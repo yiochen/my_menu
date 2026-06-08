@@ -44,6 +44,4 @@ example
 
 # local assistant tooling
 .claude/
-AGENTS.md
-CLAUDE.md
 .vscode/
