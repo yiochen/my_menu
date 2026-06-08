@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DishCard } from '@/components/DishCard';
 import { FloatingActionButton } from '@/components/FloatingActionButton';
@@ -13,6 +13,7 @@ const filters = ['All', 'Favorites', 'Mains', 'Bowls', 'Pasta', 'Soups', 'Desser
 export default function MenuScreen() {
   const dishes = useAppStore((state) => state.dishes);
   const toggleFavorite = useAppStore((state) => state.toggleFavorite);
+  const insets = useSafeAreaInsets();
   const [search, setSearch] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<(typeof filters)[number]>('All');
 
@@ -35,8 +36,8 @@ export default function MenuScreen() {
   const recent = [...dishes].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 4);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.content}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 160 + insets.bottom }]}>
         <View style={styles.header}>
           <View>
             <Text style={styles.title}>My Menu</Text>
@@ -122,7 +123,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingBottom: 140,
+    flexGrow: 1,
     gap: 16,
   },
   header: {

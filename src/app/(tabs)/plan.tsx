@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { ScrollView, Pressable, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FloatingActionButton } from '@/components/FloatingActionButton';
 import { APP_COLORS, APP_RADIUS } from '@/theme';
@@ -11,6 +11,7 @@ export default function PlanScreen() {
   const dishes = useAppStore((state) => state.dishes);
   const plannedMeals = useAppStore((state) => state.plannedMeals);
   const reviewItems = useAppStore((state) => state.reviewItems);
+  const insets = useSafeAreaInsets();
   const { days, label } = getWeekRange();
 
   const plannedByDate = new Map(plannedMeals.map((meal) => [meal.date, meal]));
@@ -19,8 +20,8 @@ export default function PlanScreen() {
     .find((dish) => !plannedMeals.some((meal) => meal.dishId === dish.id)) ?? dishes[0];
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.content}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 160 + insets.bottom }]}>
         <View style={styles.header}>
           <View>
             <Text style={styles.eyebrow}>Plan</Text>
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingBottom: 140,
+    flexGrow: 1,
     gap: 18,
   },
   header: {

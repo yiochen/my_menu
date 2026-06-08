@@ -1,11 +1,21 @@
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { APP_COLORS, APP_RADIUS } from '@/theme';
 
 export function FloatingActionButton() {
+  const insets = useSafeAreaInsets();
+
   return (
-    <Pressable onPress={() => router.push('/modals/capture')} style={styles.button}>
+    <Pressable
+      onPress={() => router.push('/modals/capture')}
+      style={[
+        styles.button,
+        {
+          bottom: Platform.OS === 'web' ? 16 : Math.max(insets.bottom - 8, 8),
+        },
+      ]}>
       <Text style={styles.label}>+</Text>
     </Pressable>
   );
@@ -15,7 +25,6 @@ const styles = StyleSheet.create({
   button: {
     position: 'absolute',
     right: 20,
-    bottom: 94,
     width: 60,
     height: 60,
     borderRadius: APP_RADIUS.pill,
