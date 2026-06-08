@@ -2,7 +2,9 @@
 
 MyMenu is a mobile-first cooking app built with Expo and React Native.
 
-The product idea is simple: capture what you cook, let the app organize it into dishes, and build a personal menu over time. The current MVP is fully client-side and uses local persistence plus mock AI behind service interfaces so we can swap in a real backend later.
+MyMenu is a personal cooking memory system: capture what you cook, let the app organize it into dishes, and build a personal menu over time. The product is closer to "Google Photos for cooking" than a generic recipe app or social feed. The current MVP is fully client-side and uses local persistence plus mock AI behind service interfaces so we can swap in a real backend later.
+
+The full product vision, IA, UX principles, and roadmap live in [docs/product-vision.md](docs/product-vision.md).
 
 ## MVP Features
 
@@ -135,3 +137,4 @@ eas build --profile preview --platform android
 - The MVP is intentionally client-only.
 - Auth, backend APIs, Supabase, and production AI are not implemented yet.
 - `openAiClient.ts` is currently a stub and `mockAi.ts` is the active implementation unless an OpenAI API key-backed implementation is added later.
+- Product and feature decisions should stay aligned with [docs/product-vision.md](docs/product-vision.md).
