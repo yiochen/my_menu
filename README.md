@@ -1,56 +1,137 @@
-# Welcome to your Expo app 👋
+# MyMenu
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+MyMenu is a mobile-first cooking app built with Expo and React Native.
 
-## Get started
+The product idea is simple: capture what you cook, let the app organize it into dishes, and build a personal menu over time. The current MVP is fully client-side and uses local persistence plus mock AI behind service interfaces so we can swap in a real backend later.
 
-1. Install dependencies
+## MVP Features
 
-   ```bash
-   npm install
-   ```
+- Weekly planning with a simple `Plan` tab
+- Personal dish library in the `Menu` tab
+- Dish detail view with recipe, ingredients, notes, and source photo history
+- Floating capture flow for:
+  - taking a photo
+  - importing photos
+  - adding a dish idea as text
+- Mock AI classification that:
+  - attaches captures to an existing dish
+  - creates a new dish
+  - sends uncertain matches to a review queue
+- Cover improvement flow using the AI service boundary
+- AsyncStorage-backed local database with seeded sample data on first launch
 
-2. Start the app
+## Tech Stack
 
-   ```bash
-   npx expo start
-   ```
+- Expo SDK 56
+- React Native
+- TypeScript
+- Expo Router
+- Zustand
+- AsyncStorage
+- `expo-image-picker`
+- `date-fns`
 
-In the output, you'll find options to open the app in a
+## Architecture
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+The app is intentionally structured so UI code does not talk directly to storage or AI implementations.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```txt
+UI
+↓
+Zustand Store
+↓
+DatabaseService / AiService
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Key files:
 
-### Other setup steps
+- [src/types/models.ts](src/types/models.ts)
+- [src/store/useAppStore.ts](src/store/useAppStore.ts)
+- [src/services/db/types.ts](src/services/db/types.ts)
+- [src/services/db/localDb.ts](src/services/db/localDb.ts)
+- [src/services/ai/types.ts](src/services/ai/types.ts)
+- [src/services/ai/index.ts](src/services/ai/index.ts)
+- [src/services/ai/mockAi.ts](src/services/ai/mockAi.ts)
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Project Structure
 
-## Learn more
+```txt
+src/
+  app/
+    (tabs)/
+      plan.tsx
+      menu.tsx
+    dish/
+      [id].tsx
+    modals/
+      capture.tsx
+      review.tsx
+      improve-cover.tsx
+      plan-dish.tsx
+  components/
+  data/
+  services/
+  store/
+  theme/
+  types/
+  utils/
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## Local Development
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Install dependencies:
 
-## Join the community
+```bash
+npm install
+```
 
-Join our community of developers creating universal apps.
+Start the Expo dev server:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npm run start
+```
+
+Useful shortcuts:
+
+```bash
+npm run ios
+npm run android
+npm run web
+```
+
+## Verification
+
+Type-check the project:
+
+```bash
+npx tsc --noEmit
+```
+
+Export the web build:
+
+```bash
+npx expo export --platform web
+```
+
+## EAS Setup
+
+This repo is already linked to an EAS project and includes a basic [eas.json](eas.json).
+
+Available build profiles:
+
+- `development`: internal dev client build
+- `preview`: internal distribution build
+- `production`: release build with auto-incremented versioning
+
+Examples:
+
+```bash
+eas build --profile preview --platform ios
+eas build --profile preview --platform android
+```
+
+## Notes
+
+- The MVP is intentionally client-only.
+- Auth, backend APIs, Supabase, and production AI are not implemented yet.
+- `openAiClient.ts` is currently a stub and `mockAi.ts` is the active implementation unless an OpenAI API key-backed implementation is added later.
