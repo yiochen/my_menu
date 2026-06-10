@@ -12,21 +12,21 @@ export type SeedDish = {
   servings: number;
   madeCount: number;
   lastMadeAt: string;
-  ingredients: Array<{
+  ingredients: {
     name: string;
     quantity?: string;
     unit?: string;
     optional?: boolean;
-  }>;
+  }[];
   recipeSteps: string[];
   notes: string[];
-  sourcePhotos: Array<{
+  sourcePhotos: {
     uri: string;
     capturedAt: string;
     note?: string;
     aiMatched?: boolean;
     confidence?: number;
-  }>;
+  }[];
 };
 
 const sources = {

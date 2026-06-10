@@ -13,7 +13,7 @@ export function FloatingActionButton() {
       style={[
         styles.button,
         {
-          bottom: Platform.OS === 'web' ? 16 : Math.max(insets.bottom - 8, 8),
+          bottom: Platform.OS === 'web' ? 12 : insets.bottom + 26,
         },
       ]}>
       <Text style={styles.label}>+</Text>

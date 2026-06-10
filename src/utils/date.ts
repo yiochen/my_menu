@@ -4,6 +4,7 @@ import {
   format,
   formatDistanceToNowStrict,
   parseISO,
+  startOfDay,
   startOfWeek,
 } from 'date-fns';
 
@@ -16,6 +17,18 @@ export function getWeekRange(date = new Date()) {
     end,
     days: eachDayOfInterval({ start, end }),
     label: `${format(start, 'MMM d')} - ${format(end, 'MMM d')}`,
+  };
+}
+
+export function getRemainingWeekRange(date = new Date()) {
+  const start = startOfDay(date);
+  const end = endOfWeek(start, { weekStartsOn: 1 });
+
+  return {
+    start,
+    end,
+    days: eachDayOfInterval({ start, end }),
+    label: `${format(start, 'EEE, MMM d')} - ${format(end, 'EEE, MMM d')}`,
   };
 }
 

@@ -1,30 +1,29 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { APP_COLORS, APP_RADIUS } from '@/theme';
 import { useAppStore } from '@/store/useAppStore';
-import { getWeekRange, toDateKey } from '@/utils/date';
+import type { PlanningLabel } from '@/types/models';
+import { getRemainingWeekRange, toDateKey } from '@/utils/date';
+
+const planningLabels: (PlanningLabel | 'None')[] = ['None', 'Breakfast', 'Lunch', 'Dinner'];
 
 export default function PlanDishModal() {
   const { dishId, date } = useLocalSearchParams<{ dishId?: string; date?: string }>();
   const dishes = useAppStore((state) => state.dishes);
   const planDish = useAppStore((state) => state.planDish);
-  const { days } = getWeekRange();
+  const { days } = getRemainingWeekRange();
   const [selectedDishId, setSelectedDishId] = useState(dishId ?? dishes[0]?.id);
-
-  const selectedDish = useMemo(
-    () => dishes.find((dish) => dish.id === selectedDishId),
-    [dishes, selectedDishId],
-  );
+  const [selectedLabel, setSelectedLabel] = useState<PlanningLabel | 'None'>('None');
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Plan Dinner</Text>
-          <Text style={styles.subtitle}>Pick a dish and drop it onto this week.</Text>
+          <Text style={styles.title}>Add to Plan</Text>
+          <Text style={styles.subtitle}>Pick a dish, then optionally tag it for the day.</Text>
         </View>
         <Pressable onPress={() => router.back()} style={styles.closeButton}>
           <Text style={styles.closeText}>✕</Text>
@@ -39,12 +38,35 @@ export default function PlanDishModal() {
               key={dish.id}
               onPress={() => setSelectedDishId(dish.id)}
               style={[styles.dishRow, selectedDishId === dish.id && styles.dishRowActive]}>
-              <Text style={[styles.dishRowText, selectedDishId === dish.id && styles.dishRowTextActive]}>{dish.title}</Text>
+              <View style={styles.dishTextBlock}>
+                <Text style={[styles.dishRowText, selectedDishId === dish.id && styles.dishRowTextActive]}>
+                  {dish.title}
+                </Text>
+                <Text style={[styles.dishRowMeta, selectedDishId === dish.id && styles.dishRowMetaActive]}>
+                  {dish.prepMinutes ?? 0} min
+                  {dish.servings ? ` • Serves ${dish.servings}` : ''}
+                </Text>
+              </View>
             </Pressable>
           ))}
         </View>
 
-        <Text style={styles.sectionTitle}>This Week</Text>
+        <Text style={styles.sectionTitle}>Planning Label</Text>
+        <View style={styles.labelRow}>
+          {planningLabels.map((label) => {
+            const active = selectedLabel === label;
+            return (
+              <Pressable
+                key={label}
+                onPress={() => setSelectedLabel(label)}
+                style={[styles.labelChip, active && styles.labelChipActive]}>
+                <Text style={[styles.labelChipText, active && styles.labelChipTextActive]}>{label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <Text style={styles.sectionTitle}>Choose Day</Text>
         <View style={styles.sectionCard}>
           {days.map((day) => {
             const dateKey = toDateKey(day);
@@ -53,18 +75,18 @@ export default function PlanDishModal() {
               <Pressable
                 key={dateKey}
                 onPress={async () => {
-                  if (!selectedDish) {
+                  if (!selectedDishId) {
                     return;
                   }
-                  await planDish(selectedDish.id, dateKey);
+                  await planDish(selectedDishId, dateKey, selectedLabel === 'None' ? undefined : selectedLabel);
                   router.back();
                 }}
                 style={[styles.dayRow, active && styles.dayRowActive]}>
                 <View>
                   <Text style={styles.dayLabel}>{day.toLocaleDateString('en-US', { weekday: 'long' })}</Text>
-                  <Text style={styles.dayMeta}>{dateKey}</Text>
+                  <Text style={styles.dayMeta}>{day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</Text>
                 </View>
-                <Text style={styles.dayAction}>Plan</Text>
+                <Text style={styles.dayAction}>Add dish</Text>
               </Pressable>
             );
           })}
@@ -86,9 +108,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    gap: 16,
   },
   title: {
-    fontSize: 28,
+    fontSize: 30,
     fontFamily: 'Georgia',
     fontWeight: '700',
     color: APP_COLORS.text,
@@ -96,14 +119,17 @@ const styles = StyleSheet.create({
   subtitle: {
     color: APP_COLORS.textMuted,
     marginTop: 8,
+    fontSize: 15,
   },
   closeButton: {
-    width: 36,
-    height: 36,
+    width: 38,
+    height: 38,
     borderRadius: APP_RADIUS.pill,
     backgroundColor: APP_COLORS.card,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: APP_COLORS.border,
   },
   closeText: {
     color: APP_COLORS.text,
@@ -128,18 +154,57 @@ const styles = StyleSheet.create({
   },
   dishRow: {
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: APP_RADIUS.md,
     backgroundColor: APP_COLORS.white,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   dishRowActive: {
-    backgroundColor: APP_COLORS.green,
+    borderColor: APP_COLORS.green,
+    backgroundColor: '#F3F8F2',
+  },
+  dishTextBlock: {
+    gap: 4,
   },
   dishRowText: {
     color: APP_COLORS.text,
-    fontWeight: '600',
+    fontWeight: '700',
+    fontSize: 16,
   },
   dishRowTextActive: {
+    color: APP_COLORS.green,
+  },
+  dishRowMeta: {
+    color: APP_COLORS.textMuted,
+    fontSize: 13,
+  },
+  dishRowMetaActive: {
+    color: APP_COLORS.green,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  labelChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: APP_RADIUS.pill,
+    backgroundColor: APP_COLORS.card,
+    borderWidth: 1,
+    borderColor: APP_COLORS.border,
+  },
+  labelChipActive: {
+    backgroundColor: APP_COLORS.green,
+    borderColor: APP_COLORS.green,
+  },
+  labelChipText: {
+    color: APP_COLORS.text,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  labelChipTextActive: {
     color: APP_COLORS.white,
   },
   dayRow: {
@@ -150,21 +215,24 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: APP_RADIUS.md,
     backgroundColor: APP_COLORS.white,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   dayRowActive: {
-    borderWidth: 1,
     borderColor: APP_COLORS.gold,
   },
   dayLabel: {
     color: APP_COLORS.text,
     fontWeight: '700',
+    fontSize: 15,
   },
   dayMeta: {
     color: APP_COLORS.textMuted,
     marginTop: 4,
   },
   dayAction: {
-    color: APP_COLORS.green,
+    color: APP_COLORS.gold,
     fontWeight: '700',
+    fontSize: 15,
   },
 });

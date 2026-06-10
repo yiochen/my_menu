@@ -74,11 +74,13 @@ export type CaptureItem = {
   createdAt: string;
 };
 
+export type PlanningLabel = 'Breakfast' | 'Lunch' | 'Dinner';
+
 export type PlannedMeal = {
   id: ID;
   dishId: ID;
   date: string;
-  mealType: 'dinner';
+  label?: PlanningLabel;
   createdAt: string;
 };
 

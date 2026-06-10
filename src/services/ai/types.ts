@@ -13,12 +13,12 @@ export type GeneratedDish = {
   prepMinutes?: number;
   difficulty?: 'Easy' | 'Medium' | 'Hard';
   servings?: number;
-  ingredients: Array<{
+  ingredients: {
     name: string;
     quantity?: string;
     unit?: string;
     optional?: boolean;
-  }>;
+  }[];
   recipeSteps: string[];
   notes?: string[];
   heroImageUri?: string;

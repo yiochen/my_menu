@@ -4,6 +4,7 @@ import type {
   DishNote,
   ID,
   Ingredient,
+  PlanningLabel,
   PlannedMeal,
   RecipeStep,
   ReviewItem,
@@ -21,21 +22,21 @@ export type CreateDishInput = {
   servings?: number;
   madeCount?: number;
   lastMadeAt?: string;
-  ingredients?: Array<{
+  ingredients?: {
     name: string;
     quantity?: string;
     unit?: string;
     optional?: boolean;
-  }>;
+  }[];
   recipeSteps?: string[];
   notes?: string[];
-  sourcePhotos?: Array<{
+  sourcePhotos?: {
     uri: string;
     capturedAt?: string;
     note?: string;
     aiMatched?: boolean;
     confidence?: number;
-  }>;
+  }[];
 };
 
 export type AddSourcePhotoInput = {
@@ -64,7 +65,7 @@ export interface DatabaseService {
   getRecipeSteps(dishId: ID): Promise<RecipeStep[]>;
   setRecipeSteps(dishId: ID, steps: RecipeStep[]): Promise<void>;
   getPlannedMeals(startDate: string, endDate: string): Promise<PlannedMeal[]>;
-  planMeal(dishId: ID, date: string): Promise<PlannedMeal>;
+  planMeal(dishId: ID, date: string, label?: PlanningLabel): Promise<PlannedMeal>;
   removePlannedMeal(id: ID): Promise<void>;
   createCaptureItem(input: Partial<CaptureItem>): Promise<CaptureItem>;
   updateCaptureItem(id: ID, patch: Partial<CaptureItem>): Promise<CaptureItem>;

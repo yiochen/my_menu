@@ -10,6 +10,7 @@ import type {
   DishNote,
   ID,
   Ingredient,
+  PlanningLabel,
   PlannedMeal,
   RecipeStep,
   ReviewItem,
@@ -42,7 +43,7 @@ type AppStore = {
   attachCaptureToDish: (captureId: ID, dishId: ID) => Promise<void>;
   resolveReview: (reviewItemId: ID, resolution: ID | 'create_new') => Promise<void>;
   deleteCapture: (captureId: ID, reviewItemId?: ID) => Promise<void>;
-  planDish: (dishId: ID, date: string) => Promise<void>;
+  planDish: (dishId: ID, date: string, label?: PlanningLabel) => Promise<void>;
   improveCover: (dishId: ID, prompt: string) => Promise<void>;
   addNote: (dishId: ID, text: string) => Promise<void>;
   toggleFavorite: (dishId: ID) => Promise<void>;
@@ -315,8 +316,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
     await refreshStore(set);
   },
 
-  async planDish(dishId, date) {
-    await dbService.planMeal(dishId, date);
+  async planDish(dishId, date, label) {
+    await dbService.planMeal(dishId, date, label);
     await refreshStore(set);
   },
 

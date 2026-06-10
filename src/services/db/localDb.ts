@@ -15,7 +15,7 @@ import type {
 } from '@/types/models';
 import { createId } from '@/utils/id';
 
-import type { AddSourcePhotoInput, CreateDishInput, DatabaseService } from './types';
+import type { CreateDishInput, DatabaseService } from './types';
 
 export const STORAGE_KEY = 'mymenu.localdb.v1';
 
@@ -424,19 +424,13 @@ export const localDb: DatabaseService & { initialize(): Promise<void> } = {
     return state.plannedMeals.filter((item) => item.date >= startDate && item.date <= endDate);
   },
 
-  async planMeal(dishId, date) {
+  async planMeal(dishId, date, label) {
     return withState(async (state) => {
-      const existing = state.plannedMeals.find((item) => item.date === date && item.mealType === 'dinner');
-      if (existing) {
-        existing.dishId = dishId;
-        return existing;
-      }
-
       const meal: PlannedMeal = {
         id: createId('plan'),
         dishId,
         date,
-        mealType: 'dinner',
+        label,
         createdAt: formatISO(new Date()),
       };
       state.plannedMeals.push(meal);
