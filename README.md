@@ -1,140 +1,67 @@
 # MyMenu
 
-MyMenu is a mobile-first cooking app built with Expo and React Native.
+MyMenu is a Flutter mobile app for building a personal cooking memory system.
 
-MyMenu is a personal cooking memory system: capture what you cook, let the app organize it into dishes, and build a personal menu over time. The product is closer to "Google Photos for cooking" than a generic recipe app or social feed. The current MVP is fully client-side and uses local persistence plus mock AI behind service interfaces so we can swap in a real backend later.
+The product vision is simple: capture what you cook, let the app organize it
+into dishes, and build a personal menu that gets richer over time. The full
+product direction lives in [docs/product-vision.md](/Users/yiouchen/dev/my_menu/docs/product-vision.md).
 
-The full product vision, IA, UX principles, and roadmap live in [docs/product-vision.md](docs/product-vision.md).
-
-## MVP Features
-
-- Weekly planning with a simple `Plan` tab
-- Personal dish library in the `Menu` tab
-- Dish detail view with recipe, ingredients, notes, and source photo history
-- Floating capture flow for:
-  - taking a photo
-  - importing photos
-  - adding a dish idea as text
-- Mock AI classification that:
-  - attaches captures to an existing dish
-  - creates a new dish
-  - sends uncertain matches to a review queue
-- Cover improvement flow using the AI service boundary
-- AsyncStorage-backed local database with seeded sample data on first launch
-
-## Tech Stack
-
-- Expo SDK 56
-- React Native
-- TypeScript
-- Expo Router
-- Zustand
-- AsyncStorage
-- `expo-image-picker`
-- `date-fns`
-
-## Architecture
-
-The app is intentionally structured so UI code does not talk directly to storage or AI implementations.
+## Repository Layout
 
 ```txt
-UI
-↓
-Zustand Store
-↓
-DatabaseService / AiService
+/
+  apps/
+    mobile_flutter/
+  backend/
+    api/
+    supabase/
+  contracts/
+    openapi/
+  docs/
 ```
 
-Key files:
+## Mobile App
 
-- [src/types/models.ts](src/types/models.ts)
-- [src/store/useAppStore.ts](src/store/useAppStore.ts)
-- [src/services/db/types.ts](src/services/db/types.ts)
-- [src/services/db/localDb.ts](src/services/db/localDb.ts)
-- [src/services/ai/types.ts](src/services/ai/types.ts)
-- [src/services/ai/index.ts](src/services/ai/index.ts)
-- [src/services/ai/mockAi.ts](src/services/ai/mockAi.ts)
+The active mobile app lives in
+[apps/mobile_flutter](/Users/yiouchen/dev/my_menu/apps/mobile_flutter).
 
-## Project Structure
+Current Flutter MVP coverage:
 
-```txt
-src/
-  app/
-    (tabs)/
-      plan.tsx
-      menu.tsx
-    dish/
-      [id].tsx
-    modals/
-      capture.tsx
-      review.tsx
-      improve-cover.tsx
-      plan-dish.tsx
-  components/
-  data/
-  services/
-  store/
-  theme/
-  types/
-  utils/
-```
+- `Plan` and `Menu` tabs
+- dish detail screen
+- mocked capture flows for ideas and photo captures
+- review queue flow
+- mocked cover improvement flow
+- seeded local in-memory state for product iteration
 
-## Local Development
+## Development
 
-Install dependencies:
+Flutter app setup:
 
 ```bash
-npm install
+cd apps/mobile_flutter
+flutter pub get
 ```
 
-Start the Expo dev server:
+Run the app:
 
 ```bash
-npm run start
-```
-
-Useful shortcuts:
-
-```bash
-npm run ios
-npm run android
-npm run web
+flutter run
 ```
 
 ## Verification
 
-Type-check the project:
+Run these from `apps/mobile_flutter/`:
 
 ```bash
-npx tsc --noEmit
+dart analyze
+dart run tool/structural_lint.dart
+flutter test
 ```
 
-Export the web build:
+## Architecture Notes
 
-```bash
-npx expo export --platform web
-```
-
-## EAS Setup
-
-This repo is already linked to an EAS project and includes a basic [eas.json](eas.json).
-
-Available build profiles:
-
-- `development`: internal dev client build
-- `preview`: internal distribution build
-- `production`: release build with auto-incremented versioning
-
-Examples:
-
-```bash
-eas build --profile preview --platform ios
-eas build --profile preview --platform android
-```
-
-## Notes
-
-- The MVP is intentionally client-only.
-- Auth, backend APIs, Supabase, and production AI are not implemented yet.
-- `openAiClient.ts` is currently a stub and `mockAi.ts` is the active implementation unless an OpenAI API key-backed implementation is added later.
-- Product and feature decisions should stay aligned with [docs/product-vision.md](docs/product-vision.md).
+- [docs/flutter-app-design.md](/Users/yiouchen/dev/my_menu/docs/flutter-app-design.md) is the current Flutter architecture reference.
+- OpenAPI is the planned contract source under
+  [contracts/openapi/openapi.yaml](/Users/yiouchen/dev/my_menu/contracts/openapi/openapi.yaml).
+- Backend placeholders live under [backend](/Users/yiouchen/dev/my_menu/backend) for future Supabase and API work.

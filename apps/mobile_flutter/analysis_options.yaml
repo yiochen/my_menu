@@ -1,0 +1,16 @@
+include: package:very_good_analysis/analysis_options.yaml
+
+analyzer:
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "build/**"
+  errors:
+    lines_longer_than_80_chars: ignore
+    unnecessary_raw_strings: ignore
+
+linter:
+  rules:
+    omit_local_variable_types: false
+    public_member_api_docs: false
+    require_trailing_commas: false
