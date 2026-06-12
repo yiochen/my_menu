@@ -16,36 +16,38 @@ Future<void> showCaptureSheet(
     showDragHandle: true,
     builder: (BuildContext sheetContext) {
       return SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                'Capture',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'This Flutter pass keeps capture mocked so we can preserve the product loop before device APIs are wired in.',
-              ),
-              const SizedBox(height: 16),
-              _CaptureActionTile(
-                icon: Icons.lightbulb_outline,
-                title: 'Add dish idea',
-                subtitle: 'Save a cooking idea from text.',
-                onTap: () =>
-                    Navigator.of(sheetContext).pop(CaptureAction.addIdea),
-              ),
-              _CaptureActionTile(
-                icon: Icons.photo_camera_back_outlined,
-                title: 'Mock photo capture',
-                subtitle: 'Simulate a capture with a short description.',
-                onTap: () =>
-                    Navigator.of(sheetContext).pop(CaptureAction.mockCapture),
-              ),
-            ],
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Capture',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'This Flutter pass keeps capture mocked so we can preserve the product loop before device APIs are wired in.',
+                ),
+                const SizedBox(height: 16),
+                _CaptureActionTile(
+                  icon: Icons.lightbulb_outline,
+                  title: 'Add dish idea',
+                  subtitle: 'Save a cooking idea from text.',
+                  onTap: () =>
+                      Navigator.of(sheetContext).pop(CaptureAction.addIdea),
+                ),
+                _CaptureActionTile(
+                  icon: Icons.photo_camera_back_outlined,
+                  title: 'Mock photo capture',
+                  subtitle: 'Simulate a capture with a short description.',
+                  onTap: () =>
+                      Navigator.of(sheetContext).pop(CaptureAction.mockCapture),
+                ),
+              ],
+            ),
           ),
         ),
       );

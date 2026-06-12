@@ -45,6 +45,7 @@ class _HomeShellState extends State<HomeShell> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
+        key: const ValueKey('capture_fab'),
         onPressed: () => showCaptureSheet(context, state),
         icon: const Icon(Icons.add),
         label: const Text('Capture'),

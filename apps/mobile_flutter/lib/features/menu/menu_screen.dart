@@ -29,6 +29,7 @@ class MenuScreen extends StatelessWidget {
         Text('My Menu', style: Theme.of(context).textTheme.headlineMedium),
         const SizedBox(height: 12),
         TextField(
+          key: const ValueKey('menu_search_field'),
           onChanged: onQueryChanged,
           decoration: InputDecoration(
             prefixIcon: const Icon(Icons.search),
@@ -46,7 +47,7 @@ class MenuScreen extends StatelessWidget {
           Text('Favorites', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
           SizedBox(
-            height: 220,
+            height: 300,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: favorites.length,

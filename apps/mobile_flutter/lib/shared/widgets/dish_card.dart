@@ -26,6 +26,7 @@ class DishCard extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Stack(
               children: <Widget>[
@@ -49,9 +50,12 @@ class DishCard extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   Text(
                     dish.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 6),
@@ -63,6 +67,8 @@ class DishCard extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     '${dish.prepMinutes} min · ${dish.category} · Made ${dish.madeCount} times',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
