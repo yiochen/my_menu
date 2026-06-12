@@ -20,8 +20,8 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.5"
           channel: stable
+          cache: true
 
       - name: Install dependencies
         run: flutter pub get
@@ -56,7 +56,6 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.5"
           channel: stable
           cache: true
 
@@ -73,8 +72,8 @@ jobs:
       - name: Run Android integration test
         uses: ReactiveCircus/android-emulator-runner@v2
         with:
-          api-level: 34
+          api-level: 35
           arch: x86_64
           profile: pixel_6
           emulator-boot-timeout: 900
-          script: cd apps/mobile_flutter && flutter test integration_test/app_smoke_test.dart -d emulator-5554
+          script: cd apps/mobile_flutter && flutter drive --driver=integration_test/driver.dart --target=integration_test/app_smoke_test.dart -d emulator-5554
