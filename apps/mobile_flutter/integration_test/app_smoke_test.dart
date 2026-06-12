@@ -21,7 +21,13 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('capture_fab')));
       await tester.pump(const Duration(milliseconds: 500));
 
-      await tester.tap(find.text('Add dish idea'));
+      final Finder addDishIdea = find.text('Add dish idea');
+      await _scrollIntoView(
+        tester,
+        addDishIdea,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(addDishIdea);
       await _pumpUntilFound(tester, find.byType(TextFormField));
 
       await tester.enterText(
@@ -52,6 +58,26 @@ void main() {
       expect(find.text('Black Bean Tacos'), findsOneWidget);
     });
   });
+}
+
+Future<void> _scrollIntoView(
+  WidgetTester tester,
+  Finder target, {
+  required Finder scrollable,
+  double delta = 200,
+}) async {
+  if (target.evaluate().isNotEmpty) {
+    await tester.ensureVisible(target);
+    await tester.pump(const Duration(milliseconds: 250));
+    return;
+  }
+
+  await tester.scrollUntilVisible(
+    target,
+    delta,
+    scrollable: scrollable,
+  );
+  await tester.pump(const Duration(milliseconds: 250));
 }
 
 Future<void> _pumpUntilFound(
