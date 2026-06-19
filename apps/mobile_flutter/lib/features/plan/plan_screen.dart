@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/app/app_shell_theme.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/planning/plan_dates.dart';
-import 'package:mymenu/domain/planning/planned_meal.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_screen.dart';
 import 'package:mymenu/features/plan/plan_menu_strip.dart';
@@ -29,148 +27,56 @@ class PlanScreen extends StatefulWidget {
   State<PlanScreen> createState() => _PlanScreenState();
 }
 
-class _PlanScreenState extends State<PlanScreen>
-    with SingleTickerProviderStateMixin {
+class _PlanScreenState extends State<PlanScreen> {
   final ScrollController _scrollController = ScrollController();
-  Ticker? _dragAutoScrollTicker;
-  Duration? _lastDragAutoScrollTick;
-  PlannedMeal? _draggingMeal;
-  double? _draggingMealHeight;
-  double? _draggingTouchOffsetY;
-  Offset? _draggingGlobalPosition;
+  PlanDragDropSession? _dragSession;
   bool _isAddAnotherDayHighlighted = false;
   bool _isTrashHighlighted = false;
 
-  bool get _isDragging => _draggingMeal != null;
+  bool get _isDragging => _dragSession != null;
 
   @override
   void dispose() {
-    _dragAutoScrollTicker?.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
-  void _handleDragStarted(
-    PlannedMeal meal,
-    double rowHeight,
-    double touchOffsetY,
-  ) {
-    setState(() {
-      _draggingMeal = meal;
-      _draggingMealHeight = rowHeight;
-      _draggingTouchOffsetY = touchOffsetY;
-      _draggingGlobalPosition = null;
-      _isAddAnotherDayHighlighted = false;
-      _isTrashHighlighted = false;
-    });
-    _startDragAutoScroll();
-    widget.onDragStateChanged?.call(true);
-  }
-
-  void _handleDragEnded() {
-    if (!mounted) {
-      return;
-    }
+  void _handleDragSessionChanged(PlanDragDropSession? session) {
+    final bool wasDragging = _isDragging;
+    final bool isDragging = session != null;
 
     setState(() {
-      _draggingMeal = null;
-      _draggingMealHeight = null;
-      _draggingTouchOffsetY = null;
-      _draggingGlobalPosition = null;
-      _isAddAnotherDayHighlighted = false;
-      _isTrashHighlighted = false;
+      _dragSession = session;
+      if (!isDragging) {
+        _isAddAnotherDayHighlighted = false;
+        _isTrashHighlighted = false;
+      }
     });
-    _stopDragAutoScroll();
-    widget.onDragStateChanged?.call(false);
-  }
-
-  void _handleDragMoved(Offset globalPosition) {
-    if (mounted) {
-      setState(() {
-        _draggingGlobalPosition = globalPosition;
-      });
+    if (wasDragging != isDragging) {
+      widget.onDragStateChanged?.call(isDragging);
     }
   }
 
-  void _startDragAutoScroll() {
-    _lastDragAutoScrollTick = null;
-    _dragAutoScrollTicker ??= createTicker(_handleDragAutoScrollTick);
-    if (!_dragAutoScrollTicker!.isActive) {
-      _dragAutoScrollTicker!.start();
-    }
-  }
-
-  void _stopDragAutoScroll() {
-    _dragAutoScrollTicker?.stop();
-    _lastDragAutoScrollTick = null;
-  }
-
-  void _handleDragAutoScrollTick(Duration elapsed) {
-    final Duration? previousElapsed = _lastDragAutoScrollTick;
-    _lastDragAutoScrollTick = elapsed;
-    if (!_isDragging ||
-        previousElapsed == null ||
-        !_scrollController.hasClients ||
-        !mounted) {
+  void _handleDragPointerMove(PointerMoveEvent event) {
+    final PlanDragDropSession? session = _dragSession;
+    if (session == null) {
       return;
     }
-
-    final Offset? dragPosition = _draggingGlobalPosition;
-    if (dragPosition == null) {
-      return;
-    }
-
-    final RenderObject? renderObject = context.findRenderObject();
-    final RenderBox? screenBox =
-        renderObject is RenderBox && renderObject.hasSize ? renderObject : null;
-    final double topEdge = screenBox?.localToGlobal(Offset.zero).dy ?? 0;
-    final double bottomEdge = screenBox == null
-        ? MediaQuery.sizeOf(context).height
-        : topEdge + screenBox.size.height;
-    final double trigger = context.planTheme.dragAutoScrollTrigger;
-    final double maxStep = context.planTheme.dragAutoScrollStep;
-    final double elapsedSeconds =
-        (elapsed - previousElapsed).inMicroseconds.clamp(0, 50000).toDouble() /
-            Duration.microsecondsPerSecond;
-    final double frameScale = elapsedSeconds * 60;
-    double direction = 0;
-    double progress = 0;
-
-    if (dragPosition.dy < topEdge + trigger) {
-      direction = -1;
-      progress =
-          ((topEdge + trigger - dragPosition.dy) / trigger).clamp(0.0, 1.0);
-    } else if (dragPosition.dy > bottomEdge - trigger) {
-      direction = 1;
-      progress = ((dragPosition.dy - (bottomEdge - trigger)) / trigger)
-          .clamp(0.0, 1.0);
-    }
-
-    if (direction == 0 || progress == 0) {
-      return;
-    }
-
-    _jumpByDragAutoScrollDelta(direction * maxStep * progress * frameScale);
+    _handleDragSessionChanged(session.copyWith(globalPosition: event.position));
   }
 
-  void _handleMealMoved(
-    MyMenuState state,
-    PlannedMeal meal,
-    String targetDayKey,
-    int targetIndex,
-  ) {
+  void _handleMealMoved(MyMenuState state, PlanDragDropMove move) {
     state.movePlannedMeal(
-      meal.id,
-      targetDayKey: targetDayKey,
-      targetIndex: targetIndex,
+      move.itemId,
+      targetDayKey: move.toGroupId,
+      targetIndex: move.toIndex,
     );
-    _handleDragEnded();
   }
 
   Future<void> _handleDropOnAddAnotherDay(
     BuildContext context,
     MyMenuState state,
-    PlannedMeal meal,
+    PlanDragDropPayload payload,
     List<DateTime> dates,
   ) async {
     setState(() {
@@ -192,18 +98,16 @@ class _PlanScreenState extends State<PlanScreen>
       return;
     }
     if (selectedDate == null) {
-      _handleDragEnded();
       return;
     }
 
     state.ensurePlanDateVisible(selectedDate);
     final String targetDayKey = dayKeyForDate(selectedDate);
     state.movePlannedMeal(
-      meal.id,
+      payload.itemId,
       targetDayKey: targetDayKey,
       targetIndex: state.plannedMealsForDay(targetDayKey).length,
     );
-    _handleDragEnded();
   }
 
   @override
@@ -216,9 +120,7 @@ class _PlanScreenState extends State<PlanScreen>
 
     return Listener(
       behavior: HitTestBehavior.translucent,
-      onPointerMove: _isDragging ? _handlePointerMove : null,
-      onPointerUp: _isDragging ? _handlePointerEnded : null,
-      onPointerCancel: _isDragging ? _handlePointerEnded : null,
+      onPointerMove: _isDragging ? _handleDragPointerMove : null,
       child: DecoratedBox(
         decoration: const BoxDecoration(color: Color(0xFFFFFCF7)),
         child: Stack(
@@ -240,12 +142,11 @@ class _PlanScreenState extends State<PlanScreen>
                     _isTrashHighlighted = isHighlighted;
                   });
                 },
-                onMealAccepted: (PlannedMeal meal) {
-                  state.removePlannedMeal(meal.id);
+                onMealAccepted: (PlanDragDropPayload payload) {
+                  state.removePlannedMeal(payload.itemId);
                   setState(() {
                     _isTrashHighlighted = false;
                   });
-                  _handleDragEnded();
                 },
               ),
           ],
@@ -335,53 +236,49 @@ class _PlanScreenState extends State<PlanScreen>
       children: <Widget>[
         PlanTimeline(
           dates: dates,
-          draggingMealId: _draggingMeal?.id,
-          draggingMealHeight: _draggingMealHeight,
-          draggingTouchOffsetY: _draggingTouchOffsetY,
-          draggingGlobalPosition: _draggingGlobalPosition,
-          onDragStarted: _handleDragStarted,
-          onDragMoved: _handleDragMoved,
-          onDragEnded: _handleDragEnded,
-          onMealMoved: (PlannedMeal meal, String targetDayKey, int index) {
-            _handleMealMoved(state, meal, targetDayKey, index);
-          },
+          scrollController: _scrollController,
+          dragSession: _dragSession,
+          onDragSessionChanged: _handleDragSessionChanged,
+          onMealMoved: (PlanDragDropMove move) => _handleMealMoved(state, move),
         ),
-        Center(
-          child: DragTarget<PlannedMeal>(
-            onWillAcceptWithDetails: (DragTargetDetails<PlannedMeal> details) {
-              setState(() {
-                _isAddAnotherDayHighlighted = true;
-              });
-              return true;
-            },
-            onLeave: (PlannedMeal? data) {
-              if (!_isDragging) {
-                return;
-              }
+        DragTarget<PlanDragDropPayload>(
+          onWillAcceptWithDetails:
+              (DragTargetDetails<PlanDragDropPayload> details) {
+            setState(() {
+              _isAddAnotherDayHighlighted = true;
+            });
+            return true;
+          },
+          onLeave: (PlanDragDropPayload? data) {
+            if (!_isDragging) {
+              return;
+            }
 
-              setState(() {
-                _isAddAnotherDayHighlighted = false;
-              });
-            },
-            onAcceptWithDetails: (DragTargetDetails<PlannedMeal> details) {
-              _handleDropOnAddAnotherDay(context, state, details.data, dates);
-            },
-            builder: (
-              BuildContext context,
-              List<PlannedMeal?> candidateData,
-              List<dynamic> rejectedData,
-            ) {
-              final bool isActive =
-                  _isAddAnotherDayHighlighted || candidateData.isNotEmpty;
+            setState(() {
+              _isAddAnotherDayHighlighted = false;
+            });
+          },
+          onAcceptWithDetails:
+              (DragTargetDetails<PlanDragDropPayload> details) {
+            _handleDropOnAddAnotherDay(context, state, details.data, dates);
+          },
+          builder: (
+            BuildContext context,
+            List<PlanDragDropPayload?> candidateData,
+            List<dynamic> rejectedData,
+          ) {
+            final bool isActive =
+                _isAddAnotherDayHighlighted || candidateData.isNotEmpty;
 
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 160),
-                decoration: BoxDecoration(
-                  color:
-                      isActive ? const Color(0xFFF8EAC1) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(tokens.addButtonRadius),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: isActive ? const Color(0xFFF8EAC1) : Colors.transparent,
+                borderRadius: BorderRadius.circular(tokens.addButtonRadius),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Center(
                 child: TextButton.icon(
                   onPressed: _isDragging ? null : state.addNextPlanDay,
                   style: TextButton.styleFrom(
@@ -390,9 +287,9 @@ class _PlanScreenState extends State<PlanScreen>
                   icon: const Icon(Icons.add),
                   label: const Text('Add another day'),
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ],
     );

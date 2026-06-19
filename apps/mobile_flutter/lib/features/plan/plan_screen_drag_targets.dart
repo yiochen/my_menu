@@ -1,33 +1,5 @@
 part of 'plan_screen.dart';
 
-extension _PlanScreenDragTracking on _PlanScreenState {
-  void _handlePointerMove(PointerMoveEvent event) {
-    if (!_isDragging) {
-      return;
-    }
-    _handleDragMoved(event.position);
-  }
-
-  void _handlePointerEnded(PointerEvent event) {
-    if (!_isDragging) {
-      return;
-    }
-    _draggingGlobalPosition = null;
-  }
-
-  void _jumpByDragAutoScrollDelta(double delta) {
-    final double nextOffset = (_scrollController.offset + delta).clamp(
-      _scrollController.position.minScrollExtent,
-      _scrollController.position.maxScrollExtent,
-    );
-    if (nextOffset == _scrollController.offset) {
-      return;
-    }
-
-    _scrollController.jumpTo(nextOffset);
-  }
-}
-
 class _PlanTrashTarget extends StatelessWidget {
   const _PlanTrashTarget({
     required this.tokens,
@@ -41,31 +13,32 @@ class _PlanTrashTarget extends StatelessWidget {
   final bool isDragging;
   final bool isHighlighted;
   final ValueChanged<bool> onHighlightChanged;
-  final ValueChanged<PlannedMeal> onMealAccepted;
+  final ValueChanged<PlanDragDropPayload> onMealAccepted;
 
   @override
   Widget build(BuildContext context) {
     return Positioned(
       right: tokens.dragTrashRightOffset,
       top: (MediaQuery.sizeOf(context).height - tokens.dragTrashSize) / 2,
-      child: DragTarget<PlannedMeal>(
+      child: DragTarget<PlanDragDropPayload>(
         key: const ValueKey<String>('plan_trash_target'),
-        onWillAcceptWithDetails: (DragTargetDetails<PlannedMeal> details) {
+        onWillAcceptWithDetails:
+            (DragTargetDetails<PlanDragDropPayload> details) {
           onHighlightChanged(true);
           return true;
         },
-        onLeave: (PlannedMeal? data) {
+        onLeave: (PlanDragDropPayload? data) {
           if (!isDragging) {
             return;
           }
           onHighlightChanged(false);
         },
-        onAcceptWithDetails: (DragTargetDetails<PlannedMeal> details) {
+        onAcceptWithDetails: (DragTargetDetails<PlanDragDropPayload> details) {
           onMealAccepted(details.data);
         },
         builder: (
           BuildContext context,
-          List<PlannedMeal?> candidateData,
+          List<PlanDragDropPayload?> candidateData,
           List<dynamic> rejectedData,
         ) {
           final bool isActive = isHighlighted || candidateData.isNotEmpty;

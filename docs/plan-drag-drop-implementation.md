@@ -13,7 +13,10 @@ Build a Trello-style drag-and-drop experience for the Plan timeline where:
 
 ## State Ownership
 
-Keep screen-level drag session state in
+Keep reusable drag session mechanics in
+`apps/mobile_flutter/lib/shared/drag_drop/drag_drop_board.dart`.
+
+Keep Plan-specific overlay state in
 `apps/mobile_flutter/lib/features/plan/plan_screen.dart`.
 
 Terminology:
@@ -28,25 +31,28 @@ Drag-and-drop should operate on `PlannedMeal`, not `Dish`, so duplicate dishes
 are handled correctly. If the same dish is planned twice, those are still two
 different `PlannedMeal` records with different `PlannedMeal.id` values.
 
-Track:
+The shared board tracks:
 
-- `draggingMeal`
-- `draggingMealHeight`
+- the dragged `DragDropPayload`
+- the measured dragged item height
+- the latest global drag position for edge autoscroll
+
+The Plan screen tracks:
+
+- `dragSession`
 - `isAddAnotherDayHighlighted`
 - `isTrashHighlighted`
 
-Expose drag state to the timeline by passing:
+Expose drag state to the Plan screen through:
 
-- `draggingMealId`
-- `draggingMealHeight`
-- drag lifecycle callbacks
+- `onDragSessionChanged`
+- `DragDropSession<String, String, PlannedMeal>?`
 
 Pseudo code:
 
 ```dart
 class PlanScreenState {
-  PlannedMeal? draggingMeal;
-  double? draggingMealHeight;
+  DragDropSession<String, String, PlannedMeal>? dragSession;
   bool isAddAnotherDayHighlighted;
   bool isTrashHighlighted;
 }
@@ -71,18 +77,19 @@ class PlannedMeal {
 
 ## Drag Start
 
-Make each planned dish row a `LongPressDraggable<PlannedMeal>`.
+The shared board wraps each planned dish row in a
+`LongPressDraggable<DragDropPayload<String, String, PlannedMeal>>`.
 
-Measure the row's rendered height at drag start with a `GlobalKey`.
+Measure each row's rendered height after paint and cache it by planned item id.
 
-Send both the meal and the measured height to `PlanScreen`.
+Send the resulting drag session to `PlanScreen` for overlay/shade behavior.
 
 Pseudo code:
 
 ```dart
 onDragStarted() {
-  final rowHeight = measureRowWithGlobalKey();
-  notifyDragStarted(meal, rowHeight);
+  final rowHeight = measuredRowHeightFor(meal.id);
+  notifyDragSessionChanged(payloadFor(meal, rowHeight));
 }
 ```
 
@@ -109,18 +116,8 @@ When dragging ends or completes:
 Pseudo code:
 
 ```dart
-handleDragStarted(meal, rowHeight) {
-  draggingMeal = meal;
-  draggingMealHeight = rowHeight;
-}
-
-handleDragMoved(globalPosition) {
-  autoScrollIfNearViewportEdge(globalPosition);
-}
-
-handleDragEnded() {
-  draggingMeal = null;
-  draggingMealHeight = null;
+handleDragSessionChanged(session) {
+  dragSession = session;
   clearHighlights();
 }
 ```
@@ -429,15 +426,17 @@ The timeline stays interactive above the dimmed sections.
 ## Files And Responsibilities
 
 - `apps/mobile_flutter/lib/features/plan/plan_screen.dart`
-  screen-level drag session, auto-scroll, add-another-day target, trash target
+  Plan overlay state, add-another-day target, trash target
+- `apps/mobile_flutter/lib/shared/drag_drop/drag_drop_board.dart`
+  reusable board API, drag session, edge autoscroll, move payloads
+- `apps/mobile_flutter/lib/shared/drag_drop/drag_drop_group.dart`
+  reusable group drop target, measured rows, insertion index, animated slots
 - `apps/mobile_flutter/lib/features/plan/plan_timeline.dart`
-  timeline wiring and shared drag helpers
-- `apps/mobile_flutter/lib/features/plan/plan_timeline_day_card.dart`
-  day card layout computation and insertion bands
+  Plan wiring into `DragDropBoard<String, String, PlannedMeal>`
+- `apps/mobile_flutter/lib/features/plan/plan_timeline_drag_drop_ui.dart`
+  Plan-specific day card chrome, dividers, empty-day target, yellow gap
 - `apps/mobile_flutter/lib/features/plan/plan_timeline_row.dart`
-  draggable row, measurement, drag ghost
-- `apps/mobile_flutter/lib/features/plan/plan_timeline_drop_zones.dart`
-  overlap drag targets and empty-day drop zone
+  Plan dish row and drag feedback visuals
 - `apps/mobile_flutter/lib/domain/sync/my_menu_state.dart`
   move, remove, and extend plan data
 

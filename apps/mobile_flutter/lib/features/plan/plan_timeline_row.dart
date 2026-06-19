@@ -1,92 +1,28 @@
 part of 'plan_timeline.dart';
 
 class _PlannedDishRow extends StatefulWidget {
-  const _PlannedDishRow({
-    required this.meal,
-    required this.onDragStarted,
-    required this.onDragMoved,
-    required this.onDragEnded,
-  });
+  const _PlannedDishRow({required this.meal});
+
+  static const Color _planRowColor = Color(0xFFFFFEFB);
 
   final PlannedMeal meal;
-  final PlanMealDragStartedCallback onDragStarted;
-  final ValueChanged<Offset> onDragMoved;
-  final VoidCallback onDragEnded;
 
   @override
   State<_PlannedDishRow> createState() => _PlannedDishRowState();
 }
 
 class _PlannedDishRowState extends State<_PlannedDishRow> {
-  static const Color _planRowColor = Color(0xFFFFFEFB);
-  final GlobalKey _rowKey = GlobalKey();
-  double _lastTouchOffsetY = 0;
-
   @override
   Widget build(BuildContext context) {
     final MyMenuState state = MyMenuScope.of(context);
     final Dish dish = state.dishById(widget.meal.dishId);
-    final PlanThemeTokens tokens = context.planTheme;
-    final AppShellThemeTokens shellTokens = context.appShellTheme;
-    final double feedbackWidth = MediaQuery.sizeOf(context).width -
-        shellTokens.screenHorizontalPadding * 2 -
-        tokens.dayColumnWidth -
-        tokens.dayColumnGap;
 
-    return Listener(
-      onPointerDown: (PointerDownEvent event) {
-        final BuildContext? rowContext = _rowKey.currentContext;
-        if (rowContext == null) {
-          return;
-        }
-        final RenderBox rowBox = rowContext.findRenderObject()! as RenderBox;
-        _lastTouchOffsetY = rowBox.globalToLocal(event.position).dy;
-      },
-      child: LongPressDraggable<PlannedMeal>(
-        data: widget.meal,
-        maxSimultaneousDrags: 1,
-        onDragStarted: () {
-          final double rowHeight = _rowKey.currentContext?.size?.height ??
-              tokens.dishThumbHeight + tokens.dishRowInset.vertical;
-          widget.onDragStarted(widget.meal, rowHeight, _lastTouchOffsetY);
-        },
-        onDragUpdate: (DragUpdateDetails details) {
-          widget.onDragMoved(details.globalPosition);
-        },
-        onDraggableCanceled: (_, __) => _handleDragEnded(),
-        onDragCompleted: _handleDragEnded,
-        onDragEnd: (_) => _handleDragEnded(),
-        feedback: Material(
-          color: Colors.transparent,
-          child: SizedBox(
-            width: feedbackWidth,
-            child: Opacity(
-              opacity: 0.96,
-              child: _DishRowSurface(
-                dish: dish,
-                meal: widget.meal,
-                backgroundColor: _planRowColor,
-                elevation: 10,
-              ),
-            ),
-          ),
-        ),
-        childWhenDragging: const SizedBox.shrink(),
-        child: KeyedSubtree(
-          key: _rowKey,
-          child: _DishRowSurface(
-            dish: dish,
-            meal: widget.meal,
-            backgroundColor: _planRowColor,
-            onTap: () => _openEditor(context, state),
-          ),
-        ),
-      ),
+    return _DishRowSurface(
+      dish: dish,
+      meal: widget.meal,
+      backgroundColor: _PlannedDishRow._planRowColor,
+      onTap: () => _openEditor(context, state),
     );
-  }
-
-  void _handleDragEnded() {
-    widget.onDragEnded();
   }
 
   Future<void> _openEditor(BuildContext context, MyMenuState state) {
@@ -97,6 +33,40 @@ class _PlannedDishRowState extends State<_PlannedDishRow> {
       initialDishId: widget.meal.dishId,
       initialLabel: widget.meal.label,
       meal: widget.meal,
+    );
+  }
+}
+
+class _PlannedDishFeedback extends StatelessWidget {
+  const _PlannedDishFeedback({required this.meal});
+
+  final PlannedMeal meal;
+
+  @override
+  Widget build(BuildContext context) {
+    final MyMenuState state = MyMenuScope.of(context);
+    final Dish dish = state.dishById(meal.dishId);
+    final PlanThemeTokens tokens = context.planTheme;
+    final AppShellThemeTokens shellTokens = context.appShellTheme;
+    final double feedbackWidth = MediaQuery.sizeOf(context).width -
+        shellTokens.screenHorizontalPadding * 2 -
+        tokens.dayColumnWidth -
+        tokens.dayColumnGap;
+
+    return Material(
+      color: Colors.transparent,
+      child: SizedBox(
+        width: feedbackWidth,
+        child: Opacity(
+          opacity: 0.96,
+          child: _DishRowSurface(
+            dish: dish,
+            meal: meal,
+            backgroundColor: _PlannedDishRow._planRowColor,
+            elevation: 10,
+          ),
+        ),
+      ),
     );
   }
 }
