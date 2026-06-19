@@ -11,7 +11,6 @@ final List<Dish> seededDishes = <Dish>[
     category: 'Pasta',
     prepMinutes: 25,
     difficulty: 'Easy',
-    servings: 2,
     madeCount: 8,
     lastMadeLabel: '2 weeks ago',
     isFavorite: true,
@@ -60,7 +59,6 @@ final List<Dish> seededDishes = <Dish>[
     category: 'Soups',
     prepMinutes: 30,
     difficulty: 'Medium',
-    servings: 4,
     madeCount: 6,
     lastMadeLabel: '4 days ago',
     ingredients: <String>[
@@ -106,7 +104,6 @@ final List<Dish> seededDishes = <Dish>[
     category: 'Mains',
     prepMinutes: 40,
     difficulty: 'Medium',
-    servings: 3,
     madeCount: 5,
     lastMadeLabel: '11 days ago',
     ingredients: <String>[
@@ -147,7 +144,6 @@ final List<Dish> seededDishes = <Dish>[
     category: 'Bowls',
     prepMinutes: 20,
     difficulty: 'Easy',
-    servings: 2,
     madeCount: 4,
     lastMadeLabel: '18 days ago',
     isFavorite: true,

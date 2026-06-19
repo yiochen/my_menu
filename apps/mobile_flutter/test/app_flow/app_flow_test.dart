@@ -12,9 +12,9 @@ void main() {
       await tester.pumpWidget(const MyMenuApp());
       await tester.pumpAndSettle();
 
-      expect(find.text('What are we cooking this week?'), findsOneWidget);
+      expect(find.byKey(const ValueKey<String>('plan_screen')), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(FloatingActionButton, 'Capture'));
+      await tester.tap(find.byKey(const ValueKey('capture_fab')));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Add dish idea'));

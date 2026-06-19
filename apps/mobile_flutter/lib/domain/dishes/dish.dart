@@ -7,7 +7,6 @@ class Dish {
     required this.category,
     required this.prepMinutes,
     required this.difficulty,
-    required this.servings,
     required this.madeCount,
     required this.lastMadeLabel,
     required this.ingredients,
@@ -24,7 +23,6 @@ class Dish {
   final String category;
   final int prepMinutes;
   final String difficulty;
-  final int servings;
   final int madeCount;
   final String lastMadeLabel;
   final List<String> ingredients;
@@ -40,7 +38,6 @@ class Dish {
     String? category,
     int? prepMinutes,
     String? difficulty,
-    int? servings,
     int? madeCount,
     String? lastMadeLabel,
     List<String>? ingredients,
@@ -57,7 +54,6 @@ class Dish {
       category: category ?? this.category,
       prepMinutes: prepMinutes ?? this.prepMinutes,
       difficulty: difficulty ?? this.difficulty,
-      servings: servings ?? this.servings,
       madeCount: madeCount ?? this.madeCount,
       lastMadeLabel: lastMadeLabel ?? this.lastMadeLabel,
       ingredients: ingredients ?? this.ingredients,

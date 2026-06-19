@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
-import 'package:mymenu/domain/planning/planned_meal.dart';
+import 'package:mymenu/domain/planning/plan_dates.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/improve_cover/improve_cover_dialog.dart';
+import 'package:mymenu/features/plan/plan_dish_dialog.dart';
 import 'package:mymenu/shared/widgets/info_section.dart';
 
 class DishDetailScreen extends StatelessWidget {
@@ -176,62 +177,16 @@ class _DishActions extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         OutlinedButton.icon(
-          onPressed: () => _openPlanDialog(context, state, dishId),
+          onPressed: () => showPlanDishDialog(
+            context,
+            state,
+            initialDayKey: dayKeyForDate(state.remainingPlanDates().first),
+            initialDishId: dishId,
+          ),
           icon: const Icon(Icons.calendar_month),
           label: const Text('Plan Dish'),
         ),
       ],
-    );
-  }
-
-  Future<void> _openPlanDialog(
-    BuildContext context,
-    MyMenuState state,
-    String dishId,
-  ) async {
-    String selectedDayKey = state.plan.first.dayKey;
-    await showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (
-            BuildContext context,
-            void Function(void Function()) setDialogState,
-          ) {
-            return AlertDialog(
-              title: const Text('Plan Dish'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: state.plan.map((PlannedMeal meal) {
-                  return RadioListTile<String>(
-                    value: meal.dayKey,
-                    groupValue: selectedDayKey,
-                    title: Text(meal.label),
-                    onChanged: (String? value) {
-                      if (value != null) {
-                        setDialogState(() => selectedDayKey = value);
-                      }
-                    },
-                  );
-                }).toList(growable: false),
-              ),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
-                ),
-                FilledButton(
-                  onPressed: () {
-                    state.planDish(selectedDayKey, dishId);
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Plan'),
-                ),
-              ],
-            );
-          },
-        );
-      },
     );
   }
 }
