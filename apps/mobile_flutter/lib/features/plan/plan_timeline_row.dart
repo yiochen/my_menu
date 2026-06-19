@@ -1,7 +1,10 @@
 part of 'plan_timeline.dart';
 
 class _PlannedDishRow extends StatefulWidget {
-  const _PlannedDishRow({required this.meal});
+  const _PlannedDishRow({
+    required this.meal,
+    super.key,
+  });
 
   static const Color _planRowColor = Color(0xFFFFFEFB);
 

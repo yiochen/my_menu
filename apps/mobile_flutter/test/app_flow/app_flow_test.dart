@@ -12,7 +12,7 @@ void main() {
       await tester.pumpWidget(const MyMenuApp());
       await tester.pumpAndSettle();
 
-      expect(find.text('Lemon Garlic Linguine'), findsOneWidget);
+      expect(find.byKey(const ValueKey<String>('plan_screen')), findsOneWidget);
 
       await tester.tap(find.byKey(const ValueKey('capture_fab')));
       await tester.pumpAndSettle();

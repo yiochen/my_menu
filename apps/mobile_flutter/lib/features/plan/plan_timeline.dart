@@ -108,7 +108,10 @@ class PlanTimeline extends StatelessWidget {
       },
       itemBuilder: (BuildContext context,
           DragDropItemState<String, String, PlannedMeal> itemState) {
-        return _PlannedDishRow(meal: itemState.item);
+        return _PlannedDishRow(
+          key: ValueKey<String>('planned_meal_${itemState.itemId}'),
+          meal: itemState.item,
+        );
       },
       feedbackBuilder: (BuildContext context,
           DragDropItemState<String, String, PlannedMeal> itemState) {

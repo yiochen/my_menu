@@ -122,6 +122,7 @@ class _PlanScreenState extends State<PlanScreen> {
       behavior: HitTestBehavior.translucent,
       onPointerMove: _isDragging ? _handleDragPointerMove : null,
       child: DecoratedBox(
+        key: const ValueKey<String>('plan_screen'),
         decoration: const BoxDecoration(color: Color(0xFFFFFCF7)),
         child: Stack(
           children: <Widget>[

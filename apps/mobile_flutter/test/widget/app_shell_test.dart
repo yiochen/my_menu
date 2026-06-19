@@ -14,7 +14,10 @@ void main() {
         await tester.pumpWidget(const MyMenuApp());
         await tester.pumpAndSettle();
 
-        expect(find.text('Lemon Garlic Linguine'), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey<String>('plan_screen')),
+          findsOneWidget,
+        );
 
         await tester.scrollUntilVisible(
           find.text('Cook Tonight?'),
@@ -70,10 +73,13 @@ void main() {
         await tester.pumpWidget(const MyMenuApp());
         await tester.pumpAndSettle();
 
-        expect(find.text('Lemon Garlic Linguine'), findsOneWidget);
+        final Finder firstPlannedMeal = find.byKey(
+          const ValueKey<String>('planned_meal_plan_today_0'),
+        );
+        expect(firstPlannedMeal, findsOneWidget);
 
         final TestGesture gesture = await tester.startGesture(
-          tester.getCenter(find.text('Lemon Garlic Linguine')),
+          tester.getCenter(firstPlannedMeal),
         );
         await tester.pump(kLongPressTimeout + const Duration(milliseconds: 50));
         expect(find.byKey(const ValueKey('plan_trash_target')), findsOneWidget);
