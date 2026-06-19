@@ -13,10 +13,10 @@ void main() {
       app.main();
       await _pumpUntilFound(
         tester,
-        find.text('What are we cooking this week?'),
+        find.text('Lemon Garlic Linguine'),
       );
 
-      expect(find.text('What are we cooking this week?'), findsOneWidget);
+      expect(find.text('Lemon Garlic Linguine'), findsOneWidget);
 
       await tester.tap(find.byKey(const ValueKey('capture_fab')));
       await tester.pump(const Duration(milliseconds: 500));
