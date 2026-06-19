@@ -1,266 +1,400 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 import 'package:mymenu/app/app.dart';
+import 'package:mymenu/app/app_shell_theme.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
+import 'package:mymenu/domain/planning/plan_dates.dart';
 import 'package:mymenu/domain/planning/planned_meal.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_screen.dart';
+import 'package:mymenu/features/plan/plan_menu_strip.dart';
+import 'package:mymenu/features/plan/plan_theme.dart';
+import 'package:mymenu/features/plan/plan_timeline.dart';
 
-class PlanScreen extends StatelessWidget {
-  const PlanScreen({required this.onOpenReview, super.key});
+part 'plan_screen_sections.dart';
+part 'plan_screen_drag_targets.dart';
+
+class PlanScreen extends StatefulWidget {
+  const PlanScreen({
+    required this.onOpenReview,
+    this.onDragStateChanged,
+    super.key,
+  });
 
   final VoidCallback onOpenReview;
+  final ValueChanged<bool>? onDragStateChanged;
+
+  @override
+  State<PlanScreen> createState() => _PlanScreenState();
+}
+
+class _PlanScreenState extends State<PlanScreen>
+    with SingleTickerProviderStateMixin {
+  final ScrollController _scrollController = ScrollController();
+  Ticker? _dragAutoScrollTicker;
+  Duration? _lastDragAutoScrollTick;
+  PlannedMeal? _draggingMeal;
+  double? _draggingMealHeight;
+  double? _draggingTouchOffsetY;
+  Offset? _draggingGlobalPosition;
+  bool _isAddAnotherDayHighlighted = false;
+  bool _isTrashHighlighted = false;
+
+  bool get _isDragging => _draggingMeal != null;
+
+  @override
+  void dispose() {
+    _dragAutoScrollTicker?.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _handleDragStarted(
+    PlannedMeal meal,
+    double rowHeight,
+    double touchOffsetY,
+  ) {
+    setState(() {
+      _draggingMeal = meal;
+      _draggingMealHeight = rowHeight;
+      _draggingTouchOffsetY = touchOffsetY;
+      _draggingGlobalPosition = null;
+      _isAddAnotherDayHighlighted = false;
+      _isTrashHighlighted = false;
+    });
+    _startDragAutoScroll();
+    widget.onDragStateChanged?.call(true);
+  }
+
+  void _handleDragEnded() {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _draggingMeal = null;
+      _draggingMealHeight = null;
+      _draggingTouchOffsetY = null;
+      _draggingGlobalPosition = null;
+      _isAddAnotherDayHighlighted = false;
+      _isTrashHighlighted = false;
+    });
+    _stopDragAutoScroll();
+    widget.onDragStateChanged?.call(false);
+  }
+
+  void _handleDragMoved(Offset globalPosition) {
+    if (mounted) {
+      setState(() {
+        _draggingGlobalPosition = globalPosition;
+      });
+    }
+  }
+
+  void _startDragAutoScroll() {
+    _lastDragAutoScrollTick = null;
+    _dragAutoScrollTicker ??= createTicker(_handleDragAutoScrollTick);
+    if (!_dragAutoScrollTicker!.isActive) {
+      _dragAutoScrollTicker!.start();
+    }
+  }
+
+  void _stopDragAutoScroll() {
+    _dragAutoScrollTicker?.stop();
+    _lastDragAutoScrollTick = null;
+  }
+
+  void _handleDragAutoScrollTick(Duration elapsed) {
+    final Duration? previousElapsed = _lastDragAutoScrollTick;
+    _lastDragAutoScrollTick = elapsed;
+    if (!_isDragging ||
+        previousElapsed == null ||
+        !_scrollController.hasClients ||
+        !mounted) {
+      return;
+    }
+
+    final Offset? dragPosition = _draggingGlobalPosition;
+    if (dragPosition == null) {
+      return;
+    }
+
+    final RenderObject? renderObject = context.findRenderObject();
+    final RenderBox? screenBox =
+        renderObject is RenderBox && renderObject.hasSize ? renderObject : null;
+    final double topEdge = screenBox?.localToGlobal(Offset.zero).dy ?? 0;
+    final double bottomEdge = screenBox == null
+        ? MediaQuery.sizeOf(context).height
+        : topEdge + screenBox.size.height;
+    final double trigger = context.planTheme.dragAutoScrollTrigger;
+    final double maxStep = context.planTheme.dragAutoScrollStep;
+    final double elapsedSeconds =
+        (elapsed - previousElapsed).inMicroseconds.clamp(0, 50000).toDouble() /
+            Duration.microsecondsPerSecond;
+    final double frameScale = elapsedSeconds * 60;
+    double direction = 0;
+    double progress = 0;
+
+    if (dragPosition.dy < topEdge + trigger) {
+      direction = -1;
+      progress =
+          ((topEdge + trigger - dragPosition.dy) / trigger).clamp(0.0, 1.0);
+    } else if (dragPosition.dy > bottomEdge - trigger) {
+      direction = 1;
+      progress = ((dragPosition.dy - (bottomEdge - trigger)) / trigger)
+          .clamp(0.0, 1.0);
+    }
+
+    if (direction == 0 || progress == 0) {
+      return;
+    }
+
+    _jumpByDragAutoScrollDelta(direction * maxStep * progress * frameScale);
+  }
+
+  void _handleMealMoved(
+    MyMenuState state,
+    PlannedMeal meal,
+    String targetDayKey,
+    int targetIndex,
+  ) {
+    state.movePlannedMeal(
+      meal.id,
+      targetDayKey: targetDayKey,
+      targetIndex: targetIndex,
+    );
+    _handleDragEnded();
+  }
+
+  Future<void> _handleDropOnAddAnotherDay(
+    BuildContext context,
+    MyMenuState state,
+    PlannedMeal meal,
+    List<DateTime> dates,
+  ) async {
+    setState(() {
+      _isAddAnotherDayHighlighted = false;
+    });
+
+    final DateTime initialDate = dates.isEmpty
+        ? startOfDay(DateTime.now()).add(const Duration(days: 1))
+        : startOfDay(dates.last).add(const Duration(days: 1));
+    final DateTime firstDate =
+        dates.isEmpty ? startOfDay(DateTime.now()) : startOfDay(dates.first);
+    final DateTime? selectedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: firstDate.add(const Duration(days: 365)),
+    );
+    if (!mounted) {
+      return;
+    }
+    if (selectedDate == null) {
+      _handleDragEnded();
+      return;
+    }
+
+    state.ensurePlanDateVisible(selectedDate);
+    final String targetDayKey = dayKeyForDate(selectedDate);
+    state.movePlannedMeal(
+      meal.id,
+      targetDayKey: targetDayKey,
+      targetIndex: state.plannedMealsForDay(targetDayKey).length,
+    );
+    _handleDragEnded();
+  }
 
   @override
   Widget build(BuildContext context) {
     final MyMenuState state = MyMenuScope.of(context);
     final Dish recommendedDish = state.recommendedDish();
+    final List<DateTime> dates = state.remainingPlanDates();
+    final AppShellThemeTokens shellTokens = context.appShellTheme;
+    final PlanThemeTokens tokens = context.planTheme;
+
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerMove: _isDragging ? _handlePointerMove : null,
+      onPointerUp: _isDragging ? _handlePointerEnded : null,
+      onPointerCancel: _isDragging ? _handlePointerEnded : null,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(color: Color(0xFFFFFCF7)),
+        child: Stack(
+          children: <Widget>[
+            _buildPlanList(
+              state: state,
+              recommendedDish: recommendedDish,
+              dates: dates,
+              shellTokens: shellTokens,
+              tokens: tokens,
+            ),
+            if (_isDragging)
+              _PlanTrashTarget(
+                tokens: tokens,
+                isDragging: _isDragging,
+                isHighlighted: _isTrashHighlighted,
+                onHighlightChanged: (bool isHighlighted) {
+                  setState(() {
+                    _isTrashHighlighted = isHighlighted;
+                  });
+                },
+                onMealAccepted: (PlannedMeal meal) {
+                  state.removePlannedMeal(meal.id);
+                  setState(() {
+                    _isTrashHighlighted = false;
+                  });
+                  _handleDragEnded();
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlanList({
+    required MyMenuState state,
+    required Dish recommendedDish,
+    required List<DateTime> dates,
+    required AppShellThemeTokens shellTokens,
+    required PlanThemeTokens tokens,
+  }) {
+    final EdgeInsets screenPadding = EdgeInsets.symmetric(
+      horizontal: shellTokens.screenHorizontalPadding,
+    );
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+      controller: _scrollController,
+      physics: _isDragging ? const NeverScrollableScrollPhysics() : null,
+      padding: EdgeInsets.only(
+        top: tokens.screenTopPadding,
+        bottom: tokens.screenBottomPadding,
+      ),
       children: <Widget>[
-        _PlanHeader(onOpenReview: onOpenReview),
-        const SizedBox(height: 20),
-        _WeekCard(plan: state.plan),
-        const SizedBox(height: 20),
-        _CookTonightCard(dish: recommendedDish),
+        Padding(
+          padding: screenPadding,
+          child: _SectionShade(
+            isDimmed: _isDragging,
+            shadeColor: tokens.dragShadeColor,
+            child: _PlanHeader(
+              onOpenReview: widget.onOpenReview,
+              reviewCount: state.reviewItems.length,
+              dates: dates,
+            ),
+          ),
+        ),
+        SizedBox(height: tokens.sectionSpacing),
+        Padding(
+          padding: screenPadding,
+          child:
+              _buildTimelineSection(state: state, dates: dates, tokens: tokens),
+        ),
+        SizedBox(height: tokens.sectionSpacing),
+        Padding(
+          padding: screenPadding,
+          child: _SectionShade(
+            isDimmed: _isDragging,
+            shadeColor: tokens.dragShadeColor,
+            child: _CookTonightCard(dish: recommendedDish),
+          ),
+        ),
+        SizedBox(height: tokens.subsectionSpacing),
+        _SectionShade(
+          isDimmed: _isDragging,
+          shadeColor: tokens.dragShadeColor,
+          child: PlanMenuStrip(
+            horizontalPadding: shellTokens.screenHorizontalPadding,
+          ),
+        ),
         if (state.reviewItems.isNotEmpty) ...<Widget>[
-          const SizedBox(height: 16),
-          _ReviewCard(
-            count: state.reviewItems.length,
-            onTap: onOpenReview,
+          SizedBox(height: tokens.reviewSpacing),
+          Padding(
+            padding: screenPadding,
+            child: _SectionShade(
+              isDimmed: _isDragging,
+              shadeColor: tokens.dragShadeColor,
+              child: _ReviewCard(
+                count: state.reviewItems.length,
+                onTap: widget.onOpenReview,
+              ),
+            ),
           ),
         ],
       ],
     );
   }
-}
 
-class _PlanHeader extends StatelessWidget {
-  const _PlanHeader({required this.onOpenReview});
-
-  final VoidCallback onOpenReview;
-
-  @override
-  Widget build(BuildContext context) {
-    final MyMenuState state = MyMenuScope.of(context);
-
-    return Row(
+  Widget _buildTimelineSection({
+    required MyMenuState state,
+    required List<DateTime> dates,
+    required PlanThemeTokens tokens,
+  }) {
+    return Column(
       children: <Widget>[
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text('Plan', style: Theme.of(context).textTheme.labelLarge),
-              Text(
-                'What are we cooking this week?',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-            ],
-          ),
+        PlanTimeline(
+          dates: dates,
+          draggingMealId: _draggingMeal?.id,
+          draggingMealHeight: _draggingMealHeight,
+          draggingTouchOffsetY: _draggingTouchOffsetY,
+          draggingGlobalPosition: _draggingGlobalPosition,
+          onDragStarted: _handleDragStarted,
+          onDragMoved: _handleDragMoved,
+          onDragEnded: _handleDragEnded,
+          onMealMoved: (PlannedMeal meal, String targetDayKey, int index) {
+            _handleMealMoved(state, meal, targetDayKey, index);
+          },
         ),
-        IconButton(
-          onPressed: onOpenReview,
-          icon: Badge(
-            isLabelVisible: state.reviewItems.isNotEmpty,
-            label: Text(state.reviewItems.length.toString()),
-            child: const Icon(Icons.fact_check_outlined),
+        Center(
+          child: DragTarget<PlannedMeal>(
+            onWillAcceptWithDetails: (DragTargetDetails<PlannedMeal> details) {
+              setState(() {
+                _isAddAnotherDayHighlighted = true;
+              });
+              return true;
+            },
+            onLeave: (PlannedMeal? data) {
+              if (!_isDragging) {
+                return;
+              }
+
+              setState(() {
+                _isAddAnotherDayHighlighted = false;
+              });
+            },
+            onAcceptWithDetails: (DragTargetDetails<PlannedMeal> details) {
+              _handleDropOnAddAnotherDay(context, state, details.data, dates);
+            },
+            builder: (
+              BuildContext context,
+              List<PlannedMeal?> candidateData,
+              List<dynamic> rejectedData,
+            ) {
+              final bool isActive =
+                  _isAddAnotherDayHighlighted || candidateData.isNotEmpty;
+
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                decoration: BoxDecoration(
+                  color:
+                      isActive ? const Color(0xFFF8EAC1) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(tokens.addButtonRadius),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: TextButton.icon(
+                  onPressed: _isDragging ? null : state.addNextPlanDay,
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFB06D00),
+                  ),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add another day'),
+                ),
+              );
+            },
           ),
         ),
       ],
-    );
-  }
-}
-
-class _WeekCard extends StatelessWidget {
-  const _WeekCard({required this.plan});
-
-  final List<PlannedMeal> plan;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text('This Week', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 12),
-            for (final PlannedMeal meal in plan) ...<Widget>[
-              _PlanRow(meal: meal),
-              const SizedBox(height: 10),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PlanRow extends StatelessWidget {
-  const _PlanRow({required this.meal});
-
-  final PlannedMeal meal;
-
-  @override
-  Widget build(BuildContext context) {
-    final MyMenuState state = MyMenuScope.of(context);
-    final Dish? dish =
-        meal.dishId == null ? null : state.dishById(meal.dishId!);
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: () => _openPlanDialog(context, state, meal),
-      child: Ink(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF3EFE7),
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Row(
-          children: <Widget>[
-            SizedBox(
-              width: 44,
-              child: Text(
-                meal.label,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            Expanded(
-              child: Text(
-                dish?.title ?? 'Choose a dish later',
-                style: dish == null
-                    ? Theme.of(context).textTheme.bodyMedium
-                    : Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _openPlanDialog(
-    BuildContext context,
-    MyMenuState state,
-    PlannedMeal meal,
-  ) async {
-    String selectedDishId = meal.dishId ?? state.dishes.first.id;
-    await showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (
-            BuildContext context,
-            void Function(void Function()) setDialogState,
-          ) {
-            return AlertDialog(
-              title: Text('Plan ${meal.label}'),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: ListView(
-                  shrinkWrap: true,
-                  children: state.dishes.map((Dish dish) {
-                    return RadioListTile<String>(
-                      value: dish.id,
-                      groupValue: selectedDishId,
-                      title: Text(dish.title),
-                      subtitle:
-                          Text('${dish.prepMinutes} min · ${dish.category}'),
-                      onChanged: (String? value) {
-                        if (value != null) {
-                          setDialogState(() => selectedDishId = value);
-                        }
-                      },
-                    );
-                  }).toList(growable: false),
-                ),
-              ),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
-                ),
-                FilledButton(
-                  onPressed: () {
-                    state.planDish(meal.dayKey, selectedDishId);
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Plan'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class _CookTonightCard extends StatelessWidget {
-  const _CookTonightCard({required this.dish});
-
-  final Dish dish;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: const Color(0xFFE8F2FF),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(24),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (BuildContext context) =>
-                DishDetailScreen(dishId: dish.id),
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                'Cook Tonight',
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                dish.title,
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 8),
-              Text('${dish.prepMinutes} min · Last made ${dish.lastMadeLabel}'),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ReviewCard extends StatelessWidget {
-  const _ReviewCard({
-    required this.count,
-    required this.onTap,
-  });
-
-  final int count;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      color: const Color(0xFFFFF0D9),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: ListTile(
-        title: Text('$count capture needs review'),
-        subtitle: const Text('Help the app confirm a dish match.'),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: onTap,
-      ),
     );
   }
 }
