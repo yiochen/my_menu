@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
+import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/capture/review_item.dart';
 import 'package:mymenu/domain/capture/seeded_review_items.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
@@ -7,23 +10,42 @@ import 'package:mymenu/domain/dishes/seeded_dishes.dart';
 import 'package:mymenu/domain/planning/plan_dates.dart';
 import 'package:mymenu/domain/planning/planned_meal.dart';
 import 'package:mymenu/domain/planning/seeded_plan.dart';
+import 'package:mymenu/domain/sync/repositories.dart';
+
+part 'my_menu_state_capture.dart';
+part 'my_menu_state_planning.dart';
 
 class MyMenuState extends ChangeNotifier {
-  MyMenuState()
+  MyMenuState({AppRepositories? repositories})
       : _dishes = List<Dish>.of(seededDishes),
         _plan = buildSeededPlan(),
+        _captureItems = const <CaptureItem>[],
         _reviewItems = List<ReviewItem>.of(seededReviewItems),
-        _extraPlanDays = 0;
+        _extraPlanDays = 0,
+        _repositories = repositories {
+    if (_repositories != null) {
+      unawaited(_bootstrapRepositories());
+    }
+  }
 
   List<Dish> _dishes;
   List<PlannedMeal> _plan;
+  List<CaptureItem> _captureItems;
   List<ReviewItem> _reviewItems;
   int? _extraPlanDays;
+  final AppRepositories? _repositories;
+  bool _isSyncingCaptures = false;
 
   List<Dish> get dishes => List<Dish>.unmodifiable(_dishes);
   List<PlannedMeal> get plan => List<PlannedMeal>.unmodifiable(_plan);
+  List<CaptureItem> get captureItems =>
+      List<CaptureItem>.unmodifiable(_captureItems);
   List<ReviewItem> get reviewItems =>
       List<ReviewItem>.unmodifiable(_reviewItems);
+
+  void _notifyChanged() {
+    notifyListeners();
+  }
 
   List<DateTime> remainingPlanDates({DateTime? from}) {
     final List<DateTime> baseDates = remainingDaysInWeek(from);
@@ -79,99 +101,6 @@ class MyMenuState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addPlannedMeal(String dayKey, String dishId, {String? label}) {
-    _plan = <PlannedMeal>[
-      ..._plan,
-      PlannedMeal(
-        id: 'plan_${_plan.length + 1}',
-        dayKey: dayKey,
-        dishId: dishId,
-        label: label,
-      ),
-    ];
-    notifyListeners();
-  }
-
-  void updatePlannedMeal(String planId, String dishId, {String? label}) {
-    _plan = _plan.map((PlannedMeal meal) {
-      return meal.id == planId
-          ? meal.copyWith(dishId: dishId, label: label)
-          : meal;
-    }).toList(growable: false);
-    notifyListeners();
-  }
-
-  void removePlannedMeal(String planId) {
-    _plan = _plan
-        .where((PlannedMeal meal) => meal.id != planId)
-        .toList(growable: false);
-    notifyListeners();
-  }
-
-  void addNextPlanDay() {
-    _extraPlanDays = (_extraPlanDays ?? 0) + 1;
-    notifyListeners();
-  }
-
-  void ensurePlanDateVisible(DateTime date, {DateTime? from}) {
-    final List<DateTime> baseDates = remainingDaysInWeek(from);
-    if (baseDates.isEmpty) {
-      return;
-    }
-
-    final DateTime normalizedDate = startOfDay(date);
-    final DateTime lastBaseDate = startOfDay(baseDates.last);
-    if (!normalizedDate.isAfter(lastBaseDate)) {
-      return;
-    }
-
-    final int extraPlanDays = normalizedDate.difference(lastBaseDate).inDays;
-    final int nextExtraPlanDays = extraPlanDays > (_extraPlanDays ?? 0)
-        ? extraPlanDays
-        : (_extraPlanDays ?? 0);
-    if (nextExtraPlanDays == (_extraPlanDays ?? 0)) {
-      return;
-    }
-
-    _extraPlanDays = nextExtraPlanDays;
-    notifyListeners();
-  }
-
-  void movePlannedMeal(
-    String planId, {
-    required String targetDayKey,
-    required int targetIndex,
-  }) {
-    final int sourceIndex =
-        _plan.indexWhere((PlannedMeal meal) => meal.id == planId);
-    if (sourceIndex == -1) {
-      return;
-    }
-
-    final PlannedMeal movingMeal = _plan[sourceIndex];
-    final PlannedMeal updatedMeal = movingMeal.dayKey == targetDayKey
-        ? movingMeal
-        : movingMeal.copyWith(dayKey: targetDayKey);
-
-    final List<PlannedMeal> nextPlan = List<PlannedMeal>.of(_plan)
-      ..removeAt(sourceIndex);
-
-    int insertAt = _globalInsertIndexForDay(
-      nextPlan,
-      dayKey: targetDayKey,
-      indexInDay: targetIndex,
-    );
-    if (insertAt < 0) {
-      insertAt = 0;
-    } else if (insertAt > nextPlan.length) {
-      insertAt = nextPlan.length;
-    }
-
-    nextPlan.insert(insertAt, updatedMeal);
-    _plan = nextPlan;
-    notifyListeners();
-  }
-
   void improveCover(String dishId, String prompt) {
     _dishes = _dishes.map((Dish dish) {
       if (dish.id != dishId || dish.sourcePhotos.isEmpty) {
@@ -188,6 +117,10 @@ class MyMenuState extends ChangeNotifier {
   void addIdea(String text) {
     final String trimmed = text.trim();
     if (trimmed.isEmpty) {
+      return;
+    }
+    if (_repositories != null) {
+      unawaited(_createIdeaCapture(trimmed));
       return;
     }
 
@@ -272,13 +205,101 @@ class MyMenuState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void addPhotoCaptures(List<String> imageRefs) {
+    unawaited(_createPhotoCaptures(imageRefs));
+  }
+
+  void discardCapture(String captureId) {
+    final AppRepositories? repositories = _repositories;
+    _captureItems = _captureItems.map((CaptureItem item) {
+      if (item.id != captureId) {
+        return item;
+      }
+      return CaptureItem(
+        id: item.id,
+        kind: item.kind,
+        status: CaptureItemStatus.discarded,
+        createdAt: item.createdAt,
+        localMediaRef: item.localMediaRef,
+        remoteMediaRef: item.remoteMediaRef,
+        text: item.text,
+        appliedDishId: item.appliedDishId,
+      );
+    }).toList(growable: false);
+    notifyListeners();
+    if (repositories != null) {
+      unawaited(repositories.captureRepository.discardCapture(captureId));
+    }
+  }
+
+  Future<void> _bootstrapRepositories() async {
+    final AppRepositories repositories = _repositories!;
+    await repositories.seedIfNeeded();
+    await _reloadFromRepositories();
+  }
+
+  Future<void> _createPhotoCaptures(List<String> imageRefs) async {
+    final AppRepositories? repositories = _repositories;
+    if (repositories == null) {
+      final List<ReviewItem> nextReviewItems = _reviewItemsWithPhotoCaptures(
+        imageRefs,
+        _reviewItems,
+      );
+      if (!identical(nextReviewItems, _reviewItems)) {
+        _reviewItems = nextReviewItems;
+        notifyListeners();
+      }
+      return;
+    }
+
+    await repositories.captureRepository.createPhotoCaptures(imageRefs);
+    await _reloadFromRepositories();
+    await _syncCaptures();
+  }
+
+  Future<void> _createIdeaCapture(String text) async {
+    final AppRepositories? repositories = _repositories;
+    if (repositories == null) {
+      return;
+    }
+    await repositories.captureRepository.createIdeaCapture(text);
+    await _reloadFromRepositories();
+    await _syncCaptures();
+  }
+
+  Future<void> _syncCaptures() async {
+    final AppRepositories? repositories = _repositories;
+    if (repositories == null || _isSyncingCaptures) {
+      return;
+    }
+    _isSyncingCaptures = true;
+    try {
+      await repositories.syncRepository.processPendingCaptures();
+      await _reloadFromRepositories();
+    } finally {
+      _isSyncingCaptures = false;
+    }
+  }
+
+  Future<void> _reloadFromRepositories() async {
+    final AppRepositories repositories = _repositories!;
+    _dishes = await repositories.dishRepository.listDishes();
+    _captureItems = await repositories.captureRepository.listFeedItems();
+    notifyListeners();
+  }
+
   void resolveReviewToDish(String reviewId, String dishId) {
     final ReviewItem item =
         _reviewItems.firstWhere((ReviewItem review) => review.id == reviewId);
     _reviewItems = _reviewItems
         .where((ReviewItem review) => review.id != reviewId)
         .toList(growable: false);
-    _attachCook(dishId, item.summary, notify: false);
+    _attachCook(
+      dishId,
+      item.summary,
+      imageRef: item.imageRef,
+      notify: false,
+    );
     notifyListeners();
   }
 
@@ -288,6 +309,14 @@ class MyMenuState extends ChangeNotifier {
     _reviewItems = _reviewItems
         .where((ReviewItem review) => review.id != reviewId)
         .toList(growable: false);
+    if (item.imageRef != null) {
+      _dishes = <Dish>[
+        _dishFromPhotoReview(item, _dishes.length, _templateFor(item.summary)),
+        ..._dishes,
+      ];
+      notifyListeners();
+      return;
+    }
     addIdea(item.summary);
   }
 
@@ -305,7 +334,12 @@ class MyMenuState extends ChangeNotifier {
     return dishById('dish_linguine');
   }
 
-  void _attachCook(String dishId, String note, {bool notify = true}) {
+  void _attachCook(
+    String dishId,
+    String note, {
+    String? imageRef,
+    bool notify = true,
+  }) {
     _dishes = _dishes.map((Dish dish) {
       if (dish.id != dishId) {
         return dish;
@@ -316,9 +350,10 @@ class MyMenuState extends ChangeNotifier {
         lastMadeLabel: 'Today',
         sourcePhotos: <SourcePhoto>[
           SourcePhoto(
-            url: dish.sourcePhotos.isEmpty
-                ? dish.heroImageUrl
-                : dish.sourcePhotos.first.url,
+            url: imageRef ??
+                (dish.sourcePhotos.isEmpty
+                    ? dish.heroImageUrl
+                    : dish.sourcePhotos.first.url),
             capturedLabel: 'Today',
             note: note,
             confidenceLabel: '86%',
@@ -339,35 +374,5 @@ class MyMenuState extends ChangeNotifier {
         .where((String part) => part.trim().isNotEmpty)
         .map((String part) => '${part[0].toUpperCase()}${part.substring(1)}')
         .join(' ');
-  }
-
-  int _globalInsertIndexForDay(
-    List<PlannedMeal> plan, {
-    required String dayKey,
-    required int indexInDay,
-  }) {
-    final List<int> dayIndices = <int>[];
-    for (int index = 0; index < plan.length; index++) {
-      if (plan[index].dayKey == dayKey) {
-        dayIndices.add(index);
-      }
-    }
-
-    if (dayIndices.isEmpty) {
-      for (int index = 0; index < plan.length; index++) {
-        if (plan[index].dayKey.compareTo(dayKey) > 0) {
-          return index;
-        }
-      }
-      return plan.length;
-    }
-
-    if (indexInDay <= 0) {
-      return dayIndices.first;
-    }
-    if (indexInDay >= dayIndices.length) {
-      return dayIndices.last + 1;
-    }
-    return dayIndices[indexInDay];
   }
 }

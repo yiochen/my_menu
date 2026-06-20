@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:mymenu/app/app_providers.dart';
 import 'package:mymenu/app/home_shell.dart';
+import 'package:mymenu/core/database/app_database.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/shared/theme/app_theme.dart';
 
@@ -19,20 +22,35 @@ class MyMenuScope extends InheritedNotifier<MyMenuState> {
   }
 }
 
-class MyMenuApp extends StatefulWidget {
-  const MyMenuApp({super.key});
+class MyMenuApp extends StatelessWidget {
+  const MyMenuApp({this.database, super.key});
 
-  @override
-  State<MyMenuApp> createState() => _MyMenuAppState();
-}
-
-class _MyMenuAppState extends State<MyMenuApp> {
-  final MyMenuState _state = MyMenuState();
+  final AppDatabase? database;
 
   @override
   Widget build(BuildContext context) {
+    final AppDatabase? overrideDatabase = database;
+    if (overrideDatabase == null) {
+      return const ProviderScope(child: _MyMenuAppView());
+    }
+
+    return ProviderScope(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(overrideDatabase),
+      ],
+      child: const _MyMenuAppView(),
+    );
+  }
+}
+
+class _MyMenuAppView extends ConsumerWidget {
+  const _MyMenuAppView();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final MyMenuState state = ref.watch(myMenuStateProvider);
     return MyMenuScope(
-      notifier: _state,
+      notifier: state,
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'MyMenu',

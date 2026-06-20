@@ -16,6 +16,32 @@ void main() {
       expect(state.dishes.first.lastMadeLabel, 'Not cooked yet');
     });
 
+    test('adds photo captures to the review queue', () {
+      final MyMenuState state = MyMenuState()
+        ..addPhotoCaptures(<String>[
+          '/tmp/mymenu/capture_one.jpg',
+          '/tmp/mymenu/capture_two.jpg',
+        ]);
+
+      final reviewItems = state.reviewItems;
+
+      expect(reviewItems.first.imageRef, '/tmp/mymenu/capture_one.jpg');
+      expect(
+        reviewItems.first.summary,
+        'Photo capture ready to organize.',
+      );
+      expect(reviewItems[1].imageRef, '/tmp/mymenu/capture_two.jpg');
+    });
+
+    test('ignores empty photo capture refs', () {
+      final MyMenuState state = MyMenuState();
+      final int initialReviewCount = state.reviewItems.length;
+
+      state.addPhotoCaptures(const <String>['', '   ']);
+
+      expect(state.reviewItems.length, initialReviewCount);
+    });
+
     test('planning a dish adds it to the targeted day', () {
       final MyMenuState state = MyMenuState();
       final String dayKey = dayKeyForDate(state.remainingPlanDates().first);

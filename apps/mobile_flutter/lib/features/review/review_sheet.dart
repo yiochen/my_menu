@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mymenu/domain/capture/review_item.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/shared/widgets/app_image.dart';
 
 Future<void> showReviewSheet(
   BuildContext context,
@@ -64,6 +65,18 @@ class _ReviewCard extends StatelessWidget {
               item.summary,
               style: Theme.of(context).textTheme.titleMedium,
             ),
+            if (item.imageRef != null) ...<Widget>[
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: AppImage(
+                  imageRef: item.imageRef!,
+                  height: 160,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             Text('Confidence ${item.confidenceLabel}'),
             const SizedBox(height: 12),

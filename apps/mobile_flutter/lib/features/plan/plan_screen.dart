@@ -9,6 +9,7 @@ import 'package:mymenu/features/dish_detail/dish_detail_screen.dart';
 import 'package:mymenu/features/plan/plan_menu_strip.dart';
 import 'package:mymenu/features/plan/plan_theme.dart';
 import 'package:mymenu/features/plan/plan_timeline.dart';
+import 'package:mymenu/shared/widgets/app_image.dart';
 
 part 'plan_screen_sections.dart';
 part 'plan_screen_drag_targets.dart';
@@ -16,11 +17,13 @@ part 'plan_screen_drag_targets.dart';
 class PlanScreen extends StatefulWidget {
   const PlanScreen({
     required this.onOpenReview,
+    required this.onOpenCaptureFeed,
     this.onDragStateChanged,
     super.key,
   });
 
   final VoidCallback onOpenReview;
+  final VoidCallback onOpenCaptureFeed;
   final ValueChanged<bool>? onDragStateChanged;
 
   @override
@@ -220,6 +223,20 @@ class _PlanScreenState extends State<PlanScreen> {
               child: _ReviewCard(
                 count: state.reviewItems.length,
                 onTap: widget.onOpenReview,
+              ),
+            ),
+          ),
+        ],
+        if (state.captureItems.isNotEmpty) ...<Widget>[
+          SizedBox(height: tokens.reviewSpacing),
+          Padding(
+            padding: screenPadding,
+            child: _SectionShade(
+              isDimmed: _isDragging,
+              shadeColor: tokens.dragShadeColor,
+              child: _CaptureFeedCard(
+                count: state.captureItems.length,
+                onTap: widget.onOpenCaptureFeed,
               ),
             ),
           ),

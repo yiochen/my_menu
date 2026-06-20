@@ -1,0 +1,266 @@
+import 'package:drift/drift.dart' hide isNotNull, isNull;
+import 'package:drift/native.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mymenu/core/database/app_database.dart';
+import 'package:mymenu/core/network/my_menu_api_client.dart';
+import 'package:mymenu/domain/capture/capture_item.dart';
+import 'package:mymenu/domain/dishes/dish.dart';
+import 'package:mymenu/domain/dishes/seeded_dishes.dart';
+import 'package:mymenu/domain/planning/seeded_plan.dart';
+import 'package:mymenu/domain/sync/repositories.dart';
+
+void main() {
+  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+
+  group('repositories', () {
+    late AppDatabase database;
+    late AppRepositories repositories;
+
+    setUp(() {
+      database = AppDatabase.forTesting(NativeDatabase.memory());
+      repositories = AppRepositories(
+        database: database,
+        apiClient: FakeMyMenuApiClient(),
+      );
+    });
+
+    tearDown(() async {
+      await database.close();
+    });
+
+    test('seeds dishes and plan into local storage', () async {
+      await repositories.seedIfNeeded();
+
+      final dishes = await repositories.dishRepository.listDishes();
+      final plannedMeals = await database.select(database.plannedMeals).get();
+
+      expect(dishes.length, seededDishes.length);
+      expect(dishes.first.sourcePhotos, isNotEmpty);
+      expect(plannedMeals.length, buildSeededPlan().length);
+    });
+
+    test('seedIfNeeded is idempotent', () async {
+      await repositories.seedIfNeeded();
+      await repositories.seedIfNeeded();
+
+      final dishes = await database.select(database.dishes).get();
+      final plannedMeals = await database.select(database.plannedMeals).get();
+
+      expect(dishes.length, seededDishes.length);
+      expect(plannedMeals.length, buildSeededPlan().length);
+    });
+
+    test('dish repository upserts and hydrates source photos', () async {
+      await repositories.seedIfNeeded();
+      final Dish original =
+          (await repositories.dishRepository.listDishes()).first;
+      final Dish updated = original.copyWith(
+        title: 'Renamed ${original.title}',
+        isFavorite: !original.isFavorite,
+      );
+
+      await repositories.dishRepository.upsertDish(updated);
+      final dishes = await repositories.dishRepository.listDishes();
+      final Dish saved =
+          dishes.firstWhere((Dish dish) => dish.id == original.id);
+
+      expect(saved.title, updated.title);
+      expect(saved.isFavorite, updated.isFavorite);
+      expect(saved.sourcePhotos.length, original.sourcePhotos.length);
+    });
+
+    test('photo capture sync creates an applied feed item and dish', () async {
+      await repositories.seedIfNeeded();
+      await repositories.captureRepository.createPhotoCaptures(
+        const <String>['/tmp/capture.jpg'],
+      );
+
+      var feedItems = await repositories.captureRepository.listFeedItems();
+      expect(feedItems.single.status, CaptureItemStatus.pendingUpload);
+
+      final createdDishes =
+          await repositories.syncRepository.processPendingCaptures();
+      feedItems = await repositories.captureRepository.listFeedItems();
+
+      expect(createdDishes.single.title, isNotEmpty);
+      expect(feedItems.single.status, CaptureItemStatus.applied);
+      expect(feedItems.single.appliedDishId, createdDishes.single.id);
+      expect(createdDishes.single.sourcePhotos.single.url, '/tmp/capture.jpg');
+    });
+
+    test('photo capture ignores empty refs and creates sync operations',
+        () async {
+      final List<String> ids =
+          await repositories.captureRepository.createPhotoCaptures(
+        const <String>['', '  ', '/tmp/one.jpg', '/tmp/two.jpg'],
+      );
+
+      final feedItems = await repositories.captureRepository.listFeedItems();
+      final syncOperations =
+          await database.select(database.syncOperations).get();
+
+      expect(ids.length, 2);
+      expect(feedItems.length, 2);
+      expect(
+          feedItems.map((CaptureItem item) => item.localMediaRef),
+          containsAll(
+            const <String>['/tmp/one.jpg', '/tmp/two.jpg'],
+          ));
+      expect(syncOperations.length, 2);
+      expect(
+          syncOperations
+              .every((operation) => operation.entity == 'capture_item'),
+          isTrue);
+    });
+
+    test('idea capture trims text and starts classifying', () async {
+      final String? id = await repositories.captureRepository
+          .createIdeaCapture('  kimchi rice  ');
+
+      final feedItems = await repositories.captureRepository.listFeedItems();
+      final syncOperations =
+          await database.select(database.syncOperations).get();
+
+      expect(id, isNotNull);
+      expect(feedItems.single.kind, CaptureItemKind.idea);
+      expect(feedItems.single.status, CaptureItemStatus.classifying);
+      expect(feedItems.single.text, 'kimchi rice');
+      expect(syncOperations.single.entityId, id);
+    });
+
+    test('blank idea capture is ignored', () async {
+      final String? id =
+          await repositories.captureRepository.createIdeaCapture('   ');
+
+      final feedItems = await repositories.captureRepository.listFeedItems();
+      final syncOperations =
+          await database.select(database.syncOperations).get();
+
+      expect(id, isNull);
+      expect(feedItems, isEmpty);
+      expect(syncOperations, isEmpty);
+    });
+
+    test('idea capture sync creates dish without source photo', () async {
+      await repositories.seedIfNeeded();
+      final String? id = await repositories.captureRepository
+          .createIdeaCapture('late night udon');
+
+      final List<Dish> createdDishes =
+          await repositories.syncRepository.processPendingCaptures();
+      final feedItems = await repositories.captureRepository.listFeedItems();
+
+      expect(id, isNotNull);
+      expect(createdDishes.single.title, 'Late Night Udon');
+      expect(createdDishes.single.sourcePhotos, isEmpty);
+      expect(createdDishes.single.madeCount, 0);
+      expect(feedItems.single.status, CaptureItemStatus.applied);
+      expect(feedItems.single.appliedDishId, createdDishes.single.id);
+    });
+
+    test('discarded capture is not processed by sync', () async {
+      await repositories.seedIfNeeded();
+      final List<String> ids =
+          await repositories.captureRepository.createPhotoCaptures(
+        const <String>['/tmp/capture.jpg'],
+      );
+
+      await repositories.captureRepository.discardCapture(ids.single);
+      final createdDishes =
+          await repositories.syncRepository.processPendingCaptures();
+      final feedItems = await repositories.captureRepository.listFeedItems();
+
+      expect(createdDishes, isEmpty);
+      expect(feedItems.single.status, CaptureItemStatus.discarded);
+    });
+
+    test('sync repository uploads photos before classification', () async {
+      final _RecordingApiClient apiClient = _RecordingApiClient();
+      repositories = AppRepositories(
+        database: database,
+        apiClient: apiClient,
+      );
+      await repositories.captureRepository.createPhotoCaptures(
+        const <String>['/tmp/capture.jpg'],
+      );
+
+      await repositories.syncRepository.processPendingCaptures();
+      final feedItems = await repositories.captureRepository.listFeedItems();
+
+      expect(apiClient.uploadedCaptureIds, hasLength(1));
+      expect(
+          apiClient.classifiedRemoteMediaRefs.single, startsWith('remote://'));
+      expect(feedItems.single.remoteMediaRef,
+          apiClient.classifiedRemoteMediaRefs.single);
+    });
+
+    test('sync repository does nothing when no captures are pending', () async {
+      final _RecordingApiClient apiClient = _RecordingApiClient();
+      repositories = AppRepositories(
+        database: database,
+        apiClient: apiClient,
+      );
+
+      final List<Dish> createdDishes =
+          await repositories.syncRepository.processPendingCaptures();
+
+      expect(createdDishes, isEmpty);
+      expect(apiClient.uploadedCaptureIds, isEmpty);
+      expect(apiClient.classifiedCaptureIds, isEmpty);
+    });
+
+    test('fake API upload and idea classification return expected DTOs',
+        () async {
+      final FakeMyMenuApiClient apiClient = FakeMyMenuApiClient();
+
+      final String mediaRef = await apiClient.uploadCaptureMedia(
+        captureId: 'capture_1',
+        localMediaRef: '/tmp/photo.jpg',
+      );
+      final ApiCaptureResult result = await apiClient.classifyCapture(
+        captureId: 'capture_1',
+        remoteMediaRef: mediaRef,
+        ideaText: 'crispy tofu bowls',
+      );
+
+      expect(mediaRef, 'fake://captures/capture_1');
+      expect(result.captureId, 'capture_1');
+      expect(result.dishId, 'dish_capture_1');
+      expect(result.title, 'Crispy Tofu Bowls');
+      expect(result.mediaRef, mediaRef);
+    });
+  });
+}
+
+class _RecordingApiClient implements MyMenuApiClient {
+  final List<String> uploadedCaptureIds = <String>[];
+  final List<String> classifiedCaptureIds = <String>[];
+  final List<String?> classifiedRemoteMediaRefs = <String?>[];
+
+  @override
+  Future<String> uploadCaptureMedia({
+    required String captureId,
+    required String localMediaRef,
+  }) async {
+    uploadedCaptureIds.add(captureId);
+    return 'remote://$captureId';
+  }
+
+  @override
+  Future<ApiCaptureResult> classifyCapture({
+    required String captureId,
+    required String? remoteMediaRef,
+    required String? ideaText,
+  }) async {
+    classifiedCaptureIds.add(captureId);
+    classifiedRemoteMediaRefs.add(remoteMediaRef);
+    return ApiCaptureResult(
+      captureId: captureId,
+      dishId: 'dish_$captureId',
+      title: ideaText ?? 'Recorded Capture',
+      description: 'Recorded by test API.',
+      mediaRef: remoteMediaRef ?? '',
+      category: 'Tests',
+    );
+  }
+}

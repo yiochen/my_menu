@@ -4,6 +4,7 @@ import 'package:mymenu/app/app.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_screen.dart';
+import 'package:mymenu/shared/widgets/app_image.dart';
 
 class DishCard extends StatelessWidget {
   const DishCard({required this.dish, super.key});
@@ -32,7 +33,10 @@ class DishCard extends StatelessWidget {
               children: <Widget>[
                 AspectRatio(
                   aspectRatio: 16 / 10,
-                  child: Image.network(dish.heroImageUrl, fit: BoxFit.cover),
+                  child: AppImage(
+                    imageRef: dish.heroImageUrl,
+                    fit: BoxFit.cover,
+                  ),
                 ),
                 Positioned(
                   top: 10,

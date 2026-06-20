@@ -126,8 +126,8 @@ class _CookTonightSuggestion extends StatelessWidget {
             borderRadius: BorderRadius.circular(
               tokens.cookTonightSuggestionThumbRadius,
             ),
-            child: Image.network(
-              dish.heroImageUrl,
+            child: AppImage(
+              imageRef: dish.heroImageUrl,
               width: tokens.cookTonightSuggestionThumbWidth,
               height: tokens.cookTonightSuggestionThumbHeight,
               fit: BoxFit.cover,
@@ -286,6 +286,34 @@ class _ReviewCard extends StatelessWidget {
       child: ListTile(
         title: Text('$count capture needs review'),
         subtitle: const Text('Help the app confirm a dish match.'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
+class _CaptureFeedCard extends StatelessWidget {
+  const _CaptureFeedCard({
+    required this.count,
+    required this.onTap,
+  });
+
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final PlanThemeTokens tokens = context.planTheme;
+
+    return Card(
+      color: const Color(0xFFEAF4EC),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(tokens.reviewCardRadius),
+      ),
+      child: ListTile(
+        title: Text('$count capture in feed'),
+        subtitle: const Text('Track upload and fake API classification.'),
         trailing: const Icon(Icons.chevron_right),
         onTap: onTap,
       ),
