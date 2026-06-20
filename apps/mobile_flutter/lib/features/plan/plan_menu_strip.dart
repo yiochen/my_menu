@@ -5,6 +5,7 @@ import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_screen.dart';
 import 'package:mymenu/features/plan/plan_theme.dart';
+import 'package:mymenu/shared/widgets/app_image.dart';
 
 class PlanMenuStrip extends StatelessWidget {
   const PlanMenuStrip({
@@ -94,8 +95,8 @@ class _MenuDishCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: <Widget>[
-              Image.network(
-                dish.heroImageUrl,
+              AppImage(
+                imageRef: dish.heroImageUrl,
                 fit: BoxFit.cover,
               ),
               const DecoratedBox(

@@ -6,6 +6,7 @@ import 'package:mymenu/domain/planning/plan_dates.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/improve_cover/improve_cover_dialog.dart';
 import 'package:mymenu/features/plan/plan_dish_dialog.dart';
+import 'package:mymenu/shared/widgets/app_image.dart';
 import 'package:mymenu/shared/widgets/info_section.dart';
 
 class DishDetailScreen extends StatelessWidget {
@@ -109,14 +110,14 @@ class _DishHero extends StatelessWidget {
         background: Stack(
           fit: StackFit.expand,
           children: <Widget>[
-            Image.network(dish.heroImageUrl, fit: BoxFit.cover),
+            AppImage(imageRef: dish.heroImageUrl, fit: BoxFit.cover),
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: <Color>[
-                    Colors.black.withOpacity(0.6),
+                    Colors.black.withValues(alpha: 0.6),
                     Colors.transparent,
                   ],
                 ),
@@ -226,14 +227,14 @@ class _SourcePhotoCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: <Widget>[
-            Image.network(photo.url, fit: BoxFit.cover),
+            AppImage(imageRef: photo.url, fit: BoxFit.cover),
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: <Color>[
-                    Colors.black.withOpacity(0.65),
+                    Colors.black.withValues(alpha: 0.65),
                     Colors.transparent,
                   ],
                 ),

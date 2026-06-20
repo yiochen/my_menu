@@ -17,6 +17,8 @@ void main() {
       .listSync(recursive: true)
       .whereType<File>()
       .where((File file) => file.path.endsWith('.dart'))
+      .where((File file) => !file.path.endsWith('.g.dart'))
+      .where((File file) => !file.path.endsWith('.freezed.dart'))
       .toList()
     ..sort((File a, File b) => a.path.compareTo(b.path));
 

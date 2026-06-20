@@ -21,7 +21,7 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('capture_fab')));
       await tester.pump(const Duration(milliseconds: 500));
 
-      final Finder addDishIdea = find.text('Add dish idea');
+      final Finder addDishIdea = find.text('Add Idea');
       await _scrollIntoView(
         tester,
         addDishIdea,
@@ -36,6 +36,7 @@ void main() {
       );
       await tester.tap(find.text('Save'));
       await tester.pump(const Duration(milliseconds: 500));
+      await tester.pump(const Duration(seconds: 2));
 
       await tester.tap(find.text('Menu'));
       await _pumpUntilFound(
@@ -93,5 +94,6 @@ Future<void> _pumpUntilFound(
     }
   }
 
-  throw TestFailure('Timed out waiting for ${finder.description}.');
+  throw TestFailure(
+      'Timed out waiting for ${finder.describeMatch(Plurality.one)}.');
 }

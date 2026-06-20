@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/app/app_shell_theme.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/features/capture/capture_feed_sheet.dart';
+import 'package:mymenu/features/capture/capture_media_service.dart';
 import 'package:mymenu/features/capture/capture_sheet.dart';
 import 'package:mymenu/features/menu/menu_screen.dart';
 import 'package:mymenu/features/plan/plan_screen.dart';
@@ -19,6 +21,8 @@ class _HomeShellState extends State<HomeShell> {
   int _selectedIndex = 0;
   String _query = '';
   bool _isPlanDragging = false;
+  final ImagePickerCaptureMediaService _captureMediaService =
+      ImagePickerCaptureMediaService();
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +40,8 @@ class _HomeShellState extends State<HomeShell> {
                   children: <Widget>[
                     PlanScreen(
                       onOpenReview: () => showReviewSheet(context, state),
+                      onOpenCaptureFeed: () =>
+                          showCaptureFeedSheet(context, state),
                       onDragStateChanged: (bool isDragging) {
                         setState(() => _isPlanDragging = isDragging);
                       },
@@ -55,7 +61,11 @@ class _HomeShellState extends State<HomeShell> {
                   onDestinationSelected: (int index) {
                     setState(() => _selectedIndex = index);
                   },
-                  onCapture: () => showCaptureSheet(context, state),
+                  onCapture: () => showCaptureSheet(
+                    context,
+                    state,
+                    _captureMediaService,
+                  ),
                 ),
             ],
           );
