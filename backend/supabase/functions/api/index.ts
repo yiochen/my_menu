@@ -58,7 +58,9 @@ function supabaseFor(authHeader: string, serviceRole: boolean) {
 
   return createClient(url, key, {
     global: {
-      headers: authHeader.length > 0 ? { Authorization: authHeader } : {},
+      headers: !serviceRole && authHeader.length > 0
+        ? { Authorization: authHeader }
+        : {},
     },
     auth: {
       persistSession: false,
