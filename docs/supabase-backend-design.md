@@ -16,6 +16,83 @@ The client-facing contract is:
 This keeps the app local-first while still making the user's menu recoverable if
 they switch phones.
 
+## Project Setup and Operations
+
+The Supabase project for this backend is:
+
+```txt
+ydzoibvdnumaejurhuyo
+```
+
+The dashboard URL is:
+
+```txt
+https://supabase.com/dashboard/project/ydzoibvdnumaejurhuyo
+```
+
+Keep the Supabase CLI project under `backend/supabase/`. Run Supabase CLI
+commands from `backend/`, so the CLI sees the nested `supabase/` directory as
+its project directory.
+
+Initial local setup:
+
+```bash
+brew install supabase/tap/supabase
+cd backend
+supabase login
+supabase init
+supabase link --project-ref ydzoibvdnumaejurhuyo
+```
+
+If `supabase init` has already created `backend/supabase/config.toml`, do not
+run it again unless intentionally reinitializing the local Supabase project.
+
+Run the Flutter app against Supabase by passing the project URL and publishable
+anon key as Dart defines:
+
+```bash
+cd apps/mobile_flutter
+flutter run \
+  --dart-define=SUPABASE_URL=https://ydzoibvdnumaejurhuyo.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=<publishable-anon-key>
+```
+
+If either Dart define is missing, the app uses the local fake API client for
+product iteration and tests.
+
+Supabase GitHub Integration should be configured in the dashboard with:
+
+- repository: this GitHub repository
+- working directory: `backend`
+- production branch: `main`
+
+With that working directory, Supabase will read `backend/supabase/` as the
+project's Supabase directory. Production deploys should use the Supabase GitHub
+Integration instead of a custom GitHub Actions deployment workflow unless there
+is a concrete need for custom deployment behavior.
+
+Keep as much backend configuration in GitHub as Supabase supports:
+
+- database migrations in `backend/supabase/migrations/`
+- RLS policies and Postgres RPCs in migrations
+- Edge Functions in `backend/supabase/functions/`
+- storage bucket declarations in `backend/supabase/config.toml`
+- seed data and database/function tests when introduced
+
+Do not commit secrets or machine-local state. Keep these outside the repo:
+
+- Supabase access tokens
+- database passwords
+- production API keys
+- OAuth provider secrets
+- Edge Function secrets
+- generated local environment files
+
+Some Supabase project settings may still need to live in the dashboard or in
+Supabase-managed secrets. When a setting cannot be represented in
+`config.toml`, document the dashboard setting here or in the relevant migration
+or function README.
+
 ## Design Principles
 
 - Local SQLite remains the mobile source of truth for UI.
@@ -443,6 +520,12 @@ implemented as one `api` Edge Function with path routing, or as separate
 functions.
 
 All requests require Supabase auth. All responses are JSON.
+
+Implementation can start as one `api` Edge Function with internal routing for
+these app-facing operations. Split operations into separate Edge Functions later
+only if deployment, permissions, runtime limits, or monitoring needs make that
+worth the extra surface area. Do not add empty placeholder functions; add Edge
+Function code when the first real app-facing API is implemented.
 
 ### `sync.bootstrap`
 

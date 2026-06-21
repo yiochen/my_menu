@@ -209,6 +209,24 @@ void main() {
       expect(apiClient.classifiedCaptureIds, isEmpty);
     });
 
+    test('sync repository marks captures failed when remote sync throws',
+        () async {
+      repositories = AppRepositories(
+        database: database,
+        apiClient: _ThrowingApiClient(),
+      );
+      await repositories.captureRepository.createPhotoCaptures(
+        const <String>['/tmp/capture.jpg'],
+      );
+
+      final List<Dish> createdDishes =
+          await repositories.syncRepository.processPendingCaptures();
+      final feedItems = await repositories.captureRepository.listFeedItems();
+
+      expect(createdDishes, isEmpty);
+      expect(feedItems.single.status, CaptureItemStatus.failed);
+    });
+
     test('fake API upload and idea classification return expected DTOs',
         () async {
       final FakeMyMenuApiClient apiClient = FakeMyMenuApiClient();
@@ -262,5 +280,24 @@ class _RecordingApiClient implements MyMenuApiClient {
       mediaRef: remoteMediaRef ?? '',
       category: 'Tests',
     );
+  }
+}
+
+class _ThrowingApiClient implements MyMenuApiClient {
+  @override
+  Future<String> uploadCaptureMedia({
+    required String captureId,
+    required String localMediaRef,
+  }) {
+    throw StateError('Remote sync unavailable.');
+  }
+
+  @override
+  Future<ApiCaptureResult> classifyCapture({
+    required String captureId,
+    required String? remoteMediaRef,
+    required String? ideaText,
+  }) {
+    throw StateError('Remote sync unavailable.');
   }
 }

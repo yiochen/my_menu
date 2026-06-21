@@ -4,6 +4,7 @@
 # local tooling
 .claude/
 .vscode/
+backend/supabase/.temp/
 
 # Flutter / Dart
 **/.dart_tool/

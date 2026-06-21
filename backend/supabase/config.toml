@@ -1,0 +1,23 @@
+project_id = "mymenu"
+
+[api]
+enabled = true
+
+[auth]
+enabled = true
+enable_anonymous_sign_ins = true
+
+[db]
+major_version = 15
+
+[storage]
+enabled = true
+
+[storage.buckets.menu-media]
+public = false
+file_size_limit = "20MiB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/heic", "image/heif"]
+
+[functions.api]
+enabled = true
+verify_jwt = true

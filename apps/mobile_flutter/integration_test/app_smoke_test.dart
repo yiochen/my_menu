@@ -10,7 +10,7 @@ void main() {
     testWidgets('launches, captures an idea, and finds it in menu search', (
       WidgetTester tester,
     ) async {
-      app.main();
+      await app.main();
       await _pumpUntilFound(
         tester,
         find.byKey(const ValueKey<String>('plan_screen')),

@@ -1,0 +1,266 @@
+import { createClient } from "jsr:@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
+type JsonRecord = Record<string, unknown>;
+// Keep this loose until the Supabase database types are generated for the repo.
+type SupabaseClientAny = any;
+
+Deno.serve(async (request: Request) => {
+  if (request.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
+    const body = await request.json() as JsonRecord;
+    const route = String(body.route ?? "");
+    const authHeader = request.headers.get("Authorization") ?? "";
+    const userClient = supabaseFor(authHeader, false);
+    const adminClient = supabaseFor(authHeader, true);
+    const { data: userData, error: userError } = await userClient.auth
+      .getUser();
+
+    if (userError || userData.user == null) {
+      return json({ error: "Unauthorized" }, 401);
+    }
+
+    const userId = userData.user.id;
+
+    switch (route) {
+      case "capture.preparePhotoUpload":
+        return await preparePhotoUpload(adminClient, userId, body);
+      case "capture.createPhoto":
+        return await createPhoto(adminClient, userId, body);
+      case "capture.classify":
+        return await classifyCapture(adminClient, userId, body);
+      case "capture.discard":
+        return await discardCapture(adminClient, userId, body);
+      default:
+        return json({ error: `Unknown route: ${route}` }, 404);
+    }
+  } catch (error) {
+    console.error(error);
+    return json({
+      error: error instanceof Error ? error.message : "Server error",
+    }, 500);
+  }
+});
+
+function supabaseFor(authHeader: string, serviceRole: boolean) {
+  const url = requireEnv("SUPABASE_URL");
+  const key = serviceRole
+    ? requireEnv("SUPABASE_SERVICE_ROLE_KEY")
+    : requireEnv("SUPABASE_ANON_KEY");
+
+  return createClient(url, key, {
+    global: {
+      headers: authHeader.length > 0 ? { Authorization: authHeader } : {},
+    },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+}
+
+async function preparePhotoUpload(
+  adminClient: SupabaseClientAny,
+  userId: string,
+  body: JsonRecord,
+) {
+  const captureId = requiredString(body, "captureId");
+  const contentType = requiredString(body, "contentType");
+  const extension = extensionFor(contentType);
+  const storagePath =
+    `users/${userId}/captures/${captureId}/original.${extension}`;
+
+  const { data, error } = await adminClient.storage
+    .from("menu-media")
+    .createSignedUploadUrl(storagePath);
+
+  if (error != null) {
+    throw error;
+  }
+
+  return json({
+    captureId,
+    storageBucket: "menu-media",
+    storagePath,
+    upload: {
+      signedUrl: data.signedUrl,
+      token: data.token,
+      path: data.path,
+    },
+  });
+}
+
+async function createPhoto(
+  adminClient: SupabaseClientAny,
+  userId: string,
+  body: JsonRecord,
+) {
+  const captureId = requiredString(body, "captureId");
+  const result = await rpcOne(adminClient, "api_create_photo_capture", {
+    p_user_id: userId,
+    p_capture_id: captureId,
+    p_storage_path: requiredString(body, "storagePath"),
+    p_content_type: requiredString(body, "contentType"),
+    p_byte_size: optionalNumber(body, "byteSize"),
+    p_width: optionalNumber(body, "width"),
+    p_height: optionalNumber(body, "height"),
+    p_sha256: optionalString(body, "sha256"),
+    p_captured_at: optionalString(body, "capturedAt") ??
+      new Date().toISOString(),
+  });
+
+  return json({
+    capture: {
+      id: result.capture_id,
+      kind: "photo",
+      status: "classifying",
+      imageId: result.image_id,
+    },
+    image: {
+      id: result.image_id,
+      kind: "capture_photo",
+      mediaRef: `menu-media:${requiredString(body, "storagePath")}`,
+    },
+    cursor: result.sync_cursor,
+  });
+}
+
+async function classifyCapture(
+  adminClient: SupabaseClientAny,
+  userId: string,
+  body: JsonRecord,
+) {
+  const captureId = requiredString(body, "captureId");
+  const ideaText = optionalString(body, "ideaText")?.trim();
+
+  if (ideaText != null && ideaText.length > 0) {
+    await rpcOne(adminClient, "api_create_idea_capture", {
+      p_user_id: userId,
+      p_capture_id: captureId,
+      p_idea_text: ideaText,
+      p_captured_at: new Date().toISOString(),
+    });
+  }
+
+  const title = titleFrom(ideaText ?? "Captured Dish");
+  const dishId = crypto.randomUUID();
+  const result = await rpcOne(adminClient, "api_create_dish_from_capture", {
+    p_user_id: userId,
+    p_capture_id: captureId,
+    p_dish_id: dishId,
+    p_title: title,
+    p_description: "AI-assisted draft from a synced capture.",
+    p_labels: ["capture"],
+    p_confidence_label: "Draft",
+  });
+
+  return json({
+    captureId,
+    dishId,
+    title,
+    description: "AI-assisted draft from a synced capture.",
+    mediaRef: body.remoteMediaRef ?? "",
+    category: "Mains",
+    sourceImageId: result.source_image_id,
+    cursor: result.sync_cursor,
+  });
+}
+
+async function discardCapture(
+  adminClient: SupabaseClientAny,
+  userId: string,
+  body: JsonRecord,
+) {
+  const captureId = requiredString(body, "captureId");
+  const result = await rpcOne(adminClient, "api_discard_capture", {
+    p_user_id: userId,
+    p_capture_id: captureId,
+  });
+
+  return json({
+    captureId,
+    status: "discarded",
+    cursor: result.sync_cursor,
+  });
+}
+
+async function rpcOne(
+  adminClient: SupabaseClientAny,
+  fn: string,
+  args: JsonRecord,
+) {
+  const { data, error } = await adminClient.rpc(fn, args);
+  if (error != null) {
+    throw error;
+  }
+  if (!Array.isArray(data) || data.length === 0) {
+    throw new Error(`${fn} returned no rows`);
+  }
+  return data[0] as JsonRecord;
+}
+
+function json(body: JsonRecord, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...corsHeaders,
+      "Content-Type": "application/json",
+    },
+  });
+}
+
+function requiredString(body: JsonRecord, key: string) {
+  const value = body[key];
+  if (typeof value !== "string" || value.length === 0) {
+    throw new Error(`Missing required string: ${key}`);
+  }
+  return value;
+}
+
+function optionalString(body: JsonRecord, key: string) {
+  const value = body[key];
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+function optionalNumber(body: JsonRecord, key: string) {
+  const value = body[key];
+  return typeof value === "number" ? value : null;
+}
+
+function extensionFor(contentType: string) {
+  switch (contentType.toLowerCase()) {
+    case "image/png":
+      return "png";
+    case "image/heic":
+      return "heic";
+    case "image/heif":
+      return "heif";
+    default:
+      return "jpg";
+  }
+}
+
+function titleFrom(input: string) {
+  return input
+    .trim()
+    .split(/\s+/)
+    .filter((part) => part.length > 0)
+    .map((part) => `${part[0].toUpperCase()}${part.slice(1)}`)
+    .join(" ");
+}
+
+function requireEnv(name: string) {
+  const value = Deno.env.get(name);
+  if (value == null || value.length === 0) {
+    throw new Error(`Missing environment variable: ${name}`);
+  }
+  return value;
+}
