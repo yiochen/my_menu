@@ -187,7 +187,9 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
       body: body,
     );
     if (response.status < 200 || response.status >= 300) {
-      throw StateError('Supabase function failed: ${response.status}');
+      throw StateError(
+        'Supabase function failed: ${response.status} ${response.data}',
+      );
     }
     final Object? data = response.data;
     if (data is Map<String, dynamic>) {

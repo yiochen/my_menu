@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:drift/drift.dart';
 import 'package:mymenu/core/database/app_database.dart' as db;
 import 'package:mymenu/core/network/my_menu_api_client.dart';
@@ -259,7 +261,13 @@ class SyncRepository {
       try {
         final Dish dish = await _processCapture(capture);
         createdDishes.add(dish);
-      } on Object {
+      } on Object catch (error, stackTrace) {
+        developer.log(
+          'Capture sync failed.',
+          name: 'mymenu.sync',
+          error: error,
+          stackTrace: stackTrace,
+        );
         await _markCaptureFailed(capture.id);
       }
     }
