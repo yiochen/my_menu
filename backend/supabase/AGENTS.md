@@ -60,9 +60,9 @@ supabase test db supabase/tests
 Run Edge Function checks after changing functions:
 
 ```bash
-deno fmt --check supabase/functions/api/index.ts
-deno check supabase/functions/api/index.ts
-supabase functions serve api
+deno fmt --check supabase/functions
+find supabase/functions -path '*/index.ts' -print0 | xargs -0 -n1 deno check
+supabase functions serve
 deno test --allow-net --allow-env --allow-read supabase/tests/edge
 ```
 

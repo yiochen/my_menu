@@ -259,8 +259,10 @@ class SyncRepository {
       }
 
       try {
-        final Dish dish = await _processCapture(capture);
-        createdDishes.add(dish);
+        final Dish? dish = await _processCapture(capture);
+        if (dish != null) {
+          createdDishes.add(dish);
+        }
       } on Object catch (error, stackTrace) {
         developer.log(
           'Capture sync failed.',
@@ -274,7 +276,7 @@ class SyncRepository {
     return createdDishes;
   }
 
-  Future<Dish> _processCapture(db.CaptureItemRow capture) async {
+  Future<Dish?> _processCapture(db.CaptureItemRow capture) async {
     String? remoteMediaRef = capture.remoteMediaRef;
     if (capture.kind == capture_domain.CaptureItemKind.photo.name &&
         capture.localMediaRef != null &&
@@ -295,39 +297,20 @@ class SyncRepository {
       );
     }
 
-    final ApiCaptureResult result = await _apiClient.classifyCapture(
+    final ApiClassificationStart result = await _apiClient.classifyCapture(
       captureId: capture.id,
       remoteMediaRef: remoteMediaRef,
       ideaText: capture.ideaText,
     );
-    final Dish dish = _dishFromApiResult(result, capture);
-    await _database.transaction(() async {
-      await _database
-          .into(_database.dishes)
-          .insertOnConflictUpdate(dish.toCompanion());
-      if (capture.kind == capture_domain.CaptureItemKind.photo.name) {
-        await _database.into(_database.sourcePhotos).insert(
-              db.SourcePhotosCompanion.insert(
-                id: 'source_${capture.id}',
-                dishId: dish.id,
-                url: capture.localMediaRef ?? result.mediaRef,
-                capturedLabel: 'Today',
-                note: const Value<String?>('Created from capture.'),
-                confidenceLabel: const Value<String?>('Fake API'),
-              ),
-            );
-      }
-      await (_database.update(_database.captureItems)
-            ..where((db.CaptureItems table) => table.id.equals(capture.id)))
-          .write(
-        db.CaptureItemsCompanion(
-          status: Value<String>(capture_domain.CaptureItemStatus.applied.name),
-          remoteMediaRef: Value<String?>(remoteMediaRef),
-          appliedDishId: Value<String?>(dish.id),
-        ),
-      );
-    });
-    return dish;
+    await (_database.update(_database.captureItems)
+          ..where((db.CaptureItems table) => table.id.equals(capture.id)))
+        .write(
+      db.CaptureItemsCompanion(
+        status: Value<String>(result.status),
+        remoteMediaRef: Value<String?>(remoteMediaRef),
+      ),
+    );
+    return null;
   }
 
   Future<void> _markCaptureFailed(String captureId) async {
@@ -340,39 +323,4 @@ class SyncRepository {
     );
   }
 
-  Dish _dishFromApiResult(ApiCaptureResult result, db.CaptureItemRow capture) {
-    final String heroImage = capture.localMediaRef ??
-        result.mediaRef.ifEmpty(seededDishes.first.heroImageUrl);
-    return Dish(
-      id: result.dishId,
-      title: result.title,
-      description: result.description,
-      heroImageUrl: heroImage,
-      category: result.category,
-      prepMinutes: 30,
-      difficulty: 'Easy',
-      madeCount:
-          capture.kind == capture_domain.CaptureItemKind.photo.name ? 1 : 0,
-      lastMadeLabel: capture.kind == capture_domain.CaptureItemKind.photo.name
-          ? 'Today'
-          : 'Not cooked yet',
-      ingredients: const <String>['AI draft ingredient'],
-      recipeSteps: const <String>['Review and edit this AI-assisted draft.'],
-      notes: const <String>['Created by fake API classification.'],
-      sourcePhotos: capture.kind == capture_domain.CaptureItemKind.photo.name
-          ? <SourcePhoto>[
-              SourcePhoto(
-                url: heroImage,
-                capturedLabel: 'Today',
-                note: 'Created from capture.',
-                confidenceLabel: 'Fake API',
-              ),
-            ]
-          : const <SourcePhoto>[],
-    );
-  }
-}
-
-extension on String {
-  String ifEmpty(String fallback) => isEmpty ? fallback : this;
 }

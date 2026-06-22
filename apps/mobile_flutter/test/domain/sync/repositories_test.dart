@@ -69,7 +69,7 @@ void main() {
       expect(saved.sourcePhotos.length, original.sourcePhotos.length);
     });
 
-    test('photo capture sync creates an applied feed item and dish', () async {
+    test('photo capture sync starts backend classification', () async {
       await repositories.seedIfNeeded();
       await repositories.captureRepository.createPhotoCaptures(
         const <String>['/tmp/capture.jpg'],
@@ -82,10 +82,10 @@ void main() {
           await repositories.syncRepository.processPendingCaptures();
       feedItems = await repositories.captureRepository.listFeedItems();
 
-      expect(createdDishes.single.title, isNotEmpty);
-      expect(feedItems.single.status, CaptureItemStatus.applied);
-      expect(feedItems.single.appliedDishId, createdDishes.single.id);
-      expect(createdDishes.single.sourcePhotos.single.url, '/tmp/capture.jpg');
+      expect(createdDishes, isEmpty);
+      expect(feedItems.single.status, CaptureItemStatus.classifying);
+      expect(feedItems.single.appliedDishId, isNull);
+      expect(feedItems.single.remoteMediaRef, startsWith('fake://captures/'));
     });
 
     test('photo capture ignores empty refs and creates sync operations',
@@ -141,7 +141,7 @@ void main() {
       expect(syncOperations, isEmpty);
     });
 
-    test('idea capture sync creates dish without source photo', () async {
+    test('idea capture sync starts backend classification', () async {
       await repositories.seedIfNeeded();
       final String? id = await repositories.captureRepository
           .createIdeaCapture('late night udon');
@@ -151,11 +151,9 @@ void main() {
       final feedItems = await repositories.captureRepository.listFeedItems();
 
       expect(id, isNotNull);
-      expect(createdDishes.single.title, 'Late Night Udon');
-      expect(createdDishes.single.sourcePhotos, isEmpty);
-      expect(createdDishes.single.madeCount, 0);
-      expect(feedItems.single.status, CaptureItemStatus.applied);
-      expect(feedItems.single.appliedDishId, createdDishes.single.id);
+      expect(createdDishes, isEmpty);
+      expect(feedItems.single.status, CaptureItemStatus.classifying);
+      expect(feedItems.single.appliedDishId, isNull);
     });
 
     test('discarded capture is not processed by sync', () async {
@@ -227,7 +225,7 @@ void main() {
       expect(feedItems.single.status, CaptureItemStatus.failed);
     });
 
-    test('fake API upload and idea classification return expected DTOs',
+    test('fake API upload and idea classification start return expected DTOs',
         () async {
       final FakeMyMenuApiClient apiClient = FakeMyMenuApiClient();
 
@@ -235,7 +233,7 @@ void main() {
         captureId: 'capture_1',
         localMediaRef: '/tmp/photo.jpg',
       );
-      final ApiCaptureResult result = await apiClient.classifyCapture(
+      final ApiClassificationStart result = await apiClient.classifyCapture(
         captureId: 'capture_1',
         remoteMediaRef: mediaRef,
         ideaText: 'crispy tofu bowls',
@@ -243,9 +241,7 @@ void main() {
 
       expect(mediaRef, 'fake://captures/capture_1');
       expect(result.captureId, 'capture_1');
-      expect(result.dishId, 'dish_capture_1');
-      expect(result.title, 'Crispy Tofu Bowls');
-      expect(result.mediaRef, mediaRef);
+      expect(result.status, CaptureItemStatus.classifying.name);
     });
   });
 }
@@ -265,20 +261,16 @@ class _RecordingApiClient implements MyMenuApiClient {
   }
 
   @override
-  Future<ApiCaptureResult> classifyCapture({
+  Future<ApiClassificationStart> classifyCapture({
     required String captureId,
     required String? remoteMediaRef,
     required String? ideaText,
   }) async {
     classifiedCaptureIds.add(captureId);
     classifiedRemoteMediaRefs.add(remoteMediaRef);
-    return ApiCaptureResult(
+    return ApiClassificationStart(
       captureId: captureId,
-      dishId: 'dish_$captureId',
-      title: ideaText ?? 'Recorded Capture',
-      description: 'Recorded by test API.',
-      mediaRef: remoteMediaRef ?? '',
-      category: 'Tests',
+      status: CaptureItemStatus.classifying.name,
     );
   }
 }
@@ -293,7 +285,7 @@ class _ThrowingApiClient implements MyMenuApiClient {
   }
 
   @override
-  Future<ApiCaptureResult> classifyCapture({
+  Future<ApiClassificationStart> classifyCapture({
     required String captureId,
     required String? remoteMediaRef,
     required String? ideaText,

@@ -13,8 +13,8 @@ echo "Running Flutter tests..."
 (cd "$ROOT_DIR/apps/mobile_flutter" && flutter test)
 
 echo "Checking Edge Function formatting and types..."
-(cd "$ROOT_DIR" && deno fmt --check backend/supabase/functions/api/index.ts)
-(cd "$ROOT_DIR" && deno check backend/supabase/functions/api/index.ts)
+(cd "$ROOT_DIR" && deno fmt --check backend/supabase/functions)
+(cd "$ROOT_DIR" && find backend/supabase/functions -path '*/index.ts' -print0 | xargs -0 -n1 deno check)
 
 echo "Running Supabase local checks..."
 (cd "$ROOT_DIR" && scripts/supabase_local_check.sh)

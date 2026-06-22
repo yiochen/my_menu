@@ -63,10 +63,12 @@ jobs:
           deno-version: v2.x
 
       - name: Check Edge Function formatting
-        run: deno fmt --check backend/supabase/functions/api/index.ts
+        run: deno fmt --check backend/supabase/functions
 
       - name: Check Edge Function types
-        run: deno check backend/supabase/functions/api/index.ts
+        run: |
+          find backend/supabase/functions -path '*/index.ts' -print0 \
+            | xargs -0 -n1 deno check
 
       - name: Run Edge Function HTTP tests
         run: |
@@ -78,17 +80,17 @@ jobs:
           cd backend
           supabase start
           supabase db reset
-          supabase functions serve api > /tmp/mymenu-supabase-functions.log 2>&1 &
+          supabase functions serve > /tmp/mymenu-supabase-functions.log 2>&1 &
           echo "$!" > /tmp/mymenu-supabase-functions.pid
 
           for _ in {1..30}; do
-            if grep -q "functions/v1/api" /tmp/mymenu-supabase-functions.log; then
+            if grep -q "functions/v1" /tmp/mymenu-supabase-functions.log; then
               break
             fi
             sleep 1
           done
 
-          if ! grep -q "functions/v1/api" /tmp/mymenu-supabase-functions.log; then
+          if ! grep -q "functions/v1" /tmp/mymenu-supabase-functions.log; then
             echo "Edge Function server did not become ready."
             exit 1
           fi

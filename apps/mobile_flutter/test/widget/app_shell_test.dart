@@ -56,20 +56,18 @@ void main() {
         await tester.pumpAndSettle();
         await tester.pump(const Duration(seconds: 2));
 
-        await tester.tap(find.text('Menu'));
-        await tester.pumpAndSettle();
-
-        await tester.enterText(find.byType(TextField), 'crispy tofu');
-        await tester.pumpAndSettle();
-
         await tester.scrollUntilVisible(
-          find.text('Crispy Tofu Bowls'),
+          find.text('1 capture in feed'),
           200,
           scrollable: find.byType(Scrollable).first,
         );
-      });
 
-      expect(find.text('Crispy Tofu Bowls'), findsOneWidget);
+        expect(find.text('1 capture in feed'), findsOneWidget);
+        expect(
+          find.text('Track upload and fake API classification.'),
+          findsOneWidget,
+        );
+      });
     });
 
     testWidgets('shows the trash target while dragging a planned dish', (

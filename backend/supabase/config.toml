@@ -18,6 +18,25 @@ public = false
 file_size_limit = "20MiB"
 allowed_mime_types = ["image/jpeg", "image/png", "image/heic", "image/heif"]
 
-[functions.api]
+[edge_runtime]
+policy = "per_worker"
+
+[functions.preparePhotoUpload]
 enabled = true
 verify_jwt = true
+
+[functions.createPhoto]
+enabled = true
+verify_jwt = true
+
+[functions.classify]
+enabled = true
+verify_jwt = true
+
+[functions.discard]
+enabled = true
+verify_jwt = true
+
+[functions.run_ai]
+enabled = true
+verify_jwt = false

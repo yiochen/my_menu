@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -14,22 +13,14 @@ class SupabaseApiConfig {
   static bool get isConfigured => url.isNotEmpty && anonKey.isNotEmpty;
 }
 
-class ApiCaptureResult {
-  const ApiCaptureResult({
+class ApiClassificationStart {
+  const ApiClassificationStart({
     required this.captureId,
-    required this.dishId,
-    required this.title,
-    required this.description,
-    required this.mediaRef,
-    required this.category,
+    required this.status,
   });
 
   final String captureId;
-  final String dishId;
-  final String title;
-  final String description;
-  final String mediaRef;
-  final String category;
+  final String status;
 }
 
 abstract class MyMenuApiClient {
@@ -38,7 +29,7 @@ abstract class MyMenuApiClient {
     required String localMediaRef,
   });
 
-  Future<ApiCaptureResult> classifyCapture({
+  Future<ApiClassificationStart> classifyCapture({
     required String captureId,
     required String? remoteMediaRef,
     required String? ideaText,
@@ -46,19 +37,6 @@ abstract class MyMenuApiClient {
 }
 
 class FakeMyMenuApiClient implements MyMenuApiClient {
-  FakeMyMenuApiClient({Random? random}) : _random = random ?? Random(7);
-
-  final Random _random;
-
-  static const List<String> _dishNames = <String>[
-    'Golden Garlic Noodles',
-    'Miso Market Bowl',
-    'Sunday Pepper Chicken',
-    'Bright Herb Rice',
-    'Sesame Garden Pasta',
-    'Tomato Butter Beans',
-  ];
-
   @override
   Future<String> uploadCaptureMedia({
     required String captureId,
@@ -69,32 +47,16 @@ class FakeMyMenuApiClient implements MyMenuApiClient {
   }
 
   @override
-  Future<ApiCaptureResult> classifyCapture({
+  Future<ApiClassificationStart> classifyCapture({
     required String captureId,
     required String? remoteMediaRef,
     required String? ideaText,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 700));
-    final String title = ideaText == null || ideaText.trim().isEmpty
-        ? _dishNames[_random.nextInt(_dishNames.length)]
-        : _titleCase(ideaText);
-    return ApiCaptureResult(
+    return ApiClassificationStart(
       captureId: captureId,
-      dishId: 'dish_$captureId',
-      title: title,
-      description: 'Created from a synced capture.',
-      mediaRef: remoteMediaRef ?? '',
-      category: 'Mains',
+      status: 'classifying',
     );
-  }
-
-  String _titleCase(String input) {
-    return input
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((String part) => part.isNotEmpty)
-        .map((String part) => '${part[0].toUpperCase()}${part.substring(1)}')
-        .join(' ');
   }
 }
 
@@ -114,8 +76,8 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
     final Uint8List bytes = await File(localMediaRef).readAsBytes();
     final String contentType = _contentTypeForPath(localMediaRef);
     final Map<String, Object?> prepare = await _invokeJson(
+      'preparePhotoUpload',
       <String, Object?>{
-        'route': 'capture.preparePhotoUpload',
         'captureId': captureId,
         'contentType': contentType,
         'byteSize': bytes.length,
@@ -134,8 +96,8 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
         );
 
     final Map<String, Object?> created = await _invokeJson(
+      'createPhoto',
       <String, Object?>{
-        'route': 'capture.createPhoto',
         'captureId': captureId,
         'storagePath': storagePath,
         'contentType': contentType,
@@ -148,7 +110,7 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
   }
 
   @override
-  Future<ApiCaptureResult> classifyCapture({
+  Future<ApiClassificationStart> classifyCapture({
     required String captureId,
     required String? remoteMediaRef,
     required String? ideaText,
@@ -156,21 +118,17 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
     await _ensureSession();
 
     final Map<String, Object?> data = await _invokeJson(
+      'classify',
       <String, Object?>{
-        'route': 'capture.classify',
         'captureId': captureId,
         if (remoteMediaRef != null) 'remoteMediaRef': remoteMediaRef,
         if (ideaText != null) 'ideaText': ideaText,
       },
     );
 
-    return ApiCaptureResult(
+    return ApiClassificationStart(
       captureId: _stringValue(data, 'captureId'),
-      dishId: _stringValue(data, 'dishId'),
-      title: _stringValue(data, 'title'),
-      description: _stringValue(data, 'description'),
-      mediaRef: _optionalStringValue(data, 'mediaRef') ?? '',
-      category: _optionalStringValue(data, 'category') ?? 'Mains',
+      status: _stringValue(data, 'status'),
     );
   }
 
@@ -181,14 +139,13 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
     await _client.auth.signInAnonymously();
   }
 
-  Future<Map<String, Object?>> _invokeJson(Map<String, Object?> body) async {
-    final String route = _stringValue(body, 'route');
+  Future<Map<String, Object?>> _invokeJson(
+    String functionName,
+    Map<String, Object?> body,
+  ) async {
     final FunctionResponse response = await _client.functions.invoke(
-      'api',
+      functionName,
       body: body,
-      queryParameters: <String, String>{
-        'route': route,
-      },
     );
     if (response.status < 200 || response.status >= 300) {
       throw StateError(

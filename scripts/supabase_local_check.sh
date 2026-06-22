@@ -57,20 +57,20 @@ echo "Running Supabase database tests..."
 supabase test db supabase/tests
 
 if find "$EDGE_TEST_DIR" -type f \( -name '*_test.ts' -o -name '*.test.ts' \) 2>/dev/null | grep -q .; then
-  echo "Serving Supabase Edge Function api..."
+  echo "Serving Supabase Edge Functions..."
   rm -f "$FUNCTION_LOG"
-  supabase functions serve api >"$FUNCTION_LOG" 2>&1 &
+  supabase functions serve >"$FUNCTION_LOG" 2>&1 &
   FUNCTION_PID="$!"
 
   echo "Waiting for Edge Function server..."
   for _ in {1..30}; do
-    if grep -q "functions/v1/api" "$FUNCTION_LOG" 2>/dev/null; then
+    if grep -q "functions/v1" "$FUNCTION_LOG" 2>/dev/null; then
       break
     fi
     sleep 1
   done
 
-  if ! grep -q "functions/v1/api" "$FUNCTION_LOG" 2>/dev/null; then
+  if ! grep -q "functions/v1" "$FUNCTION_LOG" 2>/dev/null; then
     echo "Edge Function server did not become ready." >&2
     exit 1
   fi
