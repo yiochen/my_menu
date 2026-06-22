@@ -1,0 +1,51 @@
+name: Supabase Backend CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/supabase_backend_ci.yml"
+      - "backend/supabase/**"
+      - "scripts/supabase_local_check.sh"
+  push:
+    branches: [main, "codex/**"]
+    paths:
+      - ".github/workflows/supabase_backend_ci.yml"
+      - "backend/supabase/**"
+      - "scripts/supabase_local_check.sh"
+
+jobs:
+  supabase_backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.107.0
+
+      - name: Set up Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Check Edge Function formatting
+        run: deno fmt --check backend/supabase/functions/api/index.ts
+
+      - name: Check Edge Function types
+        run: deno check backend/supabase/functions/api/index.ts
+
+      - name: Run Supabase local checks
+        run: STOP_SUPABASE_AFTER=1 scripts/supabase_local_check.sh
+
+      - name: Upload Supabase function logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-function-logs
+          path: /tmp/mymenu-supabase-functions.log
+          if-no-files-found: ignore
