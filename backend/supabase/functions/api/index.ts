@@ -214,25 +214,31 @@ async function rpcOne(
   fn: string,
   args: JsonRecord,
 ) {
-  const { data, error } = await adminClient.rpc(fn, args);
-  if (isSchemaCacheRetry(error)) {
-    await sleep(250);
-    const retry = await adminClient.rpc(fn, args);
-    if (retry.error != null) {
-      throw retry.error;
+  const delays = [0, 250, 500, 1000, 2000, 4000];
+  let lastError: unknown;
+
+  for (const delay of delays) {
+    if (delay > 0) {
+      await sleep(delay);
     }
-    if (!Array.isArray(retry.data) || retry.data.length === 0) {
-      throw new Error(`${fn} returned no rows`);
+
+    const { data, error } = await adminClient.rpc(fn, args);
+    if (error == null) {
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error(`${fn} returned no rows`);
+      }
+      return data[0] as JsonRecord;
     }
-    return retry.data[0] as JsonRecord;
+
+    lastError = error;
+    if (!isSchemaCacheRetry(error)) {
+      throw error;
+    }
+
+    console.warn(`${fn} hit PostgREST schema cache retry`, error);
   }
-  if (error != null) {
-    throw error;
-  }
-  if (!Array.isArray(data) || data.length === 0) {
-    throw new Error(`${fn} returned no rows`);
-  }
-  return data[0] as JsonRecord;
+
+  throw lastError;
 }
 
 function withRoute(response: Response, route: string) {
