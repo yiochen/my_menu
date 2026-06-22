@@ -15,9 +15,11 @@ Deno.serve(async (request: Request) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  let route = "";
   try {
     const body = await request.json() as JsonRecord;
-    const route = String(body.route ?? "");
+    route = String(body.route ?? "");
+    console.info(`mymenu route=${route}`);
     const authHeader = request.headers.get("Authorization") ?? "";
     const userClient = supabaseFor(authHeader, false);
     const adminClient = supabaseFor(authHeader, true);
@@ -25,28 +27,41 @@ Deno.serve(async (request: Request) => {
       .getUser();
 
     if (userError || userData.user == null) {
-      return json({ error: "Unauthorized" }, 401);
+      return json({ error: "Unauthorized" }, 401, route);
     }
 
     const userId = userData.user.id;
 
     switch (route) {
       case "capture.preparePhotoUpload":
-        return await preparePhotoUpload(adminClient, userId, body);
+        return withRoute(
+          await preparePhotoUpload(adminClient, userId, body),
+          route,
+        );
       case "capture.createPhoto":
-        return await createPhoto(adminClient, userId, body);
+        return withRoute(await createPhoto(adminClient, userId, body), route);
       case "capture.classify":
-        return await classifyCapture(adminClient, userId, body);
+        return withRoute(
+          await classifyCapture(adminClient, userId, body),
+          route,
+        );
       case "capture.discard":
-        return await discardCapture(adminClient, userId, body);
+        return withRoute(
+          await discardCapture(adminClient, userId, body),
+          route,
+        );
       default:
-        return json({ error: `Unknown route: ${route}` }, 404);
+        return json({ error: `Unknown route: ${route}` }, 404, route);
     }
   } catch (error) {
-    console.error(error);
-    return json({
-      error: error instanceof Error ? error.message : "Server error",
-    }, 500);
+    console.error(`mymenu route=${route} failed`, error);
+    return json(
+      {
+        error: error instanceof Error ? error.message : "Server error",
+      },
+      500,
+      route,
+    );
   }
 });
 
@@ -200,6 +215,17 @@ async function rpcOne(
   args: JsonRecord,
 ) {
   const { data, error } = await adminClient.rpc(fn, args);
+  if (isSchemaCacheRetry(error)) {
+    await sleep(250);
+    const retry = await adminClient.rpc(fn, args);
+    if (retry.error != null) {
+      throw retry.error;
+    }
+    if (!Array.isArray(retry.data) || retry.data.length === 0) {
+      throw new Error(`${fn} returned no rows`);
+    }
+    return retry.data[0] as JsonRecord;
+  }
   if (error != null) {
     throw error;
   }
@@ -209,14 +235,40 @@ async function rpcOne(
   return data[0] as JsonRecord;
 }
 
-function json(body: JsonRecord, status = 200) {
+function withRoute(response: Response, route: string) {
+  if (route.length === 0) {
+    return response;
+  }
+  const headers = new Headers(response.headers);
+  headers.set("x-mymenu-route", route);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+function json(body: JsonRecord, status = 200, route?: string) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       ...corsHeaders,
       "Content-Type": "application/json",
+      ...(route != null && route.length > 0 ? { "x-mymenu-route": route } : {}),
     },
   });
+}
+
+function isSchemaCacheRetry(error: unknown) {
+  if (error == null || typeof error !== "object") {
+    return false;
+  }
+  const code = "code" in error ? error.code : null;
+  return code === "PGRST002";
+}
+
+function sleep(milliseconds: number) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
 function requiredString(body: JsonRecord, key: string) {

@@ -182,9 +182,13 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
   }
 
   Future<Map<String, Object?>> _invokeJson(Map<String, Object?> body) async {
+    final String route = _stringValue(body, 'route');
     final FunctionResponse response = await _client.functions.invoke(
       'api',
       body: body,
+      queryParameters: <String, String>{
+        'route': route,
+      },
     );
     if (response.status < 200 || response.status >= 300) {
       throw StateError(
