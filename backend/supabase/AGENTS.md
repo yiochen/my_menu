@@ -42,10 +42,28 @@ Keep as much backend configuration in GitHub as Supabase supports:
 - storage bucket declarations in `config.toml`
 - seed data and tests when introduced
 
+Add or update tests with backend changes:
+
+- migration, RLS, storage policy, or Postgres RPC changes should include pgTAP
+  coverage under `supabase/tests/`
+- Edge Function routing, request validation, auth behavior, storage access, or
+  RPC integration changes should include HTTP tests under `supabase/tests/edge/`
+- when a change intentionally has no useful test seam, document why in the PR
+  or final handoff
+
 Run database tests from `backend/` after changing migrations or RPCs:
 
 ```bash
 supabase test db supabase/tests
+```
+
+Run Edge Function checks after changing functions:
+
+```bash
+deno fmt --check supabase/functions/api/index.ts
+deno check supabase/functions/api/index.ts
+supabase functions serve api
+deno test --allow-net --allow-env --allow-read supabase/tests/edge
 ```
 
 From the repository root, run the full local Supabase check with:
