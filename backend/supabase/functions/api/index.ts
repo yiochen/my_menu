@@ -10,6 +10,26 @@ type JsonRecord = Record<string, unknown>;
 // Keep this loose until the Supabase database types are generated for the repo.
 type SupabaseClientAny = any;
 
+// App-facing Edge Function routes.
+//
+// Flutter calls this single Supabase Function and passes one of these `route`
+// values in the JSON body. The function verifies the Supabase auth session,
+// then uses privileged server-side clients/RPCs for writes the app should not
+// perform directly.
+//
+// - capture.preparePhotoUpload
+//   Triggered when the user takes or selects a photo. Returns a signed Storage
+//   upload URL for the user-scoped capture path; it does not create DB rows.
+// - capture.createPhoto
+//   Triggered after Flutter uploads the photo bytes to Storage. Records the
+//   photo capture and capture image metadata in Postgres.
+// - capture.classify
+//   Triggered when the app asks the backend to classify/apply a capture. Today
+//   this creates a draft dish immediately; future AI confidence logic can decide
+//   whether to auto-apply or leave the capture in review.
+// - capture.discard
+//   Triggered when the user rejects a capture from review. Marks that capture as
+//   discarded so sync/review flows stop processing it.
 Deno.serve(async (request: Request) => {
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -34,18 +54,22 @@ Deno.serve(async (request: Request) => {
 
     switch (route) {
       case "capture.preparePhotoUpload":
+        // User starts a photo capture; issue a signed Storage upload URL.
         return withRoute(
           await preparePhotoUpload(adminClient, userId, body),
           route,
         );
       case "capture.createPhoto":
+        // Photo upload completed; persist the capture and image metadata.
         return withRoute(await createPhoto(adminClient, userId, body), route);
       case "capture.classify":
+        // Backend classification/application step; currently creates a draft dish.
         return withRoute(
           await classifyCapture(adminClient, userId, body),
           route,
         );
       case "capture.discard":
+        // User rejects a capture; mark it discarded server-side.
         return withRoute(
           await discardCapture(adminClient, userId, body),
           route,
