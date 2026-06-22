@@ -41,7 +41,7 @@ jobs:
   mobile_flutter_android_integration:
     runs-on: ubuntu-latest
     needs: mobile_flutter
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -52,6 +52,10 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+          cache: gradle
+          cache-dependency-path: |
+            apps/mobile_flutter/android/**/*.gradle
+            apps/mobile_flutter/android/gradle/wrapper/gradle-wrapper.properties
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
