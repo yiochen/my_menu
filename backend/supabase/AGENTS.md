@@ -42,6 +42,12 @@ Keep as much backend configuration in GitHub as Supabase supports:
 - storage bucket declarations in `config.toml`
 - seed data and tests when introduced
 
+Run database tests from `backend/` after changing migrations or RPCs:
+
+```bash
+supabase test db supabase/tests
+```
+
 Do not commit secrets or local machine state, including Supabase access tokens,
 database passwords, production API keys, OAuth provider secrets, Edge Function
 secrets, or generated local environment files.
