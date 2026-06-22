@@ -63,6 +63,10 @@ jobs:
         working-directory: apps/mobile_flutter
         run: flutter pub get
 
+      - name: Build Android integration APK
+        working-directory: apps/mobile_flutter
+        run: flutter build apk --debug --target=integration_test/app_smoke_test.dart --dart-define=MY_MENU_API_MODE=fake
+
       - name: Enable KVM access
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -76,4 +80,4 @@ jobs:
           arch: x86_64
           profile: pixel_6
           emulator-boot-timeout: 900
-          script: cd apps/mobile_flutter && flutter test integration_test/app_smoke_test.dart -d emulator-5554 --dart-define=MY_MENU_API_MODE=fake
+          script: cd apps/mobile_flutter && flutter drive --driver=integration_test/driver.dart --target=integration_test/app_smoke_test.dart --use-application-binary=build/app/outputs/flutter-apk/app-debug.apk -d emulator-5554
