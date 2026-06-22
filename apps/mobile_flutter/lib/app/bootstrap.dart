@@ -5,7 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (SupabaseApiConfig.isConfigured) {
+  if (SupabaseApiConfig.shouldUseSupabase) {
     await Supabase.initialize(
       url: SupabaseApiConfig.url,
       publishableKey: SupabaseApiConfig.anonKey,

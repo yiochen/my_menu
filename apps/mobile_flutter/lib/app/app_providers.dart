@@ -12,7 +12,7 @@ final appDatabaseProvider = Provider<AppDatabase>((Ref ref) {
 });
 
 final myMenuApiClientProvider = Provider<MyMenuApiClient>((Ref ref) {
-  if (SupabaseApiConfig.isConfigured) {
+  if (SupabaseApiConfig.shouldUseSupabase) {
     return SupabaseMyMenuApiClient();
   }
   return FakeMyMenuApiClient();
