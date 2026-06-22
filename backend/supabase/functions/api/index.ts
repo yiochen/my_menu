@@ -10,26 +10,6 @@ type JsonRecord = Record<string, unknown>;
 // Keep this loose until the Supabase database types are generated for the repo.
 type SupabaseClientAny = any;
 
-// App-facing Edge Function routes.
-//
-// Flutter calls this single Supabase Function and passes one of these `route`
-// values in the JSON body. The function verifies the Supabase auth session,
-// then uses privileged server-side clients/RPCs for writes the app should not
-// perform directly.
-//
-// - capture.preparePhotoUpload
-//   Triggered when the user takes or selects a photo. Returns a signed Storage
-//   upload URL for the user-scoped capture path; it does not create DB rows.
-// - capture.createPhoto
-//   Triggered after Flutter uploads the photo bytes to Storage. Records the
-//   photo capture and capture image metadata in Postgres.
-// - capture.classify
-//   Triggered when the app asks the backend to classify/apply a capture. Today
-//   this creates a draft dish immediately; future AI confidence logic can decide
-//   whether to auto-apply or leave the capture in review.
-// - capture.discard
-//   Triggered when the user rejects a capture from review. Marks that capture as
-//   discarded so sync/review flows stop processing it.
 Deno.serve(async (request: Request) => {
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -54,22 +34,18 @@ Deno.serve(async (request: Request) => {
 
     switch (route) {
       case "capture.preparePhotoUpload":
-        // User starts a photo capture; issue a signed Storage upload URL.
         return withRoute(
           await preparePhotoUpload(adminClient, userId, body),
           route,
         );
       case "capture.createPhoto":
-        // Photo upload completed; persist the capture and image metadata.
         return withRoute(await createPhoto(adminClient, userId, body), route);
       case "capture.classify":
-        // Backend classification/application step; currently creates a draft dish.
         return withRoute(
           await classifyCapture(adminClient, userId, body),
           route,
         );
       case "capture.discard":
-        // User rejects a capture; mark it discarded server-side.
         return withRoute(
           await discardCapture(adminClient, userId, body),
           route,
@@ -108,6 +84,12 @@ function supabaseFor(authHeader: string, serviceRole: boolean) {
   });
 }
 
+// Handles route `capture.preparePhotoUpload`.
+//
+// Triggered when the user takes or selects a photo in Flutter. The client calls
+// this before uploading bytes so the server can choose the user-scoped Storage
+// path and return a signed upload URL. This route intentionally does not create
+// database rows; `capture.createPhoto` records metadata after upload succeeds.
 async function preparePhotoUpload(
   adminClient: SupabaseClientAny,
   userId: string,
@@ -139,6 +121,12 @@ async function preparePhotoUpload(
   });
 }
 
+// Handles route `capture.createPhoto`.
+//
+// Triggered after Flutter uploads the photo bytes to the signed Storage URL from
+// `capture.preparePhotoUpload`. The route records the capture and image metadata
+// through `api_create_photo_capture`, leaving the capture in `classifying` until
+// `capture.classify` applies it or `capture.discard` rejects it.
 async function createPhoto(
   adminClient: SupabaseClientAny,
   userId: string,
@@ -174,6 +162,13 @@ async function createPhoto(
   });
 }
 
+// Handles route `capture.classify`.
+//
+// Triggered when the app asks the backend to classify or apply a capture. Today
+// this route uses placeholder classification data and immediately creates a
+// draft dish through `api_create_dish_from_capture`. Future AI confidence logic
+// can branch here to auto-apply confident captures or leave uncertain captures
+// pending review.
 async function classifyCapture(
   adminClient: SupabaseClientAny,
   userId: string,
@@ -215,6 +210,10 @@ async function classifyCapture(
   });
 }
 
+// Handles route `capture.discard`.
+//
+// Triggered when the user rejects a capture from review. The route calls
+// `api_discard_capture` so sync and review flows stop processing the capture.
 async function discardCapture(
   adminClient: SupabaseClientAny,
   userId: string,
