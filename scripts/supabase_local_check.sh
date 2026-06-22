@@ -63,7 +63,7 @@ if find "$EDGE_TEST_DIR" -type f \( -name '*_test.ts' -o -name '*.test.ts' \) 2>
   FUNCTION_PID="$!"
 
   echo "Waiting for Edge Function server..."
-  for _ in {1..30}; do
+  for _ in {1..90}; do
     if grep -q "functions/v1" "$FUNCTION_LOG" 2>/dev/null; then
       break
     fi

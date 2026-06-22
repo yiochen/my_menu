@@ -83,7 +83,7 @@ jobs:
           supabase functions serve > /tmp/mymenu-supabase-functions.log 2>&1 &
           echo "$!" > /tmp/mymenu-supabase-functions.pid
 
-          for _ in {1..30}; do
+          for _ in {1..90}; do
             if grep -q "functions/v1" /tmp/mymenu-supabase-functions.log; then
               break
             fi
@@ -92,6 +92,7 @@ jobs:
 
           if ! grep -q "functions/v1" /tmp/mymenu-supabase-functions.log; then
             echo "Edge Function server did not become ready."
+            tail -120 /tmp/mymenu-supabase-functions.log || true
             exit 1
           fi
 
