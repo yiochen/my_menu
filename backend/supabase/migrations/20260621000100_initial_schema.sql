@@ -363,7 +363,7 @@ begin
     jsonb_build_object('imageId', v_image_id)
   );
 
-  return query select p_capture_id, v_image_id, v_cursor;
+  return query select p_capture_id::uuid, v_image_id::uuid, v_cursor::bigint;
 end;
 $$;
 
@@ -408,7 +408,7 @@ begin
 
   v_cursor := public.emit_sync_event(p_user_id, 'capture', p_capture_id, 'upsert');
 
-  return query select p_capture_id, v_cursor;
+  return query select p_capture_id::uuid, v_cursor::bigint;
 end;
 $$;
 
@@ -466,9 +466,9 @@ begin
     kind = 'source_photo',
     confidence_label = p_confidence_label,
     deleted_at = null
-  where capture_id = p_capture_id
-    and user_id = p_user_id
-    and kind in ('capture_photo', 'source_photo')
+  where public.dish_images.capture_id = p_capture_id
+    and public.dish_images.user_id = p_user_id
+    and public.dish_images.kind in ('capture_photo', 'source_photo')
   returning id into v_source_image_id;
 
   update public.captures
@@ -490,7 +490,7 @@ begin
     )
   );
 
-  return query select p_capture_id, p_dish_id, v_source_image_id, v_cursor;
+  return query select p_capture_id::uuid, p_dish_id::uuid, v_source_image_id::uuid, v_cursor::bigint;
 end;
 $$;
 
@@ -516,7 +516,7 @@ begin
 
   v_cursor := public.emit_sync_event(p_user_id, 'capture', p_capture_id, 'discard');
 
-  return query select p_capture_id, v_cursor;
+  return query select p_capture_id::uuid, v_cursor::bigint;
 end;
 $$;
 
