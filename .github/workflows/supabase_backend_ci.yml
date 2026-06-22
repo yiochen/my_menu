@@ -15,7 +15,36 @@ on:
       - "scripts/supabase_local_check.sh"
 
 jobs:
-  supabase_backend:
+  supabase_database:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.107.0
+
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Reset local database
+        run: supabase db reset
+
+      - name: Run pgTAP database tests
+        run: supabase test db supabase/tests
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop
+
+  supabase_edge_functions:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -39,8 +68,33 @@ jobs:
       - name: Check Edge Function types
         run: deno check backend/supabase/functions/api/index.ts
 
-      - name: Run Supabase local checks
-        run: STOP_SUPABASE_AFTER=1 scripts/supabase_local_check.sh
+      - name: Run Edge Function HTTP tests
+        run: |
+          if ! find backend/supabase/tests/edge -type f \( -name '*_test.ts' -o -name '*.test.ts' \) 2>/dev/null | grep -q .; then
+            echo "No Edge Function HTTP tests found; skipping."
+            exit 0
+          fi
+
+          cd backend
+          supabase start
+          supabase db reset
+          supabase functions serve api > /tmp/mymenu-supabase-functions.log 2>&1 &
+          echo "$!" > /tmp/mymenu-supabase-functions.pid
+
+          for _ in {1..30}; do
+            if grep -q "functions/v1/api" /tmp/mymenu-supabase-functions.log; then
+              break
+            fi
+            sleep 1
+          done
+
+          if ! grep -q "functions/v1/api" /tmp/mymenu-supabase-functions.log; then
+            echo "Edge Function server did not become ready."
+            exit 1
+          fi
+
+          cd ..
+          deno test --allow-net --allow-env --allow-read backend/supabase/tests/edge
 
       - name: Upload Supabase function logs
         if: failure()
@@ -49,3 +103,15 @@ jobs:
           name: supabase-function-logs
           path: /tmp/mymenu-supabase-functions.log
           if-no-files-found: ignore
+
+      - name: Stop Edge Function server
+        if: always()
+        run: |
+          if [ -f /tmp/mymenu-supabase-functions.pid ]; then
+            kill "$(cat /tmp/mymenu-supabase-functions.pid)" 2>/dev/null || true
+          fi
+
+      - name: Stop local Supabase
+        if: always()
+        working-directory: backend
+        run: supabase stop
