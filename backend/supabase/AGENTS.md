@@ -48,6 +48,17 @@ Run database tests from `backend/` after changing migrations or RPCs:
 supabase test db supabase/tests
 ```
 
+From the repository root, run the full local Supabase check with:
+
+```bash
+scripts/supabase_local_check.sh
+```
+
+That script starts Supabase, resets the local database, runs pgTAP database
+tests, serves Edge Functions when HTTP tests are present, runs those HTTP tests,
+and stops the function server on exit. Set `STOP_SUPABASE_AFTER=1` to also stop
+the Supabase stack after the check.
+
 Do not commit secrets or local machine state, including Supabase access tokens,
 database passwords, production API keys, OAuth provider secrets, Edge Function
 secrets, or generated local environment files.
