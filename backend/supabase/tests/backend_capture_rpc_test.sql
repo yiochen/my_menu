@@ -48,7 +48,7 @@ SELECT is(
 );
 
 SELECT is(
-  (SELECT public.api_create_photo_capture(
+  (SELECT capture_id FROM public.api_create_photo_capture(
     '00000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000002',
     'users/00000000-0000-4000-8000-000000000001/captures/10000000-0000-4000-8000-000000000002/original.jpg',
@@ -58,7 +58,7 @@ SELECT is(
     480,
     'hash-one',
     '2026-06-22T00:00:00Z'::timestamptz
-  )).capture_id,
+  )),
   '10000000-0000-4000-8000-000000000002'::uuid,
   'api_create_photo_capture returns capture id'
 );
@@ -82,7 +82,7 @@ SELECT is(
 );
 
 SELECT is(
-  (SELECT public.api_create_dish_from_capture(
+  (SELECT dish_id FROM public.api_create_dish_from_capture(
     '00000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000002',
     '20000000-0000-4000-8000-000000000001',
@@ -90,7 +90,7 @@ SELECT is(
     'Created by pgTAP.',
     ARRAY['capture', 'test'],
     'Draft'
-  )).dish_id,
+  )),
   '20000000-0000-4000-8000-000000000001'::uuid,
   'api_create_dish_from_capture returns dish id'
 );
@@ -126,12 +126,12 @@ SELECT is(
 );
 
 SELECT is(
-  (SELECT public.api_create_idea_capture(
+  (SELECT capture_id FROM public.api_create_idea_capture(
     '00000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000003',
     'kimchi rice',
     '2026-06-22T00:01:00Z'::timestamptz
-  )).capture_id,
+  )),
   '10000000-0000-4000-8000-000000000003'::uuid,
   'api_create_idea_capture returns capture id'
 );
@@ -143,10 +143,10 @@ SELECT is(
 );
 
 SELECT is(
-  (SELECT public.api_discard_capture(
+  (SELECT capture_id FROM public.api_discard_capture(
     '00000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000003'
-  )).capture_id,
+  )),
   '10000000-0000-4000-8000-000000000003'::uuid,
   'api_discard_capture returns capture id'
 );
