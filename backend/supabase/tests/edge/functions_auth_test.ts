@@ -1,8 +1,4 @@
-import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-
 const baseUrl = Deno.env.get("SUPABASE_URL") ?? "http://127.0.0.1:54321";
-const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
-  "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz";
 
 Deno.test("preparePhotoUpload requires a user session", async () => {
   const response = await fetch(`${baseUrl}/functions/v1/preparePhotoUpload`, {
@@ -17,6 +13,12 @@ Deno.test("preparePhotoUpload requires a user session", async () => {
   assertEquals(response.status, 401);
   await response.body?.cancel();
 });
+
+function assertEquals(actual: unknown, expected: unknown) {
+  if (actual !== expected) {
+    throw new Error(`Expected ${expected}, got ${actual}`);
+  }
+}
 
 Deno.test("process_capture_async requires the worker key", async () => {
   const response = await fetch(
