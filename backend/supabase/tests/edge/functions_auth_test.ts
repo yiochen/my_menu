@@ -18,18 +18,21 @@ Deno.test("preparePhotoUpload requires a user session", async () => {
   await response.body?.cancel();
 });
 
-Deno.test("run_ai requires the worker key", async () => {
-  const response = await fetch(`${baseUrl}/functions/v1/run_ai`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-mymenu-worker-key": "not-the-worker-key",
+Deno.test("process_capture_async requires the worker key", async () => {
+  const response = await fetch(
+    `${baseUrl}/functions/v1/process_capture_async`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-mymenu-worker-key": "not-the-worker-key",
+      },
+      body: JSON.stringify({
+        userId: "00000000-0000-4000-8000-000000000001",
+        captureId: "10000000-0000-4000-8000-000000000011",
+      }),
     },
-    body: JSON.stringify({
-      userId: "00000000-0000-4000-8000-000000000001",
-      captureId: "10000000-0000-4000-8000-000000000011",
-    }),
-  });
+  );
 
   assertEquals(response.status, 403);
   await response.body?.cancel();

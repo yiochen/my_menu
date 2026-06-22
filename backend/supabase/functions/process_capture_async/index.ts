@@ -30,15 +30,6 @@ Deno.serve(async (request: Request) => {
     // TODO: Replace this fake classifier with Gemini/OpenAI. The real worker
     // should inspect the capture media/idea, decide whether it can auto-apply,
     // and write either a dish draft or a review result for later sync.
-    if (ideaText != null && ideaText.length > 0) {
-      await rpcOne(adminClient, "api_create_idea_capture", {
-        p_user_id: userId,
-        p_capture_id: captureId,
-        p_idea_text: ideaText,
-        p_captured_at: new Date().toISOString(),
-      });
-    }
-
     const title = titleFrom(ideaText ?? "Captured Dish");
     const dishId = crypto.randomUUID();
     const result = await rpcOne(adminClient, "api_create_dish_from_capture", {
@@ -59,7 +50,7 @@ Deno.serve(async (request: Request) => {
       cursor: result.sync_cursor,
     });
   } catch (error) {
-    console.error("run_ai failed", error);
+    console.error("process_capture_async failed", error);
     return json(
       { error: error instanceof Error ? error.message : "Server error" },
       500,

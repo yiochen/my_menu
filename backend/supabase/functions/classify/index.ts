@@ -1,5 +1,3 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-
 import {
   handleOptions,
   json,
@@ -7,11 +5,7 @@ import {
   readJson,
   requiredString,
 } from "../_shared/http.ts";
-import { requireEnv, requireUser } from "../_shared/supabase.ts";
-
-declare const EdgeRuntime: {
-  waitUntil(promise: Promise<unknown>): void;
-};
+import { requireEnv, requireUser, rpcOne } from "../_shared/supabase.ts";
 
 Deno.serve(async (request: Request) => {
   const options = handleOptions(request);
@@ -20,7 +14,7 @@ Deno.serve(async (request: Request) => {
   }
 
   try {
-    const { error, userId } = await requireUser(request);
+    const { adminClient, error, userId } = await requireUser(request);
     if (error != null) {
       return error;
     }
@@ -29,21 +23,29 @@ Deno.serve(async (request: Request) => {
     const captureId = requiredString(body, "captureId");
 
     // Triggered when the app asks the backend to classify a capture. This route
-    // returns immediately after starting the async worker; run_ai later writes
-    // the fake classification result and emits sync events through RPCs.
-    EdgeRuntime.waitUntil(
-      invokeRunAi({
-        userId,
-        captureId,
-        remoteMediaRef: optionalString(body, "remoteMediaRef"),
-        ideaText: optionalString(body, "ideaText"),
-      }),
+    // records that processing has started and asks Postgres to enqueue the
+    // process_capture_async worker through pg_net after the transaction commits.
+    const result = await rpcOne(
+      adminClient,
+      "api_schedule_capture_processing",
+      {
+        p_user_id: userId,
+        p_capture_id: captureId,
+        p_function_url: `${
+          requireEnv("SUPABASE_URL")
+        }/functions/v1/process_capture_async`,
+        p_worker_key: requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
+        p_remote_media_ref: optionalString(body, "remoteMediaRef"),
+        p_idea_text: optionalString(body, "ideaText"),
+      },
     );
 
     return json({
       captureId,
-      status: "classifying",
+      status: result.status,
       started: true,
+      requestId: result.request_id,
+      cursor: result.sync_cursor,
     });
   } catch (error) {
     console.error("classify failed", error);
@@ -53,24 +55,3 @@ Deno.serve(async (request: Request) => {
     );
   }
 });
-
-async function invokeRunAi(body: Record<string, unknown>) {
-  const url = `${requireEnv("SUPABASE_URL")}/functions/v1/run_ai`;
-  const serviceRoleKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-mymenu-worker-key": serviceRoleKey,
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      console.error("run_ai failed", response.status, await response.text());
-    }
-  } catch (error) {
-    console.error("run_ai invocation failed", error);
-  }
-}
