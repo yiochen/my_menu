@@ -123,7 +123,10 @@ if [[ -n "$ADB_SERIAL" ]]; then
 fi
 
 if [[ -z "$ADB_SERIAL" ]]; then
-  mapfile -t DEVICES < <(adb devices | awk 'NR > 1 && $2 == "device" { print $1 }')
+  DEVICES=()
+  while IFS= read -r device; do
+    DEVICES+=("$device")
+  done < <(adb devices | awk 'NR > 1 && $2 == "device" { print $1 }')
   if [[ "${#DEVICES[@]}" -eq 0 ]]; then
     echo "No adb device is connected and authorized." >&2
     adb devices >&2

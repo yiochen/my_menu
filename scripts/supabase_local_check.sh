@@ -44,6 +44,10 @@ command -v deno >/dev/null || {
   echo "Deno is required for Edge Function checks." >&2
   exit 1
 }
+command -v jq >/dev/null || {
+  echo "jq is required to read local Supabase service-role credentials." >&2
+  exit 1
+}
 
 cd "$BACKEND_DIR"
 
@@ -76,7 +80,9 @@ if find "$EDGE_TEST_DIR" -type f \( -name '*_test.ts' -o -name '*.test.ts' \) 2>
   fi
 
   echo "Running Edge Function HTTP tests..."
-  deno test --allow-net --allow-env --allow-read "$EDGE_TEST_DIR"
+  SUPABASE_URL=http://127.0.0.1:54321 \
+    SUPABASE_SERVICE_ROLE_KEY="$(supabase status -o json | jq -r '.SERVICE_ROLE_KEY')" \
+    deno test --allow-net --allow-env --allow-read "$EDGE_TEST_DIR"
 else
   echo "No Edge Function HTTP tests found under $EDGE_TEST_DIR; skipping."
 fi

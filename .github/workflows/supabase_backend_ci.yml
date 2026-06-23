@@ -97,7 +97,9 @@ jobs:
           fi
 
           cd ..
-          deno test --allow-net --allow-env --allow-read backend/supabase/tests/edge
+          SUPABASE_URL=http://127.0.0.1:54321 \
+            SUPABASE_SERVICE_ROLE_KEY="$(cd backend && supabase status -o json | jq -r '.SERVICE_ROLE_KEY')" \
+            deno test --allow-net --allow-env --allow-read backend/supabase/tests/edge
 
       - name: Upload Supabase function logs
         if: failure()
