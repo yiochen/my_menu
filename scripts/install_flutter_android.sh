@@ -7,6 +7,8 @@ BUILD_MODE="${BUILD_MODE:-debug}"
 API_MODE="${MY_MENU_API_MODE:-auto}"
 ADB_SERIAL="${ADB_SERIAL:-}"
 APK_PATH=""
+DEFAULT_SUPABASE_URL="https://ydzoibvdnumaejurhuyo.supabase.co"
+DEFAULT_SUPABASE_ANON_KEY="sb_publishable_QECVmfRzDdLzGULak5eOYA_Q64lGA64"
 
 usage() {
   cat <<'EOF'
@@ -28,21 +30,20 @@ Options:
 Environment:
   BUILD_MODE              debug, release, or profile
   MY_MENU_API_MODE        auto, fake, or supabase
-  SUPABASE_URL            optional Supabase URL dart define
-  SUPABASE_ANON_KEY       optional Supabase publishable key dart define
+  SUPABASE_URL            Supabase URL override
+  SUPABASE_ANON_KEY       Supabase publishable key override
   ADB_SERIAL              optional adb device serial
 
 Examples:
+  scripts/install_flutter_android.sh
   scripts/install_flutter_android.sh --api-mode fake
-  scripts/install_flutter_android.sh --device R5CT... --api-mode supabase \
-    --supabase-url https://example.supabase.co \
-    --supabase-anon-key sb_publishable_...
+  scripts/install_flutter_android.sh --device R5CT...
 EOF
 }
 
 NO_BUILD=0
-SUPABASE_URL_VALUE="${SUPABASE_URL:-}"
-SUPABASE_ANON_KEY_VALUE="${SUPABASE_ANON_KEY:-}"
+SUPABASE_URL_VALUE="${SUPABASE_URL:-$DEFAULT_SUPABASE_URL}"
+SUPABASE_ANON_KEY_VALUE="${SUPABASE_ANON_KEY:-$DEFAULT_SUPABASE_ANON_KEY}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
