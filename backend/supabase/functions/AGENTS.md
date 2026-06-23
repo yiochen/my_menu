@@ -8,8 +8,8 @@ for the route or behavior touched. Cover request validation, auth expectations,
 storage behavior, and RPC integration when those are part of the change.
 
 `classify` is the app-facing scheduler for capture classification. It should
-enqueue `processCaptureAsync` through the database `pg_net` RPC and return
-without waiting for AI work. Keep `processCaptureAsync` as an internal worker
+enqueue `process-capture-async` through the database `pg_net` RPC and return
+without waiting for AI work. Keep `process-capture-async` as an internal worker
 guarded by `x-mymenu-worker-key`.
 
 Run from `backend/`:

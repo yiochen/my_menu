@@ -102,7 +102,7 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
     final Uint8List bytes = await File(localMediaRef).readAsBytes();
     final String contentType = _contentTypeForPath(localMediaRef);
     final Map<String, Object?> prepare = await _invokeJson(
-      'preparePhotoUpload',
+      'prepare-photo-upload',
       <String, Object?>{
         'captureId': captureId,
         'contentType': contentType,
@@ -122,7 +122,7 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
         );
 
     final Map<String, Object?> created = await _invokeJson(
-      'createPhoto',
+      'create-photo',
       <String, Object?>{
         'captureId': captureId,
         'storagePath': storagePath,

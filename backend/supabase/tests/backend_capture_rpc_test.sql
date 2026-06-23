@@ -179,7 +179,7 @@ SELECT *
 FROM public.api_schedule_capture_processing(
   '00000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000004',
-  'http://127.0.0.1:54321/functions/v1/processCaptureAsync',
+  'http://127.0.0.1:54321/functions/v1/process-capture-async',
   'test-worker-key',
   'users/00000000-0000-4000-8000-000000000001/captures/10000000-0000-4000-8000-000000000004/original.jpg',
   null
@@ -202,7 +202,7 @@ SELECT *
 FROM public.api_schedule_capture_processing(
   '00000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000005',
-  'http://127.0.0.1:54321/functions/v1/processCaptureAsync',
+  'http://127.0.0.1:54321/functions/v1/process-capture-async',
   'test-worker-key',
   null,
   'fried egg rice'

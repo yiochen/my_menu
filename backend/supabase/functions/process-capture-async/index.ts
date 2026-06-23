@@ -50,7 +50,7 @@ Deno.serve(async (request: Request) => {
       cursor: result.sync_cursor,
     });
   } catch (error) {
-    console.error("processCaptureAsync failed", error);
+    console.error("process-capture-async failed", error);
     return json(
       { error: error instanceof Error ? error.message : "Server error" },
       500,
