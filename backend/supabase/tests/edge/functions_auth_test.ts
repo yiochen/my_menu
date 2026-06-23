@@ -1,8 +1,8 @@
 const baseUrl = Deno.env.get("SUPABASE_URL") ?? "http://127.0.0.1:54321";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-Deno.test("preparePhotoUpload requires a user session", async () => {
-  const response = await fetch(`${baseUrl}/functions/v1/preparePhotoUpload`, {
+Deno.test("prepare-photo-upload requires a user session", async () => {
+  const response = await fetch(`${baseUrl}/functions/v1/prepare-photo-upload`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -21,9 +21,9 @@ function assertEquals(actual: unknown, expected: unknown) {
   }
 }
 
-Deno.test("processCaptureAsync requires the worker key", async () => {
+Deno.test("process-capture-async requires the worker key", async () => {
   const response = await fetch(
-    `${baseUrl}/functions/v1/processCaptureAsync`,
+    `${baseUrl}/functions/v1/process-capture-async`,
     {
       method: "POST",
       headers: {

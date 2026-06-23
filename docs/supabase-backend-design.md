@@ -467,11 +467,11 @@ row points to `(storage_bucket, storage_path)`.
 
 1. Flutter creates a local capture with a client-generated `capture_id` and a
    local file path.
-2. Flutter calls `capture.preparePhotoUpload`.
+2. Flutter calls `capture.prepare-photo-upload`.
 3. The Edge Function returns a signed upload URL for a Storage object path. It
    does not create a Postgres capture row yet.
 4. Flutter uploads bytes to the signed URL.
-5. Flutter calls `capture.createPhoto`.
+5. Flutter calls `capture.create-photo`.
 6. The Edge Function creates:
    - one `captures` row with status `classifying`
    - one `dish_images` row with kind `capture_photo`
@@ -616,7 +616,7 @@ Response:
 There is no ID mapping for client-created rows because the client ID is the
 server ID.
 
-### `capture.preparePhotoUpload`
+### `capture.prepare-photo-upload`
 
 Returns a signed upload URL. This does not create a Postgres capture row.
 
@@ -645,7 +645,7 @@ Response:
 }
 ```
 
-### `capture.createPhoto`
+### `capture.create-photo`
 
 Creates the server capture after the image bytes exist in Storage.
 
@@ -1130,7 +1130,7 @@ for MVP.
 
 1. Create Supabase project, private Storage bucket, tables, enums, RLS, and RPC
    migrations.
-2. Implement `capture.preparePhotoUpload`, `capture.createPhoto`,
+2. Implement `capture.prepare-photo-upload`, `capture.create-photo`,
    `capture.createIdea`, `capture.get`, and `capture.discard`.
 3. Implement fake classification inside an Edge Function matching the current
    Flutter fake API behavior.

@@ -24,7 +24,7 @@ Deno.serve(async (request: Request) => {
 
     // Triggered when the app asks the backend to classify a capture. This route
     // records that processing has started and asks Postgres to enqueue the
-    // processCaptureAsync worker through pg_net after the transaction commits.
+    // process-capture-async worker through pg_net after the transaction commits.
     const result = await rpcOne(
       adminClient,
       "api_schedule_capture_processing",
@@ -33,7 +33,7 @@ Deno.serve(async (request: Request) => {
         p_capture_id: captureId,
         p_function_url: `${
           requireEnv("SUPABASE_URL")
-        }/functions/v1/processCaptureAsync`,
+        }/functions/v1/process-capture-async`,
         p_worker_key: requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
         p_remote_media_ref: optionalString(body, "remoteMediaRef"),
         p_idea_text: optionalString(body, "ideaText"),

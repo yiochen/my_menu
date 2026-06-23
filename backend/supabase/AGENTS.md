@@ -50,7 +50,7 @@ Add or update tests with backend changes:
   RPC integration changes should include HTTP tests under `supabase/tests/edge/`
 - async capture processing is scheduled by `api_schedule_capture_processing`
   with `pg_net`; test the database enqueue in pgTAP and test the internal worker
-  (`processCaptureAsync`) directly with Edge Function HTTP tests
+  (`process-capture-async`) directly with Edge Function HTTP tests
 - when a change intentionally has no useful test seam, document why in the PR
   or final handoff
 
