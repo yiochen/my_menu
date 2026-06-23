@@ -1,0 +1,70 @@
+name: Flutter Android Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  android_release:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+          cache-dependency-path: |
+            apps/mobile_flutter/android/**/*.gradle
+            apps/mobile_flutter/android/gradle/wrapper/gradle-wrapper.properties
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: apps/mobile_flutter
+        run: flutter pub get
+
+      - name: Build release APK
+        run: scripts/install_flutter_android.sh --release --api-mode supabase --build-only
+
+      - name: Prepare APK asset
+        id: apk
+        run: |
+          short_sha="${GITHUB_SHA::7}"
+          apk_name="mymenu-android-${short_sha}.apk"
+          apk_path="apps/mobile_flutter/build/app/outputs/flutter-apk/app-release.apk"
+          cp "$apk_path" "$apk_name"
+          echo "name=$apk_name" >> "$GITHUB_OUTPUT"
+          echo "path=$apk_name" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.apk.outputs.name }}
+          path: ${{ steps.apk.outputs.path }}
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APK_PATH: ${{ steps.apk.outputs.path }}
+          APK_NAME: ${{ steps.apk.outputs.name }}
+          TAG_NAME: android-main-${{ github.run_number }}
+        run: |
+          gh release create "$TAG_NAME" "$APK_PATH#$APK_NAME" \
+            --target "$GITHUB_SHA" \
+            --title "Android build ${GITHUB_SHA::7}" \
+            --notes "Android release APK built from main commit $GITHUB_SHA with MY_MENU_API_MODE=supabase."
