@@ -37,6 +37,6 @@ verify_jwt = true
 enabled = true
 verify_jwt = true
 
-[functions.process_capture_async]
+[functions.processCaptureAsync]
 enabled = true
 verify_jwt = false

@@ -72,6 +72,7 @@ begin
     ),
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || p_worker_key,
       'x-mymenu-worker-key', p_worker_key
     ),
     timeout_milliseconds := 30000
