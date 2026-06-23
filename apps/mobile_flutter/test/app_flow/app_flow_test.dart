@@ -10,7 +10,7 @@ import '../support/network_image_test_helper.dart';
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
-  testWidgets('user can add and find a new dish idea', (
+  testWidgets('user can add a dish idea and see it classifying', (
     WidgetTester tester,
   ) async {
     await runWithMockNetworkImages(() async {
@@ -33,20 +33,18 @@ void main() {
       await tester.pumpAndSettle();
       await tester.pump(const Duration(seconds: 2));
 
-      await tester.tap(find.text('Menu'));
-      await tester.pumpAndSettle();
-
-      await tester.enterText(find.byType(TextField), 'gochujang');
-      await tester.pumpAndSettle();
-
       await tester.scrollUntilVisible(
-        find.text('Gochujang Noodles'),
+        find.text('1 capture in feed'),
         200,
         scrollable: find.byType(Scrollable).first,
       );
-    });
 
-    expect(find.text('Gochujang Noodles'), findsOneWidget);
+      expect(find.text('1 capture in feed'), findsOneWidget);
+      expect(
+        find.text('Track upload and fake API classification.'),
+        findsOneWidget,
+      );
+    });
   });
 }
 

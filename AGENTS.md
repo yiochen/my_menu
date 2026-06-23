@@ -11,3 +11,8 @@ For Flutter work under `apps/mobile_flutter/`:
 - run `dart analyze` before wrapping up changes
 - run `dart run tool/structural_lint.dart` from `apps/mobile_flutter/` to catch oversized files and oversized `build()` methods
 - prefer keeping feature UI under `lib/features/` and reusable UI under `lib/shared/`
+
+# Supabase Backend
+
+For Supabase work, follow the more specific instructions in
+`backend/supabase/AGENTS.md`.

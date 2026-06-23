@@ -59,6 +59,37 @@ dart run tool/structural_lint.dart
 flutter test
 ```
 
+Run all local checks from the repository root:
+
+```bash
+scripts/check_all.sh
+```
+
+Run Supabase-only local checks:
+
+```bash
+scripts/supabase_local_check.sh
+```
+
+To stop the Supabase stack after the Supabase checks complete:
+
+```bash
+STOP_SUPABASE_AFTER=1 scripts/supabase_local_check.sh
+```
+
+This checkout uses tracked git hooks from `.githooks/`. If hooks are not active,
+run:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+To bypass the pre-commit checks for a commit:
+
+```bash
+SKIP_LOCAL_CHECKS=1 git commit
+```
+
 ## Architecture Notes
 
 - [docs/flutter-app-design.md](/Users/yiouchen/dev/my_menu/docs/flutter-app-design.md) is the current Flutter architecture reference.

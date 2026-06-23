@@ -7,10 +7,10 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('MyMenu Android smoke test', () {
-    testWidgets('launches, captures an idea, and finds it in menu search', (
+    testWidgets('launches, captures an idea, and sees it classifying', (
       WidgetTester tester,
     ) async {
-      app.main();
+      await app.main();
       await _pumpUntilFound(
         tester,
         find.byKey(const ValueKey<String>('plan_screen')),
@@ -38,25 +38,17 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pump(const Duration(seconds: 2));
 
-      await tester.tap(find.text('Menu'));
-      await _pumpUntilFound(
-        tester,
-        find.byKey(const ValueKey('menu_search_field')),
-      );
-
-      await tester.enterText(
-        find.byKey(const ValueKey('menu_search_field')),
-        'black bean',
-      );
-      await tester.pump(const Duration(milliseconds: 500));
-
       await tester.scrollUntilVisible(
-        find.text('Black Bean Tacos'),
+        find.text('1 capture in feed'),
         200,
         scrollable: find.byType(Scrollable).first,
       );
 
-      expect(find.text('Black Bean Tacos'), findsOneWidget);
+      expect(find.text('1 capture in feed'), findsOneWidget);
+      expect(
+        find.text('Track upload and fake API classification.'),
+        findsOneWidget,
+      );
     });
   });
 }
