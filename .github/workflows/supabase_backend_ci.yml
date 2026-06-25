@@ -97,8 +97,10 @@ jobs:
           fi
 
           cd ..
+          STATUS_JSON="$(cd backend && supabase status -o json)"
           SUPABASE_URL=http://127.0.0.1:54321 \
-            SUPABASE_SERVICE_ROLE_KEY="$(cd backend && supabase status -o json | jq -r '.SERVICE_ROLE_KEY')" \
+            SUPABASE_ANON_KEY="$(printf '%s' "$STATUS_JSON" | jq -r '.ANON_KEY')" \
+            SUPABASE_SERVICE_ROLE_KEY="$(printf '%s' "$STATUS_JSON" | jq -r '.SERVICE_ROLE_KEY')" \
             deno test --allow-net --allow-env --allow-read backend/supabase/tests/edge
 
       - name: Upload Supabase function logs

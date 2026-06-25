@@ -40,3 +40,19 @@ verify_jwt = true
 [functions.process-capture-async]
 enabled = true
 verify_jwt = false
+
+[functions.sync-pull]
+enabled = true
+verify_jwt = true
+
+[functions.get-captures]
+enabled = true
+verify_jwt = true
+
+[functions.get-dishes]
+enabled = true
+verify_jwt = true
+
+[functions.get-review-items]
+enabled = true
+verify_jwt = true

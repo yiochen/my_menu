@@ -20,69 +20,73 @@ class DishDetailScreen extends StatelessWidget {
     final Dish dish = state.dishById(dishId);
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: <Widget>[
-          _DishHero(dish: dish),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  _DishSummary(dish: dish),
-                  const SizedBox(height: 20),
-                  _DishActions(dishId: dish.id),
-                  const SizedBox(height: 28),
-                  InfoSection(
-                    title: 'Ingredients',
-                    child: Column(
-                      children: dish.ingredients.map((String item) {
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
-                          title: Text(item),
-                        );
-                      }).toList(growable: false),
+      body: RefreshIndicator(
+        onRefresh: state.refreshFromServer,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: <Widget>[
+            _DishHero(dish: dish),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    _DishSummary(dish: dish),
+                    const SizedBox(height: 20),
+                    _DishActions(dishId: dish.id),
+                    const SizedBox(height: 28),
+                    InfoSection(
+                      title: 'Ingredients',
+                      child: Column(
+                        children: dish.ingredients.map((String item) {
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                            title: Text(item),
+                          );
+                        }).toList(growable: false),
+                      ),
                     ),
-                  ),
-                  InfoSection(
-                    title: 'Recipe',
-                    child: Column(
-                      children: dish.recipeSteps.asMap().entries.map((
-                        MapEntry<int, String> entry,
-                      ) {
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: CircleAvatar(
-                            radius: 14,
-                            child: Text('${entry.key + 1}'),
-                          ),
-                          title: Text(entry.value),
-                        );
-                      }).toList(growable: false),
+                    InfoSection(
+                      title: 'Recipe',
+                      child: Column(
+                        children: dish.recipeSteps.asMap().entries.map((
+                          MapEntry<int, String> entry,
+                        ) {
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: CircleAvatar(
+                              radius: 14,
+                              child: Text('${entry.key + 1}'),
+                            ),
+                            title: Text(entry.value),
+                          );
+                        }).toList(growable: false),
+                      ),
                     ),
-                  ),
-                  InfoSection(
-                    title: 'Notes',
-                    child: Column(
-                      children: dish.notes.map((String note) {
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: const Icon(Icons.sticky_note_2_outlined),
-                          title: Text(note),
-                        );
-                      }).toList(growable: false),
+                    InfoSection(
+                      title: 'Notes',
+                      child: Column(
+                        children: dish.notes.map((String note) {
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.sticky_note_2_outlined),
+                            title: Text(note),
+                          );
+                        }).toList(growable: false),
+                      ),
                     ),
-                  ),
-                  InfoSection(
-                    title: 'Sources',
-                    child: _SourcePhotoStrip(photos: dish.sourcePhotos),
-                  ),
-                ],
+                    InfoSection(
+                      title: 'Sources',
+                      child: _SourcePhotoStrip(photos: dish.sourcePhotos),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -6,7 +6,7 @@ extension CaptureItemRowMapper on db.CaptureItemRow {
     return CaptureItem(
       id: id,
       kind: CaptureItemKind.values.byName(kind),
-      status: CaptureItemStatus.values.byName(status),
+      status: _statusFromDatabase(status),
       createdAt: createdAt,
       localMediaRef: localMediaRef,
       remoteMediaRef: remoteMediaRef,
@@ -14,4 +14,11 @@ extension CaptureItemRowMapper on db.CaptureItemRow {
       appliedDishId: appliedDishId,
     );
   }
+}
+
+CaptureItemStatus _statusFromDatabase(String status) {
+  return switch (status) {
+    'needs_review' => CaptureItemStatus.needsReview,
+    _ => CaptureItemStatus.values.byName(status),
+  };
 }

@@ -15,6 +15,50 @@ Deno.test("prepare-photo-upload requires a user session", async () => {
   await response.body?.cancel();
 });
 
+Deno.test("sync-pull requires a user session", async () => {
+  const response = await fetch(`${baseUrl}/functions/v1/sync-pull`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ afterCursor: 0 }),
+  });
+
+  assertEquals(response.status, 401);
+  await response.body?.cancel();
+});
+
+Deno.test("get-captures requires a user session", async () => {
+  const response = await fetch(`${baseUrl}/functions/v1/get-captures`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids: [] }),
+  });
+
+  assertEquals(response.status, 401);
+  await response.body?.cancel();
+});
+
+Deno.test("get-dishes requires a user session", async () => {
+  const response = await fetch(`${baseUrl}/functions/v1/get-dishes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids: [] }),
+  });
+
+  assertEquals(response.status, 401);
+  await response.body?.cancel();
+});
+
+Deno.test("get-review-items requires a user session", async () => {
+  const response = await fetch(`${baseUrl}/functions/v1/get-review-items`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ids: [] }),
+  });
+
+  assertEquals(response.status, 401);
+  await response.body?.cancel();
+});
+
 function assertEquals(actual: unknown, expected: unknown) {
   if (actual !== expected) {
     throw new Error(`Expected ${expected}, got ${actual}`);
