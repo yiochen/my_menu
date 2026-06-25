@@ -2,7 +2,11 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:mymenu/core/network/my_menu_api_models.dart';
+import 'package:mymenu/core/network/my_menu_api_parsers.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+export 'package:mymenu/core/network/my_menu_api_models.dart';
 
 class SupabaseApiConfig {
   const SupabaseApiConfig._();
@@ -39,16 +43,6 @@ class SupabaseApiConfig {
   }
 }
 
-class ApiClassificationStart {
-  const ApiClassificationStart({
-    required this.captureId,
-    required this.status,
-  });
-
-  final String captureId;
-  final String status;
-}
-
 abstract class MyMenuApiClient {
   Future<String> uploadCaptureMedia({
     required String captureId,
@@ -60,6 +54,17 @@ abstract class MyMenuApiClient {
     required String? remoteMediaRef,
     required String? ideaText,
   });
+
+  Future<ApiSyncPull> pullSync({
+    required int afterCursor,
+    required int limit,
+  });
+
+  Future<List<ApiCapture>> getCaptures(List<String> ids);
+
+  Future<List<ApiDish>> getDishes(List<String> ids);
+
+  Future<List<ApiReviewItem>> getReviewItems(List<String> ids);
 }
 
 class FakeMyMenuApiClient implements MyMenuApiClient {
@@ -83,6 +88,34 @@ class FakeMyMenuApiClient implements MyMenuApiClient {
       captureId: captureId,
       status: 'classifying',
     );
+  }
+
+  @override
+  Future<ApiSyncPull> pullSync({
+    required int afterCursor,
+    required int limit,
+  }) async {
+    return ApiSyncPull(
+      cursor: afterCursor,
+      hasMore: false,
+      requiresBootstrap: false,
+      events: const <ApiSyncEvent>[],
+    );
+  }
+
+  @override
+  Future<List<ApiCapture>> getCaptures(List<String> ids) async {
+    return const <ApiCapture>[];
+  }
+
+  @override
+  Future<List<ApiDish>> getDishes(List<String> ids) async {
+    return const <ApiDish>[];
+  }
+
+  @override
+  Future<List<ApiReviewItem>> getReviewItems(List<String> ids) async {
+    return const <ApiReviewItem>[];
   }
 }
 
@@ -110,9 +143,9 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
       },
     );
 
-    final Map<String, Object?> upload = _mapValue(prepare, 'upload');
-    final String storagePath = _stringValue(prepare, 'storagePath');
-    final String token = _stringValue(upload, 'token');
+    final Map<String, Object?> upload = apiMapValue(prepare, 'upload');
+    final String storagePath = apiStringValue(prepare, 'storagePath');
+    final String token = apiStringValue(upload, 'token');
 
     await _client.storage.from('menu-media').uploadBinaryToSignedUrl(
           storagePath,
@@ -131,8 +164,8 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
         'capturedAt': DateTime.now().toUtc().toIso8601String(),
       },
     );
-    final Map<String, Object?> image = _mapValue(created, 'image');
-    return _stringValue(image, 'mediaRef');
+    final Map<String, Object?> image = apiMapValue(created, 'image');
+    return apiStringValue(image, 'mediaRef');
   }
 
   @override
@@ -153,9 +186,82 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
     );
 
     return ApiClassificationStart(
-      captureId: _stringValue(data, 'captureId'),
-      status: _stringValue(data, 'status'),
+      captureId: apiStringValue(data, 'captureId'),
+      status: apiStringValue(data, 'status'),
     );
+  }
+
+  @override
+  Future<ApiSyncPull> pullSync({
+    required int afterCursor,
+    required int limit,
+  }) async {
+    await _ensureSession();
+
+    final Map<String, Object?> data = await _invokeJson(
+      'sync-pull',
+      <String, Object?>{
+        'afterCursor': afterCursor,
+        'limit': limit,
+      },
+    );
+
+    return ApiSyncPull(
+      cursor: apiIntValue(data, 'cursor'),
+      hasMore: apiBoolValue(data, 'hasMore'),
+      requiresBootstrap: apiBoolValue(data, 'requiresBootstrap'),
+      events: apiListValue(data, 'events')
+          .map(apiSyncEventFromJson)
+          .toList(growable: false),
+    );
+  }
+
+  @override
+  Future<List<ApiCapture>> getCaptures(List<String> ids) async {
+    if (ids.isEmpty) {
+      return const <ApiCapture>[];
+    }
+    await _ensureSession();
+
+    final Map<String, Object?> data = await _invokeJson(
+      'get-captures',
+      <String, Object?>{'ids': ids},
+    );
+    return apiListValue(data, 'items')
+        .map(apiCaptureFromJson)
+        .toList(growable: false);
+  }
+
+  @override
+  Future<List<ApiDish>> getDishes(List<String> ids) async {
+    if (ids.isEmpty) {
+      return const <ApiDish>[];
+    }
+    await _ensureSession();
+
+    final Map<String, Object?> data = await _invokeJson(
+      'get-dishes',
+      <String, Object?>{'ids': ids},
+    );
+    return apiListValue(data, 'items')
+        .map(apiDishFromJson)
+        .toList(growable: false);
+  }
+
+  @override
+  Future<List<ApiReviewItem>> getReviewItems(List<String> ids) async {
+    if (ids.isEmpty) {
+      return const <ApiReviewItem>[];
+    }
+    await _ensureSession();
+
+    final Map<String, Object?> data = await _invokeJson(
+      'get-review-items',
+      <String, Object?>{'ids': ids},
+    );
+    return apiListValue(data, 'items')
+        .map(apiReviewItemFromJson)
+        .toList(growable: false);
   }
 
   Future<void> _ensureSession() async {
@@ -186,30 +292,6 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
       return data;
     }
     throw StateError('Supabase function returned non-object JSON.');
-  }
-
-  Map<String, Object?> _mapValue(Map<String, Object?> data, String key) {
-    final Object? value = data[key];
-    if (value is Map<String, dynamic>) {
-      return Map<String, Object?>.from(value);
-    }
-    if (value is Map<String, Object?>) {
-      return value;
-    }
-    throw StateError('Expected JSON object at "$key".');
-  }
-
-  String _stringValue(Map<String, Object?> data, String key) {
-    final String? value = _optionalStringValue(data, key);
-    if (value == null) {
-      throw StateError('Expected string at "$key".');
-    }
-    return value;
-  }
-
-  String? _optionalStringValue(Map<String, Object?> data, String key) {
-    final Object? value = data[key];
-    return value is String ? value : null;
   }
 
   String _contentTypeForPath(String path) {

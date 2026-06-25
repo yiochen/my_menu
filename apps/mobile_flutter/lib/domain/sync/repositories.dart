@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:developer' as developer;
 
 import 'package:drift/drift.dart';
@@ -11,6 +12,8 @@ import 'package:mymenu/domain/dishes/seeded_dishes.dart';
 import 'package:mymenu/domain/planning/planned_meal.dart' as planning_domain;
 import 'package:mymenu/domain/planning/seeded_plan.dart';
 import 'package:uuid/uuid.dart';
+
+part 'repositories_sync.dart';
 
 class AppRepositories {
   AppRepositories({
@@ -237,6 +240,7 @@ class SyncRepository {
 
   final db.AppDatabase _database;
   final MyMenuApiClient _apiClient;
+  static const String _captureSyncCursorKey = 'capture_sync_cursor';
 
   Future<List<Dish>> processPendingCaptures() async {
     final List<db.CaptureItemRow> captures =
@@ -322,5 +326,4 @@ class SyncRepository {
       ),
     );
   }
-
 }

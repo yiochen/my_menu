@@ -243,6 +243,29 @@ void main() {
       expect(result.captureId, 'capture_1');
       expect(result.status, CaptureItemStatus.classifying.name);
     });
+
+    test('pullCaptureSync applies capture result events and advances cursor',
+        () async {
+      repositories = AppRepositories(
+        database: database,
+        apiClient: _SyncResultApiClient(),
+      );
+
+      await repositories.syncRepository.pullCaptureSync();
+
+      final feedItems = await repositories.captureRepository.listFeedItems();
+      final dishes = await repositories.dishRepository.listDishes();
+      final cursor = await (database.select(database.syncMetadata)
+            ..where((table) => table.key.equals('capture_sync_cursor')))
+          .getSingle();
+
+      expect(feedItems.single.status, CaptureItemStatus.applied);
+      expect(feedItems.single.appliedDishId, 'dish_sync_result');
+      expect(dishes.single.title, 'Sync Result Noodles');
+      expect(
+          dishes.single.sourcePhotos.single.url, 'https://example.com/a.jpg');
+      expect(cursor.value, '42');
+    });
   });
 }
 
@@ -273,6 +296,34 @@ class _RecordingApiClient implements MyMenuApiClient {
       status: CaptureItemStatus.classifying.name,
     );
   }
+
+  @override
+  Future<ApiSyncPull> pullSync({
+    required int afterCursor,
+    required int limit,
+  }) async {
+    return ApiSyncPull(
+      cursor: afterCursor,
+      hasMore: false,
+      requiresBootstrap: false,
+      events: const <ApiSyncEvent>[],
+    );
+  }
+
+  @override
+  Future<List<ApiCapture>> getCaptures(List<String> ids) async {
+    return const <ApiCapture>[];
+  }
+
+  @override
+  Future<List<ApiDish>> getDishes(List<String> ids) async {
+    return const <ApiDish>[];
+  }
+
+  @override
+  Future<List<ApiReviewItem>> getReviewItems(List<String> ids) async {
+    return const <ApiReviewItem>[];
+  }
 }
 
 class _ThrowingApiClient implements MyMenuApiClient {
@@ -291,5 +342,135 @@ class _ThrowingApiClient implements MyMenuApiClient {
     required String? ideaText,
   }) {
     throw StateError('Remote sync unavailable.');
+  }
+
+  @override
+  Future<ApiSyncPull> pullSync({
+    required int afterCursor,
+    required int limit,
+  }) {
+    throw StateError('Remote sync unavailable.');
+  }
+
+  @override
+  Future<List<ApiCapture>> getCaptures(List<String> ids) {
+    throw StateError('Remote sync unavailable.');
+  }
+
+  @override
+  Future<List<ApiDish>> getDishes(List<String> ids) {
+    throw StateError('Remote sync unavailable.');
+  }
+
+  @override
+  Future<List<ApiReviewItem>> getReviewItems(List<String> ids) {
+    throw StateError('Remote sync unavailable.');
+  }
+}
+
+class _SyncResultApiClient implements MyMenuApiClient {
+  @override
+  Future<String> uploadCaptureMedia({
+    required String captureId,
+    required String localMediaRef,
+  }) {
+    throw StateError('Unexpected upload.');
+  }
+
+  @override
+  Future<ApiClassificationStart> classifyCapture({
+    required String captureId,
+    required String? remoteMediaRef,
+    required String? ideaText,
+  }) {
+    throw StateError('Unexpected classification.');
+  }
+
+  @override
+  Future<ApiSyncPull> pullSync({
+    required int afterCursor,
+    required int limit,
+  }) async {
+    if (afterCursor >= 42) {
+      return const ApiSyncPull(
+        cursor: 42,
+        hasMore: false,
+        requiresBootstrap: false,
+        events: <ApiSyncEvent>[],
+      );
+    }
+
+    return const ApiSyncPull(
+      cursor: 42,
+      hasMore: false,
+      requiresBootstrap: false,
+      events: <ApiSyncEvent>[
+        ApiSyncEvent(
+          cursor: 42,
+          type: 'capture.applied_to_new_dish',
+          entityIds: <String, String>{
+            'captureId': 'capture_sync_result',
+            'dishId': 'dish_sync_result',
+            'sourceImageId': 'source_sync_result',
+          },
+        ),
+      ],
+    );
+  }
+
+  @override
+  Future<List<ApiCapture>> getCaptures(List<String> ids) async {
+    return <ApiCapture>[
+      if (ids.contains('capture_sync_result'))
+        ApiCapture(
+          id: 'capture_sync_result',
+          kind: CaptureItemKind.photo.name,
+          status: CaptureItemStatus.applied.name,
+          capturedAt: DateTime.utc(2026, 6, 20, 12),
+          appliedDishId: 'dish_sync_result',
+          image: const ApiImage(
+            id: 'source_sync_result',
+            kind: 'source_photo',
+            mediaRef: 'https://example.com/a.jpg',
+          ),
+        ),
+    ];
+  }
+
+  @override
+  Future<List<ApiDish>> getDishes(List<String> ids) async {
+    return <ApiDish>[
+      if (ids.contains('dish_sync_result'))
+        ApiDish(
+          id: 'dish_sync_result',
+          title: 'Sync Result Noodles',
+          description: 'Created from sync.',
+          labels: const <String>['noodles'],
+          isFavorite: true,
+          madeCount: 1,
+          lastMadeAt: DateTime.utc(2026, 6, 20, 12),
+          coverImage: const ApiImage(
+            id: 'source_sync_result',
+            kind: 'source_photo',
+            mediaRef: 'https://example.com/a.jpg',
+          ),
+          sourcePhotos: <ApiSourcePhoto>[
+            ApiSourcePhoto(
+              id: 'source_sync_result',
+              mediaRef: 'https://example.com/a.jpg',
+              capturedAt: DateTime.utc(2026, 6, 20, 12),
+              confidenceLabel: 'AI',
+            ),
+          ],
+          ingredients: const <String>['noodles'],
+          steps: const <String>['Cook noodles.'],
+          notes: const <String>['Synced from server.'],
+        ),
+    ];
+  }
+
+  @override
+  Future<List<ApiReviewItem>> getReviewItems(List<String> ids) async {
+    return const <ApiReviewItem>[];
   }
 }
