@@ -1,7 +1,8 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseApiConfig {
@@ -101,6 +102,10 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
 
     final Uint8List bytes = await File(localMediaRef).readAsBytes();
     final String contentType = _contentTypeForPath(localMediaRef);
+    _logApi(
+      'uploadCaptureMedia start captureId=$captureId '
+      'contentType=$contentType bytes=${bytes.length}',
+    );
     final Map<String, Object?> prepare = await _invokeJson(
       'prepare-photo-upload',
       <String, Object?>{
@@ -114,12 +119,14 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
     final String storagePath = _stringValue(prepare, 'storagePath');
     final String token = _stringValue(upload, 'token');
 
+    _logApi('uploadCaptureMedia storage upload start captureId=$captureId');
     await _client.storage.from('menu-media').uploadBinaryToSignedUrl(
           storagePath,
           token,
           bytes,
           FileOptions(contentType: contentType, upsert: true),
         );
+    _logApi('uploadCaptureMedia storage upload complete captureId=$captureId');
 
     final Map<String, Object?> created = await _invokeJson(
       'create-photo',
@@ -132,7 +139,9 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
       },
     );
     final Map<String, Object?> image = _mapValue(created, 'image');
-    return _stringValue(image, 'mediaRef');
+    final String mediaRef = _stringValue(image, 'mediaRef');
+    _logApi('uploadCaptureMedia complete captureId=$captureId');
+    return mediaRef;
   }
 
   @override
@@ -162,17 +171,27 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
     if (_client.auth.currentSession != null) {
       return;
     }
+    _logApi('signInAnonymously start');
     await _client.auth.signInAnonymously();
+    _logApi('signInAnonymously complete');
   }
 
   Future<Map<String, Object?>> _invokeJson(
     String functionName,
     Map<String, Object?> body,
   ) async {
-    final FunctionResponse response = await _client.functions.invoke(
-      functionName,
-      body: body,
-    );
+    _logApi('invoke $functionName start');
+    final FunctionResponse response;
+    try {
+      response = await _client.functions.invoke(
+        functionName,
+        body: body,
+      );
+    } on Object catch (error, stackTrace) {
+      _logApi('invoke $functionName threw', error, stackTrace);
+      rethrow;
+    }
+    _logApi('invoke $functionName status=${response.status}');
     if (response.status < 200 || response.status >= 300) {
       throw StateError(
         'Supabase function failed: ${response.status} ${response.data}',
@@ -224,5 +243,18 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
       return 'image/heif';
     }
     return 'image/jpeg';
+  }
+}
+
+void _logApi(String message, [Object? error, StackTrace? stackTrace]) {
+  developer.log(
+    message,
+    name: 'mymenu.api',
+    error: error,
+    stackTrace: stackTrace,
+  );
+  debugPrint('mymenu.api: $message${error == null ? '' : ' error=$error'}');
+  if (stackTrace != null) {
+    debugPrintStack(label: 'mymenu.api stack', stackTrace: stackTrace);
   }
 }
