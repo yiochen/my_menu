@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mymenu/core/database/app_database.dart' as db;
 import 'package:mymenu/core/network/my_menu_api_client.dart';
 import 'package:mymenu/domain/capture/capture_item.dart' as capture_domain;
@@ -256,6 +257,7 @@ class SyncRepository {
               ))
             .get();
     final List<Dish> createdDishes = <Dish>[];
+    _logSync('processPendingCaptures count=${captures.length}');
 
     for (final db.CaptureItemRow capture in captures) {
       if (capture.status == capture_domain.CaptureItemStatus.discarded.name) {
@@ -263,17 +265,17 @@ class SyncRepository {
       }
 
       try {
+        _logSync(
+          'process capture start id=${capture.id} '
+          'kind=${capture.kind} status=${capture.status}',
+        );
         final Dish? dish = await _processCapture(capture);
         if (dish != null) {
           createdDishes.add(dish);
         }
+        _logSync('process capture complete id=${capture.id}');
       } on Object catch (error, stackTrace) {
-        developer.log(
-          'Capture sync failed.',
-          name: 'mymenu.sync',
-          error: error,
-          stackTrace: stackTrace,
-        );
+        _logSync('capture sync failed id=${capture.id}', error, stackTrace);
         await _markCaptureFailed(capture.id);
       }
     }
@@ -285,10 +287,12 @@ class SyncRepository {
     if (capture.kind == capture_domain.CaptureItemKind.photo.name &&
         capture.localMediaRef != null &&
         remoteMediaRef == null) {
+      _logSync('upload photo start id=${capture.id}');
       remoteMediaRef = await _apiClient.uploadCaptureMedia(
         captureId: capture.id,
         localMediaRef: capture.localMediaRef!,
       );
+      _logSync('upload photo complete id=${capture.id}');
       await (_database.update(_database.captureItems)
             ..where((db.CaptureItems table) => table.id.equals(capture.id)))
           .write(
@@ -301,11 +305,13 @@ class SyncRepository {
       );
     }
 
+    _logSync('classify start id=${capture.id}');
     final ApiClassificationStart result = await _apiClient.classifyCapture(
       captureId: capture.id,
       remoteMediaRef: remoteMediaRef,
       ideaText: capture.ideaText,
     );
+    _logSync('classify complete id=${capture.id} status=${result.status}');
     await (_database.update(_database.captureItems)
           ..where((db.CaptureItems table) => table.id.equals(capture.id)))
         .write(
@@ -325,5 +331,18 @@ class SyncRepository {
         status: Value<String>(capture_domain.CaptureItemStatus.failed.name),
       ),
     );
+  }
+}
+
+void _logSync(String message, [Object? error, StackTrace? stackTrace]) {
+  developer.log(
+    message,
+    name: 'mymenu.sync',
+    error: error,
+    stackTrace: stackTrace,
+  );
+  debugPrint('mymenu.sync: $message${error == null ? '' : ' error=$error'}');
+  if (stackTrace != null) {
+    debugPrintStack(label: 'mymenu.sync stack', stackTrace: stackTrace);
   }
 }

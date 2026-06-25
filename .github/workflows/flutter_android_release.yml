@@ -37,6 +37,22 @@ jobs:
         working-directory: apps/mobile_flutter
         run: flutter pub get
 
+      - name: Configure Android release signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          keystore_path="apps/mobile_flutter/android/mymenu-upload-keystore.p12"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
+          {
+            echo "storeFile=mymenu-upload-keystore.p12"
+            echo "storePassword=$ANDROID_KEYSTORE_PASSWORD"
+            echo "keyAlias=$ANDROID_KEY_ALIAS"
+            echo "keyPassword=$ANDROID_KEY_PASSWORD"
+          } > apps/mobile_flutter/android/key.properties
+
       - name: Build release APK
         run: scripts/install_flutter_android.sh --release --api-mode supabase --build-only
 
