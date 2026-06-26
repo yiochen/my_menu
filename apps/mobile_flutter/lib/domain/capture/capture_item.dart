@@ -8,6 +8,7 @@ enum CaptureItemStatus {
   pendingUpload,
   uploaded,
   classifying,
+  needsReview,
   applied,
   discarded,
   failed,

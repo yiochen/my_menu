@@ -15,6 +15,7 @@ import 'package:mymenu/domain/sync/repositories.dart';
 part 'my_menu_state_capture.dart';
 part 'my_menu_state_dishes.dart';
 part 'my_menu_state_planning.dart';
+part 'my_menu_state_sync.dart';
 
 class MyMenuState extends ChangeNotifier {
   MyMenuState({AppRepositories? repositories})
@@ -36,6 +37,11 @@ class MyMenuState extends ChangeNotifier {
   int? _extraPlanDays;
   final AppRepositories? _repositories;
   bool _isSyncingCaptures = false;
+  Timer? _captureSyncTimer;
+  DateTime? _captureSyncPollingDeadline;
+
+  static const Duration _captureSyncPollInterval = Duration(seconds: 5);
+  static const Duration _captureSyncPollWindow = Duration(minutes: 2);
 
   List<Dish> get dishes => List<Dish>.unmodifiable(_dishes);
   List<PlannedMeal> get plan => List<PlannedMeal>.unmodifiable(_plan);
@@ -43,6 +49,12 @@ class MyMenuState extends ChangeNotifier {
       List<CaptureItem>.unmodifiable(_captureItems);
   List<ReviewItem> get reviewItems =>
       List<ReviewItem>.unmodifiable(_reviewItems);
+
+  @override
+  void dispose() {
+    _captureSyncTimer?.cancel();
+    super.dispose();
+  }
 
   void _notifyChanged() {
     notifyListeners();
@@ -230,6 +242,7 @@ class MyMenuState extends ChangeNotifier {
       );
     }).toList(growable: false);
     notifyListeners();
+    _updateCaptureSyncPolling();
     if (repositories != null) {
       unawaited(repositories.captureRepository.discardCapture(captureId));
     }
@@ -239,6 +252,7 @@ class MyMenuState extends ChangeNotifier {
     final AppRepositories repositories = _repositories!;
     await repositories.seedIfNeeded();
     await _reloadFromRepositories();
+    _updateCaptureSyncPolling();
   }
 
   Future<void> _createPhotoCaptures(List<String> imageRefs) async {
@@ -256,6 +270,7 @@ class MyMenuState extends ChangeNotifier {
     }
 
     await repositories.captureRepository.createPhotoCaptures(imageRefs);
+    _startCaptureSyncPollingWindow();
     await _reloadFromRepositories();
     await _syncCaptures();
   }
@@ -266,22 +281,9 @@ class MyMenuState extends ChangeNotifier {
       return;
     }
     await repositories.captureRepository.createIdeaCapture(text);
+    _startCaptureSyncPollingWindow();
     await _reloadFromRepositories();
     await _syncCaptures();
-  }
-
-  Future<void> _syncCaptures() async {
-    final AppRepositories? repositories = _repositories;
-    if (repositories == null || _isSyncingCaptures) {
-      return;
-    }
-    _isSyncingCaptures = true;
-    try {
-      await repositories.syncRepository.processPendingCaptures();
-      await _reloadFromRepositories();
-    } finally {
-      _isSyncingCaptures = false;
-    }
   }
 
   Future<void> _reloadFromRepositories() async {

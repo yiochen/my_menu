@@ -104,6 +104,15 @@ class SyncOperations extends Table {
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
 }
 
+@DataClassName('SyncMetadataRow')
+class SyncMetadata extends Table {
+  TextColumn get key => text()();
+  TextColumn get value => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{key};
+}
+
 @DriftDatabase(
   tables: <Type>[
     Dishes,
@@ -113,6 +122,7 @@ class SyncOperations extends Table {
     PlannedMeals,
     ReviewItems,
     SyncOperations,
+    SyncMetadata,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -126,9 +136,11 @@ class AppDatabase extends _$AppDatabase {
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
+      onCreate: (Migrator migrator) => migrator.createAll(),
       onUpgrade: (Migrator migrator, int from, int to) async {
         if (from < 2) {
           await migrator.createTable(dishNotes);
+          await migrator.createTable(syncMetadata);
           await _migrateJsonNotesToRows();
         }
       },

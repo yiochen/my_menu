@@ -120,7 +120,7 @@ idempotent. If an upload or mutation is retried, the server can safely treat the
 same `(user_id, id)` as the same object.
 
 For records created by the backend, such as AI draft dishes and AI generated
-images, the server creates the ID and returns it through `sync.pull` or the
+images, the server creates the ID and returns it through `sync-pull` or the
 specific Edge Function response.
 
 ## Core Server Objects
@@ -422,7 +422,22 @@ create index planned_meals_labels_idx
 ### Sync Ledger
 
 The sync ledger gives the client a simple way to pull everything changed since a
-known cursor. Edge Functions write one event per meaningful mutation.
+known cursor. It is a durable per-user changelog for user-visible server
+mutations.
+
+Edge Functions should not write complex multi-table changes directly. They
+should call app-facing Postgres RPCs, and those RPCs should update domain tables
+and emit sync events in the same transaction. The invariant is:
+
+- if a server mutation changes data another device should learn about, the RPC
+  that performs the mutation must call `emit_sync_event`
+- the sync event should describe the product-level outcome, not just the lowest
+  level row update
+- clients use sync events as change signals, then call batch fetch endpoints for
+  the current entity state they need
+
+For example, AI resolving a capture to a dish is one semantic event even though
+it may update `captures`, `dish_images`, and `dishes`.
 
 ```sql
 create table public.sync_events (
@@ -437,6 +452,71 @@ create table public.sync_events (
 
 create index sync_events_user_id_idx on public.sync_events(user_id, id);
 ```
+
+For now, the existing columns can represent semantic event types as
+`entity_type || '.' || operation`. For example:
+
+```txt
+entity_type = 'capture'
+operation = 'applied_to_existing_dish'
+payload = {
+  "captureId": "capture-uuid",
+  "dishId": "dish-uuid",
+  "sourceImageId": "image-uuid"
+}
+```
+
+Capture sync should use these event types:
+
+- `capture.classifying`
+- `capture.needs_review`
+- `capture.applied_to_new_dish`
+- `capture.applied_to_existing_dish`
+- `capture.failed`
+- `capture.discarded`
+
+Future entity deletion events should use `*.deleted`, such as `dish.deleted` or
+`review_item.deleted`. The delete event is the authoritative signal for clients
+to remove or tombstone local rows.
+
+### Sync Cursor Storage
+
+Flutter stores the capture sync cursor locally as `capture_sync_cursor`.
+
+The default value is `0`. After `sync-pull` returns events, the client should:
+
+1. group entity IDs by affected entity type
+2. fetch needed entity details through batch `*.get` endpoints
+3. apply local SQLite upserts, deletes, and tombstones
+4. persist the returned cursor only after all local writes succeed
+
+If processing fails, the client must not advance `capture_sync_cursor`; replaying
+the same events later should be safe.
+
+For `capture.classifying`, the client can skip `get-captures` when that capture
+already exists locally in a classifying state. That event is mainly useful for
+another device, restore flows, or a local record that is missing.
+
+### Sync Event Retention
+
+MVP can keep all `sync_events`. That is simplest and avoids cursor-expiry edge
+cases while the product is small.
+
+Later, the server may prune old events after a generous retention window, such
+as 90 or 180 days. If a client calls `sync-pull` with a cursor older than the
+oldest retained event for that user, the response should ask the client to
+bootstrap instead of pretending the event stream is complete:
+
+```json
+{
+  "requiresBootstrap": true,
+  "reason": "cursor_too_old"
+}
+```
+
+A future `client_sync_devices` table can track each installation's last
+acknowledged cursor. That would allow smarter cleanup based on the minimum active
+device cursor, while expiring devices that have not synced for a long time.
 
 ## Storage
 
@@ -467,11 +547,11 @@ row points to `(storage_bucket, storage_path)`.
 
 1. Flutter creates a local capture with a client-generated `capture_id` and a
    local file path.
-2. Flutter calls `capture.preparePhotoUpload`.
+2. Flutter calls `prepare-photo-upload`.
 3. The Edge Function returns a signed upload URL for a Storage object path. It
    does not create a Postgres capture row yet.
 4. Flutter uploads bytes to the signed URL.
-5. Flutter calls `capture.createPhoto`.
+5. Flutter calls `create-photo`.
 6. The Edge Function creates:
    - one `captures` row with status `classifying`
    - one `dish_images` row with kind `capture_photo`
@@ -515,19 +595,17 @@ bucket URLs.
 
 ## Edge Function API
 
-These are the app-facing APIs. Names are written as logical routes; they can be
-implemented as one `api` Edge Function with path routing, or as separate
-functions.
+These are the app-facing APIs. Names are written as Supabase Edge Function
+names. Use kebab-case to match the current function directories, such as
+`prepare-photo-upload`, `create-photo`, `classify`, `discard`, and
+`process-capture-async`.
 
 All requests require Supabase auth. All responses are JSON.
 
-Implementation can start as one `api` Edge Function with internal routing for
-these app-facing operations. Split operations into separate Edge Functions later
-only if deployment, permissions, runtime limits, or monitoring needs make that
-worth the extra surface area. Do not add empty placeholder functions; add Edge
-Function code when the first real app-facing API is implemented.
+Do not add empty placeholder functions; add Edge Function code when the first
+real app-facing API is implemented.
 
-### `sync.bootstrap`
+### `sync-bootstrap`
 
 Used after login or on a new phone.
 
@@ -550,9 +628,11 @@ Response:
 }
 ```
 
-### `sync.pull`
+### `sync-pull`
 
-Used by the sync worker to fetch server changes.
+Used by the sync worker to fetch server change signals. It returns ordered
+events, not full entity payloads. The client follows these signals with batch
+fetch calls such as `get-captures`, `get-dishes`, and `get-review-items`.
 
 Request:
 
@@ -568,19 +648,47 @@ Response:
 ```json
 {
   "cursor": 130,
+  "hasMore": false,
   "events": [
     {
-      "id": 124,
-      "entityType": "dish",
-      "entityId": "dish-uuid",
-      "operation": "upsert",
-      "payload": {}
+      "cursor": 124,
+      "type": "capture.applied_to_existing_dish",
+      "entityIds": {
+        "captureId": "capture-uuid",
+        "dishId": "dish-uuid",
+        "sourceImageId": "source-image-uuid"
+      }
     }
   ]
 }
 ```
 
-### `sync.push`
+If the client's cursor is older than retained sync history, the server returns:
+
+```json
+{
+  "requiresBootstrap": true,
+  "reason": "cursor_too_old"
+}
+```
+
+For deletion events, the event itself carries the delete signal:
+
+```json
+{
+  "cursor": 140,
+  "type": "dish.deleted",
+  "entityIds": {
+    "dishId": "dish-uuid"
+  }
+}
+```
+
+Clients should apply local deletion or tombstoning from the delete event. A
+missing ID from a later batch `get` response is not by itself a delete signal; it
+may also mean stale ID, permission mismatch, or purged server history.
+
+### `sync-push`
 
 Used for local edits that are not capture uploads, such as favorite toggles,
 notes, recipe edits, image notes, and dish labels.
@@ -616,7 +724,7 @@ Response:
 There is no ID mapping for client-created rows because the client ID is the
 server ID.
 
-### `capture.preparePhotoUpload`
+### `prepare-photo-upload`
 
 Returns a signed upload URL. This does not create a Postgres capture row.
 
@@ -645,7 +753,7 @@ Response:
 }
 ```
 
-### `capture.createPhoto`
+### `create-photo`
 
 Creates the server capture after the image bytes exist in Storage.
 
@@ -682,7 +790,7 @@ Response:
 }
 ```
 
-### `capture.createIdea`
+### `create-idea`
 
 Creates an idea capture and starts classification.
 
@@ -709,7 +817,7 @@ Response:
 }
 ```
 
-### `capture.discard`
+### `discard`
 
 Discards a feed item without deleting its sync history.
 
@@ -731,15 +839,17 @@ Response:
 }
 ```
 
-### `capture.get`
+### `get-captures`
 
-Allows the client to poll one capture after upload/classification.
+Fetches the current server state for multiple captures. `sync-pull` should drive
+when this is needed; clients do not need to fetch an already-local
+`capture.classifying` event unless the capture is missing locally.
 
 Request:
 
 ```json
 {
-  "captureId": "capture-uuid"
+  "ids": ["capture-uuid"]
 }
 ```
 
@@ -747,32 +857,113 @@ Response:
 
 ```json
 {
-  "capture": {
-    "id": "capture-uuid",
-    "kind": "photo",
-    "status": "needs_review",
-    "imageId": "image-uuid",
-    "appliedDishId": null
-  },
-  "image": {
-    "id": "image-uuid",
-    "kind": "capture_photo",
-    "mediaRef": "opaque-media-ref"
-  },
-  "reviewItem": {
-    "id": "review-uuid",
-    "summary": "Possible pho capture.",
-    "suggestedDishIds": ["dish-uuid"],
-    "suggestedNewDish": {
-      "title": "Beef Pho",
-      "description": "AI draft from capture.",
-      "labels": ["noodles", "soup"]
+  "items": [
+    {
+      "id": "capture-uuid",
+      "kind": "photo",
+      "status": "needs_review",
+      "imageId": "image-uuid",
+      "appliedDishId": null,
+      "image": {
+        "id": "image-uuid",
+        "kind": "capture_photo",
+        "mediaRef": "opaque-media-ref"
+      }
     }
-  }
+  ],
+  "missingIds": []
 }
 ```
 
-### `review.resolve`
+Batch `get` endpoints return current non-deleted rows by default. A missing ID is
+reported in `missingIds`, but clients should only remove local state when they
+receive a matching `*.deleted` sync event.
+
+### `get-dishes`
+
+Fetches current dish DTOs for multiple IDs after dish-related sync events, such
+as `capture.applied_to_new_dish`, `capture.applied_to_existing_dish`, or
+`dish.updated`.
+
+Request:
+
+```json
+{
+  "ids": ["dish-uuid"]
+}
+```
+
+Response:
+
+```json
+{
+  "items": [
+    {
+      "id": "dish-uuid",
+      "title": "Beef Pho",
+      "description": "AI draft from capture.",
+      "labels": ["noodles", "soup"],
+      "isFavorite": false,
+      "madeCount": 1,
+      "lastMadeAt": "2026-06-20T12:30:00Z",
+      "coverImage": {
+        "id": "image-uuid",
+        "mediaRef": "opaque-media-ref"
+      },
+      "sourcePhotos": [
+        {
+          "id": "source-image-uuid",
+          "mediaRef": "opaque-media-ref",
+          "capturedAt": "2026-06-20T12:30:00Z",
+          "note": null,
+          "confidenceLabel": "AI"
+        }
+      ],
+      "ingredients": [],
+      "steps": [],
+      "notes": []
+    }
+  ],
+  "missingIds": []
+}
+```
+
+### `get-review-items`
+
+Fetches current review items for multiple IDs after `capture.needs_review` or
+review item sync events.
+
+Request:
+
+```json
+{
+  "ids": ["review-uuid"]
+}
+```
+
+Response:
+
+```json
+{
+  "items": [
+    {
+      "id": "review-uuid",
+      "captureId": "capture-uuid",
+      "summary": "Possible pho capture.",
+      "suggestedDishIds": ["dish-uuid"],
+      "suggestedNewDish": {
+        "title": "Beef Pho",
+        "description": "AI draft from capture.",
+        "labels": ["noodles", "soup"]
+      },
+      "confidenceLabel": "Needs review"
+    }
+  ],
+  "missingIds": []
+}
+```
+
+### `resolve-review`
 
 Resolves an uncertain capture.
 
@@ -813,7 +1004,7 @@ Response:
 }
 ```
 
-### `dish.update`
+### `update-dish`
 
 Updates durable dish fields and details.
 
@@ -845,7 +1036,7 @@ Response:
 }
 ```
 
-### `cover.generate`
+### `generate-cover`
 
 Creates an AI-generated image as a first-class `dish_images` row.
 
@@ -873,7 +1064,7 @@ Response:
 }
 ```
 
-### `plan.replaceWeek`
+### `replace-week-plan`
 
 Replaces a whole week of planned meals. This is intentionally simpler than
 patch-based plan sync. The client sends the final local state for the week, and
@@ -1100,7 +1291,8 @@ Returns:
 
 ### `api_pull_events`
 
-Returns ordered sync events after a cursor.
+Returns ordered sync event signals after a cursor. Entity payloads are hydrated
+through batch fetch endpoints, not embedded in this RPC result.
 
 Inputs:
 
@@ -1111,7 +1303,9 @@ Inputs:
 Returns:
 
 - `cursor bigint`
+- `has_more boolean`
 - `events jsonb`
+- `requires_bootstrap boolean`
 
 ## Capture Classification Outcomes
 
@@ -1123,18 +1317,20 @@ The classifier should produce one of four outcomes:
 4. Confidently create an AI draft dish.
 
 The server should persist the outcome before responding. The client can learn
-about it through `capture.get` polling or `sync.pull`. We do not need WebSockets
+about it through `sync-pull` and follow-on batch fetches such as
+`get-captures`, `get-dishes`, and `get-review-items`. We do not need WebSockets
 for MVP.
 
 ## MVP Implementation Order
 
 1. Create Supabase project, private Storage bucket, tables, enums, RLS, and RPC
    migrations.
-2. Implement `capture.preparePhotoUpload`, `capture.createPhoto`,
-   `capture.createIdea`, `capture.get`, and `capture.discard`.
+2. Implement `prepare-photo-upload`, `create-photo`, `create-idea`,
+   `get-captures`, and `discard`.
 3. Implement fake classification inside an Edge Function matching the current
    Flutter fake API behavior.
-4. Implement `sync.bootstrap` so phone replacement works.
-5. Implement `sync.pull` and `sync.push` for ongoing backup.
+4. Implement `sync-bootstrap` so phone replacement works.
+5. Implement `sync-pull`, `get-dishes`, `get-review-items`, and `sync-push` for
+   ongoing backup.
 6. Implement review resolution.
-7. Implement `cover.generate` with generated images as first-class rows.
+7. Implement `generate-cover` with generated images as first-class rows.

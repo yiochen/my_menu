@@ -21,11 +21,11 @@ allowed_mime_types = ["image/jpeg", "image/png", "image/heic", "image/heif"]
 [edge_runtime]
 policy = "per_worker"
 
-[functions.preparePhotoUpload]
+[functions.prepare-photo-upload]
 enabled = true
 verify_jwt = true
 
-[functions.createPhoto]
+[functions.create-photo]
 enabled = true
 verify_jwt = true
 
@@ -37,6 +37,22 @@ verify_jwt = true
 enabled = true
 verify_jwt = true
 
-[functions.processCaptureAsync]
+[functions.process-capture-async]
 enabled = true
 verify_jwt = false
+
+[functions.sync-pull]
+enabled = true
+verify_jwt = true
+
+[functions.get-captures]
+enabled = true
+verify_jwt = true
+
+[functions.get-dishes]
+enabled = true
+verify_jwt = true
+
+[functions.get-review-items]
+enabled = true
+verify_jwt = true

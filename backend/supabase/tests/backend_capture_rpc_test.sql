@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(20);
+SELECT plan(37);
 
 DO $$
 BEGIN
@@ -48,6 +48,36 @@ SELECT is(
 );
 
 SELECT is(
+  has_schema_privilege('service_role', 'public', 'USAGE'),
+  true,
+  'service_role can use the public schema for Edge Function hydration'
+);
+
+SELECT is(
+  has_table_privilege('service_role', 'public.dishes', 'SELECT'),
+  true,
+  'service_role can select dishes for Edge Function hydration'
+);
+
+SELECT is(
+  has_table_privilege('service_role', 'public.captures', 'SELECT'),
+  true,
+  'service_role can select captures for Edge Function hydration'
+);
+
+SELECT is(
+  has_table_privilege('service_role', 'public.dish_cooking_stats', 'SELECT'),
+  true,
+  'service_role can select dish cooking stats for Edge Function hydration'
+);
+
+SELECT is(
+  has_sequence_privilege('service_role', 'public.sync_events_id_seq', 'USAGE'),
+  true,
+  'service_role can insert sync events with generated cursors'
+);
+
+SELECT is(
   (SELECT capture_id FROM public.api_create_photo_capture(
     '00000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000002',
@@ -73,6 +103,18 @@ SELECT is(
   (SELECT status::text FROM public.captures WHERE id = '10000000-0000-4000-8000-000000000002'),
   'classifying',
   'photo capture starts classifying'
+);
+
+SELECT is(
+  (
+    SELECT operation
+    FROM public.sync_events
+    WHERE entity_id = '10000000-0000-4000-8000-000000000002'
+    ORDER BY id DESC
+    LIMIT 1
+  ),
+  'classifying',
+  'photo capture emits a classifying sync event'
 );
 
 SELECT is(
@@ -126,6 +168,18 @@ SELECT is(
 );
 
 SELECT is(
+  (
+    SELECT operation
+    FROM public.sync_events
+    WHERE entity_id = '10000000-0000-4000-8000-000000000002'
+    ORDER BY id DESC
+    LIMIT 1
+  ),
+  'applied_to_new_dish',
+  'new dish capture emits an applied-to-new-dish sync event'
+);
+
+SELECT is(
   (SELECT capture_id FROM public.api_create_idea_capture(
     '00000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000003',
@@ -162,6 +216,54 @@ BEGIN
   PERFORM *
   FROM public.api_create_photo_capture(
     '00000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000006',
+    'users/00000000-0000-4000-8000-000000000001/captures/10000000-0000-4000-8000-000000000006/original.jpg',
+    'image/jpeg',
+    1234,
+    640,
+    480,
+    'hash-six',
+    '2026-06-22T00:03:00Z'::timestamptz
+  );
+END
+$$;
+
+SELECT is(
+  (SELECT dish_id FROM public.api_apply_capture_to_dish(
+    '00000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000006',
+    '20000000-0000-4000-8000-000000000001',
+    'Existing',
+    'Added to an existing dish.',
+    ARRAY['repeat']
+  )),
+  '20000000-0000-4000-8000-000000000001'::uuid,
+  'api_apply_capture_to_dish returns the existing dish id'
+);
+
+SELECT is(
+  (SELECT status::text FROM public.captures WHERE id = '10000000-0000-4000-8000-000000000006'),
+  'applied',
+  'existing dish capture is marked applied'
+);
+
+SELECT is(
+  (
+    SELECT operation
+    FROM public.sync_events
+    WHERE entity_id = '10000000-0000-4000-8000-000000000006'
+    ORDER BY id DESC
+    LIMIT 1
+  ),
+  'applied_to_existing_dish',
+  'existing dish capture emits an applied-to-existing-dish sync event'
+);
+
+DO $$
+BEGIN
+  PERFORM *
+  FROM public.api_create_photo_capture(
+    '00000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000004',
     'users/00000000-0000-4000-8000-000000000001/captures/10000000-0000-4000-8000-000000000004/original.jpg',
     'image/jpeg',
@@ -179,7 +281,7 @@ SELECT *
 FROM public.api_schedule_capture_processing(
   '00000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000004',
-  'http://127.0.0.1:54321/functions/v1/processCaptureAsync',
+  'http://127.0.0.1:54321/functions/v1/process-capture-async',
   'test-worker-key',
   'users/00000000-0000-4000-8000-000000000001/captures/10000000-0000-4000-8000-000000000004/original.jpg',
   null
@@ -202,7 +304,7 @@ SELECT *
 FROM public.api_schedule_capture_processing(
   '00000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000005',
-  'http://127.0.0.1:54321/functions/v1/processCaptureAsync',
+  'http://127.0.0.1:54321/functions/v1/process-capture-async',
   'test-worker-key',
   null,
   'fried egg rice'
@@ -218,6 +320,90 @@ SELECT is(
   (SELECT idea_text FROM public.captures WHERE id = '10000000-0000-4000-8000-000000000005'),
   'fried egg rice',
   'api_schedule_capture_processing creates idea capture rows before enqueue'
+);
+
+CREATE TEMP TABLE pulled_events AS
+SELECT *
+FROM public.api_pull_events(
+  '00000000-0000-4000-8000-000000000001',
+  0,
+  200
+);
+
+SELECT is(
+  (SELECT has_more FROM pulled_events),
+  false,
+  'api_pull_events reports no more pages when under the limit'
+);
+
+SELECT is(
+  (
+    SELECT events @> '[{"type": "capture.applied_to_existing_dish"}]'::jsonb
+    FROM pulled_events
+  ),
+  true,
+  'api_pull_events returns semantic event types'
+);
+
+SELECT is(
+  (
+    SELECT events @> jsonb_build_array(
+      jsonb_build_object(
+        'type',
+        'capture.applied_to_existing_dish',
+        'entityIds',
+        jsonb_build_object(
+          'captureId',
+          '10000000-0000-4000-8000-000000000006'::uuid,
+          'dishId',
+          '20000000-0000-4000-8000-000000000001'::uuid
+        )
+      )
+    )
+    FROM pulled_events
+  ),
+  true,
+  'api_pull_events includes entity ids needed for batch hydration'
+);
+
+SELECT is(
+  (SELECT requires_bootstrap FROM pulled_events),
+  false,
+  'api_pull_events does not require bootstrap while all events are retained'
+);
+
+CREATE TEMP TABLE pulled_first_page AS
+SELECT *
+FROM public.api_pull_events(
+  '00000000-0000-4000-8000-000000000001',
+  0,
+  1
+);
+
+SELECT is(
+  (SELECT jsonb_array_length(events) FROM pulled_first_page),
+  1,
+  'api_pull_events honors the requested page limit'
+);
+
+SELECT is(
+  (SELECT has_more FROM pulled_first_page),
+  true,
+  'api_pull_events reports more pages when events exceed the limit'
+);
+
+CREATE TEMP TABLE pulled_after_latest AS
+SELECT *
+FROM public.api_pull_events(
+  '00000000-0000-4000-8000-000000000001',
+  (SELECT cursor FROM pulled_events),
+  200
+);
+
+SELECT is(
+  (SELECT events FROM pulled_after_latest),
+  '[]'::jsonb,
+  'api_pull_events filters out events at or before the cursor'
 );
 
 SELECT * FROM finish();

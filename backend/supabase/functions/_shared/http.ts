@@ -67,3 +67,18 @@ export function optionalStringArray(data: JsonRecord, key: string) {
   }
   return value as string[];
 }
+
+export function requiredStringArray(data: JsonRecord, key: string) {
+  const value = data[key];
+  if (!Array.isArray(value)) {
+    throw new Error(`Missing required string array: ${key}`);
+  }
+
+  const values = value.filter((item): item is string =>
+    typeof item === "string" && item.length > 0
+  );
+  if (values.length !== value.length) {
+    throw new Error(`Invalid string array: ${key}`);
+  }
+  return [...new Set(values)];
+}

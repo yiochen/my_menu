@@ -29,7 +29,7 @@ Deno.serve(async (request: Request) => {
     // Triggered when the user takes or selects a photo in Flutter. The client
     // calls this before uploading bytes so the server can choose the
     // user-scoped Storage path and return a signed upload URL. This route
-    // intentionally does not create database rows; createPhoto records metadata
+    // intentionally does not create database rows; create-photo records metadata
     // after upload succeeds.
     const { data, error: uploadError } = await adminClient.storage
       .from("menu-media")
@@ -50,7 +50,7 @@ Deno.serve(async (request: Request) => {
       },
     });
   } catch (error) {
-    console.error("preparePhotoUpload failed", error);
+    console.error("prepare-photo-upload failed", error);
     return json(
       { error: error instanceof Error ? error.message : "Server error" },
       500,

@@ -24,7 +24,7 @@ Deno.serve(async (request: Request) => {
     const captureId = requiredString(body, "captureId");
 
     // Triggered after Flutter uploads the photo bytes to the signed Storage URL
-    // from preparePhotoUpload. The route records the capture and image metadata
+    // from prepare-photo-upload. The route records the capture and image metadata
     // through api_create_photo_capture, leaving the capture classifying until
     // classify starts the AI job or discard rejects it.
     const result = await rpcOne(adminClient, "api_create_photo_capture", {
@@ -56,7 +56,7 @@ Deno.serve(async (request: Request) => {
       cursor: result.sync_cursor,
     });
   } catch (error) {
-    console.error("createPhoto failed", error);
+    console.error("create-photo failed", error);
     return json(
       { error: error instanceof Error ? error.message : "Server error" },
       500,

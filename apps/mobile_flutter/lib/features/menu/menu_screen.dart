@@ -23,52 +23,56 @@ class MenuScreen extends StatelessWidget {
         .toList(growable: false);
     final List<Dish> visibleDishes = state.filterDishes(query);
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
-      children: <Widget>[
-        Text('My Menu', style: Theme.of(context).textTheme.headlineMedium),
-        const SizedBox(height: 12),
-        TextField(
-          key: const ValueKey('menu_search_field'),
-          onChanged: onQueryChanged,
-          decoration: InputDecoration(
-            prefixIcon: const Icon(Icons.search),
-            hintText: 'Search dishes, notes, and categories',
-            filled: true,
-            fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(20),
-              borderSide: BorderSide.none,
+    return RefreshIndicator(
+      onRefresh: state.refreshFromServer,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+        children: <Widget>[
+          Text('My Menu', style: Theme.of(context).textTheme.headlineMedium),
+          const SizedBox(height: 12),
+          TextField(
+            key: const ValueKey('menu_search_field'),
+            onChanged: onQueryChanged,
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.search),
+              hintText: 'Search dishes, notes, and categories',
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide.none,
+              ),
             ),
           ),
-        ),
-        if (favorites.isNotEmpty) ...<Widget>[
+          if (favorites.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 20),
+            Text('Favorites', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 300,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: favorites.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (BuildContext context, int index) {
+                  return SizedBox(
+                    width: 240,
+                    child: DishCard(dish: favorites[index]),
+                  );
+                },
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
-          Text('Favorites', style: Theme.of(context).textTheme.titleLarge),
+          Text('All Dishes', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
-          SizedBox(
-            height: 300,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: favorites.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
-              itemBuilder: (BuildContext context, int index) {
-                return SizedBox(
-                  width: 240,
-                  child: DishCard(dish: favorites[index]),
-                );
-              },
-            ),
-          ),
+          for (final Dish dish in visibleDishes) ...<Widget>[
+            DishCard(dish: dish),
+            const SizedBox(height: 12),
+          ],
         ],
-        const SizedBox(height: 20),
-        Text('All Dishes', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 12),
-        for (final Dish dish in visibleDishes) ...<Widget>[
-          DishCard(dish: dish),
-          const SizedBox(height: 12),
-        ],
-      ],
+      ),
     );
   }
 }

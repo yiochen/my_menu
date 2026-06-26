@@ -170,78 +170,86 @@ class _PlanScreenState extends State<PlanScreen> {
       horizontal: shellTokens.screenHorizontalPadding,
     );
 
-    return ListView(
-      controller: _scrollController,
-      physics: _isDragging ? const NeverScrollableScrollPhysics() : null,
-      padding: EdgeInsets.only(
-        top: tokens.screenTopPadding,
-        bottom: tokens.screenBottomPadding,
-      ),
-      children: <Widget>[
-        Padding(
-          padding: screenPadding,
-          child: _SectionShade(
-            isDimmed: _isDragging,
-            shadeColor: tokens.dragShadeColor,
-            child: _PlanHeader(
-              onOpenReview: widget.onOpenReview,
-              reviewCount: state.reviewItems.length,
+    return RefreshIndicator(
+      onRefresh: state.refreshFromServer,
+      child: ListView(
+        controller: _scrollController,
+        physics: _isDragging
+            ? const NeverScrollableScrollPhysics()
+            : const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.only(
+          top: tokens.screenTopPadding,
+          bottom: tokens.screenBottomPadding,
+        ),
+        children: <Widget>[
+          Padding(
+            padding: screenPadding,
+            child: _SectionShade(
+              isDimmed: _isDragging,
+              shadeColor: tokens.dragShadeColor,
+              child: _PlanHeader(
+                onOpenReview: widget.onOpenReview,
+                reviewCount: state.reviewItems.length,
+                dates: dates,
+              ),
+            ),
+          ),
+          SizedBox(height: tokens.sectionSpacing),
+          Padding(
+            padding: screenPadding,
+            child: _buildTimelineSection(
+              state: state,
               dates: dates,
+              tokens: tokens,
             ),
           ),
-        ),
-        SizedBox(height: tokens.sectionSpacing),
-        Padding(
-          padding: screenPadding,
-          child:
-              _buildTimelineSection(state: state, dates: dates, tokens: tokens),
-        ),
-        SizedBox(height: tokens.sectionSpacing),
-        Padding(
-          padding: screenPadding,
-          child: _SectionShade(
+          SizedBox(height: tokens.sectionSpacing),
+          Padding(
+            padding: screenPadding,
+            child: _SectionShade(
+              isDimmed: _isDragging,
+              shadeColor: tokens.dragShadeColor,
+              child: _CookTonightCard(dish: recommendedDish),
+            ),
+          ),
+          SizedBox(height: tokens.subsectionSpacing),
+          _SectionShade(
             isDimmed: _isDragging,
             shadeColor: tokens.dragShadeColor,
-            child: _CookTonightCard(dish: recommendedDish),
-          ),
-        ),
-        SizedBox(height: tokens.subsectionSpacing),
-        _SectionShade(
-          isDimmed: _isDragging,
-          shadeColor: tokens.dragShadeColor,
-          child: PlanMenuStrip(
-            horizontalPadding: shellTokens.screenHorizontalPadding,
-          ),
-        ),
-        if (state.reviewItems.isNotEmpty) ...<Widget>[
-          SizedBox(height: tokens.reviewSpacing),
-          Padding(
-            padding: screenPadding,
-            child: _SectionShade(
-              isDimmed: _isDragging,
-              shadeColor: tokens.dragShadeColor,
-              child: _ReviewCard(
-                count: state.reviewItems.length,
-                onTap: widget.onOpenReview,
-              ),
+            child: PlanMenuStrip(
+              horizontalPadding: shellTokens.screenHorizontalPadding,
             ),
           ),
-        ],
-        if (state.captureItems.isNotEmpty) ...<Widget>[
-          SizedBox(height: tokens.reviewSpacing),
-          Padding(
-            padding: screenPadding,
-            child: _SectionShade(
-              isDimmed: _isDragging,
-              shadeColor: tokens.dragShadeColor,
-              child: _CaptureFeedCard(
-                count: state.captureItems.length,
-                onTap: widget.onOpenCaptureFeed,
+          if (state.reviewItems.isNotEmpty) ...<Widget>[
+            SizedBox(height: tokens.reviewSpacing),
+            Padding(
+              padding: screenPadding,
+              child: _SectionShade(
+                isDimmed: _isDragging,
+                shadeColor: tokens.dragShadeColor,
+                child: _ReviewCard(
+                  count: state.reviewItems.length,
+                  onTap: widget.onOpenReview,
+                ),
               ),
             ),
-          ),
+          ],
+          if (state.captureItems.isNotEmpty) ...<Widget>[
+            SizedBox(height: tokens.reviewSpacing),
+            Padding(
+              padding: screenPadding,
+              child: _SectionShade(
+                isDimmed: _isDragging,
+                shadeColor: tokens.dragShadeColor,
+                child: _CaptureFeedCard(
+                  count: state.captureItems.length,
+                  onTap: widget.onOpenCaptureFeed,
+                ),
+              ),
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 

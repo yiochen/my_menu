@@ -27,40 +27,44 @@ class DishDetailScreen extends StatelessWidget {
     final GlobalKey sourcesKey = GlobalKey();
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: <Widget>[
-          _DishHero(dish: dish),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 48),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  _DishSummary(dish: dish),
-                  const SizedBox(height: 16),
-                  _DishActions(dishId: dish.id),
-                  const SizedBox(height: 20),
-                  _JumpLinks(
-                    onNotes: () => _scrollTo(notesKey),
-                    onRecipe: () => _scrollTo(recipeKey),
-                    onIngredients: () => _scrollTo(ingredientsKey),
-                    onSources: () => _scrollTo(sourcesKey),
-                  ),
-                  const SizedBox(height: 28),
-                  _NotesSection(key: notesKey, dish: dish),
-                  const SizedBox(height: 26),
-                  _RecipeSection(key: recipeKey, dish: dish),
-                  const SizedBox(height: 26),
-                  _IngredientsSection(key: ingredientsKey, dish: dish),
-                  const SizedBox(height: 26),
-                  _SourcesSection(key: sourcesKey, photos: dish.sourcePhotos),
-                  const SizedBox(height: 30),
-                  _CookAgainAction(dishId: dish.id),
-                ],
+      body: RefreshIndicator(
+        onRefresh: state.refreshFromServer,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: <Widget>[
+            _DishHero(dish: dish),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 48),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    _DishSummary(dish: dish),
+                    const SizedBox(height: 16),
+                    _DishActions(dishId: dish.id),
+                    const SizedBox(height: 20),
+                    _JumpLinks(
+                      onNotes: () => _scrollTo(notesKey),
+                      onRecipe: () => _scrollTo(recipeKey),
+                      onIngredients: () => _scrollTo(ingredientsKey),
+                      onSources: () => _scrollTo(sourcesKey),
+                    ),
+                    const SizedBox(height: 28),
+                    _NotesSection(key: notesKey, dish: dish),
+                    const SizedBox(height: 26),
+                    _RecipeSection(key: recipeKey, dish: dish),
+                    const SizedBox(height: 26),
+                    _IngredientsSection(key: ingredientsKey, dish: dish),
+                    const SizedBox(height: 26),
+                    _SourcesSection(key: sourcesKey, photos: dish.sourcePhotos),
+                    const SizedBox(height: 30),
+                    _CookAgainAction(dishId: dish.id),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

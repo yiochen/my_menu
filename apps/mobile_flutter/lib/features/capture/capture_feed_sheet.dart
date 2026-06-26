@@ -18,22 +18,26 @@ Future<void> showCaptureFeedSheet(
           animation: state,
           builder: (BuildContext context, _) {
             final List<CaptureItem> items = state.captureItems;
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-              children: <Widget>[
-                Text(
-                  'Capture Feed',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: 12),
-                if (items.isEmpty)
-                  const Text('No captures yet.')
-                else
-                  for (final CaptureItem item in items) ...<Widget>[
-                    _CaptureFeedCard(item: item, state: state),
-                    const SizedBox(height: 12),
-                  ],
-              ],
+            return RefreshIndicator(
+              onRefresh: state.refreshFromServer,
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+                children: <Widget>[
+                  Text(
+                    'Capture Feed',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 12),
+                  if (items.isEmpty)
+                    const Text('No captures yet.')
+                  else
+                    for (final CaptureItem item in items) ...<Widget>[
+                      _CaptureFeedCard(item: item, state: state),
+                      const SizedBox(height: 12),
+                    ],
+                ],
+              ),
             );
           },
         ),
@@ -104,6 +108,7 @@ class _CaptureFeedCard extends StatelessWidget {
       CaptureItemStatus.pendingUpload => 'Waiting to upload',
       CaptureItemStatus.uploaded => 'Uploaded',
       CaptureItemStatus.classifying => 'Organizing with fake API',
+      CaptureItemStatus.needsReview => 'Needs review',
       CaptureItemStatus.applied => 'Applied to menu',
       CaptureItemStatus.discarded => 'Discarded',
       CaptureItemStatus.failed => 'Failed',
