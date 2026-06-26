@@ -13,6 +13,7 @@ import 'package:mymenu/domain/planning/seeded_plan.dart';
 import 'package:mymenu/domain/sync/repositories.dart';
 
 part 'my_menu_state_capture.dart';
+part 'my_menu_state_dishes.dart';
 part 'my_menu_state_planning.dart';
 
 class MyMenuState extends ChangeNotifier {
@@ -140,10 +141,10 @@ class MyMenuState extends ChangeNotifier {
       lastMadeLabel: 'Not cooked yet',
       ingredients: template.ingredients,
       recipeSteps: template.recipeSteps,
-      notes: <String>[
+      notes: _notesFor('dish_$idBase${_dishes.length}', const <String>[
         'Captured as an idea.',
         'Add real source photos after the next cook.',
-      ],
+      ]),
       sourcePhotos: const <SourcePhoto>[],
     );
 
@@ -190,7 +191,9 @@ class MyMenuState extends ChangeNotifier {
       lastMadeLabel: 'Today',
       ingredients: template.ingredients,
       recipeSteps: template.recipeSteps,
-      notes: <String>['Created from capture: $summary'],
+      notes: _notesFor('dish_capture_${_dishes.length}', <String>[
+        'Created from capture: $summary',
+      ]),
       sourcePhotos: <SourcePhoto>[
         SourcePhoto(
           url: template.heroImageUrl,

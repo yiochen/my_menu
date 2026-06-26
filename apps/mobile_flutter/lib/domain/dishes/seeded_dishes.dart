@@ -28,11 +28,11 @@ final List<Dish> seededDishes = <Dish>[
       'Add lemon zest, juice, parmesan, and a splash of pasta water to make a glossy sauce.',
       'Toss in linguine, adjust with more pasta water, and finish with parsley.',
     ],
-    notes: <String>[
+    notes: _notes('dish_linguine', <String>[
       'Use more lemon next time.',
       'Kids liked the version with extra parmesan.',
       'Do not overcook the garlic.',
-    ],
+    ]),
     sourcePhotos: const <SourcePhoto>[
       SourcePhoto(
         url:
@@ -75,10 +75,10 @@ final List<Dish> seededDishes = <Dish>[
       'Layer noodles, thinly sliced beef, and hot broth into bowls.',
       'Serve with sprouts, basil, lime, and chile on the side.',
     ],
-    notes: <String>[
+    notes: _notes('dish_pho', <String>[
       'Broth improves overnight.',
       'Add charred onion when there is time.',
-    ],
+    ]),
     sourcePhotos: const <SourcePhoto>[
       SourcePhoto(
         url:
@@ -120,10 +120,10 @@ final List<Dish> seededDishes = <Dish>[
       'Simmer onion and carrot, then melt in curry roux with water.',
       'Slice the chicken and serve over rice with plenty of curry sauce.',
     ],
-    notes: <String>[
+    notes: _notes('dish_katsu', <String>[
       'Double the curry sauce.',
       'Best with shredded cabbage.',
-    ],
+    ]),
     sourcePhotos: const <SourcePhoto>[
       SourcePhoto(
         url:
@@ -161,10 +161,10 @@ final List<Dish> seededDishes = <Dish>[
       'Assemble bowls with rice, cucumber, and salmon.',
       'Finish with sesame seeds and any quick pickles in the fridge.',
     ],
-    notes: <String>[
+    notes: _notes('dish_salmon', <String>[
       'Great fast dinner.',
       'Try with brown rice when meal prepping.',
-    ],
+    ]),
     sourcePhotos: const <SourcePhoto>[
       SourcePhoto(
         url:
@@ -182,3 +182,14 @@ final List<Dish> seededDishes = <Dish>[
     ],
   ),
 ];
+
+List<DishNote> _notes(String dishId, List<String> bodies) {
+  return bodies.asMap().entries.map((MapEntry<int, String> entry) {
+    return DishNote(
+      id: '${dishId}_note_${entry.key}',
+      dishId: dishId,
+      body: entry.value,
+      position: entry.key,
+    );
+  }).toList(growable: false);
+}

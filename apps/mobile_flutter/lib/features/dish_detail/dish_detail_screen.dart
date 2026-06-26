@@ -7,7 +7,10 @@ import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/improve_cover/improve_cover_dialog.dart';
 import 'package:mymenu/features/plan/plan_dish_dialog.dart';
 import 'package:mymenu/shared/widgets/app_image.dart';
-import 'package:mymenu/shared/widgets/info_section.dart';
+
+part 'dish_detail_editors.dart';
+part 'dish_detail_sections.dart';
+part 'dish_detail_sources.dart';
 
 class DishDetailScreen extends StatelessWidget {
   const DishDetailScreen({required this.dishId, super.key});
@@ -18,6 +21,10 @@ class DishDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final MyMenuState state = MyMenuScope.of(context);
     final Dish dish = state.dishById(dishId);
+    final GlobalKey notesKey = GlobalKey();
+    final GlobalKey recipeKey = GlobalKey();
+    final GlobalKey ingredientsKey = GlobalKey();
+    final GlobalKey sourcesKey = GlobalKey();
 
     return Scaffold(
       body: CustomScrollView(
@@ -25,65 +32,48 @@ class DishDetailScreen extends StatelessWidget {
           _DishHero(dish: dish),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 48),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   _DishSummary(dish: dish),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   _DishActions(dishId: dish.id),
+                  const SizedBox(height: 20),
+                  _JumpLinks(
+                    onNotes: () => _scrollTo(notesKey),
+                    onRecipe: () => _scrollTo(recipeKey),
+                    onIngredients: () => _scrollTo(ingredientsKey),
+                    onSources: () => _scrollTo(sourcesKey),
+                  ),
                   const SizedBox(height: 28),
-                  InfoSection(
-                    title: 'Ingredients',
-                    child: Column(
-                      children: dish.ingredients.map((String item) {
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
-                          title: Text(item),
-                        );
-                      }).toList(growable: false),
-                    ),
-                  ),
-                  InfoSection(
-                    title: 'Recipe',
-                    child: Column(
-                      children: dish.recipeSteps.asMap().entries.map((
-                        MapEntry<int, String> entry,
-                      ) {
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: CircleAvatar(
-                            radius: 14,
-                            child: Text('${entry.key + 1}'),
-                          ),
-                          title: Text(entry.value),
-                        );
-                      }).toList(growable: false),
-                    ),
-                  ),
-                  InfoSection(
-                    title: 'Notes',
-                    child: Column(
-                      children: dish.notes.map((String note) {
-                        return ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: const Icon(Icons.sticky_note_2_outlined),
-                          title: Text(note),
-                        );
-                      }).toList(growable: false),
-                    ),
-                  ),
-                  InfoSection(
-                    title: 'Sources',
-                    child: _SourcePhotoStrip(photos: dish.sourcePhotos),
-                  ),
+                  _NotesSection(key: notesKey, dish: dish),
+                  const SizedBox(height: 26),
+                  _RecipeSection(key: recipeKey, dish: dish),
+                  const SizedBox(height: 26),
+                  _IngredientsSection(key: ingredientsKey, dish: dish),
+                  const SizedBox(height: 26),
+                  _SourcesSection(key: sourcesKey, photos: dish.sourcePhotos),
+                  const SizedBox(height: 30),
+                  _CookAgainAction(dishId: dish.id),
                 ],
               ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  void _scrollTo(GlobalKey key) {
+    final BuildContext? context = key.currentContext;
+    if (context == null) {
+      return;
+    }
+    Scrollable.ensureVisible(
+      context,
+      duration: const Duration(milliseconds: 280),
+      curve: Curves.easeOutCubic,
     );
   }
 }
@@ -99,9 +89,10 @@ class _DishHero extends StatelessWidget {
 
     return SliverAppBar(
       pinned: true,
-      expandedHeight: 300,
+      expandedHeight: 340,
       actions: <Widget>[
         IconButton(
+          tooltip: 'Favorite',
           onPressed: () => state.toggleFavorite(dish.id),
           icon: Icon(dish.isFavorite ? Icons.favorite : Icons.favorite_border),
         ),
@@ -117,10 +108,20 @@ class _DishHero extends StatelessWidget {
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: <Color>[
-                    Colors.black.withValues(alpha: 0.6),
-                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.68),
+                    Colors.black.withValues(alpha: 0.08),
                   ],
                 ),
+              ),
+            ),
+            Positioned(
+              left: 20,
+              right: 20,
+              bottom: 22,
+              child: FilledButton.icon(
+                onPressed: () => showImproveCoverDialog(context, state, dish.id),
+                icon: const Icon(Icons.auto_awesome),
+                label: const Text('Improve Cover'),
               ),
             ),
           ],
@@ -169,104 +170,15 @@ class _DishActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final MyMenuState state = MyMenuScope.of(context);
 
-    return Row(
-      children: <Widget>[
-        FilledButton.icon(
-          onPressed: () => showImproveCoverDialog(context, state, dishId),
-          icon: const Icon(Icons.auto_awesome),
-          label: const Text('Improve Cover'),
-        ),
-        const SizedBox(width: 10),
-        OutlinedButton.icon(
-          onPressed: () => showPlanDishDialog(
-            context,
-            state,
-            initialDayKey: dayKeyForDate(state.remainingPlanDates().first),
-            initialDishId: dishId,
-          ),
-          icon: const Icon(Icons.calendar_month),
-          label: const Text('Plan Dish'),
-        ),
-      ],
-    );
-  }
-}
-
-class _SourcePhotoStrip extends StatelessWidget {
-  const _SourcePhotoStrip({required this.photos});
-
-  final List<SourcePhoto> photos;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 180,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: photos.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (BuildContext context, int index) {
-          return _SourcePhotoCard(photo: photos[index]);
-        },
+    return OutlinedButton.icon(
+      onPressed: () => showPlanDishDialog(
+        context,
+        state,
+        initialDayKey: dayKeyForDate(state.remainingPlanDates().first),
+        initialDishId: dishId,
       ),
-    );
-  }
-}
-
-class _SourcePhotoCard extends StatelessWidget {
-  const _SourcePhotoCard({required this.photo});
-
-  final SourcePhoto photo;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 220,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          fit: StackFit.expand,
-          children: <Widget>[
-            AppImage(imageRef: photo.url, fit: BoxFit.cover),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: <Color>[
-                    Colors.black.withValues(alpha: 0.65),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-              left: 12,
-              right: 12,
-              bottom: 12,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    photo.capturedLabel,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  if (photo.note != null)
-                    Text(
-                      photo.note!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+      icon: const Icon(Icons.calendar_month),
+      label: const Text('Plan Dish'),
     );
   }
 }

@@ -69,6 +69,61 @@ void main() {
       expect(saved.sourcePhotos.length, original.sourcePhotos.length);
     });
 
+    test('dish repository hydrates notes from separate rows', () async {
+      await repositories.seedIfNeeded();
+
+      final List<Dish> dishes = await repositories.dishRepository.listDishes();
+      final Dish linguine =
+          dishes.firstWhere((Dish dish) => dish.id == 'dish_linguine');
+
+      expect(linguine.notes, hasLength(3));
+      expect(linguine.notes.first.id, 'dish_linguine_note_0');
+      expect(linguine.notes.first.body, 'Use more lemon next time.');
+    });
+
+    test('dish repository creates, updates, and deletes note rows', () async {
+      await repositories.seedIfNeeded();
+      final Dish dish = (await repositories.dishRepository.listDishes()).first;
+
+      final DishNote note =
+          await repositories.dishRepository.createNote(dish.id, ' Add lime ');
+      await repositories.dishRepository.updateNote(note.id, 'Add lime zest');
+      var dishes = await repositories.dishRepository.listDishes();
+      var saved = dishes.firstWhere((Dish item) => item.id == dish.id);
+
+      expect(saved.notes.last.body, 'Add lime zest');
+
+      await repositories.dishRepository.deleteNote(note.id);
+      dishes = await repositories.dishRepository.listDishes();
+      saved = dishes.firstWhere((Dish item) => item.id == dish.id);
+
+      expect(saved.notes.any((DishNote item) => item.id == note.id), isFalse);
+      expect(
+        (await database.select(database.syncOperations).get())
+            .where((row) => row.entity == 'dish_note'),
+        hasLength(3),
+      );
+    });
+
+    test('sync repository sends pending note operations', () async {
+      final _RecordingApiClient apiClient = _RecordingApiClient();
+      repositories = AppRepositories(
+        database: database,
+        apiClient: apiClient,
+      );
+      await repositories.seedIfNeeded();
+      final Dish dish = (await repositories.dishRepository.listDishes()).first;
+
+      final DishNote note =
+          await repositories.dishRepository.createNote(dish.id, 'Use chives');
+      await repositories.syncRepository.processPendingOperations();
+      final List<SyncOperationRow> operations =
+          await database.select(database.syncOperations).get();
+
+      expect(apiClient.createdNoteIds, <String>[note.id]);
+      expect(operations.where((row) => row.completedAt != null), hasLength(1));
+    });
+
     test('photo capture sync starts backend classification', () async {
       await repositories.seedIfNeeded();
       await repositories.captureRepository.createPhotoCaptures(
@@ -250,6 +305,7 @@ class _RecordingApiClient implements MyMenuApiClient {
   final List<String> uploadedCaptureIds = <String>[];
   final List<String> classifiedCaptureIds = <String>[];
   final List<String?> classifiedRemoteMediaRefs = <String?>[];
+  final List<String> createdNoteIds = <String>[];
 
   @override
   Future<String> uploadCaptureMedia({
@@ -273,6 +329,33 @@ class _RecordingApiClient implements MyMenuApiClient {
       status: CaptureItemStatus.classifying.name,
     );
   }
+
+  @override
+  Future<void> createDishNote({
+    required String noteId,
+    required String dishId,
+    required String body,
+    required int position,
+  }) async {
+    createdNoteIds.add(noteId);
+  }
+
+  @override
+  Future<void> updateDishNote({
+    required String noteId,
+    required String body,
+    required int? position,
+  }) async {}
+
+  @override
+  Future<void> deleteDishNote({required String noteId}) async {}
+
+  @override
+  Future<void> updateDish({
+    required String clientMutationId,
+    required String dishId,
+    required Map<String, Object?> patch,
+  }) async {}
 }
 
 class _ThrowingApiClient implements MyMenuApiClient {
@@ -289,6 +372,39 @@ class _ThrowingApiClient implements MyMenuApiClient {
     required String captureId,
     required String? remoteMediaRef,
     required String? ideaText,
+  }) {
+    throw StateError('Remote sync unavailable.');
+  }
+
+  @override
+  Future<void> createDishNote({
+    required String noteId,
+    required String dishId,
+    required String body,
+    required int position,
+  }) {
+    throw StateError('Remote sync unavailable.');
+  }
+
+  @override
+  Future<void> updateDishNote({
+    required String noteId,
+    required String body,
+    required int? position,
+  }) {
+    throw StateError('Remote sync unavailable.');
+  }
+
+  @override
+  Future<void> deleteDishNote({required String noteId}) {
+    throw StateError('Remote sync unavailable.');
+  }
+
+  @override
+  Future<void> updateDish({
+    required String clientMutationId,
+    required String dishId,
+    required Map<String, Object?> patch,
   }) {
     throw StateError('Remote sync unavailable.');
   }

@@ -44,3 +44,26 @@ export function optionalNumber(data: JsonRecord, key: string) {
   const value = data[key];
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
+
+export function requiredObject(data: JsonRecord, key: string) {
+  const value = data[key];
+  if (
+    typeof value !== "object" || value == null || Array.isArray(value)
+  ) {
+    throw new Error(`Missing required object: ${key}`);
+  }
+  return value as JsonRecord;
+}
+
+export function optionalStringArray(data: JsonRecord, key: string) {
+  const value = data[key];
+  if (value == null) {
+    return null;
+  }
+  if (
+    !Array.isArray(value) || !value.every((item) => typeof item === "string")
+  ) {
+    throw new Error(`Expected string array: ${key}`);
+  }
+  return value as string[];
+}

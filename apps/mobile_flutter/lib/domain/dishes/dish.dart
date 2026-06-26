@@ -27,7 +27,7 @@ class Dish {
   final String lastMadeLabel;
   final List<String> ingredients;
   final List<String> recipeSteps;
-  final List<String> notes;
+  final List<DishNote> notes;
   final List<SourcePhoto> sourcePhotos;
   final bool isFavorite;
 
@@ -42,7 +42,7 @@ class Dish {
     String? lastMadeLabel,
     List<String>? ingredients,
     List<String>? recipeSteps,
-    List<String>? notes,
+    List<DishNote>? notes,
     List<SourcePhoto>? sourcePhotos,
     bool? isFavorite,
   }) {
@@ -61,6 +61,32 @@ class Dish {
       notes: notes ?? this.notes,
       sourcePhotos: sourcePhotos ?? this.sourcePhotos,
       isFavorite: isFavorite ?? this.isFavorite,
+    );
+  }
+}
+
+class DishNote {
+  const DishNote({
+    required this.id,
+    required this.dishId,
+    required this.body,
+    required this.position,
+  });
+
+  final String id;
+  final String dishId;
+  final String body;
+  final int position;
+
+  DishNote copyWith({
+    String? body,
+    int? position,
+  }) {
+    return DishNote(
+      id: id,
+      dishId: dishId,
+      body: body ?? this.body,
+      position: position ?? this.position,
     );
   }
 }

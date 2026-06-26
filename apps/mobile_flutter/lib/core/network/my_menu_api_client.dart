@@ -60,6 +60,27 @@ abstract class MyMenuApiClient {
     required String? remoteMediaRef,
     required String? ideaText,
   });
+
+  Future<void> createDishNote({
+    required String noteId,
+    required String dishId,
+    required String body,
+    required int position,
+  });
+
+  Future<void> updateDishNote({
+    required String noteId,
+    required String body,
+    required int? position,
+  });
+
+  Future<void> deleteDishNote({required String noteId});
+
+  Future<void> updateDish({
+    required String clientMutationId,
+    required String dishId,
+    required Map<String, Object?> patch,
+  });
 }
 
 class FakeMyMenuApiClient implements MyMenuApiClient {
@@ -84,6 +105,31 @@ class FakeMyMenuApiClient implements MyMenuApiClient {
       status: 'classifying',
     );
   }
+
+  @override
+  Future<void> createDishNote({
+    required String noteId,
+    required String dishId,
+    required String body,
+    required int position,
+  }) async {}
+
+  @override
+  Future<void> updateDishNote({
+    required String noteId,
+    required String body,
+    required int? position,
+  }) async {}
+
+  @override
+  Future<void> deleteDishNote({required String noteId}) async {}
+
+  @override
+  Future<void> updateDish({
+    required String clientMutationId,
+    required String dishId,
+    required Map<String, Object?> patch,
+  }) async {}
 }
 
 class SupabaseMyMenuApiClient implements MyMenuApiClient {
@@ -155,6 +201,68 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
     return ApiClassificationStart(
       captureId: _stringValue(data, 'captureId'),
       status: _stringValue(data, 'status'),
+    );
+  }
+
+  @override
+  Future<void> createDishNote({
+    required String noteId,
+    required String dishId,
+    required String body,
+    required int position,
+  }) async {
+    await _ensureSession();
+    await _invokeJson(
+      'createDishNote',
+      <String, Object?>{
+        'noteId': noteId,
+        'dishId': dishId,
+        'body': body,
+        'position': position,
+      },
+    );
+  }
+
+  @override
+  Future<void> updateDishNote({
+    required String noteId,
+    required String body,
+    required int? position,
+  }) async {
+    await _ensureSession();
+    await _invokeJson(
+      'updateDishNote',
+      <String, Object?>{
+        'noteId': noteId,
+        'body': body,
+        if (position != null) 'position': position,
+      },
+    );
+  }
+
+  @override
+  Future<void> deleteDishNote({required String noteId}) async {
+    await _ensureSession();
+    await _invokeJson(
+      'deleteDishNote',
+      <String, Object?>{'noteId': noteId},
+    );
+  }
+
+  @override
+  Future<void> updateDish({
+    required String clientMutationId,
+    required String dishId,
+    required Map<String, Object?> patch,
+  }) async {
+    await _ensureSession();
+    await _invokeJson(
+      'updateDish',
+      <String, Object?>{
+        'clientMutationId': clientMutationId,
+        'dishId': dishId,
+        'patch': patch,
+      },
     );
   }
 

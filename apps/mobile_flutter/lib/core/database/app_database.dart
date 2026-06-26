@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
@@ -18,6 +20,20 @@ class Dishes extends Table {
   TextColumn get recipeStepsJson => text()();
   TextColumn get notesJson => text()();
   BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{id};
+}
+
+@DataClassName('DishNoteRow')
+class DishNotes extends Table {
+  TextColumn get id => text()();
+  TextColumn get dishId => text()();
+  TextColumn get body => text()();
+  IntColumn get position => integer()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
@@ -91,6 +107,7 @@ class SyncOperations extends Table {
 @DriftDatabase(
   tables: <Type>[
     Dishes,
+    DishNotes,
     SourcePhotos,
     CaptureItems,
     PlannedMeals,
@@ -104,7 +121,46 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onUpgrade: (Migrator migrator, int from, int to) async {
+        if (from < 2) {
+          await migrator.createTable(dishNotes);
+          await _migrateJsonNotesToRows();
+        }
+      },
+    );
+  }
+
+  Future<void> _migrateJsonNotesToRows() async {
+    final List<DishRow> dishRows = await select(dishes).get();
+    for (final DishRow dish in dishRows) {
+      final Object? decoded = jsonDecode(dish.notesJson);
+      if (decoded is! List<dynamic>) {
+        continue;
+      }
+      for (int index = 0; index < decoded.length; index += 1) {
+        final Object? value = decoded[index];
+        if (value is! String || value.trim().isEmpty) {
+          continue;
+        }
+        final DateTime now = DateTime.now();
+        await into(dishNotes).insert(
+          DishNotesCompanion.insert(
+            id: '${dish.id}_note_$index',
+            dishId: dish.id,
+            body: value,
+            position: index,
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+      }
+    }
+  }
 }
 
 QueryExecutor _openConnection() {
