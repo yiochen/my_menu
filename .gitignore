@@ -4,6 +4,9 @@
 # local tooling
 .claude/
 .vscode/
+.env
+.env.*
+!.env.example
 backend/supabase/.branches/
 backend/supabase/.temp/
 
