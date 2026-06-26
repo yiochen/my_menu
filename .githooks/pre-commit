@@ -6,4 +6,11 @@ if [[ "${SKIP_LOCAL_CHECKS:-0}" == "1" ]]; then
   exit 0
 fi
 
+# Git exports repository-local environment variables to hooks. Flutter shells
+# out to Git while resolving its own SDK version, so clear those variables
+# before running checks that invoke tools from other Git repositories.
+while IFS= read -r name; do
+  unset "$name"
+done < <(git rev-parse --local-env-vars)
+
 scripts/check_all.sh

@@ -2,7 +2,7 @@
 
 Supabase migrations, functions, and storage policy code belong here.
 
-Use project ref `ydzoibvdnumaejurhuyo`.
+Use the Supabase project ref from `SUPABASE_PROJECT_REF`.
 
 Run Supabase CLI commands from `backend/`, not from the repository root:
 
@@ -10,7 +10,7 @@ Run Supabase CLI commands from `backend/`, not from the repository root:
 cd backend
 supabase login
 supabase init
-supabase link --project-ref ydzoibvdnumaejurhuyo
+supabase link --project-ref "$SUPABASE_PROJECT_REF"
 ```
 
 Install the CLI on macOS with:
@@ -28,8 +28,8 @@ provided:
 
 ```bash
 flutter run \
-  --dart-define=SUPABASE_URL=https://ydzoibvdnumaejurhuyo.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=<publishable-anon-key>
+  --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+  --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
 ```
 
 Without those defines, Flutter should continue to use the fake API client for

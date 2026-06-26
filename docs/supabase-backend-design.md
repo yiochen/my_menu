@@ -21,13 +21,13 @@ they switch phones.
 The Supabase project for this backend is:
 
 ```txt
-ydzoibvdnumaejurhuyo
+<supabase-project-ref>
 ```
 
 The dashboard URL is:
 
 ```txt
-https://supabase.com/dashboard/project/ydzoibvdnumaejurhuyo
+https://supabase.com/dashboard/project/<supabase-project-ref>
 ```
 
 Keep the Supabase CLI project under `backend/supabase/`. Run Supabase CLI
@@ -41,7 +41,7 @@ brew install supabase/tap/supabase
 cd backend
 supabase login
 supabase init
-supabase link --project-ref ydzoibvdnumaejurhuyo
+supabase link --project-ref "$SUPABASE_PROJECT_REF"
 ```
 
 If `supabase init` has already created `backend/supabase/config.toml`, do not
@@ -53,8 +53,8 @@ anon key as Dart defines:
 ```bash
 cd apps/mobile_flutter
 flutter run \
-  --dart-define=SUPABASE_URL=https://ydzoibvdnumaejurhuyo.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=<publishable-anon-key>
+  --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+  --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY"
 ```
 
 If either Dart define is missing, the app uses the local fake API client for
