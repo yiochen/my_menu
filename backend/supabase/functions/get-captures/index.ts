@@ -5,6 +5,7 @@ import {
   requiredStringArray,
 } from "../_shared/http.ts";
 import { imageDto } from "../_shared/media.ts";
+import { optionalStringValue, stringValue } from "../_shared/row.ts";
 import { requireUser } from "../_shared/supabase.ts";
 
 Deno.serve(async (request: Request) => {
@@ -95,16 +96,3 @@ Deno.serve(async (request: Request) => {
     );
   }
 });
-
-function stringValue(row: Record<string, unknown>, key: string) {
-  const value = row[key];
-  if (typeof value !== "string" || value.length === 0) {
-    throw new Error(`Expected string at ${key}`);
-  }
-  return value;
-}
-
-function optionalStringValue(row: Record<string, unknown>, key: string) {
-  const value = row[key];
-  return typeof value === "string" ? value : null;
-}

@@ -1,5 +1,36 @@
 DateTime startOfDay(DateTime date) => DateTime(date.year, date.month, date.day);
 
+String monthShort(DateTime date) {
+  const List<String> months = <String>[
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return months[date.month - 1];
+}
+
+String weekdayShort(DateTime date) {
+  const List<String> weekdays = <String>[
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat',
+    'Sun',
+  ];
+  return weekdays[date.weekday - 1];
+}
+
 String dayKeyForDate(DateTime date) {
   final DateTime normalized = startOfDay(date);
   final String month = normalized.month.toString().padLeft(2, '0');

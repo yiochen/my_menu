@@ -4,6 +4,12 @@ import {
   readJson,
   requiredStringArray,
 } from "../_shared/http.ts";
+import {
+  objectValue,
+  optionalStringValue,
+  stringArrayValue,
+  stringValue,
+} from "../_shared/row.ts";
 import { requireUser } from "../_shared/supabase.ts";
 
 Deno.serve(async (request: Request) => {
@@ -60,30 +66,3 @@ Deno.serve(async (request: Request) => {
     );
   }
 });
-
-function stringValue(row: Record<string, unknown>, key: string) {
-  const value = row[key];
-  if (typeof value !== "string" || value.length === 0) {
-    throw new Error(`Expected string at ${key}`);
-  }
-  return value;
-}
-
-function optionalStringValue(row: Record<string, unknown>, key: string) {
-  const value = row[key];
-  return typeof value === "string" ? value : null;
-}
-
-function stringArrayValue(row: Record<string, unknown>, key: string) {
-  const value = row[key];
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === "string")
-    : [];
-}
-
-function objectValue(row: Record<string, unknown>, key: string) {
-  const value = row[key];
-  return typeof value === "object" && value != null
-    ? value as Record<string, unknown>
-    : null;
-}

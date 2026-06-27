@@ -5,6 +5,14 @@ import {
   requiredStringArray,
 } from "../_shared/http.ts";
 import { imageDto, signedMediaRef } from "../_shared/media.ts";
+import {
+  booleanValue,
+  numberValue,
+  optionalNumberValue,
+  optionalStringValue,
+  stringArrayValue,
+  stringValue,
+} from "../_shared/row.ts";
 import { requireUser } from "../_shared/supabase.ts";
 
 Deno.serve(async (request: Request) => {
@@ -216,42 +224,4 @@ async function sourcePhotoDtos(
     });
   }
   return items;
-}
-
-function stringValue(row: Record<string, unknown>, key: string) {
-  const value = row[key];
-  if (typeof value !== "string" || value.length === 0) {
-    throw new Error(`Expected string at ${key}`);
-  }
-  return value;
-}
-
-function optionalStringValue(row: Record<string, unknown>, key: string) {
-  const value = row[key];
-  return typeof value === "string" ? value : null;
-}
-
-function optionalNumberValue(row: Record<string, unknown>, key: string) {
-  const value = row[key];
-  return typeof value === "number" && Number.isFinite(value) ? value : null;
-}
-
-function numberValue(
-  row: Record<string, unknown>,
-  key: string,
-  fallback: number,
-) {
-  return optionalNumberValue(row, key) ?? fallback;
-}
-
-function booleanValue(row: Record<string, unknown>, key: string) {
-  const value = row[key];
-  return typeof value === "boolean" ? value : false;
-}
-
-function stringArrayValue(row: Record<string, unknown>, key: string) {
-  const value = row[key];
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === "string")
-    : [];
 }

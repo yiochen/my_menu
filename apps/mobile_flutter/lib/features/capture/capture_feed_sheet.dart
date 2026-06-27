@@ -1,45 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/shared/widgets/animated_state_sheet.dart';
 import 'package:mymenu/shared/widgets/app_image.dart';
 
 Future<void> showCaptureFeedSheet(
   BuildContext context,
   MyMenuState state,
 ) async {
-  await showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
+  await showAnimatedStateSheet(
+    context,
+    animation: state,
+    heightFactor: 0.82,
     builder: (BuildContext context) {
-      return FractionallySizedBox(
-        heightFactor: 0.82,
-        child: AnimatedBuilder(
-          animation: state,
-          builder: (BuildContext context, _) {
-            final List<CaptureItem> items = state.captureItems;
-            return RefreshIndicator(
-              onRefresh: state.refreshFromServer,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-                children: <Widget>[
-                  Text(
-                    'Capture Feed',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 12),
-                  if (items.isEmpty)
-                    const Text('No captures yet.')
-                  else
-                    for (final CaptureItem item in items) ...<Widget>[
-                      _CaptureFeedCard(item: item, state: state),
-                      const SizedBox(height: 12),
-                    ],
-                ],
-              ),
-            );
-          },
+      final List<CaptureItem> items = state.captureItems;
+      return RefreshIndicator(
+        onRefresh: state.refreshFromServer,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+          children: <Widget>[
+            Text(
+              'Capture Feed',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 12),
+            if (items.isEmpty)
+              const Text('No captures yet.')
+            else
+              for (final CaptureItem item in items) ...<Widget>[
+                _CaptureFeedCard(item: item, state: state),
+                const SizedBox(height: 12),
+              ],
+          ],
         ),
       );
     },

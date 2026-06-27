@@ -86,12 +86,7 @@ class _MenuDishCard extends StatelessWidget {
           side: const BorderSide(color: Color(0xFFE8DFD2)),
         ),
         child: InkWell(
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (BuildContext context) =>
-                  DishDetailScreen(dishId: dish.id),
-            ),
-          ),
+          onTap: () => DishDetailScreen.navigate(context, dish.id),
           child: Stack(
             fit: StackFit.expand,
             children: <Widget>[

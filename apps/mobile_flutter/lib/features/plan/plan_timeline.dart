@@ -16,37 +16,6 @@ part 'plan_timeline_drag_drop_ui.dart';
 part 'plan_timeline_label_chip.dart';
 part 'plan_timeline_row.dart';
 
-String monthShort(DateTime date) {
-  const List<String> months = <String>[
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  return months[date.month - 1];
-}
-
-String weekdayShort(DateTime date) {
-  const List<String> weekdays = <String>[
-    'Mon',
-    'Tue',
-    'Wed',
-    'Thu',
-    'Fri',
-    'Sat',
-    'Sun',
-  ];
-  return weekdays[date.weekday - 1];
-}
-
 typedef PlanDragDropPayload = DragDropPayload<String, String, PlannedMeal>;
 typedef PlanDragDropSession = DragDropSession<String, String, PlannedMeal>;
 typedef PlanDragDropMove = DragDropMove<String, String, PlannedMeal>;

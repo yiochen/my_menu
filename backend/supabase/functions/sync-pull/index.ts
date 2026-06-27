@@ -4,6 +4,7 @@ import {
   optionalNumber,
   readJson,
 } from "../_shared/http.ts";
+import { booleanValue } from "../_shared/row.ts";
 import { requireUser, rpcOne } from "../_shared/supabase.ts";
 
 Deno.serve(async (request: Request) => {
@@ -29,7 +30,7 @@ Deno.serve(async (request: Request) => {
     });
 
     return json({
-      cursor: numberValue(result, "cursor", afterCursor),
+      cursor: numberValueOrParse(result, "cursor", afterCursor),
       hasMore: booleanValue(result, "has_more", false),
       requiresBootstrap: booleanValue(result, "requires_bootstrap", false),
       events: Array.isArray(result.events) ? result.events : [],
@@ -43,7 +44,7 @@ Deno.serve(async (request: Request) => {
   }
 });
 
-function numberValue(
+function numberValueOrParse(
   data: Record<string, unknown>,
   key: string,
   fallback: number,
@@ -57,13 +58,4 @@ function numberValue(
     return Number.isFinite(parsed) ? parsed : fallback;
   }
   return fallback;
-}
-
-function booleanValue(
-  data: Record<string, unknown>,
-  key: string,
-  fallback: boolean,
-) {
-  const value = data[key];
-  return typeof value === "boolean" ? value : fallback;
 }
