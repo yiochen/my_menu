@@ -219,14 +219,5 @@ class _PlanDishForm extends StatelessWidget {
 }
 
 String _dateLabel(DateTime date) {
-  const List<String> weekdays = <String>[
-    'Mon',
-    'Tue',
-    'Wed',
-    'Thu',
-    'Fri',
-    'Sat',
-    'Sun',
-  ];
-  return '${weekdays[date.weekday - 1]}, ${date.month}/${date.day}';
+  return '${weekdayShort(date)}, ${date.month}/${date.day}';
 }

@@ -14,6 +14,14 @@ class DishDetailScreen extends StatelessWidget {
 
   final String dishId;
 
+  static void navigate(BuildContext context, String dishId) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => DishDetailScreen(dishId: dishId),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final MyMenuState state = MyMenuScope.of(context);

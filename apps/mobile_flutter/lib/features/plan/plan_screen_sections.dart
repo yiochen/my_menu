@@ -54,12 +54,7 @@ class _CookTonightCard extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(tokens.cookTonightCardRadius),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (BuildContext context) =>
-                DishDetailScreen(dishId: dish.id),
-          ),
-        ),
+        onTap: () => DishDetailScreen.navigate(context, dish.id),
         child: Padding(
           padding: tokens.cookTonightCardPadding,
           child: Column(

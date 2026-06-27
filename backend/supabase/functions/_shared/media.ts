@@ -1,3 +1,4 @@
+import { stringValue } from "./row.ts";
 import type { SupabaseClientAny } from "./supabase.ts";
 
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
@@ -30,12 +31,4 @@ export async function imageDto(
     kind: stringValue(row, "kind"),
     mediaRef: await signedMediaRef(adminClient, bucket, path),
   };
-}
-
-function stringValue(row: Record<string, unknown>, key: string) {
-  const value = row[key];
-  if (typeof value !== "string" || value.length === 0) {
-    throw new Error(`Expected string at ${key}`);
-  }
-  return value;
 }

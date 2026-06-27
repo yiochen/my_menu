@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
+import 'package:mymenu/shared/widgets/text_prompt_dialog.dart';
 
 enum CaptureAction {
   takePhoto,
@@ -110,12 +111,15 @@ Future<void> showCaptureSheet(
         () => mediaService.importPhotos(),
       );
     case CaptureAction.addIdea:
-      await _showTextPrompt(
+      final String? idea = await showTextPromptDialog(
         context,
         title: 'Add Idea',
         hint: 'Lemongrass chicken bowls',
-        onSubmit: state.addIdea,
+        autofocus: true,
       );
+      if (idea != null) {
+        state.addIdea(idea);
+      }
   }
 }
 
@@ -269,42 +273,4 @@ class _CaptureActionTile extends StatelessWidget {
       ),
     );
   }
-}
-
-Future<void> _showTextPrompt(
-  BuildContext context, {
-  required String title,
-  required String hint,
-  required ValueChanged<String> onSubmit,
-}) async {
-  String value = '';
-  await showDialog<void>(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text(title),
-        content: TextFormField(
-          autofocus: true,
-          maxLines: 3,
-          decoration: InputDecoration(hintText: hint),
-          onChanged: (String nextValue) {
-            value = nextValue;
-          },
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              onSubmit(value);
-              Navigator.of(context).pop();
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      );
-    },
-  );
 }

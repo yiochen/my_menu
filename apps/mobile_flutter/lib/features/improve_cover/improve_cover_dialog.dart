@@ -1,41 +1,20 @@
 import 'package:flutter/material.dart';
 
 import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/shared/widgets/text_prompt_dialog.dart';
 
 Future<void> showImproveCoverDialog(
   BuildContext context,
   MyMenuState state,
   String dishId,
 ) async {
-  String prompt = '';
-  await showDialog<void>(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: const Text('Improve Cover'),
-        content: TextFormField(
-          maxLines: 3,
-          decoration: const InputDecoration(
-            hintText: 'Sharper plating, brighter bowl, cleaner background',
-          ),
-          onChanged: (String value) {
-            prompt = value;
-          },
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              state.improveCover(dishId, prompt);
-              Navigator.of(context).pop();
-            },
-            child: const Text('Run'),
-          ),
-        ],
-      );
-    },
+  final String? prompt = await showTextPromptDialog(
+    context,
+    title: 'Improve Cover',
+    hint: 'Sharper plating, brighter bowl, cleaner background',
+    submitLabel: 'Run',
   );
+  if (prompt != null) {
+    state.improveCover(dishId, prompt);
+  }
 }
