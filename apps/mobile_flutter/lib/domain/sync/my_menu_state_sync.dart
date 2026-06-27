@@ -23,6 +23,8 @@ extension MyMenuStateSync on MyMenuState {
       await repositories.syncRepository.processPendingCaptures();
       await repositories.syncRepository.pullCaptureSync();
       await _reloadFromRepositories();
+    } on Object catch (error, stackTrace) {
+      _logState('_syncCaptures failed', error, stackTrace);
     } finally {
       _isSyncingCaptures = false;
       _updateCaptureSyncPolling();
@@ -38,6 +40,8 @@ extension MyMenuStateSync on MyMenuState {
     try {
       await repositories.syncRepository.pullCaptureSync();
       await _reloadFromRepositories();
+    } on Object catch (error, stackTrace) {
+      _logState('_pullCaptureSync failed', error, stackTrace);
     } finally {
       _isSyncingCaptures = false;
       _updateCaptureSyncPolling();
@@ -117,5 +121,18 @@ extension MyMenuStateSync on MyMenuState {
           false,
       };
     });
+  }
+}
+
+void _logState(String message, [Object? error, StackTrace? stackTrace]) {
+  developer.log(
+    message,
+    name: 'mymenu.state',
+    error: error,
+    stackTrace: stackTrace,
+  );
+  debugPrint('mymenu.state: $message${error == null ? '' : ' error=$error'}');
+  if (stackTrace != null) {
+    debugPrintStack(label: 'mymenu.state stack', stackTrace: stackTrace);
   }
 }

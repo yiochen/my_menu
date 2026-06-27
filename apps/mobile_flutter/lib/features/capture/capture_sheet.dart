@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 
 import 'package:mymenu/domain/sync/my_menu_state.dart';
@@ -140,7 +142,13 @@ Future<void> _savePhotoCaptures(
         ),
       ),
     );
-  } on Exception catch (_) {
+  } on Exception catch (error, stackTrace) {
+    developer.log(
+      'Photo capture failed',
+      name: 'mymenu.capture',
+      error: error,
+      stackTrace: stackTrace,
+    );
     if (!context.mounted) {
       return;
     }

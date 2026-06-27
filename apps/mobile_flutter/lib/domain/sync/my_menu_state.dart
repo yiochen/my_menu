@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart';
 
@@ -241,15 +242,24 @@ class MyMenuState extends ChangeNotifier {
     notifyListeners();
     _updateCaptureSyncPolling();
     if (repositories != null) {
-      unawaited(repositories.captureRepository.discardCapture(captureId));
+      unawaited(
+        repositories.captureRepository.discardCapture(captureId).catchError(
+          (Object error, StackTrace stackTrace) =>
+              _logState('discardCapture failed id=$captureId', error, stackTrace),
+        ),
+      );
     }
   }
 
   Future<void> _bootstrapRepositories() async {
     final AppRepositories repositories = _repositories!;
-    await repositories.seedIfNeeded();
-    await _reloadFromRepositories();
-    _updateCaptureSyncPolling();
+    try {
+      await repositories.seedIfNeeded();
+      await _reloadFromRepositories();
+      _updateCaptureSyncPolling();
+    } on Object catch (error, stackTrace) {
+      _logState('_bootstrapRepositories failed', error, stackTrace);
+    }
   }
 
   Future<void> _createPhotoCaptures(List<String> imageRefs) async {
@@ -266,10 +276,14 @@ class MyMenuState extends ChangeNotifier {
       return;
     }
 
-    await repositories.captureRepository.createPhotoCaptures(imageRefs);
-    _startCaptureSyncPollingWindow();
-    await _reloadFromRepositories();
-    await _syncCaptures();
+    try {
+      await repositories.captureRepository.createPhotoCaptures(imageRefs);
+      _startCaptureSyncPollingWindow();
+      await _reloadFromRepositories();
+      await _syncCaptures();
+    } on Object catch (error, stackTrace) {
+      _logState('_createPhotoCaptures failed', error, stackTrace);
+    }
   }
 
   Future<void> _createIdeaCapture(String text) async {
@@ -277,10 +291,14 @@ class MyMenuState extends ChangeNotifier {
     if (repositories == null) {
       return;
     }
-    await repositories.captureRepository.createIdeaCapture(text);
-    _startCaptureSyncPollingWindow();
-    await _reloadFromRepositories();
-    await _syncCaptures();
+    try {
+      await repositories.captureRepository.createIdeaCapture(text);
+      _startCaptureSyncPollingWindow();
+      await _reloadFromRepositories();
+      await _syncCaptures();
+    } on Object catch (error, stackTrace) {
+      _logState('_createIdeaCapture failed', error, stackTrace);
+    }
   }
 
   Future<void> _reloadFromRepositories() async {
