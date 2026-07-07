@@ -13,21 +13,28 @@ Future<void> _showNoteEditor(
   await showDialog<void>(
     context: context,
     builder: (BuildContext dialogContext) {
-      return AlertDialog(
-        title: Text(note == null ? 'Add Note' : 'Edit Note'),
+      return AppDialog(
+        title: note == null ? 'Add Note' : 'Edit Note',
+        subtitle: 'Capture the little thing you want to remember next time.',
+        icon: Icons.sticky_note_2_outlined,
         content: TextField(
           controller: controller,
-          minLines: 3,
-          maxLines: 6,
+          minLines: 4,
+          maxLines: 7,
           autofocus: true,
+          textCapitalization: TextCapitalization.sentences,
           decoration: const InputDecoration(hintText: 'Use more lemon.'),
         ),
-        actions: <Widget>[
-          TextButton(
+        actions: <AppDialogAction>[
+          AppDialogAction(
+            label: 'Cancel',
+            icon: Icons.close,
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
           ),
-          FilledButton(
+          AppDialogAction(
+            label: 'Save',
+            icon: Icons.check,
+            isPrimary: true,
             onPressed: () {
               if (note == null) {
                 state.addDishNote(dishId, controller.text);
@@ -36,12 +43,12 @@ Future<void> _showNoteEditor(
               }
               Navigator.of(dialogContext).pop();
             },
-            child: const Text('Save'),
           ),
         ],
       );
     },
   );
+  controller.dispose();
 }
 
 Future<void> _showListEditor(
@@ -58,20 +65,29 @@ Future<void> _showListEditor(
   await showDialog<void>(
     context: context,
     builder: (BuildContext dialogContext) {
-      return AlertDialog(
-        title: Text('Edit $title'),
+      return AppDialog(
+        title: 'Edit $title',
+        subtitle: 'Keep one item per line so the dish stays easy to scan.',
+        icon: title == 'Ingredients'
+            ? Icons.format_list_bulleted
+            : Icons.menu_book_outlined,
         content: TextField(
           controller: controller,
-          minLines: 8,
-          maxLines: 12,
+          minLines: 9,
+          maxLines: 13,
           autofocus: true,
+          textCapitalization: TextCapitalization.sentences,
         ),
-        actions: <Widget>[
-          TextButton(
+        actions: <AppDialogAction>[
+          AppDialogAction(
+            label: 'Cancel',
+            icon: Icons.close,
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
           ),
-          FilledButton(
+          AppDialogAction(
+            label: 'Save',
+            icon: Icons.check,
+            isPrimary: true,
             onPressed: () {
               final List<String> items = controller.text
                   .split('\n')
@@ -81,10 +97,10 @@ Future<void> _showListEditor(
               onSave(state, items);
               Navigator.of(dialogContext).pop();
             },
-            child: const Text('Save'),
           ),
         ],
       );
     },
   );
+  controller.dispose();
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
+import 'package:mymenu/shared/widgets/app_dialog.dart';
 
 enum CaptureAction {
   takePhoto,
@@ -281,8 +282,10 @@ Future<void> _showTextPrompt(
   await showDialog<void>(
     context: context,
     builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text(title),
+      return AppDialog(
+        title: title,
+        subtitle: 'Add just enough detail to recognize it later.',
+        icon: Icons.edit_note_outlined,
         content: TextFormField(
           autofocus: true,
           maxLines: 3,
@@ -291,17 +294,20 @@ Future<void> _showTextPrompt(
             value = nextValue;
           },
         ),
-        actions: <Widget>[
-          TextButton(
+        actions: <AppDialogAction>[
+          AppDialogAction(
+            label: 'Cancel',
+            icon: Icons.close,
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
           ),
-          FilledButton(
+          AppDialogAction(
+            label: 'Save',
+            icon: Icons.check,
+            isPrimary: true,
             onPressed: () {
               onSubmit(value);
               Navigator.of(context).pop();
             },
-            child: const Text('Save'),
           ),
         ],
       );
