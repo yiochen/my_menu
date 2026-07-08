@@ -203,6 +203,9 @@ extension SyncRepositoryPull on SyncRepository {
     await (_database.delete(_database.sourcePhotos)
           ..where((db.SourcePhotos table) => table.dishId.equals(apiDish.id)))
         .go();
+    await (_database.delete(_database.dishNotes)
+          ..where((db.DishNotes table) => table.dishId.equals(apiDish.id)))
+        .go();
     for (final ApiSourcePhoto photo in apiDish.sourcePhotos) {
       await _database.into(_database.sourcePhotos).insertOnConflictUpdate(
             db.SourcePhotosCompanion.insert(
@@ -212,6 +215,19 @@ extension SyncRepositoryPull on SyncRepository {
               capturedLabel: _capturedLabel(photo.capturedAt),
               note: Value<String?>(photo.note),
               confidenceLabel: Value<String?>(photo.confidenceLabel),
+            ),
+          );
+    }
+    for (int index = 0; index < apiDish.notes.length; index += 1) {
+      final DateTime now = DateTime.now();
+      await _database.into(_database.dishNotes).insertOnConflictUpdate(
+            db.DishNotesCompanion.insert(
+              id: '${apiDish.id}_server_note_$index',
+              dishId: apiDish.id,
+              body: apiDish.notes[index],
+              position: index,
+              createdAt: now,
+              updatedAt: now,
             ),
           );
     }
@@ -247,7 +263,7 @@ extension SyncRepositoryPull on SyncRepository {
       lastMadeLabel: _lastMadeLabel(dish.lastMadeAt),
       ingredients: dish.ingredients,
       recipeSteps: dish.steps,
-      notes: dish.notes,
+      notes: _notesFromApi(dish),
       sourcePhotos: dish.sourcePhotos.map((ApiSourcePhoto photo) {
         return SourcePhoto(
           url: photo.mediaRef,
@@ -258,6 +274,17 @@ extension SyncRepositoryPull on SyncRepository {
       }).toList(growable: false),
       isFavorite: dish.isFavorite,
     );
+  }
+
+  List<DishNote> _notesFromApi(ApiDish dish) {
+    return dish.notes.asMap().entries.map((MapEntry<int, String> entry) {
+      return DishNote(
+        id: '${dish.id}_server_note_${entry.key}',
+        dishId: dish.id,
+        body: entry.value,
+        position: entry.key,
+      );
+    }).toList(growable: false);
   }
 
   String _localCaptureStatus(String status) {

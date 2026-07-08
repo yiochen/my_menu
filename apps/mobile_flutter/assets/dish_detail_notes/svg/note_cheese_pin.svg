@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="500" viewBox="0 0 720 500">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="13" flood-color="#3a2c1d" flood-opacity="0.14"/>
+    </filter>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbf3df"/>
+      <stop offset="0.55" stop-color="#fffaf0"/>
+      <stop offset="1" stop-color="#efe3c9"/>
+    </linearGradient>
+    <radialGradient id="pin" cx="0.3" cy="0.22" r="0.7">
+      <stop offset="0" stop-color="#f5ca72"/>
+      <stop offset="0.65" stop-color="#cf9a3f"/>
+      <stop offset="1" stop-color="#94651e"/>
+    </radialGradient>
+  </defs>
+  <rect width="720" height="500" fill="#fffcf7"/>
+  <g transform="rotate(-0.5 360 250)">
+    <rect x="34" y="75" width="652" height="356" rx="16" fill="url(#paper)" filter="url(#shadow)"/>
+    <path d="M72 167 H650 M72 229 H650 M72 291 H650 M72 353 H650" stroke="#d9cdb5" stroke-width="3" opacity="0.42"/>
+    <path d="M64 102 C220 86 372 114 678 94" stroke="#fff7e7" stroke-width="26" opacity="0.18"/>
+  </g>
+  <g transform="translate(80 160)" fill="none" stroke="#c58a2e" stroke-linecap="round" stroke-linejoin="round" stroke-width="8" opacity="0.78">
+    <path d="M12 88 L12 28 L92 -12 L150 30 L150 103 Z"/>
+    <path d="M12 28 L150 30"/>
+    <path d="M40 45 C51 37 64 43 66 55 C68 67 59 77 47 74 C36 72 30 55 40 45 Z"/>
+    <path d="M100 55 C109 45 126 47 132 60 C139 75 124 88 111 82 C101 78 94 65 100 55 Z"/>
+    <path d="M45 101 C49 85 63 82 73 93 C78 81 92 80 101 92 C110 83 126 85 134 101"/>
+    <circle cx="82" cy="33" r="4"/>
+    <circle cx="113" cy="28" r="3"/>
+  </g>
+  <circle cx="355" cy="58" r="22" fill="url(#pin)" filter="url(#shadow)"/>
+  <circle cx="348" cy="51" r="8" fill="#ffe1a0" opacity="0.65"/>
+</svg>

@@ -661,6 +661,389 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
   }
 }
 
+class $DishNotesTable extends DishNotes
+    with TableInfo<$DishNotesTable, DishNoteRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DishNotesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _dishIdMeta = const VerificationMeta('dishId');
+  @override
+  late final GeneratedColumn<String> dishId = GeneratedColumn<String>(
+      'dish_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _bodyMeta = const VerificationMeta('body');
+  @override
+  late final GeneratedColumn<String> body = GeneratedColumn<String>(
+      'body', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _positionMeta =
+      const VerificationMeta('position');
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+      'position', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _deletedAtMeta =
+      const VerificationMeta('deletedAt');
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+      'deleted_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, dishId, body, position, createdAt, updatedAt, deletedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'dish_notes';
+  @override
+  VerificationContext validateIntegrity(Insertable<DishNoteRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('dish_id')) {
+      context.handle(_dishIdMeta,
+          dishId.isAcceptableOrUnknown(data['dish_id']!, _dishIdMeta));
+    } else if (isInserting) {
+      context.missing(_dishIdMeta);
+    }
+    if (data.containsKey('body')) {
+      context.handle(
+          _bodyMeta, body.isAcceptableOrUnknown(data['body']!, _bodyMeta));
+    } else if (isInserting) {
+      context.missing(_bodyMeta);
+    }
+    if (data.containsKey('position')) {
+      context.handle(_positionMeta,
+          position.isAcceptableOrUnknown(data['position']!, _positionMeta));
+    } else if (isInserting) {
+      context.missing(_positionMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(_deletedAtMeta,
+          deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DishNoteRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DishNoteRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      dishId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}dish_id'])!,
+      body: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}body'])!,
+      position: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}position'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      deletedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}deleted_at']),
+    );
+  }
+
+  @override
+  $DishNotesTable createAlias(String alias) {
+    return $DishNotesTable(attachedDatabase, alias);
+  }
+}
+
+class DishNoteRow extends DataClass implements Insertable<DishNoteRow> {
+  final String id;
+  final String dishId;
+  final String body;
+  final int position;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final DateTime? deletedAt;
+  const DishNoteRow(
+      {required this.id,
+      required this.dishId,
+      required this.body,
+      required this.position,
+      required this.createdAt,
+      required this.updatedAt,
+      this.deletedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['dish_id'] = Variable<String>(dishId);
+    map['body'] = Variable<String>(body);
+    map['position'] = Variable<int>(position);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    return map;
+  }
+
+  DishNotesCompanion toCompanion(bool nullToAbsent) {
+    return DishNotesCompanion(
+      id: Value(id),
+      dishId: Value(dishId),
+      body: Value(body),
+      position: Value(position),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+    );
+  }
+
+  factory DishNoteRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DishNoteRow(
+      id: serializer.fromJson<String>(json['id']),
+      dishId: serializer.fromJson<String>(json['dishId']),
+      body: serializer.fromJson<String>(json['body']),
+      position: serializer.fromJson<int>(json['position']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'dishId': serializer.toJson<String>(dishId),
+      'body': serializer.toJson<String>(body),
+      'position': serializer.toJson<int>(position),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+    };
+  }
+
+  DishNoteRow copyWith(
+          {String? id,
+          String? dishId,
+          String? body,
+          int? position,
+          DateTime? createdAt,
+          DateTime? updatedAt,
+          Value<DateTime?> deletedAt = const Value.absent()}) =>
+      DishNoteRow(
+        id: id ?? this.id,
+        dishId: dishId ?? this.dishId,
+        body: body ?? this.body,
+        position: position ?? this.position,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+        deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+      );
+  DishNoteRow copyWithCompanion(DishNotesCompanion data) {
+    return DishNoteRow(
+      id: data.id.present ? data.id.value : this.id,
+      dishId: data.dishId.present ? data.dishId.value : this.dishId,
+      body: data.body.present ? data.body.value : this.body,
+      position: data.position.present ? data.position.value : this.position,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DishNoteRow(')
+          ..write('id: $id, ')
+          ..write('dishId: $dishId, ')
+          ..write('body: $body, ')
+          ..write('position: $position, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, dishId, body, position, createdAt, updatedAt, deletedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DishNoteRow &&
+          other.id == this.id &&
+          other.dishId == this.dishId &&
+          other.body == this.body &&
+          other.position == this.position &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.deletedAt == this.deletedAt);
+}
+
+class DishNotesCompanion extends UpdateCompanion<DishNoteRow> {
+  final Value<String> id;
+  final Value<String> dishId;
+  final Value<String> body;
+  final Value<int> position;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> deletedAt;
+  final Value<int> rowid;
+  const DishNotesCompanion({
+    this.id = const Value.absent(),
+    this.dishId = const Value.absent(),
+    this.body = const Value.absent(),
+    this.position = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DishNotesCompanion.insert({
+    required String id,
+    required String dishId,
+    required String body,
+    required int position,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.deletedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        dishId = Value(dishId),
+        body = Value(body),
+        position = Value(position),
+        createdAt = Value(createdAt),
+        updatedAt = Value(updatedAt);
+  static Insertable<DishNoteRow> custom({
+    Expression<String>? id,
+    Expression<String>? dishId,
+    Expression<String>? body,
+    Expression<int>? position,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? deletedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (dishId != null) 'dish_id': dishId,
+      if (body != null) 'body': body,
+      if (position != null) 'position': position,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DishNotesCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? dishId,
+      Value<String>? body,
+      Value<int>? position,
+      Value<DateTime>? createdAt,
+      Value<DateTime>? updatedAt,
+      Value<DateTime?>? deletedAt,
+      Value<int>? rowid}) {
+    return DishNotesCompanion(
+      id: id ?? this.id,
+      dishId: dishId ?? this.dishId,
+      body: body ?? this.body,
+      position: position ?? this.position,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (dishId.present) {
+      map['dish_id'] = Variable<String>(dishId.value);
+    }
+    if (body.present) {
+      map['body'] = Variable<String>(body.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DishNotesCompanion(')
+          ..write('id: $id, ')
+          ..write('dishId: $dishId, ')
+          ..write('body: $body, ')
+          ..write('position: $position, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $SourcePhotosTable extends SourcePhotos
     with TableInfo<$SourcePhotosTable, SourcePhotoRow> {
   @override
@@ -2648,6 +3031,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $DishesTable dishes = $DishesTable(this);
+  late final $DishNotesTable dishNotes = $DishNotesTable(this);
   late final $SourcePhotosTable sourcePhotos = $SourcePhotosTable(this);
   late final $CaptureItemsTable captureItems = $CaptureItemsTable(this);
   late final $PlannedMealsTable plannedMeals = $PlannedMealsTable(this);
@@ -2660,6 +3044,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
         dishes,
+        dishNotes,
         sourcePhotos,
         captureItems,
         plannedMeals,
@@ -2959,6 +3344,201 @@ typedef $$DishesTableProcessedTableManager = ProcessedTableManager<
     $$DishesTableUpdateCompanionBuilder,
     (DishRow, BaseReferences<_$AppDatabase, $DishesTable, DishRow>),
     DishRow,
+    PrefetchHooks Function()>;
+typedef $$DishNotesTableCreateCompanionBuilder = DishNotesCompanion Function({
+  required String id,
+  required String dishId,
+  required String body,
+  required int position,
+  required DateTime createdAt,
+  required DateTime updatedAt,
+  Value<DateTime?> deletedAt,
+  Value<int> rowid,
+});
+typedef $$DishNotesTableUpdateCompanionBuilder = DishNotesCompanion Function({
+  Value<String> id,
+  Value<String> dishId,
+  Value<String> body,
+  Value<int> position,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<DateTime?> deletedAt,
+  Value<int> rowid,
+});
+
+class $$DishNotesTableFilterComposer
+    extends Composer<_$AppDatabase, $DishNotesTable> {
+  $$DishNotesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get dishId => $composableBuilder(
+      column: $table.dishId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get body => $composableBuilder(
+      column: $table.body, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get position => $composableBuilder(
+      column: $table.position, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+      column: $table.deletedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$DishNotesTableOrderingComposer
+    extends Composer<_$AppDatabase, $DishNotesTable> {
+  $$DishNotesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get dishId => $composableBuilder(
+      column: $table.dishId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get body => $composableBuilder(
+      column: $table.body, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get position => $composableBuilder(
+      column: $table.position, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+      column: $table.deletedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$DishNotesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DishNotesTable> {
+  $$DishNotesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get dishId =>
+      $composableBuilder(column: $table.dishId, builder: (column) => column);
+
+  GeneratedColumn<String> get body =>
+      $composableBuilder(column: $table.body, builder: (column) => column);
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+}
+
+class $$DishNotesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $DishNotesTable,
+    DishNoteRow,
+    $$DishNotesTableFilterComposer,
+    $$DishNotesTableOrderingComposer,
+    $$DishNotesTableAnnotationComposer,
+    $$DishNotesTableCreateCompanionBuilder,
+    $$DishNotesTableUpdateCompanionBuilder,
+    (DishNoteRow, BaseReferences<_$AppDatabase, $DishNotesTable, DishNoteRow>),
+    DishNoteRow,
+    PrefetchHooks Function()> {
+  $$DishNotesTableTableManager(_$AppDatabase db, $DishNotesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DishNotesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DishNotesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DishNotesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> dishId = const Value.absent(),
+            Value<String> body = const Value.absent(),
+            Value<int> position = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<DateTime?> deletedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              DishNotesCompanion(
+            id: id,
+            dishId: dishId,
+            body: body,
+            position: position,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            deletedAt: deletedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String dishId,
+            required String body,
+            required int position,
+            required DateTime createdAt,
+            required DateTime updatedAt,
+            Value<DateTime?> deletedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              DishNotesCompanion.insert(
+            id: id,
+            dishId: dishId,
+            body: body,
+            position: position,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            deletedAt: deletedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$DishNotesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $DishNotesTable,
+    DishNoteRow,
+    $$DishNotesTableFilterComposer,
+    $$DishNotesTableOrderingComposer,
+    $$DishNotesTableAnnotationComposer,
+    $$DishNotesTableCreateCompanionBuilder,
+    $$DishNotesTableUpdateCompanionBuilder,
+    (DishNoteRow, BaseReferences<_$AppDatabase, $DishNotesTable, DishNoteRow>),
+    DishNoteRow,
     PrefetchHooks Function()>;
 typedef $$SourcePhotosTableCreateCompanionBuilder = SourcePhotosCompanion
     Function({
@@ -4047,6 +4627,8 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$DishesTableTableManager get dishes =>
       $$DishesTableTableManager(_db, _db.dishes);
+  $$DishNotesTableTableManager get dishNotes =>
+      $$DishNotesTableTableManager(_db, _db.dishNotes);
   $$SourcePhotosTableTableManager get sourcePhotos =>
       $$SourcePhotosTableTableManager(_db, _db.sourcePhotos);
   $$CaptureItemsTableTableManager get captureItems =>

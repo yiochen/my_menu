@@ -38,7 +38,9 @@ Dish _dishFromPhotoReview(ReviewItem item, int dishCount, Dish template) {
     lastMadeLabel: 'Today',
     ingredients: template.ingredients,
     recipeSteps: template.recipeSteps,
-    notes: <String>['Created from capture.'],
+    notes: _notesFor('dish_capture_$dishCount', const <String>[
+      'Created from capture.',
+    ]),
     sourcePhotos: <SourcePhoto>[
       SourcePhoto(
         url: item.imageRef!,

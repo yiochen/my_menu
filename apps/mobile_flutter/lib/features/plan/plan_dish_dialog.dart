@@ -4,8 +4,16 @@ import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/planning/plan_dates.dart';
 import 'package:mymenu/domain/planning/planned_meal.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/shared/widgets/app_dialog.dart';
 
 const List<String> planLabels = <String>['Lunch', 'Dinner', 'Brunch'];
+
+const Color _dialogGreen = Color(0xFF174B2A);
+const Color _dialogCream = Color(0xFFFFFCF7);
+const Color _dialogField = Color(0xFFF8F2E8);
+const Color _dialogGold = Color(0xFFB06D00);
+const Color _dialogBorder = Color(0xFFE8DFD2);
+const Color _dialogInk = Color(0xFF253027);
 
 Future<void> showPlanDishDialog(
   BuildContext context,
@@ -55,6 +63,13 @@ class _PlanDishDialogState extends State<_PlanDishDialog> {
 
   bool get _isEditing => widget.meal != null;
 
+  String get _title {
+    if (_isEditing) {
+      return 'Edit plan';
+    }
+    return widget.initialDishId == null ? 'Add to plan' : 'Plan this dish';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -65,64 +80,72 @@ class _PlanDishDialogState extends State<_PlanDishDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(_isEditing ? 'Edit plan' : 'Add dish'),
+    return AppDialog(
+      title: _title,
+      subtitle: 'Pick when this belongs on the week and how to label it.',
+      icon: Icons.calendar_month_outlined,
       content: _PlanDishForm(
         dates: widget.state.remainingPlanDates(),
         dishes: widget.state.dishes,
         selectedDayKey: _selectedDayKey,
         selectedDishId: _selectedDishId,
         selectedLabel: _selectedLabel,
-        onDayChanged: (String value) => setState(() => _selectedDayKey = value),
-        onDishChanged: (String value) =>
-            setState(() => _selectedDishId = value),
-        onLabelChanged: (String? value) =>
-            setState(() => _selectedLabel = value),
+        onDayChanged: _selectDay,
+        onDishChanged: _selectDish,
+        onLabelChanged: _selectLabel,
       ),
-      actions: <Widget>[
+      actions: <AppDialogAction>[
         if (_isEditing)
-          TextButton(
-            onPressed: () {
-              widget.state.removePlannedMeal(widget.meal!.id);
-              Navigator.of(context).pop();
-            },
-            child: const Text('Remove'),
+          AppDialogAction(
+            label: 'Remove',
+            icon: Icons.delete_outline,
+            isDestructive: true,
+            onPressed: _remove,
           ),
-        TextButton(
+        AppDialogAction(
+          label: 'Cancel',
+          icon: Icons.close,
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
         ),
-        FilledButton(
-          onPressed: () {
-            if (_isEditing) {
-              if (widget.meal!.dayKey == _selectedDayKey) {
-                widget.state.updatePlannedMeal(
-                  widget.meal!.id,
-                  _selectedDishId,
-                  label: _selectedLabel,
-                );
-              } else {
-                widget.state.removePlannedMeal(widget.meal!.id);
-                widget.state.addPlannedMeal(
-                  _selectedDayKey,
-                  _selectedDishId,
-                  label: _selectedLabel,
-                );
-              }
-            } else {
-              widget.state.addPlannedMeal(
-                _selectedDayKey,
-                _selectedDishId,
-                label: _selectedLabel,
-              );
-            }
-
-            Navigator.of(context).pop();
-          },
-          child: Text(_isEditing ? 'Save' : 'Plan'),
+        AppDialogAction(
+          label: _isEditing ? 'Save' : 'Plan',
+          icon: _isEditing ? Icons.check : Icons.calendar_month_outlined,
+          isPrimary: true,
+          onPressed: _save,
         ),
       ],
     );
+  }
+
+  void _selectDay(String value) => setState(() => _selectedDayKey = value);
+
+  void _selectDish(String value) => setState(() => _selectedDishId = value);
+
+  void _selectLabel(String? value) => setState(() => _selectedLabel = value);
+
+  void _remove() {
+    widget.state.removePlannedMeal(widget.meal!.id);
+    Navigator.of(context).pop();
+  }
+
+  void _save() {
+    if (_isEditing && widget.meal!.dayKey == _selectedDayKey) {
+      widget.state.updatePlannedMeal(
+        widget.meal!.id,
+        _selectedDishId,
+        label: _selectedLabel,
+      );
+    } else {
+      if (_isEditing) {
+        widget.state.removePlannedMeal(widget.meal!.id);
+      }
+      widget.state.addPlannedMeal(
+        _selectedDayKey,
+        _selectedDishId,
+        label: _selectedLabel,
+      );
+    }
+    Navigator.of(context).pop();
   }
 }
 
@@ -149,8 +172,8 @@ class _PlanDishForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.maxFinite,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 400),
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -158,7 +181,8 @@ class _PlanDishForm extends StatelessWidget {
           children: <Widget>[
             DropdownButtonFormField<String>(
               initialValue: selectedDayKey,
-              decoration: const InputDecoration(labelText: 'Day'),
+              isExpanded: true,
+              decoration: _fieldDecoration('Day'),
               items: dates.map((DateTime date) {
                 final String dayKey = dayKeyForDate(date);
                 return DropdownMenuItem<String>(
@@ -172,14 +196,19 @@ class _PlanDishForm extends StatelessWidget {
                 }
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: selectedDishId,
-              decoration: const InputDecoration(labelText: 'Dish'),
+              isExpanded: true,
+              decoration: _fieldDecoration('Dish'),
               items: dishes.map((Dish dish) {
                 return DropdownMenuItem<String>(
                   value: dish.id,
-                  child: Text(dish.title),
+                  child: Text(
+                    dish.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 );
               }).toList(growable: false),
               onChanged: (String? value) {
@@ -188,32 +217,90 @@ class _PlanDishForm extends StatelessWidget {
                 }
               },
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             Text(
               'Planning label',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: <Widget>[
-                ChoiceChip(
-                  label: const Text('None'),
-                  selected: selectedLabel == null,
-                  onSelected: (_) => onLabelChanged(null),
-                ),
-                for (final String label in planLabels)
-                  ChoiceChip(
-                    label: Text(label),
-                    selected: selectedLabel == label,
-                    onSelected: (_) => onLabelChanged(label),
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: _dialogInk,
+                    fontWeight: FontWeight.w700,
                   ),
-              ],
+            ),
+            const SizedBox(height: 8),
+            _PlanLabelSelector(
+              selectedLabel: selectedLabel,
+              onChanged: onLabelChanged,
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+InputDecoration _fieldDecoration(String label) {
+  return InputDecoration(
+    labelText: label,
+    filled: true,
+    fillColor: _dialogField,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: _dialogBorder),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: _dialogGold, width: 2),
+    ),
+  );
+}
+
+class _PlanLabelSelector extends StatelessWidget {
+  const _PlanLabelSelector({
+    required this.selectedLabel,
+    required this.onChanged,
+  });
+
+  final String? selectedLabel;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<String?> labels = <String?>[null, ...planLabels];
+
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double itemWidth = (constraints.maxWidth - 8) / 2;
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: labels.map((String? label) {
+            final bool selected = selectedLabel == label;
+            return SizedBox(
+              width: itemWidth,
+              child: ChoiceChip(
+                label: SizedBox(
+                  width: double.infinity,
+                  child: Text(
+                    label ?? 'None',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                selected: selected,
+                selectedColor: const Color(0xFFF8EAC1),
+                backgroundColor: _dialogCream,
+                checkmarkColor: _dialogGreen,
+                side: BorderSide(
+                  color: selected ? _dialogGold : _dialogBorder,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                onSelected: (_) => onChanged(label),
+              ),
+            );
+          }).toList(growable: false),
+        );
+      },
     );
   }
 }

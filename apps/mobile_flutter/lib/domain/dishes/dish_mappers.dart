@@ -5,7 +5,7 @@ import 'package:mymenu/core/database/app_database.dart' as db;
 import 'package:mymenu/domain/dishes/dish.dart';
 
 extension DishRowMapper on db.DishRow {
-  Dish toDomain(List<SourcePhoto> sourcePhotos) {
+  Dish toDomain(List<SourcePhoto> sourcePhotos, List<DishNote> notes) {
     return Dish(
       id: id,
       title: title,
@@ -18,7 +18,7 @@ extension DishRowMapper on db.DishRow {
       lastMadeLabel: lastMadeLabel,
       ingredients: _stringListFromJson(ingredientsJson),
       recipeSteps: _stringListFromJson(recipeStepsJson),
-      notes: _stringListFromJson(notesJson),
+      notes: notes,
       sourcePhotos: sourcePhotos,
       isFavorite: isFavorite,
     );
@@ -39,8 +39,19 @@ extension DishCompanionMapper on Dish {
       lastMadeLabel: lastMadeLabel,
       ingredientsJson: jsonEncode(ingredients),
       recipeStepsJson: jsonEncode(recipeSteps),
-      notesJson: jsonEncode(notes),
+      notesJson: jsonEncode(notes.map((DishNote note) => note.body).toList()),
       isFavorite: Value<bool>(isFavorite),
+    );
+  }
+}
+
+extension DishNoteRowMapper on db.DishNoteRow {
+  DishNote toDomain() {
+    return DishNote(
+      id: id,
+      dishId: dishId,
+      body: body,
+      position: position,
     );
   }
 }

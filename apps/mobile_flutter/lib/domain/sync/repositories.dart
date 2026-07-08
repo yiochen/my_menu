@@ -14,6 +14,7 @@ import 'package:mymenu/domain/planning/planned_meal.dart' as planning_domain;
 import 'package:mymenu/domain/planning/seeded_plan.dart';
 import 'package:uuid/uuid.dart';
 
+part 'repositories_dishes.dart';
 part 'repositories_sync.dart';
 
 class AppRepositories {
@@ -35,66 +36,6 @@ class AppRepositories {
   Future<void> seedIfNeeded() async {
     await dishRepository.seedIfNeeded();
     await planRepository.seedIfNeeded();
-  }
-}
-
-class DishRepository {
-  DishRepository(this._database);
-
-  final db.AppDatabase _database;
-
-  Future<void> seedIfNeeded() async {
-    final int existingCount =
-        await _database.select(_database.dishes).get().then(
-              (List<db.DishRow> rows) => rows.length,
-            );
-    if (existingCount > 0) {
-      return;
-    }
-
-    await _database.batch((Batch batch) {
-      for (final Dish dish in seededDishes) {
-        batch.insert(_database.dishes, dish.toCompanion());
-        for (int index = 0; index < dish.sourcePhotos.length; index += 1) {
-          final SourcePhoto photo = dish.sourcePhotos[index];
-          batch.insert(
-            _database.sourcePhotos,
-            db.SourcePhotosCompanion.insert(
-              id: '${dish.id}_source_$index',
-              dishId: dish.id,
-              url: photo.url,
-              capturedLabel: photo.capturedLabel,
-              note: Value<String?>(photo.note),
-              confidenceLabel: Value<String?>(photo.confidenceLabel),
-            ),
-          );
-        }
-      }
-    });
-  }
-
-  Future<List<Dish>> listDishes() async {
-    final List<db.DishRow> rows =
-        await _database.select(_database.dishes).get();
-    final List<Dish> dishes = <Dish>[];
-    for (final db.DishRow row in rows) {
-      final List<db.SourcePhotoRow> photoRows = await (_database.select(
-        _database.sourcePhotos,
-      )..where((db.SourcePhotos table) => table.dishId.equals(row.id)))
-          .get();
-      dishes.add(
-        row.toDomain(
-          photoRows.map((db.SourcePhotoRow row) => row.toDomain()).toList(),
-        ),
-      );
-    }
-    return dishes;
-  }
-
-  Future<void> upsertDish(Dish dish) async {
-    await _database
-        .into(_database.dishes)
-        .insertOnConflictUpdate(dish.toCompanion());
   }
 }
 
@@ -282,6 +223,43 @@ class SyncRepository {
     return createdDishes;
   }
 
+  Future<void> processPendingOperations() async {
+    final List<db.SyncOperationRow> operations =
+        await (_database.select(_database.syncOperations)
+              ..where(
+                (db.SyncOperations table) =>
+                    table.completedAt.isNull() &
+                    (table.entity.equals('dish_note') |
+                        table.entity.equals('dish')),
+              )
+              ..orderBy(<OrderingTerm Function(db.$SyncOperationsTable)>[
+                (db.SyncOperations table) => OrderingTerm.asc(table.createdAt),
+              ]))
+            .get();
+
+    for (final db.SyncOperationRow operation in operations) {
+      try {
+        await _processOperation(operation);
+        await (_database.update(_database.syncOperations)
+              ..where(
+                (db.SyncOperations table) => table.id.equals(operation.id),
+              ))
+            .write(
+          db.SyncOperationsCompanion(
+            completedAt: Value<DateTime?>(DateTime.now()),
+          ),
+        );
+      } on Object catch (error, stackTrace) {
+        developer.log(
+          'Edit sync failed.',
+          name: 'mymenu.sync',
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }
+    }
+  }
+
   Future<Dish?> _processCapture(db.CaptureItemRow capture) async {
     String? remoteMediaRef = capture.remoteMediaRef;
     if (capture.kind == capture_domain.CaptureItemKind.photo.name &&
@@ -331,6 +309,66 @@ class SyncRepository {
         status: Value<String>(capture_domain.CaptureItemStatus.failed.name),
       ),
     );
+  }
+
+  Future<void> _processOperation(db.SyncOperationRow operation) async {
+    final Map<String, Object?> payload =
+        _payloadObject(operation.payloadJson);
+    if (operation.entity == 'dish_note') {
+      await _processNoteOperation(operation, payload);
+      return;
+    }
+    if (operation.entity == 'dish' && operation.operationType == 'update') {
+      await _apiClient.updateDish(
+        clientMutationId: operation.id,
+        dishId: operation.entityId,
+        patch: payload,
+      );
+    }
+  }
+
+  Future<void> _processNoteOperation(
+    db.SyncOperationRow operation,
+    Map<String, Object?> payload,
+  ) async {
+    switch (operation.operationType) {
+      case 'create':
+        await _apiClient.createDishNote(
+          noteId: operation.entityId,
+          dishId: _requiredPayloadString(payload, 'dishId'),
+          body: _requiredPayloadString(payload, 'body'),
+          position: _payloadInt(payload, 'position') ?? 0,
+        );
+      case 'update':
+        await _apiClient.updateDishNote(
+          noteId: operation.entityId,
+          body: _requiredPayloadString(payload, 'body'),
+          position: _payloadInt(payload, 'position'),
+        );
+      case 'delete':
+        await _apiClient.deleteDishNote(noteId: operation.entityId);
+    }
+  }
+
+  Map<String, Object?> _payloadObject(String payloadJson) {
+    final Object? decoded = jsonDecode(payloadJson);
+    if (decoded is Map<String, dynamic>) {
+      return Map<String, Object?>.from(decoded);
+    }
+    return const <String, Object?>{};
+  }
+
+  String _requiredPayloadString(Map<String, Object?> payload, String key) {
+    final Object? value = payload[key];
+    if (value is String) {
+      return value;
+    }
+    throw StateError('Missing payload string: $key');
+  }
+
+  int? _payloadInt(Map<String, Object?> payload, String key) {
+    final Object? value = payload[key];
+    return value is int ? value : null;
   }
 }
 
