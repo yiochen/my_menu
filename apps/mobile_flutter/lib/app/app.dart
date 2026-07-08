@@ -20,6 +20,14 @@ class MyMenuScope extends InheritedNotifier<MyMenuState> {
     assert(scope != null, 'MyMenuScope not found.');
     return scope!.notifier!;
   }
+
+  static MyMenuState read(BuildContext context) {
+    final InheritedElement? element =
+        context.getElementForInheritedWidgetOfExactType<MyMenuScope>();
+    final MyMenuScope? scope = element?.widget as MyMenuScope?;
+    assert(scope != null, 'MyMenuScope not found.');
+    return scope!.notifier!;
+  }
 }
 
 class MyMenuApp extends StatelessWidget {
