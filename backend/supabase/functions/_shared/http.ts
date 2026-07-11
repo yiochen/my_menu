@@ -1,9 +1,12 @@
 export type JsonRecord = Record<string, unknown>;
 
-export const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+const allowedOrigin = Deno.env.get("CORS_ALLOWED_ORIGIN") ?? "*";
+
+export const corsHeaders: Record<string, string> = {
+  "Access-Control-Allow-Origin": allowedOrigin,
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-mymenu-worker-key",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 export function handleOptions(request: Request) {

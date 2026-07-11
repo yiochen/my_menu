@@ -6,7 +6,12 @@ import {
   readJson,
   requiredString,
 } from "../_shared/http.ts";
-import { requireEnv, rpcOne, supabaseFor } from "../_shared/supabase.ts";
+import {
+  requireEnv,
+  rpcOne,
+  supabaseFor,
+  timingSafeEqual,
+} from "../_shared/supabase.ts";
 
 Deno.serve(async (request: Request) => {
   const options = handleOptions(request);
@@ -15,9 +20,9 @@ Deno.serve(async (request: Request) => {
   }
 
   try {
-    const workerKey = request.headers.get("x-mymenu-worker-key");
+    const workerKey = request.headers.get("x-mymenu-worker-key") ?? "";
     const serviceRoleKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
-    if (workerKey !== serviceRoleKey) {
+    if (!timingSafeEqual(workerKey, serviceRoleKey)) {
       return json({ error: "Forbidden" }, 403);
     }
 

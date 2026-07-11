@@ -165,15 +165,26 @@ async function loadImages(
   return byDishId;
 }
 
+type BodyTable = "dish_notes" | "dish_ingredients" | "dish_steps";
+const BODY_TABLES: ReadonlySet<string> = new Set<BodyTable>([
+  "dish_notes",
+  "dish_ingredients",
+  "dish_steps",
+]);
+
 async function loadBodyRows(
   adminClient: any,
   userId: string,
-  table: string,
+  table: BodyTable,
   dishIds: string[],
 ) {
   const byDishId = new Map<string, string[]>();
   if (dishIds.length === 0) {
     return byDishId;
+  }
+
+  if (!BODY_TABLES.has(table)) {
+    throw new Error(`Disallowed table: ${table}`);
   }
 
   const { data, error } = await adminClient

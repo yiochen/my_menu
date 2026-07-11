@@ -94,3 +94,18 @@ function isSchemaCacheRetry(error: unknown) {
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+const encoder = new TextEncoder();
+
+export function timingSafeEqual(a: string, b: string): boolean {
+  const aBytes = encoder.encode(a);
+  const bBytes = encoder.encode(b);
+  if (aBytes.byteLength !== bBytes.byteLength) {
+    return false;
+  }
+  let result = 0;
+  for (let i = 0; i < aBytes.byteLength; i++) {
+    result |= aBytes[i] ^ bBytes[i];
+  }
+  return result === 0;
+}
