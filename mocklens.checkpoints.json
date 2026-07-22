@@ -1,0 +1,1192 @@
+{
+  "ux": {
+    "ai-review-correction": {
+      "inputHash": "ecbcb7cade1fe60303788f312bde4fc4a301765588ce1736a3363bc38c9887ce",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:ai-review-correction": "cb43781356f53f1039ad5e8927e3d1134ebf0ddc5458219195c7f2f37ae7829f",
+        "screens/dish-detail.iphone-14.html": "310a930f4e397742a4094ae19d28d48da9821a6c529c804d3d32dc8a044e4247",
+        "screens/plan.iphone-14.html": "a3b76bbc4ed209b0c63492e1492bb9ea29877e26477d03dc20cebe58dae33439",
+        "screens/review-capture.iphone-14.html": "6d858c7f2840d2a93e4ab09cd1332a966dfafd92b04bf7ac7b2282bf67278c18",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/capture-saved.iphone-14.html": "bbe3da3f0f21b22df43ed1eee6f1881eed8f8a87cebbaa2bb55f6e95020efd1e"
+      },
+      "proof": "Plan exposes the conditional 1 capture needs a quick check entry. Review Capture shows the 76% source, selected Miso Salmon Bowl, Not this dish and new-dish correction paths, and Confirm match declares count 4 to 5; Capture Saved demonstrates cooking memory #5 and last made today.",
+      "screens": [
+        "plan.iphone-14",
+        "review-capture.iphone-14",
+        "states/capture-saved.iphone-14",
+        "dish-detail.iphone-14"
+      ]
+    },
+    "dish-collection-coverage": {
+      "inputHash": "5099e0b28a34b86e01a50d1b75e2de5bf7439990abca19461fd458ef96ae3fec",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:dish-collection-coverage": "990d1cff9cc5deffaff5d4056177f645ac4011276d22203c6968cdb40f51cbe8",
+        "screens/menu.iphone-14.html": "214949d54a1fa6b81d477ed84c9c1602ffc81020f0d0be56f0128e3f5b8a338e",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/menu-empty.iphone-14.html": "0fbe5b44fcf2fe88ecaf9cec4ccf8fc3a02465ce681d68bff2e29c3e233107c7"
+      },
+      "proof": "Menu Empty uses the global orange plus as its one dominant first-dish action. Menu shows 28 dishes, search, filters, a featured dish, complete reusable cards, See all and Browse all reachability; its wrapped Lemon Garlic Linguine title demonstrates the long-title card pattern.",
+      "screens": [
+        "states/menu-empty.iphone-14",
+        "menu.iphone-14"
+      ]
+    },
+    "dish-correction-and-safe-archive": {
+      "inputHash": "560011fa3bae0da3c52ccd92c43ccf4d7118b31ed5b7cc203428cf814242ee3f",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:dish-correction-and-safe-archive": "4afaf2e201212e38a48ed9f224eb4ec93dda58be1e97f7c075a4f2e3108bd909",
+        "screens/dish-detail.iphone-14.html": "310a930f4e397742a4094ae19d28d48da9821a6c529c804d3d32dc8a044e4247",
+        "screens/dish-edit.iphone-14.html": "08513d05f2443f13ec15617e95f83df0f42c4f351568f1efdd4453e6d43148e3",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/dish-archive-confirmation.iphone-14.html": "eb17aea78a760162f4454f4e7e5078741c8bd88fba664831b7a0d9411893ef50",
+        "screens/states/dish-archived.iphone-14.html": "8f9ae001419ce76f8fa3a437ee7337452e34b43c40cc73f7ff85f3c667f0071b"
+      },
+      "proof": "Dish Detail opens prefilled Dish Edit with one Save action and subordinate Archive link. Archive Confirmation reserves red fill for final commit and explains preservation; Dish Archived proves removal from Menu and suggestions, preserves recipe, 3 notes and 8 sources, and offers immediate Undo.",
+      "screens": [
+        "dish-detail.iphone-14",
+        "dish-edit.iphone-14",
+        "states/dish-archive-confirmation.iphone-14",
+        "states/dish-archived.iphone-14"
+      ]
+    },
+    "documented-action-behavior": {
+      "inputHash": "9923ccc6277886124401968a32d81b5932692c28978aac89476f2b4150c13023",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:documented-action-behavior": "9261ad267b1f37b27cce0ed20cf8b3d28f7b42272dbf21d52eb6371f94a1afc0",
+        "screens/capture.iphone-14.html": "5570e027bbf086e348e90a2b7836a20f3363cffdf7a34a42300d35564c4a9487",
+        "screens/dish-detail.iphone-14.html": "310a930f4e397742a4094ae19d28d48da9821a6c529c804d3d32dc8a044e4247",
+        "screens/dish-edit.iphone-14.html": "08513d05f2443f13ec15617e95f83df0f42c4f351568f1efdd4453e6d43148e3",
+        "screens/dish-notes.iphone-14.html": "1eb98b35e7a6be98c411e92925dd53bf5897273678ed392dc9bda7149cb655ea",
+        "screens/dish-sources.iphone-14.html": "c1974b5cc85567b60e01492022ca459e72ecccc76e8d14965e05c2e57431d085",
+        "screens/menu.iphone-14.html": "214949d54a1fa6b81d477ed84c9c1602ffc81020f0d0be56f0128e3f5b8a338e",
+        "screens/note-editor.iphone-14.html": "327b90d1ce5caaf559e7581855b1f693aa91aa62227015363d5bafb3b60a81f2",
+        "screens/plan-dish-picker.iphone-14.html": "0a7418cfd8c98ecae7227c08aa1374436d92ec3218079e7994611bbc3a1700a4",
+        "screens/plan.iphone-14.html": "a3b76bbc4ed209b0c63492e1492bb9ea29877e26477d03dc20cebe58dae33439",
+        "screens/review-capture.iphone-14.html": "6d858c7f2840d2a93e4ab09cd1332a966dfafd92b04bf7ac7b2282bf67278c18",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/source-detail.iphone-14.html": "5f04fb5d2f740e5716fbdf210ba79f93e57b897526b82e34397057732bf42faf",
+        "screens/states/capture-offline.iphone-14.html": "2061f524b67dd0847d1863e1d9823d99feb83673000688242a4a62dcb4272b2f",
+        "screens/states/capture-saved.iphone-14.html": "bbe3da3f0f21b22df43ed1eee6f1881eed8f8a87cebbaa2bb55f6e95020efd1e",
+        "screens/states/dish-archive-confirmation.iphone-14.html": "eb17aea78a760162f4454f4e7e5078741c8bd88fba664831b7a0d9411893ef50",
+        "screens/states/dish-archived.iphone-14.html": "8f9ae001419ce76f8fa3a437ee7337452e34b43c40cc73f7ff85f3c667f0071b",
+        "screens/states/plan-meal-actions.iphone-14.html": "7111c9cebfaf5e442b1c17aada5cf2756db7314540b427d7e7c999743e96f9c0",
+        "screens/states/plan-meal-removed.iphone-14.html": "2feb2a660d845b864fae5f2412a4382c5c6378382ca9ab81c2a02a82f9ec91b7"
+      },
+      "proof": "Current screens annotate capture, navigation, plan rows, dish cards, note and source rows, corrections, confirmations, and recovery. Plan Picker, Meal Actions, Meal Removed, Note Editor, Source Detail, Dish Edit, Archive Confirmation, Dish Archived, Capture Saved, Capture Offline, and Review Capture demonstrate the named outcomes.",
+      "screens": [
+        "plan.iphone-14",
+        "plan-dish-picker.iphone-14",
+        "states/plan-meal-actions.iphone-14",
+        "states/plan-meal-removed.iphone-14",
+        "menu.iphone-14",
+        "dish-detail.iphone-14",
+        "dish-edit.iphone-14",
+        "dish-notes.iphone-14",
+        "note-editor.iphone-14",
+        "dish-sources.iphone-14",
+        "source-detail.iphone-14",
+        "states/dish-archive-confirmation.iphone-14",
+        "states/dish-archived.iphone-14",
+        "capture.iphone-14",
+        "states/capture-saved.iphone-14",
+        "states/capture-offline.iphone-14",
+        "review-capture.iphone-14"
+      ]
+    },
+    "fast-capture-canonical": {
+      "inputHash": "048881a9220f8ce07540c87d11aaa315d53966a70bb04b5dbe6b0c94f879e799",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:fast-capture-canonical": "cfa9e235af7f665b8167ea4ef1b6d9f52648c58c679ac6955b9b40bf7297ac21",
+        "screens/capture.iphone-14.html": "5570e027bbf086e348e90a2b7836a20f3363cffdf7a34a42300d35564c4a9487",
+        "screens/menu.iphone-14.html": "214949d54a1fa6b81d477ed84c9c1602ffc81020f0d0be56f0128e3f5b8a338e",
+        "screens/plan.iphone-14.html": "a3b76bbc4ed209b0c63492e1492bb9ea29877e26477d03dc20cebe58dae33439",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/capture-saved.iphone-14.html": "bbe3da3f0f21b22df43ed1eee6f1881eed8f8a87cebbaa2bb55f6e95020efd1e"
+      },
+      "proof": "Plan and Menu annotate the global plus as opening Quick Capture. Capture presents exactly Take photo, Import photos, and Jot down an idea, each saving locally before organization; Capture Saved shows Miso Salmon Bowl as cooking memory #5 and its Done action returns to the invoking screen.",
+      "screens": [
+        "plan.iphone-14",
+        "menu.iphone-14",
+        "capture.iphone-14",
+        "states/capture-saved.iphone-14"
+      ]
+    },
+    "living-dish-record": {
+      "inputHash": "3c0ad4c186e877bcffb92365d36f1934a2fe30d208d18ae9c44970fd7c5f8e5c",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:living-dish-record": "6db7007fe21cf81ef79f5279cfc20c02b5c9d7ec129c31f6cf3fccf19ed47134",
+        "screens/dish-detail.iphone-14.html": "310a930f4e397742a4094ae19d28d48da9821a6c529c804d3d32dc8a044e4247",
+        "screens/dish-notes.iphone-14.html": "1eb98b35e7a6be98c411e92925dd53bf5897273678ed392dc9bda7149cb655ea",
+        "screens/dish-sources.iphone-14.html": "c1974b5cc85567b60e01492022ca459e72ecccc76e8d14965e05c2e57431d085",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/dish-incomplete.iphone-14.html": "5f685f07a45f1c528fa45f9e5e7bccfbebe7258aa5bbee8a29b7278276787179"
+      },
+      "proof": "Dish Detail keeps cover, identity, made count, last made, time, Recipe/Notes/Sources, and Plan to cook again in the first task view. Dish Notes and Dish Sources preserve identity while showing their subcollections; Dish Incomplete honestly labels no cover and missing details, source, and recipe paths with offline availability.",
+      "screens": [
+        "dish-detail.iphone-14",
+        "dish-notes.iphone-14",
+        "dish-sources.iphone-14",
+        "states/dish-incomplete.iphone-14"
+      ]
+    },
+    "notes-and-sources-parity": {
+      "inputHash": "b84b5d93d7b6d495d212d4c1d2dfade13dc0bbabd1ecda5659b9eecbbb706fbc",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:notes-and-sources-parity": "feb1fc627838f3cf79dfcd53495d6f9b4e5f878a28777869832f52b72d952ef3",
+        "screens/dish-notes.iphone-14.html": "1eb98b35e7a6be98c411e92925dd53bf5897273678ed392dc9bda7149cb655ea",
+        "screens/dish-sources.iphone-14.html": "c1974b5cc85567b60e01492022ca459e72ecccc76e8d14965e05c2e57431d085",
+        "screens/note-editor.iphone-14.html": "327b90d1ce5caaf559e7581855b1f693aa91aa62227015363d5bafb3b60a81f2",
+        "screens/review-capture.iphone-14.html": "6d858c7f2840d2a93e4ab09cd1332a966dfafd92b04bf7ac7b2282bf67278c18",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/source-detail.iphone-14.html": "5f04fb5d2f740e5716fbdf210ba79f93e57b897526b82e34397057732bf42faf"
+      },
+      "proof": "Dish Notes exposes Add note and rows that open Note Editor; the prefilled editor has one Save note action and subordinate deletion. Dish Sources opens Source Detail, whose caption editor preserves the original and routes mistaken assignment to Review Capture, where choose-another and new-dish outcomes are explicit.",
+      "screens": [
+        "dish-notes.iphone-14",
+        "note-editor.iphone-14",
+        "dish-sources.iphone-14",
+        "source-detail.iphone-14",
+        "review-capture.iphone-14"
+      ]
+    },
+    "offline-capture-recovery": {
+      "inputHash": "3192263265d306ab56fdb5e685b25df543163668d1cfed78354876b63d694458",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:offline-capture-recovery": "3879f3905d71be7cacdb118afd68fdb6868b784192aa5db14f2bbb83df9fb259",
+        "screens/capture.iphone-14.html": "5570e027bbf086e348e90a2b7836a20f3363cffdf7a34a42300d35564c4a9487",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/capture-offline.iphone-14.html": "2061f524b67dd0847d1863e1d9823d99feb83673000688242a4a62dcb4272b2f",
+        "screens/states/capture-saved.iphone-14.html": "bbe3da3f0f21b22df43ed1eee6f1881eed8f8a87cebbaa2bb55f6e95020efd1e"
+      },
+      "proof": "Capture Offline visibly separates Saved on this phone from pending AI organization. Retry now declares success opens Capture Saved while failure preserves the queue, and Done returns to the app while automatic retry continues.",
+      "screens": [
+        "capture.iphone-14",
+        "states/capture-offline.iphone-14",
+        "states/capture-saved.iphone-14"
+      ]
+    },
+    "stable-two-destination-shell": {
+      "inputHash": "7f1658dde585025cc0c61504c857f53069d00b31f81181406ca26b6e901c5d2f",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:stable-two-destination-shell": "a3426dd7b02c856026f89695f5691a82471bb12d4dcd6db1753ae93bbca26d94",
+        "screens/capture.iphone-14.html": "5570e027bbf086e348e90a2b7836a20f3363cffdf7a34a42300d35564c4a9487",
+        "screens/dish-detail.iphone-14.html": "310a930f4e397742a4094ae19d28d48da9821a6c529c804d3d32dc8a044e4247",
+        "screens/menu.iphone-14.html": "214949d54a1fa6b81d477ed84c9c1602ffc81020f0d0be56f0128e3f5b8a338e",
+        "screens/plan.iphone-14.html": "a3b76bbc4ed209b0c63492e1492bb9ea29877e26477d03dc20cebe58dae33439",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/menu-empty.iphone-14.html": "0fbe5b44fcf2fe88ecaf9cec4ccf8fc3a02465ce681d68bff2e29c3e233107c7"
+      },
+      "proof": "Plan, Menu, and Menu Empty keep the same Plan–Capture–Menu order and selected treatment. The orange plus explicitly says it opens Quick Capture and is not a destination tab; Capture has one Close dismissal, Dish Detail one Back control, and task sheets one contextual Close.",
+      "screens": [
+        "plan.iphone-14",
+        "menu.iphone-14",
+        "states/menu-empty.iphone-14",
+        "capture.iphone-14",
+        "dish-detail.iphone-14"
+      ]
+    },
+    "task-first-responsive-hierarchy": {
+      "inputHash": "bfc9b0f6913476cb92325846d8f3d90a164b7cbc08c253808ba1a79c1c2add21",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:task-first-responsive-hierarchy": "c8382ef76d9991d0c669a9f815574aba86b65798e9434362bbc899fe2d6303c2",
+        "screens/capture.iphone-14.html": "5570e027bbf086e348e90a2b7836a20f3363cffdf7a34a42300d35564c4a9487",
+        "screens/dish-detail.iphone-14.html": "310a930f4e397742a4094ae19d28d48da9821a6c529c804d3d32dc8a044e4247",
+        "screens/dish-edit.iphone-14.html": "08513d05f2443f13ec15617e95f83df0f42c4f351568f1efdd4453e6d43148e3",
+        "screens/dish-notes.iphone-14.html": "1eb98b35e7a6be98c411e92925dd53bf5897273678ed392dc9bda7149cb655ea",
+        "screens/dish-sources.iphone-14.html": "c1974b5cc85567b60e01492022ca459e72ecccc76e8d14965e05c2e57431d085",
+        "screens/menu.iphone-14.html": "214949d54a1fa6b81d477ed84c9c1602ffc81020f0d0be56f0128e3f5b8a338e",
+        "screens/note-editor.iphone-14.html": "327b90d1ce5caaf559e7581855b1f693aa91aa62227015363d5bafb3b60a81f2",
+        "screens/plan-dish-picker.iphone-14.html": "0a7418cfd8c98ecae7227c08aa1374436d92ec3218079e7994611bbc3a1700a4",
+        "screens/plan.iphone-14.html": "a3b76bbc4ed209b0c63492e1492bb9ea29877e26477d03dc20cebe58dae33439",
+        "screens/review-capture.iphone-14.html": "6d858c7f2840d2a93e4ab09cd1332a966dfafd92b04bf7ac7b2282bf67278c18",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/source-detail.iphone-14.html": "5f04fb5d2f740e5716fbdf210ba79f93e57b897526b82e34397057732bf42faf",
+        "screens/states/dish-incomplete.iphone-14.html": "5f685f07a45f1c528fa45f9e5e7bccfbebe7258aa5bbee8a29b7278276787179",
+        "screens/states/menu-empty.iphone-14.html": "0fbe5b44fcf2fe88ecaf9cec4ccf8fc3a02465ce681d68bff2e29c3e233107c7"
+      },
+      "proof": "Review of all current iPhone SE, iPhone 14, and Pixel 7 screen families confirms task data first, one filled primary action per region, quiet repeated rows, long-content wrapping, stable shells, and reserved clearance for save bars, nav, and Undo messages; the compact archive result no longer overlaps its recovery toast.",
+      "screens": [
+        "plan.iphone-14",
+        "menu.iphone-14",
+        "states/menu-empty.iphone-14",
+        "dish-detail.iphone-14",
+        "dish-edit.iphone-14",
+        "dish-notes.iphone-14",
+        "note-editor.iphone-14",
+        "dish-sources.iphone-14",
+        "source-detail.iphone-14",
+        "states/dish-incomplete.iphone-14",
+        "capture.iphone-14",
+        "review-capture.iphone-14",
+        "plan-dish-picker.iphone-14"
+      ]
+    },
+    "weekly-plan-create-and-correct": {
+      "inputHash": "c34ae9b106ba60e2b8c47bcf59b57f8aaf8c7ff8c88f28e2682ae585c04708e9",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:weekly-plan-create-and-correct": "fb31e3c4e16fcd2afc98b8418c7c5be48b49671e2c89814da4776ce8ce29bdfe",
+        "screens/plan-dish-picker.iphone-14.html": "0a7418cfd8c98ecae7227c08aa1374436d92ec3218079e7994611bbc3a1700a4",
+        "screens/plan.iphone-14.html": "a3b76bbc4ed209b0c63492e1492bb9ea29877e26477d03dc20cebe58dae33439",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/plan-meal-actions.iphone-14.html": "7111c9cebfaf5e442b1c17aada5cf2756db7314540b427d7e7c999743e96f9c0",
+        "screens/states/plan-meal-removed.iphone-14.html": "2feb2a660d845b864fae5f2412a4382c5c6378382ca9ab81c2a02a82f9ec91b7"
+      },
+      "proof": "Plan open-day tiles declare Add dish entry and meal rows disclose correction actions. Plan Dish Picker commits only the selected reference; Plan Meal Actions offers Reschedule, Replace, and Remove, while Plan Meal Removed visibly opens Tuesday and provides immediate Undo without deleting Miso Salmon Bowl.",
+      "screens": [
+        "plan.iphone-14",
+        "plan-dish-picker.iphone-14",
+        "states/plan-meal-actions.iphone-14",
+        "states/plan-meal-removed.iphone-14"
+      ]
+    }
+  },
+  "version": 1,
+  "visual": {
+    "capture.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "8df6a85687ac9517fd2aa7205987217c16ebccfd341786fba00e30bea0090f9f",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/capture.iphone-14.html": "5570e027bbf086e348e90a2b7836a20f3363cffdf7a34a42300d35564c4a9487",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "capture.iphone-14",
+      "screens": [
+        "capture.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/capture.iphone-14.png",
+      "screenshotSha256": "9513900cdd7dc0a6087504238f1f294b685bcc760f65ff2f2968dfe027a4ec75"
+    },
+    "capture.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "7dba525800b74df5eda83aa810519e757988a238b5e4fe017741a3dbb94cd7d5",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/capture.iphone-14.html": "5570e027bbf086e348e90a2b7836a20f3363cffdf7a34a42300d35564c4a9487",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "capture.iphone-14",
+      "screens": [
+        "capture.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/capture.iphone-14.png",
+      "screenshotSha256": "d42436b2159ad20d4d4e4983187833c341f8f13de14198d55e8d087520b9656d"
+    },
+    "capture.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "ba7526d0a16644d70bf680d3346587dbd012039cacbeb5dbc9849d8896a43e61",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/capture.iphone-14.html": "5570e027bbf086e348e90a2b7836a20f3363cffdf7a34a42300d35564c4a9487",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "capture.iphone-14",
+      "screens": [
+        "capture.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/capture.iphone-14.png",
+      "screenshotSha256": "642fada07a133ddd79fd105d50cc39766ebe8951fbb129a15bf9aac35b5bbddb"
+    },
+    "dish-detail.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "c7dba73949f68ed0c662a6614d181d68e5c602c77599cc6f879474ead3ea7fd9",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/dish-detail.iphone-14.html": "310a930f4e397742a4094ae19d28d48da9821a6c529c804d3d32dc8a044e4247",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "dish-detail.iphone-14",
+      "screens": [
+        "dish-detail.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/dish-detail.iphone-14.png",
+      "screenshotSha256": "3e4a9eef65c1e73174647f6c579dd51fef7981d3cf792f97992a75f904cbffef"
+    },
+    "dish-detail.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "44e669cad62255e46e6afaa033a5ec2584632e25c3b21c419022cf948c755ea3",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/dish-detail.iphone-14.html": "310a930f4e397742a4094ae19d28d48da9821a6c529c804d3d32dc8a044e4247",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "dish-detail.iphone-14",
+      "screens": [
+        "dish-detail.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/dish-detail.iphone-14.png",
+      "screenshotSha256": "bdcd62786022c3e092455dc310c0c7e2f4e758a80de43ea08d1867a95b253f24"
+    },
+    "dish-detail.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "e6ba211fe1b1c6a344b7af53f23350fd09cb8f4fcca0656bdd99eb56e1dd1a44",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/dish-detail.iphone-14.html": "310a930f4e397742a4094ae19d28d48da9821a6c529c804d3d32dc8a044e4247",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "dish-detail.iphone-14",
+      "screens": [
+        "dish-detail.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/dish-detail.iphone-14.png",
+      "screenshotSha256": "9415d2d7e127ab3d39dfd080d8da6ac7f168bdd2bea5887403ec1d7608929103"
+    },
+    "dish-edit.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "93e13860ff8ad21ea2872b42ebffc19f313d2bfcaf34e14696f69900d65157ff",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/dish-edit.iphone-14.html": "08513d05f2443f13ec15617e95f83df0f42c4f351568f1efdd4453e6d43148e3",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "dish-edit.iphone-14",
+      "screens": [
+        "dish-edit.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/dish-edit.iphone-14.png",
+      "screenshotSha256": "f49456bf1c9cccb7697f186d75f1208cf471b185c10a1e32888c6254b373d27e"
+    },
+    "dish-edit.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "6286a8ba2bf577602825febf2cf02002b27c2dad1c7c1b31a9b0452266455ead",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/dish-edit.iphone-14.html": "08513d05f2443f13ec15617e95f83df0f42c4f351568f1efdd4453e6d43148e3",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "dish-edit.iphone-14",
+      "screens": [
+        "dish-edit.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/dish-edit.iphone-14.png",
+      "screenshotSha256": "4e34f6e56c5bd80572557a6fdf73e1313988a94ba00cfa2fe0f4ba9efb2c509d"
+    },
+    "dish-edit.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "fd024aab130e20333574e70f063e8ec3d8635167087d6d7df6f8c1d6f5006a60",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/dish-edit.iphone-14.html": "08513d05f2443f13ec15617e95f83df0f42c4f351568f1efdd4453e6d43148e3",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "dish-edit.iphone-14",
+      "screens": [
+        "dish-edit.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/dish-edit.iphone-14.png",
+      "screenshotSha256": "4e00f5b6c850de6f2e44a3de658a31d4398e204f8482c96b7713177e5040dae5"
+    },
+    "dish-notes.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "98583e687cbae638cbbd4efb5293e8699feb8a65232c58de4a8fd101a262e998",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/dish-notes.iphone-14.html": "1eb98b35e7a6be98c411e92925dd53bf5897273678ed392dc9bda7149cb655ea",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "dish-notes.iphone-14",
+      "screens": [
+        "dish-notes.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/dish-notes.iphone-14.png",
+      "screenshotSha256": "6af36d27e6045a9e873ef65b5144bd0528aacd4e6023922b7775f72f9aaa3564"
+    },
+    "dish-notes.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "daed74949f610f082e157a7cf387ce88d5d1e7c2f4f7a0ad8274c781ea1eb29c",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/dish-notes.iphone-14.html": "1eb98b35e7a6be98c411e92925dd53bf5897273678ed392dc9bda7149cb655ea",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "dish-notes.iphone-14",
+      "screens": [
+        "dish-notes.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/dish-notes.iphone-14.png",
+      "screenshotSha256": "584a72520f94a90c9920d2a7db0292d59da646e595264d6b3c2b0c3b33b9bc44"
+    },
+    "dish-notes.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "467b07bf558b0c905ed86717978d3749e5608f45839a8daef65b686a5bc72ea1",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/dish-notes.iphone-14.html": "1eb98b35e7a6be98c411e92925dd53bf5897273678ed392dc9bda7149cb655ea",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "dish-notes.iphone-14",
+      "screens": [
+        "dish-notes.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/dish-notes.iphone-14.png",
+      "screenshotSha256": "1466f540b1fe09f5bd7ce48adb1cffa2d6e084760af4186c48e32930a09ce201"
+    },
+    "dish-sources.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "ed0e662ea2905d732c65f1dda7fbec2fa452fcfa235c064ad1cfa2fe816a252d",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/dish-sources.iphone-14.html": "c1974b5cc85567b60e01492022ca459e72ecccc76e8d14965e05c2e57431d085",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "dish-sources.iphone-14",
+      "screens": [
+        "dish-sources.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/dish-sources.iphone-14.png",
+      "screenshotSha256": "2d34606df89fd9d65c56017a255e248006f4a09904501de18c704f29592c89d1"
+    },
+    "dish-sources.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "c5e5e2bb58a3c1ae6f26ec2b8a47c831b3842e08f318012a6800105bd588a0c4",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/dish-sources.iphone-14.html": "c1974b5cc85567b60e01492022ca459e72ecccc76e8d14965e05c2e57431d085",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "dish-sources.iphone-14",
+      "screens": [
+        "dish-sources.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/dish-sources.iphone-14.png",
+      "screenshotSha256": "7e6430831d88b1fc30a01068209ff61818b9eb6f9ceceeead7a0c5c5e89a4a50"
+    },
+    "dish-sources.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "292dac4ce4be95f11f9274a8f490bd4d598f3806b4684f4a8886e1696bf10d85",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/dish-sources.iphone-14.html": "c1974b5cc85567b60e01492022ca459e72ecccc76e8d14965e05c2e57431d085",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "dish-sources.iphone-14",
+      "screens": [
+        "dish-sources.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/dish-sources.iphone-14.png",
+      "screenshotSha256": "3faa1a115ecc403efacdeccad453d3e1af466b08663fe4c34c572b2b520e94d6"
+    },
+    "menu.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "039878008c761bb6c891160b051c43c7136164d59d0372e0f4d75f8c7087ef43",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/menu.iphone-14.html": "214949d54a1fa6b81d477ed84c9c1602ffc81020f0d0be56f0128e3f5b8a338e",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "menu.iphone-14",
+      "screens": [
+        "menu.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/menu.iphone-14.png",
+      "screenshotSha256": "04310f613364790cfe3afbce2fbae6728ca2bbcb74c682bdfdf09a5a22421ed7"
+    },
+    "menu.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "8200066586e35740a7788c7540a33d135ce34d5315ad5d6b6ebab33622597b7b",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/menu.iphone-14.html": "214949d54a1fa6b81d477ed84c9c1602ffc81020f0d0be56f0128e3f5b8a338e",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "menu.iphone-14",
+      "screens": [
+        "menu.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/menu.iphone-14.png",
+      "screenshotSha256": "1cc1cbb8169af7beb14afab5083a77e5e2643ad61c650524b9fa127863ccb165"
+    },
+    "menu.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "0dabe8655301aea585db76d078ebfc848983a9345df0785470d828008c62568d",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/menu.iphone-14.html": "214949d54a1fa6b81d477ed84c9c1602ffc81020f0d0be56f0128e3f5b8a338e",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "menu.iphone-14",
+      "screens": [
+        "menu.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/menu.iphone-14.png",
+      "screenshotSha256": "1a688013368548eaf8e9deebfadcdd4fd64723d34a9f54bf9d838bfd99355508"
+    },
+    "note-editor.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "daaf8ee43ff7054cea5ba11ecf7a53901fc3aecc935129ac8a00226022136cce",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/note-editor.iphone-14.html": "327b90d1ce5caaf559e7581855b1f693aa91aa62227015363d5bafb3b60a81f2",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "note-editor.iphone-14",
+      "screens": [
+        "note-editor.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/note-editor.iphone-14.png",
+      "screenshotSha256": "4ab6b54d4ecf19753c3b68e35a0cabcea0c3b226955e2da38a3abea6fe423618"
+    },
+    "note-editor.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "5e6db1fe1d3eb948ee1b7ac6a505998c1a4deade33182729c6073855e85936b5",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/note-editor.iphone-14.html": "327b90d1ce5caaf559e7581855b1f693aa91aa62227015363d5bafb3b60a81f2",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "note-editor.iphone-14",
+      "screens": [
+        "note-editor.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/note-editor.iphone-14.png",
+      "screenshotSha256": "8574dd7cc1643dca475c77a003da791c45499c5e20b1dcf5456f95dd3f1fedaa"
+    },
+    "note-editor.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "0fe77a430949eefb3ec31bfcc9a799068619c2a5177032453729c552f605b85f",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/note-editor.iphone-14.html": "327b90d1ce5caaf559e7581855b1f693aa91aa62227015363d5bafb3b60a81f2",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "note-editor.iphone-14",
+      "screens": [
+        "note-editor.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/note-editor.iphone-14.png",
+      "screenshotSha256": "de57d80f729eea4afda7de7204132c967d0cd1514a1af8da431a69b4d66f5d72"
+    },
+    "plan-dish-picker.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "da09bb9d51d42242b27ba940ce82cfcb692c94321cd75ccdd0303b981e48e16a",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/plan-dish-picker.iphone-14.html": "0a7418cfd8c98ecae7227c08aa1374436d92ec3218079e7994611bbc3a1700a4",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "plan-dish-picker.iphone-14",
+      "screens": [
+        "plan-dish-picker.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/plan-dish-picker.iphone-14.png",
+      "screenshotSha256": "19723b8c883fda64fc9f1fc17d24b2b1f55c8f8b1002c860e2015dd14a35524c"
+    },
+    "plan-dish-picker.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "4736478f7dc8e405c179984d018f065456bf0b465ec65d24cd867c179d509237",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/plan-dish-picker.iphone-14.html": "0a7418cfd8c98ecae7227c08aa1374436d92ec3218079e7994611bbc3a1700a4",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "plan-dish-picker.iphone-14",
+      "screens": [
+        "plan-dish-picker.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/plan-dish-picker.iphone-14.png",
+      "screenshotSha256": "fb6d906f08a45b1c083d379e68b57e9ca2dec5903a326550c05adedb83df5aff"
+    },
+    "plan-dish-picker.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "962fa7d0fd7acf160fd9982fd24555841bbee4f6a641bda140c34814b6b3012e",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/plan-dish-picker.iphone-14.html": "0a7418cfd8c98ecae7227c08aa1374436d92ec3218079e7994611bbc3a1700a4",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "plan-dish-picker.iphone-14",
+      "screens": [
+        "plan-dish-picker.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/plan-dish-picker.iphone-14.png",
+      "screenshotSha256": "243bee741974dd7d288a408fa5eabe6d285ab7a06c2ec8cd9283a1f2804ee715"
+    },
+    "plan.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "4329804963df4e5e821477cc551fdbebb0fd222c0a73df42368942fad875a226",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/plan.iphone-14.html": "a3b76bbc4ed209b0c63492e1492bb9ea29877e26477d03dc20cebe58dae33439",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "plan.iphone-14",
+      "screens": [
+        "plan.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/plan.iphone-14.png",
+      "screenshotSha256": "c82baad917e511325f3a7210d9e8edc433ff722c372c2660b38c64e2c423ee7e"
+    },
+    "plan.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "074514a71be7aa3f1f26752d4cf8693e47c0fd722fba283ed78425b092b8359f",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/plan.iphone-14.html": "a3b76bbc4ed209b0c63492e1492bb9ea29877e26477d03dc20cebe58dae33439",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "plan.iphone-14",
+      "screens": [
+        "plan.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/plan.iphone-14.png",
+      "screenshotSha256": "6674584669b75c2f310672e9939cafea03828159d9e99fa1ae720ec977730f7e"
+    },
+    "plan.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "45c826022ce82764ba5e686c1f717ff3ca1365b18cafb4f2a4c99c194a29c3b5",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/plan.iphone-14.html": "a3b76bbc4ed209b0c63492e1492bb9ea29877e26477d03dc20cebe58dae33439",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "plan.iphone-14",
+      "screens": [
+        "plan.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/plan.iphone-14.png",
+      "screenshotSha256": "17171f9a53e3006de26cc7666e030d62d0190702969668807e053d04f87ea336"
+    },
+    "review-capture.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "21f18b823ae8834c70d2f8f253abcda727bcbd5ea5b708721ba33cfe936a766a",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/review-capture.iphone-14.html": "6d858c7f2840d2a93e4ab09cd1332a966dfafd92b04bf7ac7b2282bf67278c18",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "review-capture.iphone-14",
+      "screens": [
+        "review-capture.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/review-capture.iphone-14.png",
+      "screenshotSha256": "0d5c4c249b1077673148147e6ab20b90327f7d6913112ca618c753a194fc7f33"
+    },
+    "review-capture.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "12740a4c75fe35d8d273e0935377c301689f94c678da14d53be15a2e45235cd3",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/review-capture.iphone-14.html": "6d858c7f2840d2a93e4ab09cd1332a966dfafd92b04bf7ac7b2282bf67278c18",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "review-capture.iphone-14",
+      "screens": [
+        "review-capture.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/review-capture.iphone-14.png",
+      "screenshotSha256": "c386fa1deeed01484206cec7dd158baad9cf6c75df4afdb39b15205bb7c3590d"
+    },
+    "review-capture.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "aa2579cf694efcb8c5173490de59c70b879eef14c254fe9e2561a28385a86960",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/review-capture.iphone-14.html": "6d858c7f2840d2a93e4ab09cd1332a966dfafd92b04bf7ac7b2282bf67278c18",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "review-capture.iphone-14",
+      "screens": [
+        "review-capture.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/review-capture.iphone-14.png",
+      "screenshotSha256": "cf3d8694621f7b793378d1ba2e112b80d5bf6c74cc80b105e15d4484fafbbc1f"
+    },
+    "source-detail.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "ec9f5387adbd65c39395b5f0200f7b10ffd8c33a39bac7055a4598f013eaf153",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/source-detail.iphone-14.html": "5f04fb5d2f740e5716fbdf210ba79f93e57b897526b82e34397057732bf42faf"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "source-detail.iphone-14",
+      "screens": [
+        "source-detail.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/source-detail.iphone-14.png",
+      "screenshotSha256": "050f7ee74676d6d41351585678bc1e92fae1095558c212fa493e98e17e0be162"
+    },
+    "source-detail.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "79d83d00d258604583aa5356219b7d45aab289c6ff975c9f168809c78513108d",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/source-detail.iphone-14.html": "5f04fb5d2f740e5716fbdf210ba79f93e57b897526b82e34397057732bf42faf"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "source-detail.iphone-14",
+      "screens": [
+        "source-detail.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/source-detail.iphone-14.png",
+      "screenshotSha256": "7bfd923169bcc9dfc06be89c9044d04de275a7717f7bf9ceae554cdb3ceea417"
+    },
+    "source-detail.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "bd100ae0ee7a66d0169d139d0d8659c5f861ceea718fabe5789cf7efda5db56d",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/source-detail.iphone-14.html": "5f04fb5d2f740e5716fbdf210ba79f93e57b897526b82e34397057732bf42faf"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "source-detail.iphone-14",
+      "screens": [
+        "source-detail.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/source-detail.iphone-14.png",
+      "screenshotSha256": "ffd9876fce7d452750d39b79f6cefe47aa41932a38f55a1c4d27a7665cfe949c"
+    },
+    "states/capture-offline.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "151c5fe8dd84a2c798bdb54b8402342650b8e7094f0345f27753b1e8f17aaafb",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/capture-offline.iphone-14.html": "2061f524b67dd0847d1863e1d9823d99feb83673000688242a4a62dcb4272b2f"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/capture-offline.iphone-14",
+      "screens": [
+        "states/capture-offline.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/states/capture-offline.iphone-14.png",
+      "screenshotSha256": "3cd8542fc169e5fec940d18e6704b651919ffa935623241f2fd5a0d9036786a9"
+    },
+    "states/capture-offline.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "59a1826f79f7004493b8c7b75cf5346a5f1d10483cb4c74043a004cfb466dc24",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/capture-offline.iphone-14.html": "2061f524b67dd0847d1863e1d9823d99feb83673000688242a4a62dcb4272b2f"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/capture-offline.iphone-14",
+      "screens": [
+        "states/capture-offline.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/states/capture-offline.iphone-14.png",
+      "screenshotSha256": "67343df3359ef829a9dcbdd94f9c67cc7516d547b3c7dc2bd36f70d650411433"
+    },
+    "states/capture-offline.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "da64fc7e6cbc2ccec99b4639c5816d368f3bb4afa092bc989f378c67039ef343",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/capture-offline.iphone-14.html": "2061f524b67dd0847d1863e1d9823d99feb83673000688242a4a62dcb4272b2f"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/capture-offline.iphone-14",
+      "screens": [
+        "states/capture-offline.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/states/capture-offline.iphone-14.png",
+      "screenshotSha256": "e9c81272adacb47715d96e01ecd6fb59d71d9f47b8e5de62db71c3e1563621cb"
+    },
+    "states/capture-saved.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "b268ab6ec43c7635385d56b50497079c2577ec723b6f157dc2d9d53139d460f3",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/capture-saved.iphone-14.html": "bbe3da3f0f21b22df43ed1eee6f1881eed8f8a87cebbaa2bb55f6e95020efd1e"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/capture-saved.iphone-14",
+      "screens": [
+        "states/capture-saved.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/states/capture-saved.iphone-14.png",
+      "screenshotSha256": "469504cd585f5e3878f771036525aec48b9a514694aae9aa392ea5c1b2d891b6"
+    },
+    "states/capture-saved.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "ab353ae99291ea30f8a26c0316bb1c782607f1413390e0458f2f116f34848561",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/capture-saved.iphone-14.html": "bbe3da3f0f21b22df43ed1eee6f1881eed8f8a87cebbaa2bb55f6e95020efd1e"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/capture-saved.iphone-14",
+      "screens": [
+        "states/capture-saved.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/states/capture-saved.iphone-14.png",
+      "screenshotSha256": "5227470c8b62b37948a47d26f2d00f25233e1084eaaf48fd03271eaab0ab3379"
+    },
+    "states/capture-saved.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "d27d2abc02d5dac69496eca6944be26342b92e7256ba2f5a30e003d40cbe2781",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/capture-saved.iphone-14.html": "bbe3da3f0f21b22df43ed1eee6f1881eed8f8a87cebbaa2bb55f6e95020efd1e"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/capture-saved.iphone-14",
+      "screens": [
+        "states/capture-saved.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/states/capture-saved.iphone-14.png",
+      "screenshotSha256": "fbcf6b00a915dfb05121859d1e840d09f997ed06a26a52d3e17063f0d3062839"
+    },
+    "states/dish-archive-confirmation.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "7a79c40af5c6711848a9e0563ba86632844a3d7ecc55462ea00ffcfc38964162",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/dish-archive-confirmation.iphone-14.html": "eb17aea78a760162f4454f4e7e5078741c8bd88fba664831b7a0d9411893ef50"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/dish-archive-confirmation.iphone-14",
+      "screens": [
+        "states/dish-archive-confirmation.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/states/dish-archive-confirmation.iphone-14.png",
+      "screenshotSha256": "ca1afb228ecc33ceed93666ba0356479281de0dc6cb361fbf3bed52af56800cc"
+    },
+    "states/dish-archive-confirmation.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "74c014ede1ee06b3a7b799bedb421f33ac751c1857d571870cbf954a3e8313bf",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/dish-archive-confirmation.iphone-14.html": "eb17aea78a760162f4454f4e7e5078741c8bd88fba664831b7a0d9411893ef50"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/dish-archive-confirmation.iphone-14",
+      "screens": [
+        "states/dish-archive-confirmation.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/states/dish-archive-confirmation.iphone-14.png",
+      "screenshotSha256": "3d52c00c101c2ee25b8bbf1edfcbd23acc9b58d11e018a6edb6d50ab0df965cb"
+    },
+    "states/dish-archive-confirmation.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "ecf9ca61f7d155f04bfc544a5b8586365e289b18e9c2a26073d95d528897ce10",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/dish-archive-confirmation.iphone-14.html": "eb17aea78a760162f4454f4e7e5078741c8bd88fba664831b7a0d9411893ef50"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/dish-archive-confirmation.iphone-14",
+      "screens": [
+        "states/dish-archive-confirmation.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/states/dish-archive-confirmation.iphone-14.png",
+      "screenshotSha256": "594dc4c43dc108803cb8e4975103997cfe81b27df4a386ea784f39cf55119be1"
+    },
+    "states/dish-archived.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "c25db75f19ec48facf9be9520cc5ca0afb813c949efe8e3a855e8ad230e68139",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/dish-archived.iphone-14.html": "8f9ae001419ce76f8fa3a437ee7337452e34b43c40cc73f7ff85f3c667f0071b"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/dish-archived.iphone-14",
+      "screens": [
+        "states/dish-archived.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/states/dish-archived.iphone-14.png",
+      "screenshotSha256": "b501a6793148e91e6b212c0f4f08a7c6c0628d297725ad3cd17a3026e0deefd8"
+    },
+    "states/dish-archived.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "45b565330e6ce19109683c426cab80ec78a8865ee7159c2a67232d8efa8b3d45",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/dish-archived.iphone-14.html": "8f9ae001419ce76f8fa3a437ee7337452e34b43c40cc73f7ff85f3c667f0071b"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/dish-archived.iphone-14",
+      "screens": [
+        "states/dish-archived.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/states/dish-archived.iphone-14.png",
+      "screenshotSha256": "282d3409674412cf6f3f64526f5a95142927d04fa58457d94aea449216119f2d"
+    },
+    "states/dish-archived.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "d942ad0982ca1fafa3e789420925d4354d810eec2b9abaf6a8c65b75f8fac2f7",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/dish-archived.iphone-14.html": "8f9ae001419ce76f8fa3a437ee7337452e34b43c40cc73f7ff85f3c667f0071b"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/dish-archived.iphone-14",
+      "screens": [
+        "states/dish-archived.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/states/dish-archived.iphone-14.png",
+      "screenshotSha256": "7d383b616065bc5f61d8d98134aee63642b9621f34477c52294286f8e8717e97"
+    },
+    "states/dish-incomplete.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "35f59c7bcd116712b89a6ebd607d1808e5e8e752174b60258d5ab7c9cdd1f920",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/dish-incomplete.iphone-14.html": "5f685f07a45f1c528fa45f9e5e7bccfbebe7258aa5bbee8a29b7278276787179"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/dish-incomplete.iphone-14",
+      "screens": [
+        "states/dish-incomplete.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/states/dish-incomplete.iphone-14.png",
+      "screenshotSha256": "49d7e29d20c6ad6bd6771a9a3db4131f7f62d4d738c280ef816fed5d85532bad"
+    },
+    "states/dish-incomplete.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "71707d15697e2d9ed54c5a32a2d7e0f00e0532ad772387c02fd1cc409c379828",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/dish-incomplete.iphone-14.html": "5f685f07a45f1c528fa45f9e5e7bccfbebe7258aa5bbee8a29b7278276787179"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/dish-incomplete.iphone-14",
+      "screens": [
+        "states/dish-incomplete.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/states/dish-incomplete.iphone-14.png",
+      "screenshotSha256": "960fb084f1bdaa62d790fe76c2d3d39fc5f6591edd2a9ecdb9e736b92f411e19"
+    },
+    "states/dish-incomplete.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "7cf3a1bacb3cadde9b07587c7afd0fd2892fd161d8aef6b1f9df6b758bac3d64",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/dish-incomplete.iphone-14.html": "5f685f07a45f1c528fa45f9e5e7bccfbebe7258aa5bbee8a29b7278276787179"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/dish-incomplete.iphone-14",
+      "screens": [
+        "states/dish-incomplete.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/states/dish-incomplete.iphone-14.png",
+      "screenshotSha256": "0395e8d848c0e2d766e6b4364e618522dca7667789b5cba2685593147f42d0f9"
+    },
+    "states/menu-empty.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "8e1e47e0bdc40bea67b29cd10b43faf724e88c43a10b1cbfa29a0ab7c06a950a",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/menu-empty.iphone-14.html": "0fbe5b44fcf2fe88ecaf9cec4ccf8fc3a02465ce681d68bff2e29c3e233107c7"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/menu-empty.iphone-14",
+      "screens": [
+        "states/menu-empty.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/states/menu-empty.iphone-14.png",
+      "screenshotSha256": "368f098a3b755bddc3b19f01bf548817de7f77e33517d41643841a9bbcb94556"
+    },
+    "states/menu-empty.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "b38cb221f2f3b5a5b655c06e7c12bb5ef44204f45ec01ffb4b4e5205cfd67c39",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/menu-empty.iphone-14.html": "0fbe5b44fcf2fe88ecaf9cec4ccf8fc3a02465ce681d68bff2e29c3e233107c7"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/menu-empty.iphone-14",
+      "screens": [
+        "states/menu-empty.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/states/menu-empty.iphone-14.png",
+      "screenshotSha256": "d671b9bd9a0e7f996daa6d7708b9cf5c1c3f4b1b704d3e50aa45a15451e4786f"
+    },
+    "states/menu-empty.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "a895e13470ae7889f6926148fede918008697e18356c32446535a9d293187ef1",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/menu-empty.iphone-14.html": "0fbe5b44fcf2fe88ecaf9cec4ccf8fc3a02465ce681d68bff2e29c3e233107c7"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/menu-empty.iphone-14",
+      "screens": [
+        "states/menu-empty.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/states/menu-empty.iphone-14.png",
+      "screenshotSha256": "ea6a205df995cead3d319baa2a655f7a97d38f0c2a3fc5c7bd3cfd6589183d24"
+    },
+    "states/plan-meal-actions.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "3022b221d4f81de15b344f664ac26647645eb341a7f62cecbed0acdc2cf7723b",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/plan-meal-actions.iphone-14.html": "7111c9cebfaf5e442b1c17aada5cf2756db7314540b427d7e7c999743e96f9c0"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/plan-meal-actions.iphone-14",
+      "screens": [
+        "states/plan-meal-actions.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/states/plan-meal-actions.iphone-14.png",
+      "screenshotSha256": "547adb31d3b4fa014b18fd1429e707a7a66c2498b1df98c9ecc3e68571f62568"
+    },
+    "states/plan-meal-actions.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "ca5eba622c0debe8d388fb14f78c3c0c0f9a1fbc0dbec3f7f92c967883de30bf",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/plan-meal-actions.iphone-14.html": "7111c9cebfaf5e442b1c17aada5cf2756db7314540b427d7e7c999743e96f9c0"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/plan-meal-actions.iphone-14",
+      "screens": [
+        "states/plan-meal-actions.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/states/plan-meal-actions.iphone-14.png",
+      "screenshotSha256": "45414f9b4dd70f117303690e3db62637c3f3ef776a26e78e393ee4e5f6cea99d"
+    },
+    "states/plan-meal-actions.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "4fffd607e2fab00e42574abd9ac9b082f7c85785ef155bb2cd6ef2e33b6c477e",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/plan-meal-actions.iphone-14.html": "7111c9cebfaf5e442b1c17aada5cf2756db7314540b427d7e7c999743e96f9c0"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/plan-meal-actions.iphone-14",
+      "screens": [
+        "states/plan-meal-actions.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/states/plan-meal-actions.iphone-14.png",
+      "screenshotSha256": "b10a672b0fcd859f645dd2969204d74529e25d03b262e77091e3072398f37ace"
+    },
+    "states/plan-meal-removed.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "53bd2c692af10cacbb2bff3c87eb17d0de5cf7f90062a0831689829a4f16f2d2",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/plan-meal-removed.iphone-14.html": "2feb2a660d845b864fae5f2412a4382c5c6378382ca9ab81c2a02a82f9ec91b7"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/plan-meal-removed.iphone-14",
+      "screens": [
+        "states/plan-meal-removed.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/states/plan-meal-removed.iphone-14.png",
+      "screenshotSha256": "2b00bcee3a4de7d80d687074d0a3c5135e393fa532d16c2c6f42b50f7bd858a0"
+    },
+    "states/plan-meal-removed.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "c1dc5c239a5a04323e5e52e2fe1dcd4b6a7df26307446a1565b54bbbec621290",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/plan-meal-removed.iphone-14.html": "2feb2a660d845b864fae5f2412a4382c5c6378382ca9ab81c2a02a82f9ec91b7"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/plan-meal-removed.iphone-14",
+      "screens": [
+        "states/plan-meal-removed.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/states/plan-meal-removed.iphone-14.png",
+      "screenshotSha256": "198ba22d8862670e71fdc6635a7043a4d49322ff68817aaa5f98e409c9956910"
+    },
+    "states/plan-meal-removed.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "1d158e69bb3433eeb2d9eb3518bc0f1ab2667ef588cb78399bfe06e89512da99",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/shared.css": "cb27bb9d585672d1fa89dd44e3d967511cc67a54e462ce3b3e3395e832fce8e1",
+        "screens/states/plan-meal-removed.iphone-14.html": "2feb2a660d845b864fae5f2412a4382c5c6378382ca9ab81c2a02a82f9ec91b7"
+      },
+      "proof": "Reviewed all 57 current viewport PNGs across Plan, Menu, Dish, Notes, Sources, Capture, Review, and outcome states. The warm cream and orange system, stable shell order, task-first hierarchy, single-primary-action treatment, overlay dismissal, long-note wrapping, source scroll cues, archive confirmation and undo outcomes, and offline/review recovery remain visually coherent on iPhone SE, iPhone 14, and Pixel 7.",
+      "screen": "states/plan-meal-removed.iphone-14",
+      "screens": [
+        "states/plan-meal-removed.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/states/plan-meal-removed.iphone-14.png",
+      "screenshotSha256": "91917026233c6e4666c5473477ff1313c83efca6a84fa3e91cb2407076097433"
+    }
+  }
+}
