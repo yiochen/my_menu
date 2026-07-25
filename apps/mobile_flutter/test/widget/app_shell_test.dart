@@ -118,6 +118,73 @@ void main() {
       });
     });
 
+    testWidgets(
+        'menu top chrome is edge-to-edge, scrollable, and overflow-free',
+        (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      tester.view.padding = const FakeViewPadding(top: 47);
+      tester.platformDispatcher.textScaleFactorTestValue = 1.15;
+      addTearDown(tester.view.reset);
+      addTearDown(
+        tester.platformDispatcher.clearTextScaleFactorTestValue,
+      );
+
+      await runWithMockNetworkImages(() async {
+        await tester.pumpWidget(_testApp());
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Menu'));
+        await tester.pumpAndSettle();
+
+        final Finder menu = find.byKey(
+          const ValueKey<String>('menu_screen'),
+        );
+        expect(tester.getTopLeft(menu).dy, 0);
+        expect(
+          tester.getTopLeft(find.text('Your personal restaurant')).dy,
+          greaterThan(47),
+        );
+        expect(tester.takeException(), isNull);
+
+        await tester.drag(menu, const Offset(0, -32));
+        await tester.pumpAndSettle();
+
+        expect(
+          tester.getTopLeft(find.text('Your personal restaurant')).dy,
+          lessThan(47),
+        );
+        expect(tester.takeException(), isNull);
+      });
+    });
+
+    testWidgets('menu top chrome matches its screenshot golden', (
+      WidgetTester tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      tester.view.padding = const FakeViewPadding(top: 47);
+      tester.platformDispatcher.textScaleFactorTestValue = 1.15;
+      addTearDown(tester.view.reset);
+      addTearDown(
+        tester.platformDispatcher.clearTextScaleFactorTestValue,
+      );
+
+      await runWithMockNetworkImages(() async {
+        await tester.pumpWidget(_testApp());
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Menu'));
+        await tester.pumpAndSettle();
+
+        await expectLater(
+          find.byKey(const ValueKey<String>('menu_heading_golden')),
+          matchesGoldenFile(
+            'goldens/menu_heading_390x844_text_scale_1_15.png',
+          ),
+        );
+        expect(tester.takeException(), isNull);
+      });
+    });
+
     testWidgets('removes and restores a planned dish with Undo', (
       WidgetTester tester,
     ) async {

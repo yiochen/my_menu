@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
@@ -27,15 +28,21 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final MyMenuState state = MyMenuScope.of(context);
-    return Scaffold(
-      body: AnimatedBuilder(
-        animation: state,
-        builder: (BuildContext context, _) {
-          return Stack(
-            children: <Widget>[
-              SafeArea(
-                bottom: false,
-                child: switch (_selectedIndex) {
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+        systemNavigationBarColor: MyMenuColors.cream,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        body: AnimatedBuilder(
+          animation: state,
+          builder: (BuildContext context, _) {
+            return Stack(
+              children: <Widget>[
+                switch (_selectedIndex) {
                   0 => PlanScreen(
                       key: const ValueKey<String>('plan_destination'),
                       onOpenReview: () => showReviewSheet(context, state),
@@ -48,21 +55,21 @@ class _HomeShellState extends State<HomeShell> {
                       },
                     ),
                 },
-              ),
-              _FloatingBottomShell(
-                selectedIndex: _selectedIndex,
-                onSelect: (int value) {
-                  setState(() => _selectedIndex = value);
-                },
-                onCapture: () => showCaptureSheet(
-                  context,
-                  state,
-                  _captureMediaService,
+                _FloatingBottomShell(
+                  selectedIndex: _selectedIndex,
+                  onSelect: (int value) {
+                    setState(() => _selectedIndex = value);
+                  },
+                  onCapture: () => showCaptureSheet(
+                    context,
+                    state,
+                    _captureMediaService,
+                  ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }

@@ -42,9 +42,12 @@ class _PlanScreenState extends State<PlanScreen> {
     final String selectedKey = dayKeyForDate(_selectedDate);
 
     return WarmPage(
+      topPadding: 0,
       child: ListView(
         key: const ValueKey<String>('plan_screen'),
-        padding: EdgeInsets.zero,
+        padding: EdgeInsets.only(
+          top: MediaQuery.paddingOf(context).top + MyMenuUnits.pageTop,
+        ),
         children: <Widget>[
           _PlanHeader(reviewCount: state.reviewItems.length),
           const SizedBox(height: 16),
@@ -111,12 +114,13 @@ class _PlanHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 48,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 48),
       child: Row(
         children: <Widget>[
           Expanded(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(

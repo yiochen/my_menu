@@ -47,13 +47,24 @@ class _MenuScreenState extends State<MenuScreen> {
     final MyMenuState state = MyMenuScope.of(context);
     final List<Dish> dishes = _visibleDishes(state);
     return WarmPage(
+      topPadding: 0,
       child: RefreshIndicator(
         onRefresh: state.refreshFromServer,
         child: CustomScrollView(
           key: const ValueKey<String>('menu_screen'),
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: <Widget>[
-            SliverToBoxAdapter(child: _header(context)),
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: MediaQuery.paddingOf(context).top + MyMenuUnits.pageTop,
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: RepaintBoundary(
+                key: const ValueKey<String>('menu_heading_golden'),
+                child: _header(context),
+              ),
+            ),
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
             SliverToBoxAdapter(child: _searchField()),
             const SliverToBoxAdapter(child: SizedBox(height: 12)),
@@ -100,12 +111,14 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   Widget _header(BuildContext context) {
-    return SizedBox(
-      height: 48,
+    return ConstrainedBox(
+      key: const ValueKey<String>('menu_heading'),
+      constraints: const BoxConstraints(minHeight: 48),
       child: Row(
         children: <Widget>[
           Expanded(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
