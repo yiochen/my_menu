@@ -97,6 +97,7 @@ class AppTheme {
         backgroundColor: MyMenuColors.cream,
         surfaceTintColor: Colors.transparent,
         modalBackgroundColor: MyMenuColors.cream,
+        clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
         ),

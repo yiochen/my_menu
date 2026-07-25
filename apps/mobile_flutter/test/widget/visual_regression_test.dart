@@ -232,6 +232,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Save it while it’s fresh'), findsOneWidget);
+        _expectRoundedModalSheetClip(tester);
         await _expectFullAppGolden(tester, 'ui_capture_sheet');
       });
     });
@@ -247,6 +248,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('What do you wanna cook?'), findsOneWidget);
+        _expectRoundedModalSheetClip(tester);
         await _expectFullAppGolden(tester, 'ui_add_idea_sheet');
       });
     });
@@ -271,6 +273,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Where should this go?'), findsOneWidget);
+        _expectRoundedModalSheetClip(tester);
         await _expectFullAppGolden(tester, 'ui_review_sheet');
       });
     });
@@ -298,6 +301,16 @@ Future<void> _pumpGoldenApp(
   );
   await _precacheDishArtwork(tester);
   await tester.pumpAndSettle();
+}
+
+void _expectRoundedModalSheetClip(WidgetTester tester) {
+  final BuildContext sheetContext = tester.element(
+    find.byType(BottomSheet).last,
+  );
+  expect(
+    Theme.of(sheetContext).bottomSheetTheme.clipBehavior,
+    Clip.antiAlias,
+  );
 }
 
 MyMenuState _buildGoldenState() {
