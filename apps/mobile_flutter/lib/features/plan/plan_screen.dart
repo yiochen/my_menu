@@ -40,14 +40,19 @@ class _PlanScreenState extends State<PlanScreen> {
   Widget build(BuildContext context) {
     final MyMenuState state = MyMenuScope.of(context);
     final String selectedKey = dayKeyForDate(_selectedDate);
+    final double horizontal = MyMenuUnits.pageHorizontal(context);
 
     return WarmPage(
       topPadding: 0,
       bottomPadding: 0,
+      horizontalPadding: 0,
       child: ListView(
         key: const ValueKey<String>('plan_screen'),
-        padding: EdgeInsets.only(
-          top: MediaQuery.paddingOf(context).top + MyMenuUnits.pageTop,
+        padding: EdgeInsets.fromLTRB(
+          horizontal,
+          MediaQuery.paddingOf(context).top + MyMenuUnits.pageTop,
+          horizontal,
+          0,
         ),
         children: <Widget>[
           _PlanHeader(reviewCount: state.reviewItems.length),

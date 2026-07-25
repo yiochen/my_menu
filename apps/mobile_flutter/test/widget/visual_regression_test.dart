@@ -219,6 +219,16 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Cook again'), findsOneWidget);
+        expect(find.text('Cover image'), findsNothing);
+        final Finder detailScroll = find.byKey(
+          const ValueKey<String>('dish_detail_scroll_view'),
+        );
+        expect(tester.getTopLeft(detailScroll), Offset.zero);
+        expect(tester.getBottomRight(detailScroll), const Offset(390, 844));
+        final ListView detailList = tester.widget(detailScroll);
+        final EdgeInsets detailPadding =
+            detailList.padding!.resolve(TextDirection.ltr);
+        expect(detailPadding, const EdgeInsets.fromLTRB(18, 61, 18, 62));
         await _expectFullAppGolden(tester, 'ui_dish_detail');
       });
     });

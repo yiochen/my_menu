@@ -8,6 +8,7 @@ class WarmPage extends StatelessWidget {
     this.includeBottomChromeSpace = true,
     this.topPadding = MyMenuUnits.pageTop,
     this.bottomPadding,
+    this.horizontalPadding,
     super.key,
   });
 
@@ -15,10 +16,12 @@ class WarmPage extends StatelessWidget {
   final bool includeBottomChromeSpace;
   final double topPadding;
   final double? bottomPadding;
+  final double? horizontalPadding;
 
   @override
   Widget build(BuildContext context) {
-    final double horizontal = MyMenuUnits.pageHorizontal(context);
+    final double horizontal =
+        horizontalPadding ?? MyMenuUnits.pageHorizontal(context);
     return DecoratedBox(
       decoration: const BoxDecoration(
         color: MyMenuColors.cream,

@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:drift/drift.dart' hide isNull;
+import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -29,16 +29,33 @@ void main() {
           const ValueKey<String>('plan_screen'),
         );
         expect(plan, findsOneWidget);
+        expect(tester.getTopLeft(plan).dx, 0);
         expect(
           tester.getBottomRight(plan).dy,
           tester.view.physicalSize.height / tester.view.devicePixelRatio,
         );
+        expect(
+          tester.getBottomRight(plan).dx,
+          tester.view.physicalSize.width / tester.view.devicePixelRatio,
+        );
         final ListView planScrollView = tester.widget(plan);
+        final EdgeInsets planPadding =
+            planScrollView.padding!.resolve(TextDirection.ltr);
+        expect(planPadding.left, MyMenuUnits.pageGutter);
+        expect(planPadding.right, MyMenuUnits.pageGutter);
         final SliverChildListDelegate planChildren =
             planScrollView.childrenDelegate as SliverChildListDelegate;
         expect(
           (planChildren.children.last as SizedBox).height,
           MyMenuUnits.pageBottom,
+        );
+        expect(
+          tester.getSize(
+            find.byKey(
+              const ValueKey<String>('plan_day_count_2026-07-22'),
+            ),
+          ),
+          const Size.square(14),
         );
         expect(find.text('Wednesday, July 22'), findsOneWidget);
         expect(find.text('2 dishes planned'), findsOneWidget);
@@ -160,12 +177,29 @@ void main() {
         expect(tester.getTopLeft(menu).dy, 0);
         expect(tester.getBottomRight(menu).dy, 844);
         final CustomScrollView menuScrollView = tester.widget(menu);
+        final SliverPadding menuContent =
+            menuScrollView.slivers.single as SliverPadding;
+        final EdgeInsets menuPadding =
+            menuContent.padding.resolve(TextDirection.ltr);
+        expect(menuPadding.left, MyMenuUnits.pageGutter);
+        expect(menuPadding.right, MyMenuUnits.pageGutter);
+        final SliverMainAxisGroup menuSlivers =
+            menuContent.child! as SliverMainAxisGroup;
         final SliverToBoxAdapter bottomClearance =
-            menuScrollView.slivers.last as SliverToBoxAdapter;
+            menuSlivers.children.last as SliverToBoxAdapter;
         expect(
           (bottomClearance.child! as SizedBox).height,
           MyMenuUnits.pageBottom,
         );
+        final Container menuCard = tester.widget(
+          find.byKey(const ValueKey<String>('menu_dish_dish_salmon')),
+        );
+        final BoxDecoration cardDecoration =
+            menuCard.decoration! as BoxDecoration;
+        final BoxDecoration cardForeground =
+            menuCard.foregroundDecoration! as BoxDecoration;
+        expect(cardForeground.border, isNotNull);
+        expect(cardDecoration.boxShadow, isNotEmpty);
         expect(
           tester.getTopLeft(find.text('Your personal restaurant')).dy,
           greaterThan(47),

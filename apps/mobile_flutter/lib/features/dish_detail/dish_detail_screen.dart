@@ -27,45 +27,51 @@ class _DishDetailScreenState extends State<DishDetailScreen> {
   Widget build(BuildContext context) {
     final MyMenuState state = MyMenuScope.of(context);
     final Dish dish = state.dishById(widget.dishId);
+    final MediaQueryData mediaQuery = MediaQuery.of(context);
+    final double horizontal = MyMenuUnits.pageHorizontal(context);
 
     return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: WarmPage(
-          includeBottomChromeSpace: false,
-          topPadding: 14,
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: <Widget>[
-              DishDetailHero(dish: dish),
-              const SizedBox(height: 16),
-              PrimaryPillButton(
-                key: const ValueKey<String>('cook_again_button'),
-                label: 'Cook again',
-                icon: Icons.play_arrow_rounded,
-                onPressed: () => showCookAgainSheet(context, state, dish),
-              ),
-              const SizedBox(height: 12),
-              _Metrics(dish: dish),
-              const SizedBox(height: 12),
-              _LatestNote(dish: dish),
-              const SizedBox(height: 14),
-              _DetailTabs(
-                selected: _tab,
-                notesCount: dish.notes.length,
-                historyCount: dish.madeCount,
-                onSelect: (DishDetailTab tab) => setState(() => _tab = tab),
-              ),
-              const SizedBox(height: 16),
-              DishDetailContent(
-                dish: dish,
-                state: state,
-                tab: _tab,
-                onChanged: () => setState(() {}),
-              ),
-              const SizedBox(height: 28),
-            ],
+      body: WarmPage(
+        includeBottomChromeSpace: false,
+        topPadding: 0,
+        bottomPadding: 0,
+        horizontalPadding: 0,
+        child: ListView(
+          key: const ValueKey<String>('dish_detail_scroll_view'),
+          padding: EdgeInsets.fromLTRB(
+            horizontal,
+            mediaQuery.padding.top + 14,
+            horizontal,
+            mediaQuery.padding.bottom + 28,
           ),
+          children: <Widget>[
+            DishDetailHero(dish: dish),
+            const SizedBox(height: 16),
+            PrimaryPillButton(
+              key: const ValueKey<String>('cook_again_button'),
+              label: 'Cook again',
+              icon: Icons.play_arrow_rounded,
+              onPressed: () => showCookAgainSheet(context, state, dish),
+            ),
+            const SizedBox(height: 12),
+            _Metrics(dish: dish),
+            const SizedBox(height: 12),
+            _LatestNote(dish: dish),
+            const SizedBox(height: 14),
+            _DetailTabs(
+              selected: _tab,
+              notesCount: dish.notes.length,
+              historyCount: dish.madeCount,
+              onSelect: (DishDetailTab tab) => setState(() => _tab = tab),
+            ),
+            const SizedBox(height: 16),
+            DishDetailContent(
+              dish: dish,
+              state: state,
+              tab: _tab,
+              onChanged: () => setState(() {}),
+            ),
+          ],
         ),
       ),
     );

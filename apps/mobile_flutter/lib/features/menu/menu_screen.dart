@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/features/menu/menu_empty_states.dart';
 import 'package:mymenu/features/menu/menu_grid_card.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
@@ -46,76 +47,89 @@ class _MenuScreenState extends State<MenuScreen> {
   Widget build(BuildContext context) {
     final MyMenuState state = MyMenuScope.of(context);
     final List<Dish> dishes = _visibleDishes(state);
+    final double horizontal = MyMenuUnits.pageHorizontal(context);
     return WarmPage(
       topPadding: 0,
       bottomPadding: 0,
+      horizontalPadding: 0,
       child: RefreshIndicator(
         onRefresh: state.refreshFromServer,
         child: CustomScrollView(
           key: const ValueKey<String>('menu_screen'),
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: <Widget>[
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: MediaQuery.paddingOf(context).top + MyMenuUnits.pageTop,
+            SliverPadding(
+              padding: EdgeInsets.symmetric(horizontal: horizontal),
+              sliver: SliverMainAxisGroup(
+                slivers: <Widget>[
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: MediaQuery.paddingOf(context).top +
+                          MyMenuUnits.pageTop,
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: RepaintBoundary(
+                      key: const ValueKey<String>('menu_heading_golden'),
+                      child: _header(
+                        context,
+                        showDishCount: state.dishes.isNotEmpty,
+                      ),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                  if (state.dishes.isNotEmpty) ...<Widget>[
+                    SliverToBoxAdapter(child: _searchField()),
+                    const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                    SliverToBoxAdapter(child: _filters()),
+                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                  ],
+                  if (state.dishes.isEmpty)
+                    const SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: MenuEmpty(),
+                    )
+                  else if (dishes.isEmpty)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: MenuSearchEmpty(
+                        onClear: () {
+                          _searchController.clear();
+                          widget.onQueryChanged('');
+                          setState(() {});
+                        },
+                      ),
+                    )
+                  else ...<Widget>[
+                    SliverToBoxAdapter(child: _sectionHeader(context)),
+                    const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                    SliverGrid(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.69,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (BuildContext context, int index) {
+                          return MenuGridCard(dish: dishes[index]);
+                        },
+                        childCount: dishes.length,
+                      ),
+                    ),
+                    const SliverToBoxAdapter(
+                      child: SizedBox(
+                        key: ValueKey<String>(
+                          'menu_bottom_scroll_clearance',
+                        ),
+                        height: MyMenuUnits.pageBottom,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
-            SliverToBoxAdapter(
-              child: RepaintBoundary(
-                key: const ValueKey<String>('menu_heading_golden'),
-                child: _header(
-                  context,
-                  showDishCount: state.dishes.isNotEmpty,
-                ),
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            if (state.dishes.isNotEmpty) ...<Widget>[
-              SliverToBoxAdapter(child: _searchField()),
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
-              SliverToBoxAdapter(child: _filters()),
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            ],
-            if (state.dishes.isEmpty)
-              const SliverFillRemaining(
-                hasScrollBody: false,
-                child: _EmptyMenu(),
-              )
-            else if (dishes.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: _SearchEmpty(
-                  onClear: () {
-                    _searchController.clear();
-                    widget.onQueryChanged('');
-                    setState(() {});
-                  },
-                ),
-              )
-            else ...<Widget>[
-              SliverToBoxAdapter(child: _sectionHeader(context)),
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
-              SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 0.69,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (BuildContext context, int index) {
-                    return MenuGridCard(dish: dishes[index]);
-                  },
-                  childCount: dishes.length,
-                ),
-              ),
-              const SliverToBoxAdapter(
-                child: SizedBox(
-                  key: ValueKey<String>('menu_bottom_scroll_clearance'),
-                  height: MyMenuUnits.pageBottom,
-                ),
-              ),
-            ],
           ],
         ),
       ),
@@ -304,88 +318,5 @@ class _MenuScreenState extends State<MenuScreen> {
       return;
     }
     setState(() => _category = next.isEmpty ? null : next);
-  }
-}
-
-class _SearchEmpty extends StatelessWidget {
-  const _SearchEmpty({required this.onClear});
-
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        Container(
-          width: 116,
-          height: 116,
-          decoration: BoxDecoration(
-            color: MyMenuColors.orangeSoft,
-            borderRadius: BorderRadius.circular(38),
-          ),
-          child: const Icon(
-            Icons.search_off_rounded,
-            size: 52,
-            color: MyMenuColors.orange,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text(
-          'No dish named that—yet',
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Try fewer words or search for an ingredient or note.',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        const SizedBox(height: 14),
-        SizedBox(
-          width: 150,
-          child: PrimaryPillButton(
-            label: 'Clear search',
-            onPressed: onClear,
-            backgroundColor: MyMenuColors.oat,
-            foregroundColor: MyMenuColors.ink,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _EmptyMenu extends StatelessWidget {
-  const _EmptyMenu();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        const Icon(Icons.auto_awesome, size: 96, color: MyMenuColors.orange),
-        const SizedBox(height: 16),
-        Text(
-          'Capture your first cooking moment',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.headlineSmall,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'A photo, an import, or even a rough idea is enough. '
-          'MyMenu organizes it after capture.',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        const SizedBox(height: 14),
-        const StatusStrip(
-          icon: Icons.arrow_downward_rounded,
-          text: 'Tap the orange + below to begin',
-          color: MyMenuColors.orangeDark,
-          background: MyMenuColors.orangeSoft,
-        ),
-      ],
-    );
   }
 }

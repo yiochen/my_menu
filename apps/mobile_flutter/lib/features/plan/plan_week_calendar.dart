@@ -135,7 +135,12 @@ class _DayChip extends StatelessWidget {
                     ),
               ),
               const SizedBox(height: 2),
-              _CountMarker(count: count),
+              _CountMarker(
+                key: ValueKey<String>(
+                  'plan_day_count_${dayKeyForDate(date)}',
+                ),
+                count: count,
+              ),
             ],
           ),
         ),
@@ -145,7 +150,7 @@ class _DayChip extends StatelessWidget {
 }
 
 class _CountMarker extends StatelessWidget {
-  const _CountMarker({required this.count});
+  const _CountMarker({required this.count, super.key});
 
   final int count;
 
@@ -155,12 +160,12 @@ class _CountMarker extends StatelessWidget {
       return const SizedBox(height: 14);
     }
     return Container(
-      constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      width: 14,
+      height: 14,
       alignment: Alignment.center,
       decoration: const BoxDecoration(
         color: MyMenuColors.orangeAction,
-        borderRadius: BorderRadius.all(Radius.circular(999)),
+        shape: BoxShape.circle,
       ),
       child: Text(
         '$count',

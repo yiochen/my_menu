@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_screen.dart';
+import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/dish_artwork.dart';
 
 class MenuGridCard extends StatelessWidget {
@@ -18,89 +19,121 @@ class MenuGridCard extends StatelessWidget {
             titleStyle.height!;
     final double titleSlotHeight = (titleLineHeight * 2).ceilToDouble();
 
-    return Material(
+    return Container(
       key: ValueKey<String>('menu_dish_${dish.id}'),
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: myMenuCardShadow,
+      ),
+      foregroundDecoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: MyMenuColors.line),
+      ),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => DishDetailScreen(dishId: dish.id),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => DishDetailScreen(dishId: dish.id),
+            ),
+          ),
+          child: _MenuCardBody(
+            dish: dish,
+            titleStyle: titleStyle,
+            titleSlotHeight: titleSlotHeight,
           ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Expanded(
-              child: Stack(
-                fit: StackFit.expand,
-                children: <Widget>[
-                  DishArtwork(dish: dish),
-                  if (dish.isFavorite)
-                    Positioned(
-                      left: 10,
-                      bottom: 10,
-                      child: GestureDetector(
-                        onTap: () =>
-                            MyMenuScope.read(context).toggleFavorite(dish.id),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 5,
+      ),
+    );
+  }
+}
+
+class _MenuCardBody extends StatelessWidget {
+  const _MenuCardBody({
+    required this.dish,
+    required this.titleStyle,
+    required this.titleSlotHeight,
+  });
+
+  final Dish dish;
+  final TextStyle titleStyle;
+  final double titleSlotHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Expanded(
+          child: Stack(
+            fit: StackFit.expand,
+            children: <Widget>[
+              DishArtwork(dish: dish),
+              if (dish.isFavorite)
+                Positioned(
+                  left: 10,
+                  bottom: 10,
+                  child: GestureDetector(
+                    onTap: () =>
+                        MyMenuScope.read(context).toggleFavorite(dish.id),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xEFFFFFFF),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Icon(Icons.favorite, size: 10),
+                          SizedBox(width: 3),
+                          Text(
+                            'Favorite',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xEFFFFFFF),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              Icon(Icons.favorite, size: 10),
-                              SizedBox(width: 3),
-                              Text(
-                                'Favorite',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        ],
                       ),
                     ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 11, 12, 13),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  SizedBox(
-                    height: titleSlotHeight,
-                    child: Text(
-                      key: ValueKey<String>('menu_dish_title_${dish.id}'),
-                      dish.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: titleStyle,
-                    ),
                   ),
-                  Text(
-                    '${dish.madeCount} ${dish.madeCount == 1 ? 'cook' : 'cooks'}'
-                    ' · ${dish.sourcePhotos.length} photos',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  const SizedBox(height: 7),
-                  _MemoryCue(dish: dish),
-                ],
-              ),
-            ),
-          ],
+                ),
+            ],
+          ),
         ),
-      ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 11, 12, 13),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              SizedBox(
+                height: titleSlotHeight,
+                child: Text(
+                  key: ValueKey<String>('menu_dish_title_${dish.id}'),
+                  dish.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: titleStyle,
+                ),
+              ),
+              Text(
+                '${dish.madeCount} '
+                '${dish.madeCount == 1 ? 'cook' : 'cooks'}'
+                ' · ${dish.sourcePhotos.length} photos',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 7),
+              _MemoryCue(dish: dish),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

@@ -113,22 +113,6 @@ class _HeroCaption extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-          decoration: BoxDecoration(
-            color: const Color(0xD9FFFFFF),
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: const Text(
-            'Cover image',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-        const SizedBox(height: 5),
         Text(
           dish.title,
           style: Theme.of(context).textTheme.displaySmall?.copyWith(
