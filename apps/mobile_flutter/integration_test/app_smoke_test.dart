@@ -1,13 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:mymenu/main.dart' as app;
+import 'package:mymenu/app/app.dart';
+import 'package:mymenu/app/home_shell.dart';
+import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/shared/theme/app_theme.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('launches and captures an idea', (WidgetTester tester) async {
-    await app.main();
+    final MyMenuState state = MyMenuState();
+    addTearDown(state.dispose);
+    await tester.pumpWidget(
+      MyMenuScope(
+        notifier: state,
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.data,
+          home: const HomeShell(),
+        ),
+      ),
+    );
     await _pumpUntilFound(
       tester,
       find.byKey(const ValueKey<String>('plan_screen')),
@@ -36,11 +50,11 @@ void main() {
       scrollable: find.byType(Scrollable).last,
     );
     await tester.tap(find.text('Save idea'));
-    await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();
 
     expect(find.text('Add an idea'), findsNothing);
     expect(find.byKey(const ValueKey<String>('plan_screen')), findsOneWidget);
+    expect(state.dishes.first.title, 'Black Bean Tacos');
     expect(tester.takeException(), isNull);
   });
 }
