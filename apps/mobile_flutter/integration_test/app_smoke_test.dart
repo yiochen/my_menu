@@ -1,76 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:mymenu/main.dart' as app;
+import 'package:mymenu/app/app.dart';
+import 'package:mymenu/app/home_shell.dart';
+import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/shared/theme/app_theme.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  group('MyMenu Android smoke test', () {
-    testWidgets('launches, captures an idea, and sees it classifying', (
-      WidgetTester tester,
-    ) async {
-      await app.main();
-      await _pumpUntilFound(
-        tester,
-        find.byKey(const ValueKey<String>('plan_screen')),
-      );
+  testWidgets('launches and captures an idea', (WidgetTester tester) async {
+    final MyMenuState state = MyMenuState();
+    addTearDown(state.dispose);
+    await tester.pumpWidget(
+      MyMenuScope(
+        notifier: state,
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.data,
+          home: const HomeShell(),
+        ),
+      ),
+    );
+    await _pumpUntilFound(
+      tester,
+      find.byKey(const ValueKey<String>('plan_screen')),
+    );
 
-      expect(find.byKey(const ValueKey<String>('plan_screen')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('capture_fab')));
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Add Idea'),
+      120,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Add Idea'));
+    await _pumpUntilFound(
+      tester,
+      find.byKey(const ValueKey<String>('idea_title_field')),
+    );
 
-      await tester.tap(find.byKey(const ValueKey('capture_fab')));
-      await tester.pump(const Duration(milliseconds: 500));
+    await tester.enterText(
+      find.byKey(const ValueKey<String>('idea_title_field')),
+      'black bean tacos',
+    );
+    await tester.scrollUntilVisible(
+      find.text('Save idea'),
+      120,
+      scrollable: find.byType(Scrollable).last,
+    );
+    await tester.tap(find.text('Save idea'));
+    await tester.pumpAndSettle();
 
-      final Finder addDishIdea = find.text('Add Idea');
-      await _scrollIntoView(
-        tester,
-        addDishIdea,
-        scrollable: find.byType(Scrollable).last,
-      );
-      await tester.tap(addDishIdea);
-      await _pumpUntilFound(tester, find.byType(TextFormField));
-
-      await tester.enterText(
-        find.byType(TextFormField),
-        'black bean tacos',
-      );
-      await tester.tap(find.text('Save'));
-      await tester.pump(const Duration(milliseconds: 500));
-      await tester.pump(const Duration(seconds: 2));
-
-      await tester.scrollUntilVisible(
-        find.text('1 capture in feed'),
-        200,
-        scrollable: find.byType(Scrollable).first,
-      );
-
-      expect(find.text('1 capture in feed'), findsOneWidget);
-      expect(
-        find.text('Track upload and fake API classification.'),
-        findsOneWidget,
-      );
-    });
+    expect(find.text('Add an idea'), findsNothing);
+    expect(find.byKey(const ValueKey<String>('plan_screen')), findsOneWidget);
+    expect(state.dishes.first.title, 'Black Bean Tacos');
+    expect(tester.takeException(), isNull);
   });
-}
-
-Future<void> _scrollIntoView(
-  WidgetTester tester,
-  Finder target, {
-  required Finder scrollable,
-  double delta = 200,
-}) async {
-  if (target.evaluate().isNotEmpty) {
-    await tester.ensureVisible(target);
-    await tester.pump(const Duration(milliseconds: 250));
-    return;
-  }
-
-  await tester.scrollUntilVisible(
-    target,
-    delta,
-    scrollable: scrollable,
-  );
-  await tester.pump(const Duration(milliseconds: 250));
 }
 
 Future<void> _pumpUntilFound(
@@ -85,7 +71,7 @@ Future<void> _pumpUntilFound(
       return;
     }
   }
-
   throw TestFailure(
-      'Timed out waiting for ${finder.describeMatch(Plurality.one)}.');
+    'Timed out waiting for ${finder.describeMatch(Plurality.one)}.',
+  );
 }
