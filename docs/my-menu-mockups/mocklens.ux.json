@@ -1,0 +1,133 @@
+{
+  "version": 1,
+  "goal": "Help a home cook capture first, see automatic organization succeed, build trustworthy cooking-event history, improve a dish cover safely, and plan one or more dishes for any selected day.",
+  "delivery": {
+    "screens": [
+      "plan.iphone-14",
+      "plan-next-week.iphone-14",
+      "plan-add.iphone-14",
+      "plan-actions.iphone-14",
+      "plan-removed.iphone-14",
+      "menu.iphone-14",
+      "menu-empty.iphone-14",
+      "menu-search-empty.iphone-14",
+      "dish-detail.iphone-14",
+      "dish-memory.iphone-14",
+      "cook-again.iphone-14",
+      "capture.iphone-14",
+      "capture-saved.iphone-14",
+      "capture-matched.iphone-14",
+      "capture-created.iphone-14",
+      "capture-offline.iphone-14",
+      "capture-permission.iphone-14",
+      "add-idea.iphone-14",
+      "add-idea-validation.iphone-14",
+      "review.iphone-14",
+      "review-search-empty.iphone-14",
+      "improve-cover.iphone-14",
+      "improve-cover-generating.iphone-14",
+      "improve-cover-result.iphone-14",
+      "improve-cover-offline.iphone-14",
+      "improve-cover-error.iphone-14"
+    ],
+    "devices": ["iphone-se", "iphone-14", "pixel-7"]
+  },
+  "requirements": [
+    {
+      "id": "stable-two-tab-shell",
+      "kind": "screen-family",
+      "description": "Plan and Menu keep the stable floating Plan–capture–Menu shell, with no permanent Capture or Review tab and no competing empty-state capture button.",
+      "screens": ["plan.iphone-14", "plan-next-week.iphone-14", "menu.iphone-14", "menu-empty.iphone-14", "menu-search-empty.iphone-14"]
+    },
+    {
+      "id": "single-day-multi-dish-planning",
+      "kind": "flow",
+      "description": "Plan uses a selected-day view where one date can contain multiple dishes, one clear add action targets that date, a visually separate recommendation is explicitly not planned, and an empty non-today date has the same add path.",
+      "screens": ["plan.iphone-14", "plan-add.iphone-14", "plan-next-week.iphone-14"]
+    },
+    {
+      "id": "calendar-date-reachability",
+      "kind": "flow",
+      "description": "The calendar shows all seven days, visually distinguishes today from the selected date, exposes previous/next week controls, and demonstrates reaching a date outside the current week.",
+      "screens": ["plan.iphone-14", "plan-next-week.iphone-14"]
+    },
+    {
+      "id": "planned-meal-correction",
+      "kind": "flow",
+      "description": "A planned dish row visibly opens details, its secondary action exposes Move to another day and Remove from plan, and removal remains reversible through a compact temporary Undo toast fixed above—not covering—the bottom navigation.",
+      "screens": ["plan.iphone-14", "plan-actions.iphone-14", "plan-removed.iphone-14"]
+    },
+    {
+      "id": "automatic-capture-happy-path",
+      "kind": "flow",
+      "description": "Take Photo captures without classification, confirms immediate local save while AI organizes, then visibly demonstrates both automatic existing-dish matching and new-dish creation with Correct and Undo paths.",
+      "screens": ["capture.iphone-14", "capture-saved.iphone-14", "capture-matched.iphone-14", "capture-created.iphone-14"]
+    },
+    {
+      "id": "capture-offline-and-permission-recovery",
+      "kind": "flow",
+      "description": "Offline capture remains locally queued with a clear later-organizing state, while denied camera permission preserves Import Photos and Add Idea alternatives and explains the Settings recovery path.",
+      "screens": ["capture.iphone-14", "capture-offline.iphone-14", "capture-permission.iphone-14"]
+    },
+    {
+      "id": "capture-first-idea-flow",
+      "kind": "flow",
+      "description": "Capture offers Take Photo, Import Photos, and Add Idea before any destination decision; Add Idea captures only a dish idea and optional memory note, with no planning controls, and has canonical valid and retained-content validation states.",
+      "screens": ["capture.iphone-14", "add-idea.iphone-14", "add-idea-validation.iphone-14"]
+    },
+    {
+      "id": "contextual-ai-review-and-search-recovery",
+      "kind": "flow",
+      "description": "Review remains contextual, uses unambiguous progress wording, supports existing-dish and new-dish outcomes, and demonstrates an empty alternate-dish search with clear query correction.",
+      "screens": ["plan.iphone-14", "review.iphone-14", "review-search-empty.iphone-14"]
+    },
+    {
+      "id": "successful-cover-improvement",
+      "kind": "flow",
+      "description": "Dish Detail presents Improve Cover as a persistent compact chip on the cover image; the flow explains that sources inform a new cover without changing originals, supports source selection and optional freeform visual direction, shows generation, compares current and proposed covers, and requires Use this cover or Keep current.",
+      "screens": ["dish-detail.iphone-14", "improve-cover.iphone-14", "improve-cover-generating.iphone-14", "improve-cover-result.iphone-14"]
+    },
+    {
+      "id": "cover-improvement-recovery",
+      "kind": "flow",
+      "description": "Offline and online-generation failure states both preserve the current cover and local dish knowledge, distinguish their causes, and provide non-destructive retry or exit paths.",
+      "screens": ["improve-cover-offline.iphone-14", "improve-cover-error.iphone-14", "dish-detail.iphone-14"]
+    },
+    {
+      "id": "trustworthy-cooking-event-history",
+      "kind": "flow",
+      "description": "Cook Again explains whether the user is cooking now or planning for later; made count represents cooking occasions, source-photo count is distinct, and multiple photos can appear inside one dated cooking occasion.",
+      "screens": ["dish-detail.iphone-14", "cook-again.iphone-14", "dish-memory.iphone-14"]
+    },
+    {
+      "id": "memory-forward-discovery",
+      "kind": "screen-family",
+      "description": "The single filterable Menu grid and the first Dish Detail viewport surface cooking-history, source, favorite, or latest-note cues so the product reads as a living cooking memory rather than a generic recipe library.",
+      "screens": ["menu.iphone-14", "dish-detail.iphone-14", "dish-memory.iphone-14"]
+    },
+    {
+      "id": "clear-menu-count-and-controls",
+      "kind": "screen-family",
+      "description": "Menu labels the collection as 24 dishes, uses All, Favorites, Recently added, and Filters to control one unified dish grid without duplicate Favorites and All sections, and covers a search-empty state with concise query-clearing guidance.",
+      "screens": ["menu.iphone-14", "menu-search-empty.iphone-14"]
+    },
+    {
+      "id": "menu-empty-single-capture-action",
+      "kind": "screen",
+      "description": "The empty Menu relies on the persistent global capture button as its only dominant action and uses capture-first language rather than manual filing language.",
+      "screens": ["menu-empty.iphone-14"]
+    },
+    {
+      "id": "warm-minimal-visual-system",
+      "kind": "screen-family",
+      "description": "Every delivery screen retains the shared cream, orange, charcoal, soft-surface, high-radius, rounded-type, and ambient-shadow system with one dominant filled action per task region.",
+      "screens": ["plan.iphone-14", "plan-next-week.iphone-14", "plan-add.iphone-14", "plan-actions.iphone-14", "plan-removed.iphone-14", "menu.iphone-14", "menu-empty.iphone-14", "menu-search-empty.iphone-14", "dish-detail.iphone-14", "dish-memory.iphone-14", "cook-again.iphone-14", "capture.iphone-14", "capture-saved.iphone-14", "capture-matched.iphone-14", "capture-created.iphone-14", "capture-offline.iphone-14", "capture-permission.iphone-14", "add-idea.iphone-14", "add-idea-validation.iphone-14", "review.iphone-14", "review-search-empty.iphone-14", "improve-cover.iphone-14", "improve-cover-generating.iphone-14", "improve-cover-result.iphone-14", "improve-cover-offline.iphone-14", "improve-cover-error.iphone-14"]
+    },
+    {
+      "id": "compact-device-resilience",
+      "kind": "screen-family",
+      "description": "Seven-day calendars, multiple planned dishes, long names, grouped history, comparison states, bottom actions, and recovery copy remain readable and reachable on iPhone SE, iPhone 14, and Pixel 7 without clipped or covered controls.",
+      "screens": ["plan.iphone-14", "plan-next-week.iphone-14", "plan-actions.iphone-14", "plan-removed.iphone-14", "menu.iphone-14", "dish-detail.iphone-14", "dish-memory.iphone-14", "capture-saved.iphone-14", "improve-cover.iphone-14", "improve-cover-result.iphone-14", "add-idea-validation.iphone-14", "review-search-empty.iphone-14"]
+    }
+  ]
+}

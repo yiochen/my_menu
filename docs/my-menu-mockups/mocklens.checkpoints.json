@@ -1,0 +1,1744 @@
+{
+  "ux": {
+    "ai-uncertainty-correction": {
+      "inputHash": "f818eea471cbf1783e2868fb592ff6daebd6ad7cb79bfdb9a6d0dcc9dae9f14a",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:ai-uncertainty-correction": "d49fba47a88a9e6bc89a966c2a6f45b1165f1d680a47717ae53b2c9209dce980",
+        "screens/plan.iphone-14.html": "4efdec569f548004c5c3eeca5f33e8e4a44da79eb6f463f06d4b8056ddd25ac8",
+        "screens/review.iphone-14.html": "79c26b953a7266169fa2800063e50dbb8e3a86929f6c6c65635d184215b7d939",
+        "screens/shared.css": "47a00ee434661c17a5bc1e599cd1211de33c039a4029d46e6c53bee9d5dc9883"
+      },
+      "proof": "Plan exposes uncertainty only as a 2-item contextual review card. Review shows the captured source, time, 86% match rationale, selected existing-dish outcome, new-dish alternative, different-dish path, and confirmation that advances to item two.",
+      "screens": [
+        "plan.iphone-14",
+        "review.iphone-14"
+      ]
+    },
+    "automatic-capture-happy-path": {
+      "inputHash": "43b7b287a7e8903f4c025c5893b20c8dd74b383569500928b20448c094f38cbe",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:automatic-capture-happy-path": "2f44d42f428acf414c229835203e0b96f68336be74f21ea8962e7651a1510a81",
+        "screens/capture-created.iphone-14.html": "3f8fe84bccf1c5bf0a57c68ba12a44eca5a0012df6ff9d28d32d8d7dd036cfa7",
+        "screens/capture-matched.iphone-14.html": "9d3e3140828bd7a1388af7a55bd3a1906a2a1e64d5e41e7444a9267acdce120f",
+        "screens/capture-saved.iphone-14.html": "5c9c999a43c1e56ca630b560a26a01337c6e9ce42a8feb8543f51ffad50c4ac4",
+        "screens/capture.iphone-14.html": "a14397aca61c0ba422b29d1f41a2fc7d1a81dc8505fee1b06cb132bf48a1bf5c",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Re-reviewed the current Capture screenshot after EOF-only cleanup; rendering is unchanged and Take Photo still leads through local save to matched/created outcomes with Correct and Undo recovery.",
+      "screens": [
+        "capture.iphone-14",
+        "capture-saved.iphone-14",
+        "capture-matched.iphone-14",
+        "capture-created.iphone-14"
+      ]
+    },
+    "calendar-date-reachability": {
+      "inputHash": "a66893e962d490115d974f1afa4a7f73e828cfdabcf508e93d0c0d61c655dec4",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:calendar-date-reachability": "9f0492de3492b2fe151118ca0745726a8c3ca3770494e9523b21e4e77d572a8d",
+        "screens/plan-next-week.iphone-14.html": "30abbff30541596576493d6cf9020b249d8a1e040c1def95936e45bbd993ff3e",
+        "screens/plan.iphone-14.html": "964cc5a656c1285066bd715ea03e1db96407230abe778cf452806889efd1d6ba",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed current- and next-week Plan states on iPhone SE, iPhone 14, and Pixel 7: all seven dates, today/selection treatments, and previous/next week controls remain legible.",
+      "screens": [
+        "plan.iphone-14",
+        "plan-next-week.iphone-14"
+      ]
+    },
+    "capture-first-flow": {
+      "inputHash": "8e9d999c01dc75481cbd74dd1f218956085613b17551eb0a54624ebeaf95db4b",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:capture-first-flow": "74ae419762d7d9edc944394ad6baf9ee30750adb2233c27c3a335a4a18459fc7",
+        "screens/add-idea.iphone-14.html": "03285d110d7d2a09c1aa151b5025e83bc5f0a5a82cbdb7f4de22cc11b4ff7f5a",
+        "screens/capture.iphone-14.html": "0facfd66d0fd59420194a3d60e0cbbcf98a0f38bd0ef11f86de121a013a4d910",
+        "screens/shared.css": "47a00ee434661c17a5bc1e599cd1211de33c039a4029d46e6c53bee9d5dc9883"
+      },
+      "proof": "Capture offers Take Photo, Import Photos, and Add Idea before any destination choice. Take Photo declares immediate local save; Add Idea opens a form with one Close control, recognizable labeled fields, retained optional note, and one active Save idea completion action.",
+      "screens": [
+        "capture.iphone-14",
+        "add-idea.iphone-14"
+      ]
+    },
+    "capture-first-idea-flow": {
+      "inputHash": "8f3247578e829c34580a3486c254b93cf5a28ff317fe582201d20cf618a39203",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:capture-first-idea-flow": "001af673c1f63e9c0d6103e06582e55989b9835cd5d7557b876389abb32e71af",
+        "screens/add-idea-validation.iphone-14.html": "7338c22d36aebd078b4acd50b19274349a5be1b74eb468d72556252217140bff",
+        "screens/add-idea.iphone-14.html": "6b19a8049cabe88e8090dd0b18652815aff8cc4b487e2d2a4a57de28a4a538ab",
+        "screens/capture.iphone-14.html": "a14397aca61c0ba422b29d1f41a2fc7d1a81dc8505fee1b06cb132bf48a1bf5c",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Re-reviewed Capture after EOF-only cleanup; Take Photo, Import Photos, and Add Idea remain distinct entry actions, and Add Idea remains free of planning controls.",
+      "screens": [
+        "capture.iphone-14",
+        "add-idea.iphone-14",
+        "add-idea-validation.iphone-14"
+      ]
+    },
+    "capture-offline-and-permission-recovery": {
+      "inputHash": "82bdf93acce95c42776d5a66df1f429b7c283ea048a1c889ae7c11c0a55bd6aa",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:capture-offline-and-permission-recovery": "d8ad55e4a08f612833f4d994a92accc999a43bfb0a770740a5d50f5616a6a73a",
+        "screens/capture-offline.iphone-14.html": "019c99c65aeb31e579670cacdca71051324e5dd28755dcf4e3bb1ba5c17b5904",
+        "screens/capture-permission.iphone-14.html": "12feb5299d365573a1c83767c420c89a92a37540c6df270f2c746438d08ae272",
+        "screens/capture.iphone-14.html": "a14397aca61c0ba422b29d1f41a2fc7d1a81dc8505fee1b06cb132bf48a1bf5c",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Re-reviewed the unchanged Capture rendering with its offline and permission neighbors; local queueing, Settings recovery, Import Photos, and Add Idea remain available and clear.",
+      "screens": [
+        "capture.iphone-14",
+        "capture-offline.iphone-14",
+        "capture-permission.iphone-14"
+      ]
+    },
+    "clear-menu-count-and-controls": {
+      "inputHash": "635c55801df4248a467883330fa10d52939c17b7a14997f8e047786c5907c40f",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:clear-menu-count-and-controls": "212518b96cdec97bfd07c3e292af3e45d34e06c0a917114db8c0eaddd086a52e",
+        "screens/menu-search-empty.iphone-14.html": "8d6b3098b0d5b86cb378041f294f5d8dab7d4f31ecf178b18b167741cef26143",
+        "screens/menu.iphone-14.html": "88107162fc5f5cbe389c1086f3ff0e9e4d37df51aab96a0a3ac4045e0080b075",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed Menu and search-empty states: 24 dishes is labeled clearly, All/Favorites/Recently added/Filters control one grid, and the no-result state uses concise search guidance and Clear search.",
+      "screens": [
+        "menu.iphone-14",
+        "menu-search-empty.iphone-14"
+      ]
+    },
+    "compact-device-resilience": {
+      "inputHash": "ba2c52b0599877ae80a64790f5d4443ac4844dcb6abea2a618bce31a28b1ef0d",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:compact-device-resilience": "81db1fc937f159e024946ff2d77812ebad646e1645ba2a5ea23d0064cd0d82cf",
+        "screens/add-idea-validation.iphone-14.html": "7338c22d36aebd078b4acd50b19274349a5be1b74eb468d72556252217140bff",
+        "screens/capture-saved.iphone-14.html": "5c9c999a43c1e56ca630b560a26a01337c6e9ce42a8feb8543f51ffad50c4ac4",
+        "screens/dish-detail.iphone-14.html": "affcd12456428b0444827989898d4bc84e6f681fb2748b16cc35736c841d6482",
+        "screens/dish-memory.iphone-14.html": "ad9558a0d2d69524c13f207b25e91479b980ba95d181e7f00f0b9bcfec4f2b97",
+        "screens/improve-cover-result.iphone-14.html": "5777d744e54c90132d5012a4fce880763b70ea1cf42e7bb15f24c0e1fe033e4f",
+        "screens/improve-cover.iphone-14.html": "983921e30fa181e420e9e04e47c14d649a0f77d71edae033b0e4beb8c3d10771",
+        "screens/menu.iphone-14.html": "88107162fc5f5cbe389c1086f3ff0e9e4d37df51aab96a0a3ac4045e0080b075",
+        "screens/plan-actions.iphone-14.html": "67485434449e9b6e1faf228ba8dc1c46d8d524f2fde02e8dbd2b04efa591870d",
+        "screens/plan-next-week.iphone-14.html": "30abbff30541596576493d6cf9020b249d8a1e040c1def95936e45bbd993ff3e",
+        "screens/plan-removed.iphone-14.html": "6bdeec3228f198f84a6890813e45e78f25a92de6355528fe2b4855a0881109dc",
+        "screens/plan.iphone-14.html": "964cc5a656c1285066bd715ea03e1db96407230abe778cf452806889efd1d6ba",
+        "screens/review-search-empty.iphone-14.html": "9e887daa5eaea6be33c8c52519e51d1637336479e0e9139b4dd2b05841a78950",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed all 26 screens on iPhone SE, iPhone 14, and Pixel 7; calendars, long labels, grids, sheets, fixed actions, the hero chip, freeform prompt, and Undo toast remain readable and reachable with no detected clipping or coverage.",
+      "screens": [
+        "plan.iphone-14",
+        "plan-next-week.iphone-14",
+        "plan-actions.iphone-14",
+        "plan-removed.iphone-14",
+        "menu.iphone-14",
+        "dish-detail.iphone-14",
+        "dish-memory.iphone-14",
+        "capture-saved.iphone-14",
+        "improve-cover.iphone-14",
+        "improve-cover-result.iphone-14",
+        "add-idea-validation.iphone-14",
+        "review-search-empty.iphone-14"
+      ]
+    },
+    "contextual-ai-review-and-search-recovery": {
+      "inputHash": "63e1c45ca7052fa793ff05863a35df8d7bb58dee262472aba0ab643b38f80f37",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:contextual-ai-review-and-search-recovery": "6d0fed6cc5bea30b6ab25116028747f34151a10d4154e97e55299bbe5ea72425",
+        "screens/plan.iphone-14.html": "964cc5a656c1285066bd715ea03e1db96407230abe778cf452806889efd1d6ba",
+        "screens/review-search-empty.iphone-14.html": "9e887daa5eaea6be33c8c52519e51d1637336479e0e9139b4dd2b05841a78950",
+        "screens/review.iphone-14.html": "f5ffd8ec8f5979895c590fdf61d39fa85449cfba66c613552a99ad0ff547fece",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed Review and alternate-dish empty search: progress is contextual, existing/new outcomes remain selectable, and the empty result offers clear query recovery plus Make new.",
+      "screens": [
+        "plan.iphone-14",
+        "review.iphone-14",
+        "review-search-empty.iphone-14"
+      ]
+    },
+    "cover-improvement-recovery": {
+      "inputHash": "aa4eba44fcc1b74213325b9d300364f4d7b1013088debc4995cd748e96099a46",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:cover-improvement-recovery": "7bc8c706a4674e9686716df758e5ae2829421d51650c0f77dc82e8585435c9d9",
+        "screens/dish-detail.iphone-14.html": "affcd12456428b0444827989898d4bc84e6f681fb2748b16cc35736c841d6482",
+        "screens/improve-cover-error.iphone-14.html": "f58f216b39bbe51855c7ed6c0f0034f4c9f542918177cdd21be7b16dd60de9b3",
+        "screens/improve-cover-offline.iphone-14.html": "2699d4d9511f3e6389039e34e03fdbbd98de5345c2a7b595a964009180f9605e",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed offline and generation-error cover states: both retain the current cover, explain the distinct failure, and offer safe retry or exit actions.",
+      "screens": [
+        "improve-cover-offline.iphone-14",
+        "improve-cover-error.iphone-14",
+        "dish-detail.iphone-14"
+      ]
+    },
+    "dish-living-memory": {
+      "inputHash": "3cf21aea059c444d68658e3fe9a4df7da55ff664c8b4c3fbe2310083dfdcadca",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:dish-living-memory": "3e238b3f62160fa31f4fa8e7f27382b61d42dad60a5c82caef9f2357e3737efe",
+        "screens/dish-detail.iphone-14.html": "a88be926d39cf45d0f1dcd7fda37dabd7d7133518d0ab15b449f83eecce393e5",
+        "screens/dish-memory.iphone-14.html": "69d7203fce142a8b28da0b5dbd7987febd46db34851ad11560243f1bf40e4a7a",
+        "screens/shared.css": "47a00ee434661c17a5bc1e599cd1211de33c039a4029d46e6c53bee9d5dc9883"
+      },
+      "proof": "Dish Detail gives the cover, Cook again and Improve actions, made count 8, last made Jul 18, cook time, description, recipe tabs, ingredients, and AI-draft safety copy. Dish Memory keeps the same dish context while exposing three editable notes and three of eight dated sources with an explicit five-more reachability cue.",
+      "screens": [
+        "dish-detail.iphone-14",
+        "dish-memory.iphone-14"
+      ]
+    },
+    "idea-validation-and-correction": {
+      "inputHash": "f55fa43ab0a9f715ff3c5fcb18eccc5e7ceb107b0278d4c94bdb64a2ccadb858",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:idea-validation-and-correction": "536043018a6d92b797c6c4a43dfc75d01c44af08aa6e198c980e9eefcd33709f",
+        "screens/add-idea-validation.iphone-14.html": "be46159dcda37618c6b053552e7663de5c12048b98d0c731a97a1d3fc52cd891",
+        "screens/add-idea.iphone-14.html": "03285d110d7d2a09c1aa151b5025e83bc5f0a5a82cbdb7f4de22cc11b4ff7f5a",
+        "screens/shared.css": "47a00ee434661c17a5bc1e599cd1211de33c039a4029d46e6c53bee9d5dc9883"
+      },
+      "proof": "Add Idea Validation keeps the user's full note, highlights only the empty Dish idea field, states exactly what to add, and disables Save idea. Its single Close path matches the canonical Add Idea screen, where the same fields support correction and active completion.",
+      "screens": [
+        "add-idea.iphone-14",
+        "add-idea-validation.iphone-14"
+      ]
+    },
+    "memory-forward-discovery": {
+      "inputHash": "5c14c33df9d89ea4bfca6c06f40a140b78b472b88c339df3d6400762c992d44a",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:memory-forward-discovery": "79a6f72350b5bac831faf8983942a4aceb631148ce3171186e11171227d80f76",
+        "screens/dish-detail.iphone-14.html": "affcd12456428b0444827989898d4bc84e6f681fb2748b16cc35736c841d6482",
+        "screens/dish-memory.iphone-14.html": "ad9558a0d2d69524c13f207b25e91479b980ba95d181e7f00f0b9bcfec4f2b97",
+        "screens/menu.iphone-14.html": "88107162fc5f5cbe389c1086f3ff0e9e4d37df51aab96a0a3ac4045e0080b075",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the unified Menu grid, Dish Detail first viewport, and Cooking History: favorite, cook count, photo count, latest-note, and dated-memory cues remain prominent.",
+      "screens": [
+        "menu.iphone-14",
+        "dish-detail.iphone-14",
+        "dish-memory.iphone-14"
+      ]
+    },
+    "menu-empty-single-capture-action": {
+      "inputHash": "4b1bbc59ac2403f607bd6cfcb2cd93c315ccee359e3ab4b0c682e1cdbf63c65f",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:menu-empty-single-capture-action": "e6b1f6cd8cdb564461864574dfc7359dc5c091626ac35311a73bd4ef2651369e",
+        "screens/menu-empty.iphone-14.html": "02d2d0bb7aa98546613b2cf8a2b07e7914ffbdb7ae419b6209f942be1cb2609e",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed empty Menu on all devices: the floating global capture control is the sole dominant action and copy invites capturing a first cooking moment.",
+      "screens": [
+        "menu-empty.iphone-14"
+      ]
+    },
+    "menu-library-coverage": {
+      "inputHash": "401c9d51e88503ef8d0546d0dab29196c221b323b04481e9c180b334080c200c",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:menu-library-coverage": "03c2e067559ac4d23776dafe77ea78eae8a1af47d5a6ded4f8d096b8c303b261",
+        "screens/menu-empty.iphone-14.html": "b596ee80b7a67fce37c9d91ad530db248d461ffbce9fbd422f8e4104de7e3402",
+        "screens/menu.iphone-14.html": "cab93c962985e5baed9604a81cd5ca3e4e4a9eec23623302bd373ec85852b99a",
+        "screens/shared.css": "47a00ee434661c17a5bc1e599cd1211de33c039a4029d46e6c53bee9d5dc9883"
+      },
+      "proof": "Menu shows a 24-dish count, search across dishes/notes/ingredients, filter entry, favorites, recent filtering, and a continuing two-column All dishes collection. Menu Empty replaces the collection with one dominant Add your first dish action and capture-first guidance.",
+      "screens": [
+        "menu.iphone-14",
+        "menu-empty.iphone-14"
+      ]
+    },
+    "offline-local-first": {
+      "inputHash": "15fcec6d76cd96bb4b3d25291208938af554b7aa6d197f7f36dc9636e333b091",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:offline-local-first": "7813fab2befdfd7d87950d30a7a3ddadb914128313710eb68499d536290145d2",
+        "screens/dish-detail.iphone-14.html": "a88be926d39cf45d0f1dcd7fda37dabd7d7133518d0ab15b449f83eecce393e5",
+        "screens/improve-cover-offline.iphone-14.html": "70b240564bdaf15f89bfa97d6372e1af88bbd2831c677898fb98da8820a609ea",
+        "screens/shared.css": "47a00ee434661c17a5bc1e599cd1211de33c039a4029d46e6c53bee9d5dc9883"
+      },
+      "proof": "Dish Detail declares that Improve opens the offline recovery state when disconnected. Improve Cover Offline clearly marks AI generation as waiting while confirming the current cover, recipe, notes, eight sources, and local editing remain safe, with Try again and Remind me later recovery actions.",
+      "screens": [
+        "dish-detail.iphone-14",
+        "improve-cover-offline.iphone-14"
+      ]
+    },
+    "planned-meal-correction": {
+      "inputHash": "7fdb7ca1fe1f6075e0c9d52a1cce31c32d6ead7b939bf08fecf197a3d4c7fe26",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:planned-meal-correction": "46cbc10cf5b8f5722e43e5754439a5542bc759f7586de11beecdfb4976ccf49b",
+        "screens/plan-actions.iphone-14.html": "67485434449e9b6e1faf228ba8dc1c46d8d524f2fde02e8dbd2b04efa591870d",
+        "screens/plan-removed.iphone-14.html": "6bdeec3228f198f84a6890813e45e78f25a92de6355528fe2b4855a0881109dc",
+        "screens/plan.iphone-14.html": "964cc5a656c1285066bd715ea03e1db96407230abe778cf452806889efd1d6ba",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed Plan, action menu, and removal state together: rows expose detail and overflow actions, and the 58px Undo toast is fixed in a reserved lane above navigation without covering Add another dish.",
+      "screens": [
+        "plan.iphone-14",
+        "plan-actions.iphone-14",
+        "plan-removed.iphone-14"
+      ]
+    },
+    "single-day-multi-dish-planning": {
+      "inputHash": "8610ed2fe6af09207b35412a86ae3e1dd157fc36bdf471b30106d866071a0272",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:single-day-multi-dish-planning": "4e67499c8d02e91fdaec4e6c9ceb472664428d184661c50cebe8fb4efd43ab10",
+        "screens/plan-add.iphone-14.html": "2644c9f67a1a1a25a8987784dcf41e6a017101cea00179a942cf725dc9c8ecad",
+        "screens/plan-next-week.iphone-14.html": "30abbff30541596576493d6cf9020b249d8a1e040c1def95936e45bbd993ff3e",
+        "screens/plan.iphone-14.html": "964cc5a656c1285066bd715ea03e1db96407230abe778cf452806889efd1d6ba",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed Plan, Add to Wednesday, and next-week states: the selected date owns its dish list and Add another dish action, while recommendations remain visibly separate from planned dishes.",
+      "screens": [
+        "plan.iphone-14",
+        "plan-add.iphone-14",
+        "plan-next-week.iphone-14"
+      ]
+    },
+    "stable-two-tab-shell": {
+      "inputHash": "87ee0c82124cec6e57054252850511cb22d49442e5603c0cbea2622b94809229",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:stable-two-tab-shell": "63c513bbb9c7251b5df2d1e765bdd50c92f92fba7ae5f1b8e87ce7fc2d60b0c2",
+        "screens/menu-empty.iphone-14.html": "02d2d0bb7aa98546613b2cf8a2b07e7914ffbdb7ae419b6209f942be1cb2609e",
+        "screens/menu-search-empty.iphone-14.html": "8d6b3098b0d5b86cb378041f294f5d8dab7d4f31ecf178b18b167741cef26143",
+        "screens/menu.iphone-14.html": "88107162fc5f5cbe389c1086f3ff0e9e4d37df51aab96a0a3ac4045e0080b075",
+        "screens/plan-next-week.iphone-14.html": "30abbff30541596576493d6cf9020b249d8a1e040c1def95936e45bbd993ff3e",
+        "screens/plan.iphone-14.html": "964cc5a656c1285066bd715ea03e1db96407230abe778cf452806889efd1d6ba",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed Plan, Menu, and empty/search states across all three device contact sheets: the floating Plan–capture–Menu shell remains stable and the empty state adds no competing CTA.",
+      "screens": [
+        "plan.iphone-14",
+        "plan-next-week.iphone-14",
+        "menu.iphone-14",
+        "menu-empty.iphone-14",
+        "menu-search-empty.iphone-14"
+      ]
+    },
+    "successful-cover-improvement": {
+      "inputHash": "3b1c488183a96b89d95833d0d194ae1fc7221aa35654e2601e78a191c53c357b",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:successful-cover-improvement": "a31d293a47eecb34324929fc7045f3ad9b0900229179b14471d093f79023086b",
+        "screens/dish-detail.iphone-14.html": "affcd12456428b0444827989898d4bc84e6f681fb2748b16cc35736c841d6482",
+        "screens/improve-cover-generating.iphone-14.html": "ba9f6d6459b17d2ca524f87ba0b57efb66a5a927a3f5b459c108ac83ded21dbc",
+        "screens/improve-cover-result.iphone-14.html": "5777d744e54c90132d5012a4fce880763b70ea1cf42e7bb15f24c0e1fe033e4f",
+        "screens/improve-cover.iphone-14.html": "983921e30fa181e420e9e04e47c14d649a0f77d71edae033b0e4beb8c3d10771",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed Dish Detail through cover generation and comparison: a persistent hero chip opens the flow, the source screen includes optional freeform visual direction, originals stay safe, and replacement requires an explicit choice.",
+      "screens": [
+        "dish-detail.iphone-14",
+        "improve-cover.iphone-14",
+        "improve-cover-generating.iphone-14",
+        "improve-cover-result.iphone-14"
+      ]
+    },
+    "trustworthy-cooking-event-history": {
+      "inputHash": "fa5a53b5ddfe0c7c01b843430c8d7c072b91409b7fda9d6e8abca5123f7cb39b",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:trustworthy-cooking-event-history": "7aaaa79e9e3b76267a9eae38ffc85adada29636cc0c7d1c917d2c00a4ef4d29f",
+        "screens/cook-again.iphone-14.html": "cefd67578804661813c20f69ff82afed5f910d6c571af0a4fc3367da8501cf9e",
+        "screens/dish-detail.iphone-14.html": "affcd12456428b0444827989898d4bc84e6f681fb2748b16cc35736c841d6482",
+        "screens/dish-memory.iphone-14.html": "ad9558a0d2d69524c13f207b25e91479b980ba95d181e7f00f0b9bcfec4f2b97",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed Dish Detail, Cook Again, and Cooking History: occasions, source photos, dated groups, and multiple photos per cook remain distinct and understandable.",
+      "screens": [
+        "dish-detail.iphone-14",
+        "cook-again.iphone-14",
+        "dish-memory.iphone-14"
+      ]
+    },
+    "warm-minimal-visual-system": {
+      "inputHash": "fdadbb200b8389c1cf98a378d3c54748ce69bb06be87314541281e48d84b01f0",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:warm-minimal-visual-system": "b97731eace10fa3c7541315958dbc8a2244bf1beb1873f35cdb22c166f3e4878",
+        "screens/add-idea-validation.iphone-14.html": "7338c22d36aebd078b4acd50b19274349a5be1b74eb468d72556252217140bff",
+        "screens/add-idea.iphone-14.html": "6b19a8049cabe88e8090dd0b18652815aff8cc4b487e2d2a4a57de28a4a538ab",
+        "screens/capture-created.iphone-14.html": "3f8fe84bccf1c5bf0a57c68ba12a44eca5a0012df6ff9d28d32d8d7dd036cfa7",
+        "screens/capture-matched.iphone-14.html": "9d3e3140828bd7a1388af7a55bd3a1906a2a1e64d5e41e7444a9267acdce120f",
+        "screens/capture-offline.iphone-14.html": "019c99c65aeb31e579670cacdca71051324e5dd28755dcf4e3bb1ba5c17b5904",
+        "screens/capture-permission.iphone-14.html": "12feb5299d365573a1c83767c420c89a92a37540c6df270f2c746438d08ae272",
+        "screens/capture-saved.iphone-14.html": "5c9c999a43c1e56ca630b560a26a01337c6e9ce42a8feb8543f51ffad50c4ac4",
+        "screens/capture.iphone-14.html": "a14397aca61c0ba422b29d1f41a2fc7d1a81dc8505fee1b06cb132bf48a1bf5c",
+        "screens/cook-again.iphone-14.html": "cefd67578804661813c20f69ff82afed5f910d6c571af0a4fc3367da8501cf9e",
+        "screens/dish-detail.iphone-14.html": "affcd12456428b0444827989898d4bc84e6f681fb2748b16cc35736c841d6482",
+        "screens/dish-memory.iphone-14.html": "ad9558a0d2d69524c13f207b25e91479b980ba95d181e7f00f0b9bcfec4f2b97",
+        "screens/improve-cover-error.iphone-14.html": "f58f216b39bbe51855c7ed6c0f0034f4c9f542918177cdd21be7b16dd60de9b3",
+        "screens/improve-cover-generating.iphone-14.html": "ba9f6d6459b17d2ca524f87ba0b57efb66a5a927a3f5b459c108ac83ded21dbc",
+        "screens/improve-cover-offline.iphone-14.html": "2699d4d9511f3e6389039e34e03fdbbd98de5345c2a7b595a964009180f9605e",
+        "screens/improve-cover-result.iphone-14.html": "5777d744e54c90132d5012a4fce880763b70ea1cf42e7bb15f24c0e1fe033e4f",
+        "screens/improve-cover.iphone-14.html": "983921e30fa181e420e9e04e47c14d649a0f77d71edae033b0e4beb8c3d10771",
+        "screens/menu-empty.iphone-14.html": "02d2d0bb7aa98546613b2cf8a2b07e7914ffbdb7ae419b6209f942be1cb2609e",
+        "screens/menu-search-empty.iphone-14.html": "8d6b3098b0d5b86cb378041f294f5d8dab7d4f31ecf178b18b167741cef26143",
+        "screens/menu.iphone-14.html": "88107162fc5f5cbe389c1086f3ff0e9e4d37df51aab96a0a3ac4045e0080b075",
+        "screens/plan-actions.iphone-14.html": "67485434449e9b6e1faf228ba8dc1c46d8d524f2fde02e8dbd2b04efa591870d",
+        "screens/plan-add.iphone-14.html": "2644c9f67a1a1a25a8987784dcf41e6a017101cea00179a942cf725dc9c8ecad",
+        "screens/plan-next-week.iphone-14.html": "30abbff30541596576493d6cf9020b249d8a1e040c1def95936e45bbd993ff3e",
+        "screens/plan-removed.iphone-14.html": "6bdeec3228f198f84a6890813e45e78f25a92de6355528fe2b4855a0881109dc",
+        "screens/plan.iphone-14.html": "964cc5a656c1285066bd715ea03e1db96407230abe778cf452806889efd1d6ba",
+        "screens/review-search-empty.iphone-14.html": "9e887daa5eaea6be33c8c52519e51d1637336479e0e9139b4dd2b05841a78950",
+        "screens/review.iphone-14.html": "f5ffd8ec8f5979895c590fdf61d39fa85449cfba66c613552a99ad0ff547fece",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Re-reviewed the current Capture screenshot after non-visual EOF cleanup; its cream surface, orange primary action, rounded cards, charcoal typography, and floating treatment remain consistent with the full 78-target review.",
+      "screens": [
+        "plan.iphone-14",
+        "plan-next-week.iphone-14",
+        "plan-add.iphone-14",
+        "plan-actions.iphone-14",
+        "plan-removed.iphone-14",
+        "menu.iphone-14",
+        "menu-empty.iphone-14",
+        "menu-search-empty.iphone-14",
+        "dish-detail.iphone-14",
+        "dish-memory.iphone-14",
+        "cook-again.iphone-14",
+        "capture.iphone-14",
+        "capture-saved.iphone-14",
+        "capture-matched.iphone-14",
+        "capture-created.iphone-14",
+        "capture-offline.iphone-14",
+        "capture-permission.iphone-14",
+        "add-idea.iphone-14",
+        "add-idea-validation.iphone-14",
+        "review.iphone-14",
+        "review-search-empty.iphone-14",
+        "improve-cover.iphone-14",
+        "improve-cover-generating.iphone-14",
+        "improve-cover-result.iphone-14",
+        "improve-cover-offline.iphone-14",
+        "improve-cover-error.iphone-14"
+      ]
+    },
+    "weekly-plan-task": {
+      "inputHash": "cac4a74afaaa66bbac78593d3ea47a85ff8066150e9c9141a058f26d1a4eb6a2",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:weekly-plan-task": "3a892f3e5854a83b95e7fdb1a2216176a2c96cd3ee707cadfb805c0fc012264e",
+        "screens/plan-add.iphone-14.html": "db07b18188b0d8ace4c0e8342eed6f5f97022e5bcee2e86c9bd12def7ccef5ca",
+        "screens/plan.iphone-14.html": "4efdec569f548004c5c3eeca5f33e8e4a44da79eb6f463f06d4b8056ddd25ac8",
+        "screens/review.iphone-14.html": "79c26b953a7266169fa2800063e50dbb8e3a86929f6c6c65635d184215b7d939",
+        "screens/shared.css": "47a00ee434661c17a5bc1e599cd1211de33c039a4029d46e6c53bee9d5dc9883"
+      },
+      "proof": "Plan shows July 20–24, three planned dishes, a visible Wednesday empty-slot action, and a contextual 2-item review card. The empty slot declares that tap opens Plan Add; Plan Add preselects Miso Salmon Bowl and Save to Wednesday declares that it returns to the updated Plan.",
+      "screens": [
+        "plan.iphone-14",
+        "plan-add.iphone-14",
+        "review.iphone-14"
+      ]
+    }
+  },
+  "version": 1,
+  "visual": {
+    "add-idea-validation.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "c3eeedc9ce9f4d198f5421031475ea32635599147903e835f93b117b4d8e97ee",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/add-idea-validation.iphone-14.html": "7338c22d36aebd078b4acd50b19274349a5be1b74eb468d72556252217140bff",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "add-idea-validation.iphone-14",
+      "screens": [
+        "add-idea-validation.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/add-idea-validation.iphone-14.png",
+      "screenshotSha256": "cb00aec3d71fed56110fece428b75f538f0f8515dd74d6d39dcf40d3b919c194"
+    },
+    "add-idea-validation.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "ae30695c3d0495b96ba110435d8c599e6257da0d567e2675fdf5de2d7066096d",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/add-idea-validation.iphone-14.html": "7338c22d36aebd078b4acd50b19274349a5be1b74eb468d72556252217140bff",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "add-idea-validation.iphone-14",
+      "screens": [
+        "add-idea-validation.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/add-idea-validation.iphone-14.png",
+      "screenshotSha256": "ee1172457f869a26e3b58d8004c4bcacccc3f6b032e4aeddba59eb931ead6add"
+    },
+    "add-idea-validation.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "7ebd94b6e0fc2a06a14950ef20f885db97ea97d22f33bd1b469fd488fae79307",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/add-idea-validation.iphone-14.html": "7338c22d36aebd078b4acd50b19274349a5be1b74eb468d72556252217140bff",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "add-idea-validation.iphone-14",
+      "screens": [
+        "add-idea-validation.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/add-idea-validation.iphone-14.png",
+      "screenshotSha256": "5f728934a20398f0604a5c8b3ca7bce9963d2c5f50d019f17388ede17644f35d"
+    },
+    "add-idea.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "137954cb85b2d3b0d43c6577b5e5d79a553a87c1a782170a4a2a92b1a60b6a46",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/add-idea.iphone-14.html": "6b19a8049cabe88e8090dd0b18652815aff8cc4b487e2d2a4a57de28a4a538ab",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "add-idea.iphone-14",
+      "screens": [
+        "add-idea.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/add-idea.iphone-14.png",
+      "screenshotSha256": "179758d25e04c258d05b5c2015df4baba793f9fdc9233a436bc91fbcbae17872"
+    },
+    "add-idea.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "402b6622b9a3e1f77baa42c912032b9bba9613d7e861dead70a541a046f687ae",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/add-idea.iphone-14.html": "6b19a8049cabe88e8090dd0b18652815aff8cc4b487e2d2a4a57de28a4a538ab",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "add-idea.iphone-14",
+      "screens": [
+        "add-idea.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/add-idea.iphone-14.png",
+      "screenshotSha256": "c7f36fd50a1978655386871ed877443a7b08a7573f20981b9eab0e653f63207e"
+    },
+    "add-idea.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "bae54155376d3e402cc4e72cb7a7b560986995f9ce661e69a7876f7e3afaaf1d",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/add-idea.iphone-14.html": "6b19a8049cabe88e8090dd0b18652815aff8cc4b487e2d2a4a57de28a4a538ab",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "add-idea.iphone-14",
+      "screens": [
+        "add-idea.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/add-idea.iphone-14.png",
+      "screenshotSha256": "d8e328c1ecfa93d0b2cf2982eeda9f85b50280ffdea5f5d50cfc5e6f8c7c3472"
+    },
+    "capture-created.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "c640c6b2c41ec00c3c3c851d085d1aab9b388d013f98081e0910280cb8a74633",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/capture-created.iphone-14.html": "3f8fe84bccf1c5bf0a57c68ba12a44eca5a0012df6ff9d28d32d8d7dd036cfa7",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "capture-created.iphone-14",
+      "screens": [
+        "capture-created.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/capture-created.iphone-14.png",
+      "screenshotSha256": "8ca303a9a9e576a63e0a19591c598921a3c5e86de3968722fca9b3c75f8dd492"
+    },
+    "capture-created.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "1513f7e677b8612d9c808398f1261a5de2e42bfda7fd091c9623c92af02e8857",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/capture-created.iphone-14.html": "3f8fe84bccf1c5bf0a57c68ba12a44eca5a0012df6ff9d28d32d8d7dd036cfa7",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "capture-created.iphone-14",
+      "screens": [
+        "capture-created.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/capture-created.iphone-14.png",
+      "screenshotSha256": "8af0f3b4feb922f90152b9a9a703db6092fb2f38dc35b6c198debb12d0246dd2"
+    },
+    "capture-created.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "55acadb96b98a660750b32584a03f09696230470aebab345fd803a4d56c70829",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/capture-created.iphone-14.html": "3f8fe84bccf1c5bf0a57c68ba12a44eca5a0012df6ff9d28d32d8d7dd036cfa7",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "capture-created.iphone-14",
+      "screens": [
+        "capture-created.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/capture-created.iphone-14.png",
+      "screenshotSha256": "1a9a143f14d84f1eaff9b1607682c4292eb5aad148eed5bc5fc13193067a42e8"
+    },
+    "capture-matched.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "f0d28f92d8e91c85a36dbc9cb03145f7893ee84fb0587c1186c8b9732942e96e",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/capture-matched.iphone-14.html": "9d3e3140828bd7a1388af7a55bd3a1906a2a1e64d5e41e7444a9267acdce120f",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "capture-matched.iphone-14",
+      "screens": [
+        "capture-matched.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/capture-matched.iphone-14.png",
+      "screenshotSha256": "a1706a4bac8a526402bfdc140dd2360b984be2a3d460421c8a91431b6f92dcf8"
+    },
+    "capture-matched.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "ea93603289db7f53e34c01dfd465e347171e6d1dddf8974a66311c16ffae076e",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/capture-matched.iphone-14.html": "9d3e3140828bd7a1388af7a55bd3a1906a2a1e64d5e41e7444a9267acdce120f",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "capture-matched.iphone-14",
+      "screens": [
+        "capture-matched.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/capture-matched.iphone-14.png",
+      "screenshotSha256": "4556a5154f5dbdbde0edb33407837759efe937953b6e74ed3cef20ba61490d14"
+    },
+    "capture-matched.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "84c0bb714e332805a90ff3f9444839e7394aa289f23d5c525f1e4b7d42d2bf82",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/capture-matched.iphone-14.html": "9d3e3140828bd7a1388af7a55bd3a1906a2a1e64d5e41e7444a9267acdce120f",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "capture-matched.iphone-14",
+      "screens": [
+        "capture-matched.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/capture-matched.iphone-14.png",
+      "screenshotSha256": "ae832a43ec7af1e31fd28a1bb6adfc8c030f2670c5f0fbaf083a603b3d50b56c"
+    },
+    "capture-offline.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "1a5efe73bd7605ca54a1ed0cde47dcc64bfbd3f358479c0b469a0d8b267bd532",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/capture-offline.iphone-14.html": "019c99c65aeb31e579670cacdca71051324e5dd28755dcf4e3bb1ba5c17b5904",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "capture-offline.iphone-14",
+      "screens": [
+        "capture-offline.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/capture-offline.iphone-14.png",
+      "screenshotSha256": "2b3c3dd520fec06dc63b9f1818b04b1f6b7d3d66034db9c070517a684691b1f2"
+    },
+    "capture-offline.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "e2748c8196d35696441a846b737ec00246bc182cbfee69600a3de17f32343a72",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/capture-offline.iphone-14.html": "019c99c65aeb31e579670cacdca71051324e5dd28755dcf4e3bb1ba5c17b5904",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "capture-offline.iphone-14",
+      "screens": [
+        "capture-offline.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/capture-offline.iphone-14.png",
+      "screenshotSha256": "9cc66e6a93013c73793d181226dba9b4f3ab79023aea75bdd33608098f9913e5"
+    },
+    "capture-offline.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "d797733826f75faf316828751008f0e2ab5f6cc284807e08db467b467f8c9240",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/capture-offline.iphone-14.html": "019c99c65aeb31e579670cacdca71051324e5dd28755dcf4e3bb1ba5c17b5904",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "capture-offline.iphone-14",
+      "screens": [
+        "capture-offline.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/capture-offline.iphone-14.png",
+      "screenshotSha256": "aeb8c9707cc1d7d7f0b84948e88055b40406313cb81c6d6d806861f66e8b3459"
+    },
+    "capture-permission.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "2d4db907e4baaadeaae717048ab20a3845087c03845bb4d3b7497b4244fa2b63",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/capture-permission.iphone-14.html": "12feb5299d365573a1c83767c420c89a92a37540c6df270f2c746438d08ae272",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "capture-permission.iphone-14",
+      "screens": [
+        "capture-permission.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/capture-permission.iphone-14.png",
+      "screenshotSha256": "4396596134391bc45fca8a765649e937e77391b6131a5b1f11eee09a74c34b67"
+    },
+    "capture-permission.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "4fb6843168dd8f3f0a2a709bc4d49a75d08094fd2383f3a51c6639210f816717",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/capture-permission.iphone-14.html": "12feb5299d365573a1c83767c420c89a92a37540c6df270f2c746438d08ae272",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "capture-permission.iphone-14",
+      "screens": [
+        "capture-permission.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/capture-permission.iphone-14.png",
+      "screenshotSha256": "5029a097e5e6f3a23dc6dd1ef53da5d92e3fe2cec178b2ad9c065450c92ae4df"
+    },
+    "capture-permission.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "edce0ad119420b2b7345179000197abf6acf88b629a718a06e65c5beb3417416",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/capture-permission.iphone-14.html": "12feb5299d365573a1c83767c420c89a92a37540c6df270f2c746438d08ae272",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "capture-permission.iphone-14",
+      "screens": [
+        "capture-permission.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/capture-permission.iphone-14.png",
+      "screenshotSha256": "55b7b64aa26d9cce65c66490bc0e8899072b99a6be620ffd1d91c2a11ec80f15"
+    },
+    "capture-saved.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "9373850a1b260f80f71ad9c785a0b40fecba374a8f3d9f609b8a02ecc93f3f31",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/capture-saved.iphone-14.html": "5c9c999a43c1e56ca630b560a26a01337c6e9ce42a8feb8543f51ffad50c4ac4",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "capture-saved.iphone-14",
+      "screens": [
+        "capture-saved.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/capture-saved.iphone-14.png",
+      "screenshotSha256": "d08557c2b6042cb08fa82c7282436ab830b19c55f70189f6ec7d7ed8ab718227"
+    },
+    "capture-saved.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "90a876f2dba4f5c6392c2845be7c85d691592603a61abec9f5dc7140d6eb9089",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/capture-saved.iphone-14.html": "5c9c999a43c1e56ca630b560a26a01337c6e9ce42a8feb8543f51ffad50c4ac4",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "capture-saved.iphone-14",
+      "screens": [
+        "capture-saved.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/capture-saved.iphone-14.png",
+      "screenshotSha256": "6b298505acd47778e25eabbb3b2dc69d4ea34c2fc672190b0532d93b80315025"
+    },
+    "capture-saved.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "e16479798b43112fa3afa69941749081271003e9fab8d7eb81ad6f4c73648e81",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/capture-saved.iphone-14.html": "5c9c999a43c1e56ca630b560a26a01337c6e9ce42a8feb8543f51ffad50c4ac4",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "capture-saved.iphone-14",
+      "screens": [
+        "capture-saved.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/capture-saved.iphone-14.png",
+      "screenshotSha256": "f4fbe6ce4ed9c1efeb3646852bb6e49a00b55dfce37915a82855408ade48ead3"
+    },
+    "capture.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "4f9243b6d760c909aedfd993d08c79461faf22a4577af9e5ec98682fde36f6b8",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/capture.iphone-14.html": "a14397aca61c0ba422b29d1f41a2fc7d1a81dc8505fee1b06cb132bf48a1bf5c",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Re-reviewed the regenerated Capture screenshots after EOF-only source cleanup. Screenshot pixels and composition remain unchanged across all three devices: hierarchy, spacing, labels, action cards, status strip, and close control are legible and balanced.",
+      "screen": "capture.iphone-14",
+      "screens": [
+        "capture.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/capture.iphone-14.png",
+      "screenshotSha256": "4e5d9b9af4d53f4fdd2bc8b64802737df38b0900142dcf04868a091e434d4118"
+    },
+    "capture.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "8ca5161dd3e7de0e3841ea857f2dcbc5c3fceaf6e26952cbf15ce881fdbc1543",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/capture.iphone-14.html": "a14397aca61c0ba422b29d1f41a2fc7d1a81dc8505fee1b06cb132bf48a1bf5c",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Re-reviewed the regenerated Capture screenshots after EOF-only source cleanup. Screenshot pixels and composition remain unchanged across all three devices: hierarchy, spacing, labels, action cards, status strip, and close control are legible and balanced.",
+      "screen": "capture.iphone-14",
+      "screens": [
+        "capture.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/capture.iphone-14.png",
+      "screenshotSha256": "15cfb6287a50d5f5577c898d58e27e1358e82ce4bcbc44aa7c55e8822d11e670"
+    },
+    "capture.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "9c28f4b40f651bea0816f6c9a7d9fcd22dd8b298af7f625f6f0c11e1ee0b0fac",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/capture.iphone-14.html": "a14397aca61c0ba422b29d1f41a2fc7d1a81dc8505fee1b06cb132bf48a1bf5c",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Re-reviewed the regenerated Capture screenshots after EOF-only source cleanup. Screenshot pixels and composition remain unchanged across all three devices: hierarchy, spacing, labels, action cards, status strip, and close control are legible and balanced.",
+      "screen": "capture.iphone-14",
+      "screens": [
+        "capture.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/capture.iphone-14.png",
+      "screenshotSha256": "567fab14cbd50c297e58a888a52d0066288496fb2d3c4c4f966bab8192a32e5a"
+    },
+    "cook-again.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "44d676963d437180a8291446df8d570658c1086ca7d0470aa5c5e9c8a4b5f8da",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/cook-again.iphone-14.html": "cefd67578804661813c20f69ff82afed5f910d6c571af0a4fc3367da8501cf9e",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "cook-again.iphone-14",
+      "screens": [
+        "cook-again.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/cook-again.iphone-14.png",
+      "screenshotSha256": "5a1ec4cdeb7e44254032997693bf0605b743276e23f73cbf934162631d2726b6"
+    },
+    "cook-again.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "359224b788f31466c7a2b6aff80b7fa60ad09ffe6cf2bc088ba49453a70cf90f",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/cook-again.iphone-14.html": "cefd67578804661813c20f69ff82afed5f910d6c571af0a4fc3367da8501cf9e",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "cook-again.iphone-14",
+      "screens": [
+        "cook-again.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/cook-again.iphone-14.png",
+      "screenshotSha256": "c309204858d6c794b441e75d01e713a42a331f0ca7e45aba13901a1be7a1c83a"
+    },
+    "cook-again.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "c8e82428fe48d7dd62c3ab7f8e8d0ea862dd6f6ad9a15da31cf8607ec31ec723",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/cook-again.iphone-14.html": "cefd67578804661813c20f69ff82afed5f910d6c571af0a4fc3367da8501cf9e",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "cook-again.iphone-14",
+      "screens": [
+        "cook-again.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/cook-again.iphone-14.png",
+      "screenshotSha256": "64721ef340d6853bb63626f29a29bc029ac2b1c6ee551a419c27c375124b1d75"
+    },
+    "dish-detail.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "3152df338fc3ff61170ab3ab95c4a262f97b5ff856f186174147273156486fe9",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/dish-detail.iphone-14.html": "affcd12456428b0444827989898d4bc84e6f681fb2748b16cc35736c841d6482",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "dish-detail.iphone-14",
+      "screens": [
+        "dish-detail.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/dish-detail.iphone-14.png",
+      "screenshotSha256": "50ca3af630431107bf46a49e8d295b5edf9fa3e864a1ec937f9d8f3fad817088"
+    },
+    "dish-detail.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "92a5ccea55e712fd32ced84fa5be820dab8fa6072bfd5a7035943f66155f56bf",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/dish-detail.iphone-14.html": "affcd12456428b0444827989898d4bc84e6f681fb2748b16cc35736c841d6482",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "dish-detail.iphone-14",
+      "screens": [
+        "dish-detail.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/dish-detail.iphone-14.png",
+      "screenshotSha256": "ecdfe59c9a01ce537f2d736dca7b5327ca921e142e22b5e56b700368d2692530"
+    },
+    "dish-detail.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "46b96783c4229a6d6e94cb78bc49051294da0481191b70835c46f3a8f98b21f5",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/dish-detail.iphone-14.html": "affcd12456428b0444827989898d4bc84e6f681fb2748b16cc35736c841d6482",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "dish-detail.iphone-14",
+      "screens": [
+        "dish-detail.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/dish-detail.iphone-14.png",
+      "screenshotSha256": "fc10408dd14270374cf45900b5c46538e61261ce07c0a0f8474649b34903b253"
+    },
+    "dish-memory.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "76d20eb86e6858e33a14b2dde68332049cea15cee2b26c7b5a99bff5bbf4935a",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/dish-memory.iphone-14.html": "ad9558a0d2d69524c13f207b25e91479b980ba95d181e7f00f0b9bcfec4f2b97",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "dish-memory.iphone-14",
+      "screens": [
+        "dish-memory.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/dish-memory.iphone-14.png",
+      "screenshotSha256": "3efaf0979143ff6a8ec71d2e2a509da11c96161f80f0bceb28aa7ce552ed7392"
+    },
+    "dish-memory.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "7b9372c40e3d0b0e02514985889dbc47efbfd7e4d8d67064f5d1a3aa0954722a",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/dish-memory.iphone-14.html": "ad9558a0d2d69524c13f207b25e91479b980ba95d181e7f00f0b9bcfec4f2b97",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "dish-memory.iphone-14",
+      "screens": [
+        "dish-memory.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/dish-memory.iphone-14.png",
+      "screenshotSha256": "dfa7d2e2da1f3c15a2283cace58c58ce0e058e4b39038b8166f13fe0513721f9"
+    },
+    "dish-memory.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "adbd3cb795448543fee9efa356e04fd374402f13658fb2f7e3eeee05b3def9d8",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/dish-memory.iphone-14.html": "ad9558a0d2d69524c13f207b25e91479b980ba95d181e7f00f0b9bcfec4f2b97",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "dish-memory.iphone-14",
+      "screens": [
+        "dish-memory.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/dish-memory.iphone-14.png",
+      "screenshotSha256": "d4a9d48a97fdbda4d38e34c5c8a20e8f211b7890e6801cf5b02695d64e13d583"
+    },
+    "improve-cover-error.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "46ed359ca997592d4baaca6138b508b89519d8c2ad0d1954e5764d7483293253",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/improve-cover-error.iphone-14.html": "f58f216b39bbe51855c7ed6c0f0034f4c9f542918177cdd21be7b16dd60de9b3",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "improve-cover-error.iphone-14",
+      "screens": [
+        "improve-cover-error.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/improve-cover-error.iphone-14.png",
+      "screenshotSha256": "e0fb433dca3e019be85b5f99ee1183fb0235ddd4c4f3876a4e91d1eab70224bc"
+    },
+    "improve-cover-error.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "e28bba1464a9d27b365c6faad60b5d9ae635e8c5bd2db6a380a459a2bf58a8b0",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/improve-cover-error.iphone-14.html": "f58f216b39bbe51855c7ed6c0f0034f4c9f542918177cdd21be7b16dd60de9b3",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "improve-cover-error.iphone-14",
+      "screens": [
+        "improve-cover-error.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/improve-cover-error.iphone-14.png",
+      "screenshotSha256": "2ebd3ea252a0931f65df30d8c32d717fb7d886fb9ce823ea132c82c0d8b9fc7d"
+    },
+    "improve-cover-error.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "635e3e604a0d1b7637600d998e17c42c73a1dedcdaefdbe0c46edd1b009d8c04",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/improve-cover-error.iphone-14.html": "f58f216b39bbe51855c7ed6c0f0034f4c9f542918177cdd21be7b16dd60de9b3",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "improve-cover-error.iphone-14",
+      "screens": [
+        "improve-cover-error.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/improve-cover-error.iphone-14.png",
+      "screenshotSha256": "248299a4cc075b0f59f8ee5e0d795a3c4293d905eb55f90f6d5285004d615043"
+    },
+    "improve-cover-generating.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "816bb9d24a8d5737b4e38d2a3080db8899e7dfa4ffc451de9f26916f4dd826ef",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/improve-cover-generating.iphone-14.html": "ba9f6d6459b17d2ca524f87ba0b57efb66a5a927a3f5b459c108ac83ded21dbc",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "improve-cover-generating.iphone-14",
+      "screens": [
+        "improve-cover-generating.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/improve-cover-generating.iphone-14.png",
+      "screenshotSha256": "e716ede34618f20bddcceba91cb8eec81d1ab500089806189f80ab709fdaa282"
+    },
+    "improve-cover-generating.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "8e4df82f9aff0274a4da7532084b9b2e064cd183cdc23ed32aca8bf8054b1dd3",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/improve-cover-generating.iphone-14.html": "ba9f6d6459b17d2ca524f87ba0b57efb66a5a927a3f5b459c108ac83ded21dbc",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "improve-cover-generating.iphone-14",
+      "screens": [
+        "improve-cover-generating.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/improve-cover-generating.iphone-14.png",
+      "screenshotSha256": "0476b95d473deb15ac2520bc510678ac2e916a18b8bc86003f45c978293ad8bb"
+    },
+    "improve-cover-generating.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "f42df9fae59e38beb2ba50e37b421afa628338fd908bbb9254691c091602d70c",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/improve-cover-generating.iphone-14.html": "ba9f6d6459b17d2ca524f87ba0b57efb66a5a927a3f5b459c108ac83ded21dbc",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "improve-cover-generating.iphone-14",
+      "screens": [
+        "improve-cover-generating.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/improve-cover-generating.iphone-14.png",
+      "screenshotSha256": "60d6d108c1adf00ecc1152c07c102ae6274bdc2ce54eaba1d6ca649201380379"
+    },
+    "improve-cover-offline.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "984c584d301f9613bcaaaada3ab6b241fb617f26ed2184a43cac2b397e2d668f",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/improve-cover-offline.iphone-14.html": "2699d4d9511f3e6389039e34e03fdbbd98de5345c2a7b595a964009180f9605e",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "improve-cover-offline.iphone-14",
+      "screens": [
+        "improve-cover-offline.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/improve-cover-offline.iphone-14.png",
+      "screenshotSha256": "667588d33ecaee0b0c713f9488fb06ef410f720e694d40ff030aa07a8f57ff4f"
+    },
+    "improve-cover-offline.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "da98b7d1e4179dcff8400ce434343755ba03be85951852a61de36aede9cf003a",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/improve-cover-offline.iphone-14.html": "2699d4d9511f3e6389039e34e03fdbbd98de5345c2a7b595a964009180f9605e",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "improve-cover-offline.iphone-14",
+      "screens": [
+        "improve-cover-offline.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/improve-cover-offline.iphone-14.png",
+      "screenshotSha256": "70c9612344ecfaa17442d194d2c25a23f87c1621aa0808736fc388a89d1076f8"
+    },
+    "improve-cover-offline.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "46dbb783a510e28b5e8be2b6c05ecb9741a51309a953d8b33d1c87960d19b26d",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/improve-cover-offline.iphone-14.html": "2699d4d9511f3e6389039e34e03fdbbd98de5345c2a7b595a964009180f9605e",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "improve-cover-offline.iphone-14",
+      "screens": [
+        "improve-cover-offline.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/improve-cover-offline.iphone-14.png",
+      "screenshotSha256": "5ff0079b148a9df68d0514bd87623f86a2c9161268f785394120969baf7275d6"
+    },
+    "improve-cover-result.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "1f569a3b1038deb0501000e213fc3c69125600da288bcf13094e7d2befac7487",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/improve-cover-result.iphone-14.html": "5777d744e54c90132d5012a4fce880763b70ea1cf42e7bb15f24c0e1fe033e4f",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "improve-cover-result.iphone-14",
+      "screens": [
+        "improve-cover-result.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/improve-cover-result.iphone-14.png",
+      "screenshotSha256": "49ce1e22da9e163e6690ef9577c200ea71be97363650a2ca45b24c4eaef2386a"
+    },
+    "improve-cover-result.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "4aef43845c2e238ac5dfae686d6b2f36cf1a4888c909b7160fb3d268ee9c8c5a",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/improve-cover-result.iphone-14.html": "5777d744e54c90132d5012a4fce880763b70ea1cf42e7bb15f24c0e1fe033e4f",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "improve-cover-result.iphone-14",
+      "screens": [
+        "improve-cover-result.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/improve-cover-result.iphone-14.png",
+      "screenshotSha256": "338670f0eda79af64a67321464ee00f4918097a96db21e942de0946370dfaf0e"
+    },
+    "improve-cover-result.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "69dd46385002fa22e7cefc008535fed60e3c517eb72f94738cc1ce7b0d203742",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/improve-cover-result.iphone-14.html": "5777d744e54c90132d5012a4fce880763b70ea1cf42e7bb15f24c0e1fe033e4f",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "improve-cover-result.iphone-14",
+      "screens": [
+        "improve-cover-result.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/improve-cover-result.iphone-14.png",
+      "screenshotSha256": "142a8939d2f0fa689f3d7f7d183fa044198e308bda6a2a9d3d423ade513bf0b1"
+    },
+    "improve-cover.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "f4d076f33acc24237055b43d5ec134abe37738c88d26fbfe4a5a2132a7f80eec",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/improve-cover.iphone-14.html": "983921e30fa181e420e9e04e47c14d649a0f77d71edae033b0e4beb8c3d10771",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "improve-cover.iphone-14",
+      "screens": [
+        "improve-cover.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/improve-cover.iphone-14.png",
+      "screenshotSha256": "d4085e47a0b6108cb13c2a7bc78f00fd8ab999ec5c76478e45528329d25fc34a"
+    },
+    "improve-cover.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "be233d736f210c1f8ce156c63a53d7543979bdb11da0166f7c40696b48163ee2",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/improve-cover.iphone-14.html": "983921e30fa181e420e9e04e47c14d649a0f77d71edae033b0e4beb8c3d10771",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "improve-cover.iphone-14",
+      "screens": [
+        "improve-cover.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/improve-cover.iphone-14.png",
+      "screenshotSha256": "db6f61db7895c7fe1466a83b457a1bce536448b62d054bf2436c803f0b6a1f83"
+    },
+    "improve-cover.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "8d9c5356003c963d38394bcf02dd6e4dff0e0584559825b95c7e193501d04bd1",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/improve-cover.iphone-14.html": "983921e30fa181e420e9e04e47c14d649a0f77d71edae033b0e4beb8c3d10771",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "improve-cover.iphone-14",
+      "screens": [
+        "improve-cover.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/improve-cover.iphone-14.png",
+      "screenshotSha256": "13c08da812ceabb31d24879d6652015d1c3583a6d7017fec711aa71274ab7526"
+    },
+    "menu-empty.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "1e23a4109ce551b5595bfe0205a7224db2c0112da46976910ab5172da414c402",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/menu-empty.iphone-14.html": "02d2d0bb7aa98546613b2cf8a2b07e7914ffbdb7ae419b6209f942be1cb2609e",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "menu-empty.iphone-14",
+      "screens": [
+        "menu-empty.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/menu-empty.iphone-14.png",
+      "screenshotSha256": "9f58b7e19053d7b4c26fb51b668c73edf1a791bc7a20a1a0a530676cac252115"
+    },
+    "menu-empty.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "13e00f2d72e4890e7c6b8fb7184bba0ede06c4d18177b628e9544c1a78253328",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/menu-empty.iphone-14.html": "02d2d0bb7aa98546613b2cf8a2b07e7914ffbdb7ae419b6209f942be1cb2609e",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "menu-empty.iphone-14",
+      "screens": [
+        "menu-empty.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/menu-empty.iphone-14.png",
+      "screenshotSha256": "637954f8b32e6a534382a352e7378418f4db5f4f47b2ca15fa4b9c4751824d7c"
+    },
+    "menu-empty.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "c5fe9d0077b71d18e37782c64751a97f87926f67545056537b2a68f8298594e2",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/menu-empty.iphone-14.html": "02d2d0bb7aa98546613b2cf8a2b07e7914ffbdb7ae419b6209f942be1cb2609e",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "menu-empty.iphone-14",
+      "screens": [
+        "menu-empty.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/menu-empty.iphone-14.png",
+      "screenshotSha256": "66f03a8a958d6ad5835eaeaa6781394c20368156270205427cef72a59ea1efb0"
+    },
+    "menu-search-empty.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "427b6a7f151d34c3453069543d45b48b5c9e8885620e45150046c31bcd45d0e8",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/menu-search-empty.iphone-14.html": "8d6b3098b0d5b86cb378041f294f5d8dab7d4f31ecf178b18b167741cef26143",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "menu-search-empty.iphone-14",
+      "screens": [
+        "menu-search-empty.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/menu-search-empty.iphone-14.png",
+      "screenshotSha256": "460da5504611209f447b05510730e0cf39a0249abe375c3b1b3859d84298a380"
+    },
+    "menu-search-empty.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "3b13c39e97d8f742a85c2a786a64ad904d97afd3ee63823a2bf7c96515fd8b26",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/menu-search-empty.iphone-14.html": "8d6b3098b0d5b86cb378041f294f5d8dab7d4f31ecf178b18b167741cef26143",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "menu-search-empty.iphone-14",
+      "screens": [
+        "menu-search-empty.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/menu-search-empty.iphone-14.png",
+      "screenshotSha256": "a18db4c9c18a2cb4f2e6b48b4d19095fd2712ca8604a72078a4f8de53f589242"
+    },
+    "menu-search-empty.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "e2ea751f4e0c8b44923fc8b869566b1be4f046bd6c1ca0bc1873854c3ca6a823",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/menu-search-empty.iphone-14.html": "8d6b3098b0d5b86cb378041f294f5d8dab7d4f31ecf178b18b167741cef26143",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "menu-search-empty.iphone-14",
+      "screens": [
+        "menu-search-empty.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/menu-search-empty.iphone-14.png",
+      "screenshotSha256": "3bb897bd1991a9f0e23ff28b5162c675945867f4e5ee4bb3337079daed10a32f"
+    },
+    "menu.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "b827aae32739896d536a28276014b8795bb00ad7248b93b2d47f6cc329e1c0ac",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/menu.iphone-14.html": "88107162fc5f5cbe389c1086f3ff0e9e4d37df51aab96a0a3ac4045e0080b075",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "menu.iphone-14",
+      "screens": [
+        "menu.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/menu.iphone-14.png",
+      "screenshotSha256": "9c362415367fdc31c29218f881603616ee5019390f16d02974a0622de92ee7ed"
+    },
+    "menu.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "7810d8be79a056f9f863dbebcd1739ca8fab37596144509020a58d0bfd49db7c",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/menu.iphone-14.html": "88107162fc5f5cbe389c1086f3ff0e9e4d37df51aab96a0a3ac4045e0080b075",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "menu.iphone-14",
+      "screens": [
+        "menu.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/menu.iphone-14.png",
+      "screenshotSha256": "92332fa63018194fa6dda5b794c5090f9ce907953006323beada0c8bd9223f2d"
+    },
+    "menu.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "d561e4c05796294ffe43b5056c3ae7eae0c8e208f609dfffdd73785e0b4ba184",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/menu.iphone-14.html": "88107162fc5f5cbe389c1086f3ff0e9e4d37df51aab96a0a3ac4045e0080b075",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "menu.iphone-14",
+      "screens": [
+        "menu.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/menu.iphone-14.png",
+      "screenshotSha256": "c5929d4e046347ddb506390266ca02d7815c3b8e93a5974f0a41623112fdf0c0"
+    },
+    "plan-actions.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "887a9cedeb4024ff4173bf5ddd58047089b60f186f9e5d2078e2276ff3df15bb",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/plan-actions.iphone-14.html": "67485434449e9b6e1faf228ba8dc1c46d8d524f2fde02e8dbd2b04efa591870d",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "plan-actions.iphone-14",
+      "screens": [
+        "plan-actions.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/plan-actions.iphone-14.png",
+      "screenshotSha256": "774d23727e3356a13984193ba22cc3d1e541b606012ebf797802b1e612614309"
+    },
+    "plan-actions.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "b13441c98a07a91792ea86a0a83f6a37964ae8fc0dc9e27e2a3192bbfb2b8e03",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/plan-actions.iphone-14.html": "67485434449e9b6e1faf228ba8dc1c46d8d524f2fde02e8dbd2b04efa591870d",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "plan-actions.iphone-14",
+      "screens": [
+        "plan-actions.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/plan-actions.iphone-14.png",
+      "screenshotSha256": "59e843bdad8131bf38350f6d028c263525efe843bab66783d5a21f6db70aa7fe"
+    },
+    "plan-actions.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "d5e1913beb8d195397748a3b2f71d7e58d8c5a1772274bde8d0194c3ba33fa1b",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/plan-actions.iphone-14.html": "67485434449e9b6e1faf228ba8dc1c46d8d524f2fde02e8dbd2b04efa591870d",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "plan-actions.iphone-14",
+      "screens": [
+        "plan-actions.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/plan-actions.iphone-14.png",
+      "screenshotSha256": "d1390c33bd237d66ef6d2d5d65006877bfc71ea5a2f019158bafa30a5d4226fc"
+    },
+    "plan-add.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "90552b6a3a063de4d1666e172909a99ebcb734585ab06794a7898c7b03ddb381",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/plan-add.iphone-14.html": "2644c9f67a1a1a25a8987784dcf41e6a017101cea00179a942cf725dc9c8ecad",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "plan-add.iphone-14",
+      "screens": [
+        "plan-add.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/plan-add.iphone-14.png",
+      "screenshotSha256": "927a7c3f78caa5b71e77d62cde03146ef957078aadc9ba04eccd08f56407e94c"
+    },
+    "plan-add.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "e9e9c884f99460005dcbb1eba4dd1b9a117894d70664d29149078a19cad3ba18",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/plan-add.iphone-14.html": "2644c9f67a1a1a25a8987784dcf41e6a017101cea00179a942cf725dc9c8ecad",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "plan-add.iphone-14",
+      "screens": [
+        "plan-add.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/plan-add.iphone-14.png",
+      "screenshotSha256": "2f01b0acd093bad8b6bc14ac0ceba980481bb8c437762327dc53b2775522c815"
+    },
+    "plan-add.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "b9badc29b20031e6e6dee5f0dcdeeb00350ac8fcbfde1fa5b10e1c36b7612c49",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/plan-add.iphone-14.html": "2644c9f67a1a1a25a8987784dcf41e6a017101cea00179a942cf725dc9c8ecad",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "plan-add.iphone-14",
+      "screens": [
+        "plan-add.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/plan-add.iphone-14.png",
+      "screenshotSha256": "e954d6b938b486b8a597bcdad323d5bbf2b77f9bf84cc79e354003b72302e77e"
+    },
+    "plan-next-week.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "8f5dabb0c5116ec93331fc0749808e72da2b9f29984a28f9d44a90d36d2efab1",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/plan-next-week.iphone-14.html": "30abbff30541596576493d6cf9020b249d8a1e040c1def95936e45bbd993ff3e",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "plan-next-week.iphone-14",
+      "screens": [
+        "plan-next-week.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/plan-next-week.iphone-14.png",
+      "screenshotSha256": "acdb25f5365a87740eb63400ecdca1f89303fc61fd401eb588ffbc21eda5ca52"
+    },
+    "plan-next-week.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "4fbe97c1128052e3d9b78c681918ccbb182918f4eccd9416bfc5f343f8925322",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/plan-next-week.iphone-14.html": "30abbff30541596576493d6cf9020b249d8a1e040c1def95936e45bbd993ff3e",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "plan-next-week.iphone-14",
+      "screens": [
+        "plan-next-week.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/plan-next-week.iphone-14.png",
+      "screenshotSha256": "a7c73d81704c8c21768647fd5573be4d6928bd0f94a9009d0f76d475ec3a68b2"
+    },
+    "plan-next-week.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "a1a0ed841b87bea79bc4abcf1fabdc6ce7ae3bfd1a5925d5c7cdde20d389a96f",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/plan-next-week.iphone-14.html": "30abbff30541596576493d6cf9020b249d8a1e040c1def95936e45bbd993ff3e",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "plan-next-week.iphone-14",
+      "screens": [
+        "plan-next-week.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/plan-next-week.iphone-14.png",
+      "screenshotSha256": "d10fcc99e3cf9c8fe24349bf4a791ab4a57f770b61fc84acda2e54052cad2e86"
+    },
+    "plan-removed.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "98037c4ab659ba5f1a7da38c74405b71eb9b699bc7e3adf1d6135b35c87f9b03",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/plan-removed.iphone-14.html": "6bdeec3228f198f84a6890813e45e78f25a92de6355528fe2b4855a0881109dc",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "plan-removed.iphone-14",
+      "screens": [
+        "plan-removed.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/plan-removed.iphone-14.png",
+      "screenshotSha256": "d761c83d9608460bc69b3136ce07c34a6d07c26d310b64e429d96badc2a9dafa"
+    },
+    "plan-removed.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "3e60a8c3faf35843517b305ae44b786763483055f4b293897e4c7060f73acd3f",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/plan-removed.iphone-14.html": "6bdeec3228f198f84a6890813e45e78f25a92de6355528fe2b4855a0881109dc",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "plan-removed.iphone-14",
+      "screens": [
+        "plan-removed.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/plan-removed.iphone-14.png",
+      "screenshotSha256": "04783f3dd9de284d9a746d24c6044478f736e321ef34204c133dba9004b510e5"
+    },
+    "plan-removed.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "00760c1a114ee191a609ea05a6f7efa3d5fb3858cd1d32bb9c91467821127485",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/plan-removed.iphone-14.html": "6bdeec3228f198f84a6890813e45e78f25a92de6355528fe2b4855a0881109dc",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "plan-removed.iphone-14",
+      "screens": [
+        "plan-removed.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/plan-removed.iphone-14.png",
+      "screenshotSha256": "9c8f0c567ae3c63c889ff3493d21be40f66d504f6ddf5ab60f6567ddb12cf9ae"
+    },
+    "plan.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "b6c0598cb1f1785d7dd04ac74090d80728d634f03ba5f259ea9be32495f43a5f",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/plan.iphone-14.html": "964cc5a656c1285066bd715ea03e1db96407230abe778cf452806889efd1d6ba",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "plan.iphone-14",
+      "screens": [
+        "plan.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/plan.iphone-14.png",
+      "screenshotSha256": "21c17fcc64aad4336c910b422809c6d8b4438ac930ee77fc8e47af714c50fdbb"
+    },
+    "plan.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "056aa9fb7b108bf25104064c18f0eb6e1e6dd578bb370dc7f26fd1f2e9d0fe3b",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/plan.iphone-14.html": "964cc5a656c1285066bd715ea03e1db96407230abe778cf452806889efd1d6ba",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "plan.iphone-14",
+      "screens": [
+        "plan.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/plan.iphone-14.png",
+      "screenshotSha256": "7ed4d0ff396c131d1f48dec79a079b7a99917f2d17fb7a01b262caf95968798d"
+    },
+    "plan.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "d1e4c900892cdb8d2e12c017b033be9130f0462e614b104a04242b2ba16eb168",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/plan.iphone-14.html": "964cc5a656c1285066bd715ea03e1db96407230abe778cf452806889efd1d6ba",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "plan.iphone-14",
+      "screens": [
+        "plan.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/plan.iphone-14.png",
+      "screenshotSha256": "5ba0ae8e8ed159f29e06ad0a504c8abdb8ed4678853b1402f8ab32ce5370acd7"
+    },
+    "review-search-empty.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "07f4f1d25e32836be56656f8fcca9b6cc1c6f298c7e0699c2dd4ea0d746f5b3b",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/review-search-empty.iphone-14.html": "9e887daa5eaea6be33c8c52519e51d1637336479e0e9139b4dd2b05841a78950",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "review-search-empty.iphone-14",
+      "screens": [
+        "review-search-empty.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/review-search-empty.iphone-14.png",
+      "screenshotSha256": "734c2808e5c62375cb846368f1058d53e832d2c0480228aa89d06c7c7a8a686d"
+    },
+    "review-search-empty.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "12bcaa909ed91c90498da5e18b28912a96dc6b6867d562d5495661717255c418",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/review-search-empty.iphone-14.html": "9e887daa5eaea6be33c8c52519e51d1637336479e0e9139b4dd2b05841a78950",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "review-search-empty.iphone-14",
+      "screens": [
+        "review-search-empty.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/review-search-empty.iphone-14.png",
+      "screenshotSha256": "a35e6254a27e9f1ee7f342c6dabedad7ab2cf553ff85b2f06db01666b6caa31b"
+    },
+    "review-search-empty.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "a425a4b72dc17958d611fe85ccb23e8f95da587eb14e6ae84dd1dadd4710ff27",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/review-search-empty.iphone-14.html": "9e887daa5eaea6be33c8c52519e51d1637336479e0e9139b4dd2b05841a78950",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "review-search-empty.iphone-14",
+      "screens": [
+        "review-search-empty.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/review-search-empty.iphone-14.png",
+      "screenshotSha256": "057d7cfb42549bfd7da4090376992c4cf3c12bc606933da0ecdd1d2d608c183b"
+    },
+    "review.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "f6395a030a0939ca6210a42d6a44982abc00607abd422597f1fd12cce76d0d3c",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/review.iphone-14.html": "f5ffd8ec8f5979895c590fdf61d39fa85449cfba66c613552a99ad0ff547fece",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "review.iphone-14",
+      "screens": [
+        "review.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/review.iphone-14.png",
+      "screenshotSha256": "f19426b0116ca64c4b87d0781a12b6ade0976cb1629ed3907c6c275be028c96a"
+    },
+    "review.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "c3b56b0420a787cf7f4a37d999a9b012a3ae7e01c58e7ee326eec0a1fc33d8cb",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/review.iphone-14.html": "f5ffd8ec8f5979895c590fdf61d39fa85449cfba66c613552a99ad0ff547fece",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "review.iphone-14",
+      "screens": [
+        "review.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/review.iphone-14.png",
+      "screenshotSha256": "2a0c8fb55af65a4603eb8596b22bafd5591b224afc9200fa004ef028c0935b09"
+    },
+    "review.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "1ede293b2c2f9066ac0ad77ad1bad7614ccaa1a61e79c80e900388d993c5a871",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/review.iphone-14.html": "f5ffd8ec8f5979895c590fdf61d39fa85449cfba66c613552a99ad0ff547fece",
+        "screens/shared.css": "f4b3c494edffeda07d752435e24b597378bce26c8e352af6280d5004af8fcee5"
+      },
+      "proof": "Reviewed the current 26-screen contact sheet on each target device after the shared-style change. All screens retain clear hierarchy, balanced spacing, legible labels, coherent image crops, visible actions, and safe floating navigation; the seven revised screens also preserve the reviewed hero chip, freeform cover prompt, unified Menu grid, concise empty copy, and reserved Undo-toast lane.",
+      "screen": "review.iphone-14",
+      "screens": [
+        "review.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/review.iphone-14.png",
+      "screenshotSha256": "8e5d37db26d3671e37185ac29d5f106de44aa173fb9b2f3191886ab431e1bf67"
+    }
+  }
+}
