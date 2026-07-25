@@ -157,8 +157,13 @@ class _IngredientRow extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Text(
-                parts.first.toLowerCase().contains('salmon') ? '🐟' : '🥣'),
+            child: Icon(
+              parts.first.toLowerCase().contains('salmon')
+                  ? Icons.set_meal_outlined
+                  : Icons.restaurant_outlined,
+              size: 17,
+              color: MyMenuColors.muted,
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(

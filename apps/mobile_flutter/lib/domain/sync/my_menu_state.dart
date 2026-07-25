@@ -30,6 +30,19 @@ class MyMenuState extends ChangeNotifier {
     }
   }
 
+  @visibleForTesting
+  MyMenuState.forTesting({
+    List<Dish> dishes = const <Dish>[],
+    List<PlannedMeal> plan = const <PlannedMeal>[],
+    List<CaptureItem> captureItems = const <CaptureItem>[],
+    List<ReviewItem> reviewItems = const <ReviewItem>[],
+  })  : _dishes = List<Dish>.of(dishes),
+        _plan = List<PlannedMeal>.of(plan),
+        _captureItems = List<CaptureItem>.of(captureItems),
+        _reviewItems = List<ReviewItem>.of(reviewItems),
+        _extraPlanDays = 0,
+        _repositories = null;
+
   List<Dish> _dishes;
   List<PlannedMeal> _plan;
   List<CaptureItem> _captureItems;
@@ -42,7 +55,6 @@ class MyMenuState extends ChangeNotifier {
 
   static const Duration _captureSyncPollInterval = Duration(seconds: 5);
   static const Duration _captureSyncPollWindow = Duration(minutes: 2);
-
   List<Dish> get dishes => List<Dish>.unmodifiable(_dishes);
   List<PlannedMeal> get plan => List<PlannedMeal>.unmodifiable(_plan);
   List<CaptureItem> get captureItems =>

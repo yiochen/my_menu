@@ -12,6 +12,12 @@ class MenuGridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final TextStyle titleStyle = Theme.of(context).textTheme.titleMedium!;
+    final double titleLineHeight =
+        MediaQuery.textScalerOf(context).scale(titleStyle.fontSize!) *
+            titleStyle.height!;
+    final double titleSlotHeight = (titleLineHeight * 2).ceilToDouble();
+
     return Material(
       key: ValueKey<String>('menu_dish_${dish.id}'),
       color: Colors.white,
@@ -47,12 +53,19 @@ class MenuGridCard extends StatelessWidget {
                             color: const Color(0xEFFFFFFF),
                             borderRadius: BorderRadius.circular(999),
                           ),
-                          child: const Text(
-                            '♥ Favorite',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                            ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Icon(Icons.favorite, size: 10),
+                              SizedBox(width: 3),
+                              Text(
+                                'Favorite',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -66,12 +79,13 @@ class MenuGridCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   SizedBox(
-                    height: 38,
+                    height: titleSlotHeight,
                     child: Text(
+                      key: ValueKey<String>('menu_dish_title_${dish.id}'),
                       dish.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium,
+                      style: titleStyle,
                     ),
                   ),
                   Text(
@@ -80,16 +94,7 @@ class MenuGridCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 7),
-                  Text(
-                    _memoryCue(dish),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFF796E64),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  _MemoryCue(dish: dish),
                 ],
               ),
             ),
@@ -100,15 +105,50 @@ class MenuGridCard extends StatelessWidget {
   }
 }
 
+class _MemoryCue extends StatelessWidget {
+  const _MemoryCue({required this.dish});
+
+  final Dish dish;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Icon(
+          _usesNoteCue(dish) ? Icons.edit_outlined : Icons.history_rounded,
+          size: 11,
+          color: const Color(0xFF796E64),
+        ),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            _memoryCue(dish),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: Color(0xFF796E64),
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 String _memoryCue(Dish dish) {
   if (dish.id == 'dish_salmon') {
-    return '✎ “Broil for 2 minutes…”';
+    return '“Broil for 2 minutes…”';
   }
   if (dish.id == 'dish_katsu') {
-    return '✎ Crispier crumbs next time';
+    return 'Crispier crumbs next time';
   }
   if (dish.id == 'dish_pho') {
-    return '↻ Evolving since 2024';
+    return 'Evolving since 2024';
   }
-  return '↻ Last made ${dish.lastMadeLabel}';
+  return 'Last made ${dish.lastMadeLabel}';
 }
+
+bool _usesNoteCue(Dish dish) =>
+    dish.id == 'dish_salmon' || dish.id == 'dish_katsu';

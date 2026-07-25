@@ -62,14 +62,19 @@ class _MenuScreenState extends State<MenuScreen> {
             SliverToBoxAdapter(
               child: RepaintBoundary(
                 key: const ValueKey<String>('menu_heading_golden'),
-                child: _header(context),
+                child: _header(
+                  context,
+                  showDishCount: state.dishes.isNotEmpty,
+                ),
               ),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            SliverToBoxAdapter(child: _searchField()),
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
-            SliverToBoxAdapter(child: _filters()),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            if (state.dishes.isNotEmpty) ...<Widget>[
+              SliverToBoxAdapter(child: _searchField()),
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              SliverToBoxAdapter(child: _filters()),
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            ],
             if (state.dishes.isEmpty)
               const SliverFillRemaining(
                 hasScrollBody: false,
@@ -110,7 +115,10 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
-  Widget _header(BuildContext context) {
+  Widget _header(
+    BuildContext context, {
+    required bool showDishCount,
+  }) {
     return ConstrainedBox(
       key: const ValueKey<String>('menu_heading'),
       constraints: const BoxConstraints(minHeight: 48),
@@ -138,11 +146,12 @@ class _MenuScreenState extends State<MenuScreen> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    const WarmPill(
-                      label: '24 dishes',
-                      orange: true,
-                      compact: true,
-                    ),
+                    if (showDishCount)
+                      const WarmPill(
+                        label: '24 dishes',
+                        orange: true,
+                        compact: true,
+                      ),
                   ],
                 ),
               ],

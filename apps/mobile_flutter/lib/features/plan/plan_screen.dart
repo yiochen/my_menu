@@ -82,6 +82,7 @@ class _PlanScreenState extends State<PlanScreen> {
             const SizedBox(height: 16),
             if (state.reviewItems.isNotEmpty)
               PlanReviewCard(
+                key: const ValueKey<String>('plan_review_card'),
                 count: state.reviewItems.length,
                 onTap: widget.onOpenReview,
               ),
