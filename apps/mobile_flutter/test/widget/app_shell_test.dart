@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/core/database/app_database.dart';
@@ -9,7 +12,9 @@ import '../support/network_image_test_helper.dart';
 import '../support/tolerant_golden_file_comparator.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  setUpAll(_loadGoldenFonts);
 
   group('MyMenu app shell', () {
     testWidgets('shows the redesigned plan screen on launch', (
@@ -186,7 +191,7 @@ void main() {
         final Finder heading = find.byKey(
           const ValueKey<String>('menu_heading_golden'),
         );
-        expect(tester.getSize(heading), const Size(354, 68));
+        expect(tester.getSize(heading), const Size(354, 55));
         await expectLater(
           heading,
           matchesGoldenFile(
@@ -233,4 +238,16 @@ Widget _testApp() {
   return MyMenuApp(
     database: AppDatabase.forTesting(NativeDatabase.memory()),
   );
+}
+
+Future<void> _loadGoldenFonts() async {
+  final FontLoader loader = FontLoader('.SF Pro Rounded')
+    ..addFont(_fontData('test/support/fonts/Roboto-Regular.ttf'))
+    ..addFont(_fontData('test/support/fonts/Roboto-Bold.ttf'));
+  await loader.load();
+}
+
+Future<ByteData> _fontData(String path) async {
+  final Uint8List bytes = await File(path).readAsBytes();
+  return ByteData.sublistView(bytes);
 }
