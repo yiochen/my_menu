@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/core/database/app_database.dart';
+import 'package:mymenu/shared/theme/my_menu_theme.dart';
 
 import '../support/network_image_test_helper.dart';
 import '../support/tolerant_golden_file_comparator.dart';
@@ -24,9 +25,20 @@ void main() {
         await tester.pumpWidget(_testApp());
         await tester.pumpAndSettle();
 
+        final Finder plan = find.byKey(
+          const ValueKey<String>('plan_screen'),
+        );
+        expect(plan, findsOneWidget);
         expect(
-          find.byKey(const ValueKey<String>('plan_screen')),
-          findsOneWidget,
+          tester.getBottomRight(plan).dy,
+          tester.view.physicalSize.height / tester.view.devicePixelRatio,
+        );
+        final ListView planScrollView = tester.widget(plan);
+        final SliverChildListDelegate planChildren =
+            planScrollView.childrenDelegate as SliverChildListDelegate;
+        expect(
+          (planChildren.children.last as SizedBox).height,
+          MyMenuUnits.pageBottom,
         );
         expect(find.text('Wednesday, July 22'), findsOneWidget);
         expect(find.text('2 dishes planned'), findsOneWidget);
@@ -146,6 +158,14 @@ void main() {
           const ValueKey<String>('menu_screen'),
         );
         expect(tester.getTopLeft(menu).dy, 0);
+        expect(tester.getBottomRight(menu).dy, 844);
+        final CustomScrollView menuScrollView = tester.widget(menu);
+        final SliverToBoxAdapter bottomClearance =
+            menuScrollView.slivers.last as SliverToBoxAdapter;
+        expect(
+          (bottomClearance.child! as SizedBox).height,
+          MyMenuUnits.pageBottom,
+        );
         expect(
           tester.getTopLeft(find.text('Your personal restaurant')).dy,
           greaterThan(47),

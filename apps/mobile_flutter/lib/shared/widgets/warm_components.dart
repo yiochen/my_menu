@@ -7,12 +7,14 @@ class WarmPage extends StatelessWidget {
     required this.child,
     this.includeBottomChromeSpace = true,
     this.topPadding = MyMenuUnits.pageTop,
+    this.bottomPadding,
     super.key,
   });
 
   final Widget child;
   final bool includeBottomChromeSpace;
   final double topPadding;
+  final double? bottomPadding;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +34,8 @@ class WarmPage extends StatelessWidget {
           horizontal,
           topPadding,
           horizontal,
-          includeBottomChromeSpace ? MyMenuUnits.pageBottom : 28,
+          bottomPadding ??
+              (includeBottomChromeSpace ? MyMenuUnits.pageBottom : 28),
         ),
         child: child,
       ),

@@ -48,6 +48,7 @@ class _MenuScreenState extends State<MenuScreen> {
     final List<Dish> dishes = _visibleDishes(state);
     return WarmPage(
       topPadding: 0,
+      bottomPadding: 0,
       child: RefreshIndicator(
         onRefresh: state.refreshFromServer,
         child: CustomScrollView(
@@ -106,6 +107,12 @@ class _MenuScreenState extends State<MenuScreen> {
                     return MenuGridCard(dish: dishes[index]);
                   },
                   childCount: dishes.length,
+                ),
+              ),
+              const SliverToBoxAdapter(
+                child: SizedBox(
+                  key: ValueKey<String>('menu_bottom_scroll_clearance'),
+                  height: MyMenuUnits.pageBottom,
                 ),
               ),
             ],

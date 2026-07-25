@@ -43,6 +43,7 @@ class _PlanScreenState extends State<PlanScreen> {
 
     return WarmPage(
       topPadding: 0,
+      bottomPadding: 0,
       child: ListView(
         key: const ValueKey<String>('plan_screen'),
         padding: EdgeInsets.only(
@@ -88,6 +89,10 @@ class _PlanScreenState extends State<PlanScreen> {
               ),
           ] else
             const _WeekNavigationHint(),
+          const SizedBox(
+            key: ValueKey<String>('plan_bottom_scroll_clearance'),
+            height: MyMenuUnits.pageBottom,
+          ),
         ],
       ),
     );
