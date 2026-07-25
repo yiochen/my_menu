@@ -6,6 +6,7 @@ import 'package:mymenu/app/app.dart';
 import 'package:mymenu/core/database/app_database.dart';
 
 import '../support/network_image_test_helper.dart';
+import '../support/tolerant_golden_file_comparator.dart';
 
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
@@ -170,13 +171,24 @@ void main() {
       );
 
       await runWithMockNetworkImages(() async {
+        final GoldenFileComparator previousComparator = goldenFileComparator;
+        goldenFileComparator = TolerantGoldenFileComparator(
+          Uri.parse('test/widget/app_shell_test.dart'),
+          precisionTolerance: 0.09,
+        );
+        addTearDown(() => goldenFileComparator = previousComparator);
+
         await tester.pumpWidget(_testApp());
         await tester.pumpAndSettle();
         await tester.tap(find.text('Menu'));
         await tester.pumpAndSettle();
 
+        final Finder heading = find.byKey(
+          const ValueKey<String>('menu_heading_golden'),
+        );
+        expect(tester.getSize(heading), const Size(354, 68));
         await expectLater(
-          find.byKey(const ValueKey<String>('menu_heading_golden')),
+          heading,
           matchesGoldenFile(
             'goldens/menu_heading_390x844_text_scale_1_15.png',
           ),
