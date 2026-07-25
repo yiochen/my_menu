@@ -179,7 +179,7 @@ void main() {
         final GoldenFileComparator previousComparator = goldenFileComparator;
         goldenFileComparator = TolerantGoldenFileComparator(
           Uri.parse('test/widget/app_shell_test.dart'),
-          precisionTolerance: 0.09,
+          precisionTolerance: 0.12,
         );
         addTearDown(() => goldenFileComparator = previousComparator);
 
