@@ -1,14 +1,14 @@
 import 'dart:io';
 
-import 'package:drift/drift.dart' hide isNull;
-import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/app/app.dart';
-import 'package:mymenu/core/database/app_database.dart';
+import 'package:mymenu/app/home_shell.dart';
+import 'package:mymenu/domain/capture/seeded_review_items.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/dishes/seeded_dishes.dart';
+import 'package:mymenu/domain/planning/seeded_plan.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/menu/menu_screen.dart';
 import 'package:mymenu/shared/theme/app_theme.dart';
@@ -17,13 +17,13 @@ import '../support/network_image_test_helper.dart';
 import '../support/tolerant_golden_file_comparator.dart';
 
 const ValueKey<String> _fullAppGoldenKey = ValueKey<String>('full_app_golden');
+final DateTime _goldenPlanDate = DateTime(2026, 7, 22);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
   late GoldenFileComparator previousComparator;
-  late AppDatabase database;
+  late MyMenuState appState;
 
   setUpAll(() async {
     await _loadGoldenFonts();
@@ -39,17 +39,17 @@ void main() {
   });
 
   setUp(() {
-    database = AppDatabase.forTesting(NativeDatabase.memory());
+    appState = _buildGoldenState();
   });
 
-  tearDown(() async {
-    await database.close();
+  tearDown(() {
+    appState.dispose();
   });
 
   group('representative UI goldens at 390×844 logical pixels', () {
     testWidgets('plan home', (WidgetTester tester) async {
       await runWithMockNetworkImages(() async {
-        await _pumpGoldenApp(tester, database);
+        await _pumpGoldenApp(tester, appState);
 
         expect(find.text('Wednesday, July 22'), findsOneWidget);
         await _expectFullAppGolden(tester, 'ui_plan_home');
@@ -58,7 +58,7 @@ void main() {
 
     testWidgets('menu home', (WidgetTester tester) async {
       await runWithMockNetworkImages(() async {
-        await _pumpGoldenApp(tester, database);
+        await _pumpGoldenApp(tester, appState);
         await tester.tap(find.text('Menu'));
         await tester.pumpAndSettle();
 
@@ -71,7 +71,7 @@ void main() {
       WidgetTester tester,
     ) async {
       await runWithMockNetworkImages(() async {
-        await _pumpGoldenApp(tester, database);
+        await _pumpGoldenApp(tester, appState);
         await tester.tap(find.text('Menu'));
         await tester.pumpAndSettle();
 
@@ -210,7 +210,7 @@ void main() {
 
     testWidgets('dish detail', (WidgetTester tester) async {
       await runWithMockNetworkImages(() async {
-        await _pumpGoldenApp(tester, database);
+        await _pumpGoldenApp(tester, appState);
         await tester.tap(find.text('Menu'));
         await tester.pumpAndSettle();
         await tester.tap(
@@ -225,7 +225,7 @@ void main() {
 
     testWidgets('capture sheet', (WidgetTester tester) async {
       await runWithMockNetworkImages(() async {
-        await _pumpGoldenApp(tester, database);
+        await _pumpGoldenApp(tester, appState);
         await tester.tap(
           find.byKey(const ValueKey<String>('capture_fab')),
         );
@@ -238,7 +238,7 @@ void main() {
 
     testWidgets('add-idea sheet', (WidgetTester tester) async {
       await runWithMockNetworkImages(() async {
-        await _pumpGoldenApp(tester, database);
+        await _pumpGoldenApp(tester, appState);
         await tester.tap(
           find.byKey(const ValueKey<String>('capture_fab')),
         );
@@ -253,7 +253,7 @@ void main() {
 
     testWidgets('review sheet', (WidgetTester tester) async {
       await runWithMockNetworkImages(() async {
-        await _pumpGoldenApp(tester, database);
+        await _pumpGoldenApp(tester, appState);
         final Finder reviewCard = find.byKey(
           const ValueKey<String>('plan_review_card'),
         );
@@ -279,18 +279,35 @@ void main() {
 
 Future<void> _pumpGoldenApp(
   WidgetTester tester,
-  AppDatabase database,
+  MyMenuState state,
 ) async {
   _configureGoldenViewport(tester);
 
   await tester.pumpWidget(
     RepaintBoundary(
       key: _fullAppGoldenKey,
-      child: MyMenuApp(database: database),
+      child: MyMenuScope(
+        notifier: state,
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.data,
+          home: const HomeShell(),
+        ),
+      ),
     ),
   );
   await _precacheDishArtwork(tester);
   await tester.pumpAndSettle();
+}
+
+MyMenuState _buildGoldenState() {
+  // Keep every variable fixture independent of the wall clock. If a future
+  // golden exposes a date, it should continue to render July 22, 2026.
+  return MyMenuState.forTesting(
+    dishes: seededDishes,
+    plan: buildSeededPlan(_goldenPlanDate),
+    reviewItems: seededReviewItems,
+  );
 }
 
 Future<void> _pumpGoldenMenu(
