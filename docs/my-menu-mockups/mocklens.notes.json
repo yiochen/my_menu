@@ -1,0 +1,161 @@
+{
+  "version": 1,
+  "notes": [
+    {
+      "id": "29167262-1a12-41a0-b90e-a07ddb88ff30",
+      "status": "resolved",
+      "screen": "add-idea-validation.iphone-14",
+      "device": "iphone-14",
+      "source": "screens/add-idea-validation.iphone-14.html",
+      "selector": "div.field:nth-of-type(3) > label",
+      "element": {
+        "tag": "label",
+        "text": "Plan it? Optional"
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "rect": {
+        "x": 18,
+        "y": 599.4296875,
+        "width": 354,
+        "height": 21.15625
+      },
+      "message": "Let's not have a Plan it section in Add an idea screen.",
+      "createdAt": "2026-07-24T20:01:11.183Z",
+      "updatedAt": "2026-07-24T20:21:09.000Z",
+      "resolvedAt": "2026-07-24T20:21:09.000Z"
+    },
+    {
+      "id": "700fc71b-de70-4094-95b3-3328f987d851",
+      "status": "resolved",
+      "screen": "dish-detail.iphone-14",
+      "device": "iphone-14",
+      "source": "screens/dish-detail.iphone-14.html",
+      "selector": "button.status-strip.orange",
+      "element": {
+        "tag": "button",
+        "text": "✨ Improve cover imageCreate from your 12 source photos›"
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "rect": {
+        "x": 18,
+        "y": 360,
+        "width": 339,
+        "height": 53.1953125
+      },
+      "message": "We want this to be a persistent action that user can click anytime. But currently it looks like a temporary thing. Can we use a small chip on the header image",
+      "createdAt": "2026-07-24T20:05:39.832Z",
+      "updatedAt": "2026-07-24T20:21:09.000Z",
+      "resolvedAt": "2026-07-24T20:21:09.000Z"
+    },
+    {
+      "id": "12404c97-8535-4bec-8dc8-541955a7705a",
+      "status": "resolved",
+      "screen": "improve-cover.iphone-14",
+      "device": "iphone-14",
+      "source": "screens/improve-cover.iphone-14.html",
+      "selector": "main.screen.sheet-screen",
+      "element": {
+        "tag": "main",
+        "text": "Improve cover image Make it menu-worthyChoose source photosMyMenu uses the real moments you select to create a new cover image. Your originals never change. CURRENT COVERMiso Salmon BowlSafe until you choose a replacement✓ Your source photos3 of 12 selectedSelect all ✨The result can be aspirational;"
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 844
+      },
+      "message": "We should have freeform text input on this screen, to allow user provide their own instruction on how to improve the cover image",
+      "createdAt": "2026-07-24T20:07:26.813Z",
+      "updatedAt": "2026-07-24T20:21:09.000Z",
+      "resolvedAt": "2026-07-24T20:21:09.000Z"
+    },
+    {
+      "id": "7fd90827-1a0a-4e5e-b5d9-2edf687f6b41",
+      "status": "resolved",
+      "screen": "menu-search-empty.iphone-14",
+      "device": "iphone-14",
+      "source": "screens/menu-search-empty.iphone-14.html",
+      "selector": "section.empty-state",
+      "element": {
+        "tag": "section",
+        "text": "No dish named that—yetTry fewer words, search an ingredient or note, or capture it the next time you cook.Clear searchThe global + remains available if this is a new cooking idea."
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "rect": {
+        "x": 18,
+        "y": 248.046875,
+        "width": 354,
+        "height": 479.953125
+      },
+      "message": "\"The global + remains available if this is  a new cooking idea\" is confusing",
+      "createdAt": "2026-07-24T20:08:57.362Z",
+      "updatedAt": "2026-07-24T20:21:09.000Z",
+      "resolvedAt": "2026-07-24T20:21:09.000Z"
+    },
+    {
+      "id": "c7a6d3fc-f097-420f-b732-93b22e96ab71",
+      "status": "resolved",
+      "screen": "menu.iphone-14",
+      "device": "iphone-14",
+      "source": "screens/menu.iphone-14.html",
+      "selector": "main.screen.stack",
+      "element": {
+        "tag": "main",
+        "text": "Your personal restaurantMy Menu24 dishesM Search dishes, notes, ingredients AllFavoritesRecently added Filters FavoritesYour go-to dishes ♥ FavoriteMiso Salmon Bowl8 cooks · 12 photos✎ “Broil for 2 minutes…” Lemon Garlic Linguine5 cooks · 7 photos↻ Last made Jun 28 All dishesNewest first Chicken Kat"
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 375,
+        "height": 1133.375
+      },
+      "message": "I think no need to have two different section \"Favorites\" and \"All dishes\", when the filter row already allow user to quicky toggle between favorite and all",
+      "createdAt": "2026-07-24T20:10:09.166Z",
+      "updatedAt": "2026-07-24T20:21:09.000Z",
+      "resolvedAt": "2026-07-24T20:21:09.000Z"
+    },
+    {
+      "id": "07c11bc0-aea2-406b-8f30-1739132a017d",
+      "status": "resolved",
+      "screen": "plan-removed.iphone-14",
+      "device": "iphone-14",
+      "source": "screens/plan-removed.iphone-14.html",
+      "selector": "section.card.pad:nth-of-type(3)",
+      "element": {
+        "tag": "section",
+        "text": "✓Chicken Katsu Curry removedThe dish and its history are still in Menu.Undo"
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "rect": {
+        "x": 18,
+        "y": 582.40625,
+        "width": 354,
+        "height": 145.59375
+      },
+      "message": "If this is a temporary toast, then it should be smaller and pull out of the flow (not scrollable). But it should not cover the bottom action bar",
+      "createdAt": "2026-07-24T20:13:01.075Z",
+      "updatedAt": "2026-07-24T20:21:09.000Z",
+      "resolvedAt": "2026-07-24T20:21:09.000Z"
+    }
+  ]
+}
