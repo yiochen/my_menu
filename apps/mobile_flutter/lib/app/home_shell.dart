@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -33,10 +34,13 @@ class _HomeShellState extends State<HomeShell> {
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
-        systemNavigationBarColor: MyMenuColors.cream,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarDividerColor: Colors.transparent,
         systemNavigationBarIconBrightness: Brightness.dark,
+        systemNavigationBarContrastEnforced: false,
       ),
       child: Scaffold(
+        extendBody: true,
         body: AnimatedBuilder(
           animation: state,
           builder: (BuildContext context, _) {
@@ -93,67 +97,157 @@ class _FloatingBottomShell extends StatelessWidget {
       left: MyMenuUnits.bottomBarInset,
       right: MyMenuUnits.bottomBarInset,
       bottom: math.max(MyMenuUnits.bottomBarBottom, safeBottom + 4),
-      child: SizedBox(
-        height: MyMenuUnits.bottomBarHeight,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: <Widget>[
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFAFFFFFF),
-                borderRadius: BorderRadius.circular(27),
-                border: Border.all(color: MyMenuColors.line),
-                boxShadow: myMenuFloatingShadow,
-              ),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    child: _BottomDestination(
-                      label: 'Plan',
-                      icon: Icons.calendar_month_outlined,
-                      selected: selectedIndex == 0,
-                      onTap: () => onSelect(0),
-                    ),
-                  ),
-                  const SizedBox(width: 78),
-                  Expanded(
-                    child: _BottomDestination(
-                      label: 'Menu',
-                      icon: Icons.menu_book_outlined,
-                      selected: selectedIndex == 1,
-                      onTap: () => onSelect(1),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              top: -19,
-              child: Center(
-                child: Container(
-                  width: 74,
-                  height: 74,
-                  padding: const EdgeInsets.all(6),
-                  decoration: const BoxDecoration(
-                    color: MyMenuColors.cream,
-                    shape: BoxShape.circle,
-                  ),
-                  child: FloatingActionButton(
-                    key: const ValueKey<String>('capture_fab'),
-                    heroTag: 'global_capture',
-                    onPressed: onCapture,
-                    elevation: 0,
-                    backgroundColor: MyMenuColors.orangeAction,
-                    foregroundColor: Colors.white,
-                    shape: const CircleBorder(),
-                    child: const Icon(Icons.add, size: 28),
-                  ),
+      child: RepaintBoundary(
+        key: const ValueKey<String>('bottom_shell_golden'),
+        child: SizedBox(
+          height: MyMenuUnits.bottomBarHeight + 35,
+          child: Stack(
+            children: <Widget>[
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: MyMenuUnits.bottomBarHeight,
+                child: _BottomBar(
+                  selectedIndex: selectedIndex,
+                  onSelect: onSelect,
                 ),
               ),
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 8,
+                child: Center(
+                  child: _CaptureButton(onPressed: onCapture),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BottomBar extends StatelessWidget {
+  const _BottomBar({
+    required this.selectedIndex,
+    required this.onSelect,
+  });
+
+  final int selectedIndex;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final BorderRadius borderRadius = BorderRadius.circular(27);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        boxShadow: myMenuFloatingShadow,
+      ),
+      child: ClipRRect(
+        borderRadius: borderRadius,
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: const Color(0xF5FFFFFF),
+              borderRadius: borderRadius,
+              border: Border.all(color: MyMenuColors.line),
             ),
-          ],
+            child: Row(
+              children: <Widget>[
+                Expanded(
+                  child: _BottomDestination(
+                    label: 'Plan',
+                    icon: Icons.calendar_month_outlined,
+                    selected: selectedIndex == 0,
+                    onTap: () => onSelect(0),
+                  ),
+                ),
+                const SizedBox(width: 78),
+                Expanded(
+                  child: _BottomDestination(
+                    label: 'Menu',
+                    icon: Icons.menu_book_outlined,
+                    selected: selectedIndex == 1,
+                    onTap: () => onSelect(1),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CaptureButton extends StatelessWidget {
+  const _CaptureButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Capture',
+      child: Container(
+        key: const ValueKey<String>('capture_glow'),
+        width: 94,
+        height: 94,
+        alignment: Alignment.center,
+        decoration: const BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: <Color>[
+              Color(0x70FF710A),
+              Color(0x36FF9A3D),
+              Color(0x00FFB166),
+            ],
+            stops: <double>[0, 0.58, 1],
+          ),
+        ),
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          child: Ink(
+            width: MyMenuUnits.captureButtonSize,
+            height: MyMenuUnits.captureButtonSize,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: <Color>[
+                  Color(0xFFFF8A24),
+                  MyMenuColors.orangeAction,
+                ],
+                stops: <double>[0, 0.78],
+              ),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: Color(0x33FFFFFF),
+                  blurRadius: 2,
+                  spreadRadius: 1,
+                  offset: Offset(-1, -1),
+                ),
+              ],
+            ),
+            child: InkWell(
+              key: const ValueKey<String>('capture_fab'),
+              onTap: onPressed,
+              customBorder: const CircleBorder(),
+              child: const Icon(
+                Icons.add,
+                size: 28,
+                color: Colors.white,
+              ),
+            ),
+          ),
         ),
       ),
     );

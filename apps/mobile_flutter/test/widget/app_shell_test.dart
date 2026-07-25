@@ -163,7 +163,7 @@ void main() {
       });
     });
 
-    testWidgets('menu top chrome matches its screenshot golden', (
+    testWidgets('menu chrome matches its screenshot goldens', (
       WidgetTester tester,
     ) async {
       tester.view.physicalSize = const Size(390, 844);
@@ -196,6 +196,17 @@ void main() {
           heading,
           matchesGoldenFile(
             'goldens/menu_heading_390x844_text_scale_1_15.png',
+          ),
+        );
+
+        final Finder bottomShell = find.byKey(
+          const ValueKey<String>('bottom_shell_golden'),
+        );
+        expect(tester.getSize(bottomShell), const Size(358, 111));
+        await expectLater(
+          bottomShell,
+          matchesGoldenFile(
+            'goldens/bottom_shell_390x844_text_scale_1_15.png',
           ),
         );
         expect(tester.takeException(), isNull);
@@ -241,10 +252,15 @@ Widget _testApp() {
 }
 
 Future<void> _loadGoldenFonts() async {
-  final FontLoader loader = FontLoader('.SF Pro Rounded')
+  final FontLoader textLoader = FontLoader('.SF Pro Rounded')
     ..addFont(_fontData('test/support/fonts/Roboto-Regular.ttf'))
     ..addFont(_fontData('test/support/fonts/Roboto-Bold.ttf'));
-  await loader.load();
+  final FontLoader iconLoader = FontLoader('MaterialIcons')
+    ..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'));
+  await Future.wait(<Future<void>>[
+    textLoader.load(),
+    iconLoader.load(),
+  ]);
 }
 
 Future<ByteData> _fontData(String path) async {
