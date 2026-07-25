@@ -66,7 +66,7 @@ void main() {
 
     test('moving a planned meal reorders it within a day', () {
       final MyMenuState state = MyMenuState();
-      final String dayKey = dayKeyForDate(state.remainingPlanDates().first);
+      final String dayKey = state.plan.first.dayKey;
       final List<PlannedMeal> meals = state.plannedMealsForDay(dayKey);
 
       state.movePlannedMeal(
