@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/shared/widgets/app_image.dart';
@@ -20,7 +19,7 @@ class DishArtwork extends StatelessWidget {
   Widget build(BuildContext context) {
     final String? asset = _assetFor(dish, improved: improved);
     if (asset != null) {
-      return SvgPicture.asset(
+      return Image.asset(
         asset,
         width: double.infinity,
         height: double.infinity,
@@ -44,17 +43,17 @@ String? _assetFor(Dish dish, {required bool improved}) {
   final String key = '${dish.id} ${dish.title}'.toLowerCase();
   if (key.contains('salmon')) {
     return improved || dish.heroImageUrl.contains('miso-salmon-improved')
-        ? 'assets/dish_art/miso-salmon-improved.svg'
-        : 'assets/dish_art/miso-salmon.svg';
+        ? 'assets/dish_art/miso-salmon-improved.png'
+        : 'assets/dish_art/miso-salmon.png';
   }
   if (key.contains('linguine') || key.contains('noodle')) {
-    return 'assets/dish_art/linguine.svg';
+    return 'assets/dish_art/linguine.png';
   }
   if (key.contains('katsu') || key.contains('curry')) {
-    return 'assets/dish_art/katsu.svg';
+    return 'assets/dish_art/katsu.png';
   }
   if (key.contains('pho')) {
-    return 'assets/dish_art/pho.svg';
+    return 'assets/dish_art/pho.png';
   }
   return null;
 }

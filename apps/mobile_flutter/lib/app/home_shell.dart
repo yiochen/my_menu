@@ -35,20 +35,19 @@ class _HomeShellState extends State<HomeShell> {
             children: <Widget>[
               SafeArea(
                 bottom: false,
-                child: IndexedStack(
-                  index: _selectedIndex,
-                  children: <Widget>[
-                    PlanScreen(
+                child: switch (_selectedIndex) {
+                  0 => PlanScreen(
+                      key: const ValueKey<String>('plan_destination'),
                       onOpenReview: () => showReviewSheet(context, state),
                     ),
-                    MenuScreen(
+                  _ => MenuScreen(
+                      key: const ValueKey<String>('menu_destination'),
                       query: _query,
                       onQueryChanged: (String value) {
                         setState(() => _query = value);
                       },
                     ),
-                  ],
-                ),
+                },
               ),
               _FloatingBottomShell(
                 selectedIndex: _selectedIndex,
