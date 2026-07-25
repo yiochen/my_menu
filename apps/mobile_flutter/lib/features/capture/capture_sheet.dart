@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/features/capture/add_idea_sheet.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
-import 'package:mymenu/shared/widgets/app_dialog.dart';
+import 'package:mymenu/features/capture/capture_outcome_sheet.dart';
+import 'package:mymenu/shared/theme/my_menu_theme.dart';
+import 'package:mymenu/shared/widgets/warm_components.dart';
 
-enum CaptureAction {
-  takePhoto,
-  importPhotos,
-  addIdea,
-}
+enum CaptureAction { takePhoto, importPhotos, addIdea }
 
 Future<void> showCaptureSheet(
   BuildContext context,
@@ -17,181 +17,151 @@ Future<void> showCaptureSheet(
 ) async {
   final CaptureAction? action = await showModalBottomSheet<CaptureAction>(
     context: context,
-    isScrollControlled: true,
     useSafeArea: true,
-    backgroundColor: const Color(0xFFFFFCF7),
-    barrierColor: Colors.black.withValues(alpha: 0.55),
-    showDragHandle: true,
-    builder: (BuildContext sheetContext) {
-      return SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        'Capture',
-                        style:
-                            Theme.of(context).textTheme.displaySmall?.copyWith(
-                                  fontSize: 42,
-                                  color: const Color(0xFF143E24),
-                                ),
-                      ),
-                    ),
-                    IconButton.outlined(
-                      onPressed: () => Navigator.of(sheetContext).pop(),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  "Add a photo or idea.\nWe'll organize it for you.",
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontSize: 18,
-                        height: 1.35,
-                        color: const Color(0xFF596174),
-                      ),
-                ),
-                const SizedBox(height: 28),
-                _CaptureActionTile(
-                  icon: Icons.camera_alt,
-                  title: 'Take Photo',
-                  subtitle: 'Snap a photo of your dish right now.',
-                  onTap: () =>
-                      Navigator.of(sheetContext).pop(CaptureAction.takePhoto),
-                ),
-                const SizedBox(height: 14),
-                _CaptureActionTile(
-                  icon: Icons.photo_size_select_actual_outlined,
-                  title: 'Import Photos',
-                  subtitle: 'Choose from your library or gallery.',
-                  onTap: () => Navigator.of(sheetContext)
-                      .pop(CaptureAction.importPhotos),
-                ),
-                const SizedBox(height: 14),
-                _CaptureActionTile(
-                  icon: Icons.edit_outlined,
-                  title: 'Add Idea',
-                  subtitle: 'Note a dish you want to make or remember.',
-                  onTap: () =>
-                      Navigator.of(sheetContext).pop(CaptureAction.addIdea),
-                ),
-                const SizedBox(height: 24),
-                const _CaptureAiNote(),
-                SizedBox(height: MediaQuery.paddingOf(context).bottom),
-              ],
-            ),
-          ),
-        ),
-      );
-    },
+    isScrollControlled: true,
+    builder: (_) => const _CaptureActionSheet(),
   );
-
   if (!context.mounted || action == null) {
     return;
   }
-
   switch (action) {
     case CaptureAction.takePhoto:
-      await _savePhotoCaptures(
+      await _captureMedia(
         context,
         state,
-        () => mediaService.takePhoto(),
+        mediaService.takePhoto,
+        organizedStep: CaptureOutcomeStep.matched,
       );
     case CaptureAction.importPhotos:
-      await _savePhotoCaptures(
+      await _captureMedia(
         context,
         state,
-        () => mediaService.importPhotos(),
+        mediaService.importPhotos,
+        organizedStep: CaptureOutcomeStep.created,
       );
     case CaptureAction.addIdea:
-      await _showTextPrompt(
-        context,
-        title: 'Add Idea',
-        hint: 'Lemongrass chicken bowls',
-        onSubmit: state.addIdea,
-      );
+      final AddIdeaIntent? intent = await showAddIdeaSheet(context);
+      if (intent != null) {
+        state.addIdea(intent.title);
+      }
   }
 }
 
-Future<void> _savePhotoCaptures(
+Future<void> _captureMedia(
   BuildContext context,
   MyMenuState state,
-  Future<List<String>> Function() loadImageRefs,
-) async {
+  Future<List<String>> Function() capture, {
+  required CaptureOutcomeStep organizedStep,
+}) async {
   try {
-    final List<String> imageRefs = await loadImageRefs();
+    final List<String> imageRefs = await capture();
     if (!context.mounted || imageRefs.isEmpty) {
       return;
     }
-
     state.addPhotoCaptures(imageRefs);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          imageRefs.length == 1
-              ? 'Saved photo for review.'
-              : 'Saved ${imageRefs.length} photos for review.',
-        ),
-      ),
+    const String scenario = String.fromEnvironment(
+      'MY_MENU_CAPTURE_SCENARIO',
+      defaultValue: 'success',
     );
-  } on Exception catch (_) {
-    if (!context.mounted) {
-      return;
+    await showCaptureOutcomeSheet(
+      context,
+      state: state,
+      initialStep: scenario == 'offline'
+          ? CaptureOutcomeStep.offline
+          : CaptureOutcomeStep.saved,
+      organizedStep: organizedStep,
+    );
+  } on PlatformException catch (_) {
+    if (context.mounted) {
+      await showCaptureOutcomeSheet(
+        context,
+        state: state,
+        initialStep: CaptureOutcomeStep.permission,
+        organizedStep: organizedStep,
+      );
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Photo capture did not complete.')),
-    );
+  } on Exception catch (_) {
+    if (context.mounted) {
+      await showCaptureOutcomeSheet(
+        context,
+        state: state,
+        initialStep: CaptureOutcomeStep.permission,
+        organizedStep: organizedStep,
+      );
+    }
   }
 }
 
-class _CaptureAiNote extends StatelessWidget {
-  const _CaptureAiNote();
+class _CaptureActionSheet extends StatelessWidget {
+  const _CaptureActionSheet();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F2E8),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
+    return WarmPage(
+      includeBottomChromeSpace: false,
+      topPadding: 10,
+      child: ListView(
+        shrinkWrap: true,
+        padding: EdgeInsets.zero,
         children: <Widget>[
-          const Icon(
-            Icons.auto_awesome,
-            color: Color(0xFFC47B00),
+          SheetTopBar(
+            title: 'Capture',
+            onClose: () => Navigator.pop(context),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text.rich(
-              TextSpan(
-                children: <InlineSpan>[
-                  TextSpan(
-                    text: 'AI will match it to a dish',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                  TextSpan(
-                    text: '\nor create a new one.',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: const Color(0xFF596174),
-                        ),
-                  ),
-                ],
-              ),
+          const SizedBox(height: 12),
+          Container(
+            width: 88,
+            height: 88,
+            decoration: BoxDecoration(
+              color: MyMenuColors.orangeSoft,
+              borderRadius: BorderRadius.circular(29),
+            ),
+            child: const Icon(
+              Icons.photo_camera_outlined,
+              size: 42,
+              color: MyMenuColors.orange,
             ),
           ),
-          const Icon(
-            Icons.restaurant,
-            color: Color(0xFF174B2A),
+          const SizedBox(height: 10),
+          Text(
+            'Save it while it’s fresh',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.displaySmall,
+          ),
+          const SizedBox(height: 7),
+          Text(
+            'Snap first. MyMenu can sort out where it belongs afterward.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 18),
+          _CaptureActionTile(
+            icon: Icons.camera_alt_outlined,
+            title: 'Take Photo',
+            subtitle: 'Fastest — point, snap, done',
+            primary: true,
+            onTap: () => Navigator.pop(context, CaptureAction.takePhoto),
+          ),
+          const SizedBox(height: 10),
+          _CaptureActionTile(
+            icon: Icons.photo_library_outlined,
+            title: 'Import Photos',
+            subtitle: 'Bring in one or a few',
+            onTap: () => Navigator.pop(context, CaptureAction.importPhotos),
+          ),
+          const SizedBox(height: 10),
+          _CaptureActionTile(
+            icon: Icons.edit_outlined,
+            title: 'Add Idea',
+            subtitle: 'Save a thought for later',
+            onTap: () => Navigator.pop(context, CaptureAction.addIdea),
+          ),
+          const SizedBox(height: 14),
+          const StatusStrip(
+            icon: Icons.check_circle_outline,
+            text: 'Captures save locally, even without signal.',
+            color: MyMenuColors.green,
+            background: MyMenuColors.greenSoft,
           ),
         ],
       ),
@@ -205,112 +175,66 @@ class _CaptureActionTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.primary = false,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
+  final bool primary;
 
   @override
   Widget build(BuildContext context) {
+    final Color background =
+        primary ? MyMenuColors.orangeAction : MyMenuColors.surface;
+    final Color foreground = primary ? Colors.white : MyMenuColors.ink;
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      elevation: 2,
-      shadowColor: Colors.black.withValues(alpha: 0.08),
+      color: background,
+      borderRadius: BorderRadius.circular(22),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(18),
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 78),
+          padding: const EdgeInsets.all(12),
           child: Row(
             children: <Widget>[
-              CircleAvatar(
-                radius: 36,
-                backgroundColor: const Color(0xFFF8F2E8),
-                child: Icon(
-                  icon,
-                  color: const Color(0xFF174B2A),
-                  size: 34,
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: primary ? const Color(0x2FFFFFFF) : MyMenuColors.oat,
+                  borderRadius: BorderRadius.circular(17),
                 ),
+                child: Icon(icon, color: foreground),
               ),
-              const SizedBox(width: 20),
+              const SizedBox(width: 13),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Text(
                       title,
-                      style:
-                          Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontSize: 24,
-                                color: Colors.black,
-                              ),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: foreground,
+                          ),
                     ),
-                    const SizedBox(height: 6),
                     Text(
                       subtitle,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            fontSize: 16,
-                            color: const Color(0xFF596174),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color:
+                                primary ? Colors.white70 : MyMenuColors.muted,
                           ),
                     ),
                   ],
                 ),
               ),
-              const Icon(
-                Icons.chevron_right,
-                color: Color(0xFFC47B00),
-                size: 34,
-              ),
+              Icon(Icons.chevron_right_rounded, color: foreground),
             ],
           ),
         ),
       ),
     );
   }
-}
-
-Future<void> _showTextPrompt(
-  BuildContext context, {
-  required String title,
-  required String hint,
-  required ValueChanged<String> onSubmit,
-}) async {
-  String value = '';
-  await showDialog<void>(
-    context: context,
-    builder: (BuildContext context) {
-      return AppDialog(
-        title: title,
-        subtitle: 'Add just enough detail to recognize it later.',
-        icon: Icons.edit_note_outlined,
-        content: TextFormField(
-          autofocus: true,
-          maxLines: 3,
-          decoration: InputDecoration(hintText: hint),
-          onChanged: (String nextValue) {
-            value = nextValue;
-          },
-        ),
-        actions: <AppDialogAction>[
-          AppDialogAction(
-            label: 'Cancel',
-            icon: Icons.close,
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          AppDialogAction(
-            label: 'Save',
-            icon: Icons.check,
-            isPrimary: true,
-            onPressed: () {
-              onSubmit(value);
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      );
-    },
-  );
 }

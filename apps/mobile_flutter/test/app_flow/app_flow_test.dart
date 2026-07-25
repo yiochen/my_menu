@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,40 +10,39 @@ import '../support/network_image_test_helper.dart';
 void main() {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
-  testWidgets('user can add a dish idea and see it classifying', (
+  testWidgets('user can capture and retain an idea', (
     WidgetTester tester,
   ) async {
     await runWithMockNetworkImages(() async {
       await tester.pumpWidget(_testApp());
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const ValueKey<String>('plan_screen')), findsOneWidget);
-
       await tester.tap(find.byKey(const ValueKey('capture_fab')));
       await tester.pumpAndSettle();
-
+      await tester.scrollUntilVisible(
+        find.text('Add Idea'),
+        120,
+        scrollable: find.byType(Scrollable).last,
+      );
       await tester.tap(find.text('Add Idea'));
       await tester.pumpAndSettle();
 
       await tester.enterText(
-        find.byType(TextFormField),
+        find.byKey(const ValueKey<String>('idea_title_field')),
         'gochujang noodles',
       );
-      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
-      await tester.pumpAndSettle();
-      await tester.pump(const Duration(seconds: 2));
-
       await tester.scrollUntilVisible(
-        find.text('1 capture in feed'),
-        200,
-        scrollable: find.byType(Scrollable).first,
+        find.text('Save idea'),
+        120,
+        scrollable: find.byType(Scrollable).last,
       );
+      await tester.tap(find.text('Save idea'));
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pumpAndSettle();
 
-      expect(find.text('1 capture in feed'), findsOneWidget);
-      expect(
-        find.text('Track upload and fake API classification.'),
-        findsOneWidget,
-      );
+      expect(find.text('Add an idea'), findsNothing);
+      expect(find.byKey(const ValueKey<String>('plan_screen')), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
   });
 }

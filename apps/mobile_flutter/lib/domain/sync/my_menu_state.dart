@@ -120,6 +120,11 @@ class MyMenuState extends ChangeNotifier {
         return dish;
       }
 
+      if (dish.id == 'dish_salmon') {
+        return dish.copyWith(
+          heroImageUrl: 'asset://miso-salmon-improved',
+        );
+      }
       final int index =
           prompt.trim().isEmpty ? 0 : prompt.length % dish.sourcePhotos.length;
       return dish.copyWith(heroImageUrl: dish.sourcePhotos[index].url);

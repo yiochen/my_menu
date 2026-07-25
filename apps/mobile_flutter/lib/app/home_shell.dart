@@ -1,14 +1,15 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'package:mymenu/app/app.dart';
-import 'package:mymenu/app/app_shell_theme.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
-import 'package:mymenu/features/capture/capture_feed_sheet.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
 import 'package:mymenu/features/capture/capture_sheet.dart';
 import 'package:mymenu/features/menu/menu_screen.dart';
 import 'package:mymenu/features/plan/plan_screen.dart';
 import 'package:mymenu/features/review/review_sheet.dart';
+import 'package:mymenu/shared/theme/my_menu_theme.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -18,16 +19,14 @@ class HomeShell extends StatefulWidget {
 }
 
 class _HomeShellState extends State<HomeShell> {
-  int _selectedIndex = 0;
-  String _query = '';
-  bool _isPlanDragging = false;
   final ImagePickerCaptureMediaService _captureMediaService =
       ImagePickerCaptureMediaService();
+  int _selectedIndex = 0;
+  String _query = '';
 
   @override
   Widget build(BuildContext context) {
     final MyMenuState state = MyMenuScope.of(context);
-
     return Scaffold(
       body: AnimatedBuilder(
         animation: state,
@@ -35,16 +34,12 @@ class _HomeShellState extends State<HomeShell> {
           return Stack(
             children: <Widget>[
               SafeArea(
+                bottom: false,
                 child: IndexedStack(
                   index: _selectedIndex,
                   children: <Widget>[
                     PlanScreen(
                       onOpenReview: () => showReviewSheet(context, state),
-                      onOpenCaptureFeed: () =>
-                          showCaptureFeedSheet(context, state),
-                      onDragStateChanged: (bool isDragging) {
-                        setState(() => _isPlanDragging = isDragging);
-                      },
                     ),
                     MenuScreen(
                       query: _query,
@@ -55,18 +50,17 @@ class _HomeShellState extends State<HomeShell> {
                   ],
                 ),
               ),
-              if (!_isPlanDragging)
-                _FloatingChrome(
-                  selectedIndex: _selectedIndex,
-                  onDestinationSelected: (int index) {
-                    setState(() => _selectedIndex = index);
-                  },
-                  onCapture: () => showCaptureSheet(
-                    context,
-                    state,
-                    _captureMediaService,
-                  ),
+              _FloatingBottomShell(
+                selectedIndex: _selectedIndex,
+                onSelect: (int value) {
+                  setState(() => _selectedIndex = value);
+                },
+                onCapture: () => showCaptureSheet(
+                  context,
+                  state,
+                  _captureMediaService,
                 ),
+              ),
             ],
           );
         },
@@ -75,145 +69,127 @@ class _HomeShellState extends State<HomeShell> {
   }
 }
 
-class _FloatingChrome extends StatelessWidget {
-  const _FloatingChrome({
+class _FloatingBottomShell extends StatelessWidget {
+  const _FloatingBottomShell({
     required this.selectedIndex,
-    required this.onDestinationSelected,
+    required this.onSelect,
     required this.onCapture,
   });
 
   final int selectedIndex;
-  final ValueChanged<int> onDestinationSelected;
+  final ValueChanged<int> onSelect;
   final VoidCallback onCapture;
 
   @override
   Widget build(BuildContext context) {
-    final AppShellThemeTokens tokens = context.appShellTheme;
-
+    final double safeBottom = MediaQuery.paddingOf(context).bottom;
     return Positioned(
-      left: 0,
-      right: 0,
-      bottom: tokens.bottomChromeBottomOffset,
-      child: IgnorePointer(
-        ignoring: false,
-        child: SizedBox(
-          height: tokens.bottomChromeHeight,
-          child: Stack(
-            children: <Widget>[
-              Align(
-                alignment: Alignment.bottomCenter,
+      left: MyMenuUnits.bottomBarInset,
+      right: MyMenuUnits.bottomBarInset,
+      bottom: math.max(MyMenuUnits.bottomBarBottom, safeBottom + 4),
+      child: SizedBox(
+        height: MyMenuUnits.bottomBarHeight,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: <Widget>[
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFAFFFFFF),
+                borderRadius: BorderRadius.circular(27),
+                border: Border.all(color: MyMenuColors.line),
+                boxShadow: myMenuFloatingShadow,
+              ),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: _BottomDestination(
+                      label: 'Plan',
+                      icon: Icons.calendar_month_outlined,
+                      selected: selectedIndex == 0,
+                      onTap: () => onSelect(0),
+                    ),
+                  ),
+                  const SizedBox(width: 78),
+                  Expanded(
+                    child: _BottomDestination(
+                      label: 'Menu',
+                      icon: Icons.menu_book_outlined,
+                      selected: selectedIndex == 1,
+                      onTap: () => onSelect(1),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              top: -19,
+              child: Center(
                 child: Container(
-                  width: tokens.bottomBarWidth,
-                  height: tokens.bottomBarHeight,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFFCF7),
-                    borderRadius: BorderRadius.circular(tokens.bottomBarRadius),
-                    border: Border.all(color: const Color(0xFFE8DFD2)),
-                    boxShadow: const <BoxShadow>[
-                      BoxShadow(
-                        color: Color(0x14000000),
-                        blurRadius: 18,
-                        offset: Offset(0, 8),
-                      ),
-                    ],
+                  width: 74,
+                  height: 74,
+                  padding: const EdgeInsets.all(6),
+                  decoration: const BoxDecoration(
+                    color: MyMenuColors.cream,
+                    shape: BoxShape.circle,
                   ),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: _NavItem(
-                          isSelected: selectedIndex == 0,
-                          icon: Icons.calendar_month,
-                          label: 'Plan',
-                          onTap: () => onDestinationSelected(0),
-                        ),
-                      ),
-                      Expanded(
-                        child: _NavItem(
-                          isSelected: selectedIndex == 1,
-                          icon: Icons.person_2_outlined,
-                          label: 'Menu',
-                          onTap: () => onDestinationSelected(1),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                right: tokens.fabRightOffset,
-                bottom: tokens.fabBottomOffset,
-                child: SizedBox(
-                  width: tokens.fabSize,
-                  height: tokens.fabHeight,
                   child: FloatingActionButton(
-                    key: const ValueKey('capture_fab'),
+                    key: const ValueKey<String>('capture_fab'),
+                    heroTag: 'global_capture',
                     onPressed: onCapture,
-                    backgroundColor: const Color(0xFFD79A00),
+                    elevation: 0,
+                    backgroundColor: MyMenuColors.orangeAction,
                     foregroundColor: Colors.white,
-                    elevation: 2,
                     shape: const CircleBorder(),
-                    child: Icon(Icons.add, size: tokens.fabIconSize),
+                    child: const Icon(Icons.add, size: 28),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _NavItem extends StatelessWidget {
-  const _NavItem({
-    required this.isSelected,
-    required this.icon,
+class _BottomDestination extends StatelessWidget {
+  const _BottomDestination({
     required this.label,
+    required this.icon,
+    required this.selected,
     required this.onTap,
   });
 
-  final bool isSelected;
-  final IconData icon;
   final String label;
+  final IconData icon;
+  final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final AppShellThemeTokens tokens = context.appShellTheme;
-
-    return Padding(
-      padding: EdgeInsets.all(tokens.bottomNavItemPadding),
-      child: Material(
-        color: isSelected ? const Color(0xFFF3EFE5) : Colors.transparent,
-        borderRadius: BorderRadius.circular(tokens.bottomNavItemRadius),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(tokens.bottomNavItemRadius),
-          onTap: onTap,
-          child: SizedBox(
-            height: tokens.bottomNavSelectedHeight,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Icon(
-                  icon,
-                  size: tokens.bottomNavIconSize,
-                  color: isSelected
-                      ? const Color(0xFF174B2A)
-                      : const Color(0xFF727272),
-                ),
-                SizedBox(height: tokens.bottomNavLabelSpacing),
-                Text(
-                  label,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        fontSize: tokens.bottomNavLabelFontSize,
-                        color: isSelected
-                            ? const Color(0xFF174B2A)
-                            : const Color(0xFF727272),
-                      ),
-                ),
-              ],
+    final Color color = selected ? MyMenuColors.orangeDark : MyMenuColors.muted;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(27),
+      child: Semantics(
+        selected: selected,
+        button: true,
+        label: label,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Icon(icon, size: 22, color: color),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w800,
+                  ),
             ),
-          ),
+          ],
         ),
       ),
     );

@@ -1,0 +1,106 @@
+import 'package:flutter/material.dart';
+
+import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/features/capture/add_idea_sheet.dart';
+import 'package:mymenu/features/capture/capture_outcome_frame.dart';
+import 'package:mymenu/shared/theme/my_menu_theme.dart';
+import 'package:mymenu/shared/widgets/warm_components.dart';
+
+class CaptureOfflineView extends StatelessWidget {
+  const CaptureOfflineView({required this.onClose, super.key});
+
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return CaptureOutcomeFrame(
+      topLabel: 'Captured',
+      headline: 'Captured—even offline',
+      description: 'Nothing else to do. MyMenu will organize it when a '
+          'connection returns.',
+      art: const CaptureResultIcon(
+        icon: Icons.cloud_off_outlined,
+        color: MyMenuColors.muted,
+        background: MyMenuColors.oat,
+      ),
+      body: const WarmCard(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: <Widget>[
+            CaptureStatusLine(
+              icon: Icons.check,
+              title: 'Photo safe on this device',
+              subtitle: 'Available in your capture queue',
+            ),
+            Divider(height: 24),
+            CaptureStatusLine(
+              icon: Icons.cloud_off_outlined,
+              title: 'Organization waiting',
+              subtitle: 'Automatic matching needs a connection',
+            ),
+          ],
+        ),
+      ),
+      footer: const StatusStrip(
+        icon: Icons.refresh,
+        text: 'Queued · retry happens automatically',
+      ),
+      onClose: onClose,
+    );
+  }
+}
+
+class CapturePermissionView extends StatelessWidget {
+  const CapturePermissionView({
+    required this.state,
+    required this.onClose,
+    super.key,
+  });
+
+  final MyMenuState state;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return CaptureOutcomeFrame(
+      topLabel: 'Camera access',
+      headline: 'Camera access is off',
+      description: 'Turn it on in Settings to snap food directly. You can '
+          'still import a photo or add an idea right now.',
+      art: const CaptureResultIcon(
+        icon: Icons.no_photography_outlined,
+        color: MyMenuColors.red,
+        background: MyMenuColors.redSoft,
+      ),
+      body: Column(
+        children: <Widget>[
+          CapturePermissionAction(
+            icon: Icons.photo_library_outlined,
+            title: 'Import Photos',
+            subtitle: 'Choose from your library',
+            onTap: onClose,
+          ),
+          const SizedBox(height: 10),
+          CapturePermissionAction(
+            icon: Icons.edit_outlined,
+            title: 'Add Idea',
+            subtitle: 'Save a thought instead',
+            onTap: () => _addIdea(context),
+          ),
+        ],
+      ),
+      footer: const StatusStrip(
+        icon: Icons.lock_outline,
+        text: 'MyMenu only accesses the camera when you choose Take Photo.',
+      ),
+      onClose: onClose,
+    );
+  }
+
+  Future<void> _addIdea(BuildContext context) async {
+    final AddIdeaIntent? intent = await showAddIdeaSheet(context);
+    if (intent != null) {
+      state.addIdea(intent.title);
+    }
+  }
+}
