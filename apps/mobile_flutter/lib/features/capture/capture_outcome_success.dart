@@ -6,38 +6,47 @@ import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
 class CaptureSavedView extends StatelessWidget {
-  const CaptureSavedView({required this.onClose, super.key});
+  const CaptureSavedView({
+    required this.onClose,
+    required this.photoCount,
+    super.key,
+  });
 
   final VoidCallback onClose;
+  final int photoCount;
 
   @override
   Widget build(BuildContext context) {
     return CaptureOutcomeFrame(
       topLabel: 'Captured',
       headline: 'Got it. You’re done.',
-      description: 'MyMenu is finding the right place for this cooking moment.',
+      description: photoCount <= 1
+          ? 'This cooking moment is safely queued for upload.'
+          : 'All $photoCount photos are safely queued in one capture batch.',
       art: const CaptureResultIcon(
         icon: Icons.check_rounded,
         color: MyMenuColors.green,
         background: MyMenuColors.greenSoft,
       ),
-      body: const WarmCard(
-        padding: EdgeInsets.all(16),
+      body: WarmCard(
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: <Widget>[
             CaptureStatusLine(
               icon: Icons.check,
-              title: 'Photo saved on this device',
+              title: photoCount <= 1
+                  ? 'Photo saved on this device'
+                  : '$photoCount photos saved on this device',
               subtitle: 'Safe even if you close the app',
             ),
-            Divider(height: 24),
-            CaptureStatusLine(
+            const Divider(height: 24),
+            const CaptureStatusLine(
               icon: Icons.auto_awesome,
-              title: 'Organizing now',
-              subtitle: 'Checking your 24 dishes for a match',
+              title: 'Upload continues in the background',
+              subtitle: 'You can return to Plan or Menu now',
             ),
-            SizedBox(height: 12),
-            LinearProgressIndicator(
+            const SizedBox(height: 12),
+            const LinearProgressIndicator(
               color: MyMenuColors.orange,
               backgroundColor: MyMenuColors.oat2,
             ),

@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mymenu/core/database/app_database.dart' as db;
 import 'package:mymenu/core/network/my_menu_api_client.dart';
+import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_item.dart' as capture_domain;
 import 'package:mymenu/domain/capture/capture_mappers.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
@@ -15,19 +18,28 @@ import 'package:mymenu/domain/planning/seeded_plan.dart';
 import 'package:uuid/uuid.dart';
 
 part 'repositories_dishes.dart';
+part 'repositories_planning.dart';
+part 'repositories_capture.dart';
+part 'repositories_support.dart';
 part 'repositories_sync.dart';
 
 class AppRepositories {
   AppRepositories({
     required this.database,
     required this.apiClient,
+    this.captureControlRequestTimeout = const Duration(seconds: 5),
   })  : dishRepository = DishRepository(database),
         planRepository = PlanRepository(database),
         captureRepository = CaptureRepository(database),
-        syncRepository = SyncRepository(database, apiClient);
+        syncRepository = SyncRepository(
+          database,
+          apiClient,
+          controlRequestTimeout: captureControlRequestTimeout,
+        );
 
   final db.AppDatabase database;
   final MyMenuApiClient apiClient;
+  final Duration captureControlRequestTimeout;
   final DishRepository dishRepository;
   final PlanRepository planRepository;
   final CaptureRepository captureRepository;
@@ -39,188 +51,64 @@ class AppRepositories {
   }
 }
 
-class PlanRepository {
-  PlanRepository(this._database);
-
-  final db.AppDatabase _database;
-
-  Future<void> seedIfNeeded() async {
-    final List<db.PlannedMealRow> rows =
-        await _database.select(_database.plannedMeals).get();
-    if (rows.isNotEmpty) {
-      return;
-    }
-
-    await _database.batch((Batch batch) {
-      for (final planning_domain.PlannedMeal meal in buildSeededPlan()) {
-        batch.insert(
-          _database.plannedMeals,
-          db.PlannedMealsCompanion.insert(
-            id: meal.id,
-            dayKey: meal.dayKey,
-            dishId: meal.dishId,
-            label: Value<String?>(meal.label),
-          ),
-        );
-      }
-    });
-  }
-}
-
-class CaptureRepository {
-  CaptureRepository(this._database);
-
-  final db.AppDatabase _database;
-  final Uuid _uuid = const Uuid();
-
-  Future<List<capture_domain.CaptureItem>> listFeedItems() async {
-    final List<db.CaptureItemRow> rows =
-        await (_database.select(_database.captureItems)
-              ..orderBy(<OrderingTerm Function(db.$CaptureItemsTable)>[
-                (db.CaptureItems table) => OrderingTerm.desc(table.createdAt),
-              ]))
-            .get();
-    return rows.map((db.CaptureItemRow row) => row.toDomain()).toList();
-  }
-
-  Future<List<String>> createPhotoCaptures(List<String> imageRefs) async {
-    final List<String> ids = <String>[];
-    await _database.batch((Batch batch) {
-      for (final String imageRef in imageRefs) {
-        final String trimmed = imageRef.trim();
-        if (trimmed.isEmpty) {
-          continue;
-        }
-        final String id = _uuid.v4();
-        ids.add(id);
-        batch.insert(
-          _database.captureItems,
-          db.CaptureItemsCompanion.insert(
-            id: id,
-            kind: capture_domain.CaptureItemKind.photo.name,
-            status: capture_domain.CaptureItemStatus.pendingUpload.name,
-            createdAt: DateTime.now(),
-            localMediaRef: Value<String?>(trimmed),
-          ),
-        );
-        _enqueueSync(batch, id, 'capture_item', 'upsert');
-      }
-    });
-    return ids;
-  }
-
-  Future<String?> createIdeaCapture(String text) async {
-    final String trimmed = text.trim();
-    if (trimmed.isEmpty) {
-      return null;
-    }
-    final String id = _uuid.v4();
-    await _database.into(_database.captureItems).insert(
-          db.CaptureItemsCompanion.insert(
-            id: id,
-            kind: capture_domain.CaptureItemKind.idea.name,
-            status: capture_domain.CaptureItemStatus.classifying.name,
-            createdAt: DateTime.now(),
-            ideaText: Value<String?>(trimmed),
-          ),
-        );
-    await _database.into(_database.syncOperations).insert(
-          db.SyncOperationsCompanion.insert(
-            id: _uuid.v4(),
-            entity: 'capture_item',
-            entityId: id,
-            operationType: 'upsert',
-            payloadJson: '{}',
-            createdAt: DateTime.now(),
-          ),
-        );
-    return id;
-  }
-
-  Future<void> discardCapture(String captureId) async {
-    await (_database.update(_database.captureItems)
-          ..where((db.CaptureItems table) => table.id.equals(captureId)))
-        .write(
-      db.CaptureItemsCompanion(
-        status: Value<String>(capture_domain.CaptureItemStatus.discarded.name),
-      ),
-    );
-    await _database.into(_database.syncOperations).insert(
-          db.SyncOperationsCompanion.insert(
-            id: _uuid.v4(),
-            entity: 'capture_item',
-            entityId: captureId,
-            operationType: 'discard',
-            payloadJson: '{}',
-            createdAt: DateTime.now(),
-          ),
-        );
-  }
-
-  void _enqueueSync(
-    Batch batch,
-    String entityId,
-    String entity,
-    String operationType,
-  ) {
-    batch.insert(
-      _database.syncOperations,
-      db.SyncOperationsCompanion.insert(
-        id: _uuid.v4(),
-        entity: entity,
-        entityId: entityId,
-        operationType: operationType,
-        payloadJson: '{}',
-        createdAt: DateTime.now(),
-      ),
-    );
-  }
-}
-
 class SyncRepository {
-  SyncRepository(this._database, this._apiClient);
+  SyncRepository(
+    this._database,
+    this._apiClient, {
+    required Duration controlRequestTimeout,
+  }) : _controlRequestTimeout = controlRequestTimeout;
 
   final db.AppDatabase _database;
   final MyMenuApiClient _apiClient;
+  final Duration _controlRequestTimeout;
   static const String _captureSyncCursorKey = 'capture_sync_cursor';
 
   Future<List<Dish>> processPendingCaptures() async {
-    final List<db.CaptureItemRow> captures =
-        await (_database.select(_database.captureItems)
+    final List<db.CaptureBatchRow> batches =
+        await (_database.select(_database.captureBatches)
               ..where(
-                (db.CaptureItems table) =>
-                    table.status.equals(
-                      capture_domain.CaptureItemStatus.pendingUpload.name,
-                    ) |
-                    table.status.equals(
-                      capture_domain.CaptureItemStatus.classifying.name,
-                    ),
-              ))
+                (db.$CaptureBatchesTable table) =>
+                    table.status.equals(CaptureBatchStatus.pendingUpload.name) |
+                    table.status.equals(CaptureBatchStatus.uploading.name) |
+                    table.status.equals(CaptureBatchStatus.failed.name),
+              )
+              ..orderBy(<OrderingTerm Function(db.$CaptureBatchesTable)>[
+                (db.$CaptureBatchesTable table) =>
+                    OrderingTerm.asc(table.createdAt),
+              ]))
             .get();
-    final List<Dish> createdDishes = <Dish>[];
-    _logSync('processPendingCaptures count=${captures.length}');
+    _logSync('processPendingCaptureBatches count=${batches.length}');
+    for (final db.CaptureBatchRow batch in batches) {
+      await _processPhotoBatch(batch);
+    }
 
-    for (final db.CaptureItemRow capture in captures) {
-      if (capture.status == capture_domain.CaptureItemStatus.discarded.name) {
-        continue;
-      }
-
+    final List<db.CaptureItemRow> ideaCaptures = await (_database
+            .select(_database.captureItems)
+          ..where(
+            (db.CaptureItems table) =>
+                table.kind.equals(capture_domain.CaptureItemKind.idea.name) &
+                table.status
+                    .equals(capture_domain.CaptureItemStatus.classifying.name),
+          ))
+        .get();
+    for (final db.CaptureItemRow capture in ideaCaptures) {
       try {
-        _logSync(
-          'process capture start id=${capture.id} '
-          'kind=${capture.kind} status=${capture.status}',
+        final ApiClassificationStart result = await _apiClient.classifyCapture(
+          captureId: capture.id,
+          remoteMediaRef: null,
+          ideaText: capture.ideaText,
         );
-        final Dish? dish = await _processCapture(capture);
-        if (dish != null) {
-          createdDishes.add(dish);
-        }
-        _logSync('process capture complete id=${capture.id}');
+        await (_database.update(_database.captureItems)
+              ..where((db.CaptureItems table) => table.id.equals(capture.id)))
+            .write(
+          db.CaptureItemsCompanion(status: Value<String>(result.status)),
+        );
       } on Object catch (error, stackTrace) {
-        _logSync('capture sync failed id=${capture.id}', error, stackTrace);
+        _logSync('idea sync failed id=${capture.id}', error, stackTrace);
         await _markCaptureFailed(capture.id);
       }
     }
-    return createdDishes;
+    return const <Dish>[];
   }
 
   Future<void> processPendingOperations() async {
@@ -260,60 +148,206 @@ class SyncRepository {
     }
   }
 
-  Future<Dish?> _processCapture(db.CaptureItemRow capture) async {
-    String? remoteMediaRef = capture.remoteMediaRef;
-    if (capture.kind == capture_domain.CaptureItemKind.photo.name &&
-        capture.localMediaRef != null &&
-        remoteMediaRef == null) {
-      _logSync('upload photo start id=${capture.id}');
-      remoteMediaRef = await _apiClient.uploadCaptureMedia(
-        captureId: capture.id,
-        localMediaRef: capture.localMediaRef!,
-      );
-      _logSync('upload photo complete id=${capture.id}');
-      await (_database.update(_database.captureItems)
-            ..where((db.CaptureItems table) => table.id.equals(capture.id)))
-          .write(
-        db.CaptureItemsCompanion(
-          status: Value<String>(
-            capture_domain.CaptureItemStatus.classifying.name,
-          ),
-          remoteMediaRef: Value<String?>(remoteMediaRef),
-        ),
-      );
+  Future<void> _processPhotoBatch(db.CaptureBatchRow batch) async {
+    final List<db.CaptureItemRow> initialItems = await _itemsForBatch(batch.id);
+    final List<db.CaptureItemRow> photoItems = initialItems
+        .where(
+          (db.CaptureItemRow item) =>
+              item.kind == capture_domain.CaptureItemKind.photo.name &&
+              item.status != capture_domain.CaptureItemStatus.discarded.name,
+        )
+        .toList(growable: false);
+    if (photoItems.isEmpty) {
+      return;
     }
 
-    _logSync('classify start id=${capture.id}');
-    final ApiClassificationStart result = await _apiClient.classifyCapture(
-      captureId: capture.id,
-      remoteMediaRef: remoteMediaRef,
-      ideaText: capture.ideaText,
-    );
-    _logSync('classify complete id=${capture.id} status=${result.status}');
-    await (_database.update(_database.captureItems)
-          ..where((db.CaptureItems table) => table.id.equals(capture.id)))
-        .write(
-      db.CaptureItemsCompanion(
-        status: Value<String>(result.status),
-        remoteMediaRef: Value<String?>(remoteMediaRef),
-      ),
-    );
-    return null;
+    try {
+      await _apiClient
+          .upsertCaptureBatch(
+            batchId: batch.id,
+            itemCount: photoItems.length,
+            createdAt: batch.createdAt,
+          )
+          .timeout(_controlRequestTimeout);
+      await _markBatchStatus(batch.id, CaptureBatchStatus.uploading);
+    } on Object catch (error, stackTrace) {
+      _logSync('batch upsert failed id=${batch.id}', error, stackTrace);
+      if (_isConnectivityError(error)) {
+        await _markBatchStatus(
+          batch.id,
+          CaptureBatchStatus.pendingUpload,
+          failureReason: captureWaitingForConnectionReason,
+        );
+      } else {
+        await _markBatchStatus(
+          batch.id,
+          CaptureBatchStatus.failed,
+          failureReason: error.toString(),
+        );
+      }
+      return;
+    }
+
+    for (final db.CaptureItemRow item in photoItems) {
+      if (item.remoteMediaRef != null ||
+          item.status == capture_domain.CaptureItemStatus.failed.name) {
+        continue;
+      }
+      final String? localMediaRef = item.localMediaRef;
+      if (localMediaRef == null) {
+        await _markCaptureFailed(item.id, 'Missing local photo.');
+        continue;
+      }
+      await _markCaptureStatus(
+        item.id,
+        capture_domain.CaptureItemStatus.uploading,
+      );
+      try {
+        final String remoteMediaRef = await _apiClient.uploadCaptureMedia(
+          captureId: item.id,
+          batchId: batch.id,
+          ordinal: item.ordinal,
+          localMediaRef: localMediaRef,
+        );
+        await _markCaptureStatus(
+          item.id,
+          capture_domain.CaptureItemStatus.uploaded,
+          remoteMediaRef: remoteMediaRef,
+        );
+      } on Object catch (error, stackTrace) {
+        _logSync('capture upload failed id=${item.id}', error, stackTrace);
+        if (_isConnectivityError(error)) {
+          await _markCaptureStatus(
+            item.id,
+            capture_domain.CaptureItemStatus.pendingUpload,
+          );
+        } else {
+          await _markCaptureFailed(item.id, error.toString());
+        }
+      }
+    }
+
+    final List<db.CaptureItemRow> refreshed = await _itemsForBatch(batch.id);
+    final List<db.CaptureItemRow> activePhotos = refreshed
+        .where(
+          (db.CaptureItemRow item) =>
+              item.kind == capture_domain.CaptureItemKind.photo.name &&
+              item.status != capture_domain.CaptureItemStatus.discarded.name,
+        )
+        .toList(growable: false);
+    final bool allUploaded = activePhotos.isNotEmpty &&
+        activePhotos.every(
+          (db.CaptureItemRow item) => item.remoteMediaRef != null,
+        );
+    if (!allUploaded) {
+      final bool waitingForConnection = activePhotos.any(
+        (db.CaptureItemRow item) =>
+            item.remoteMediaRef == null &&
+            item.status == capture_domain.CaptureItemStatus.pendingUpload.name,
+      );
+      if (waitingForConnection) {
+        await _markBatchStatus(
+          batch.id,
+          CaptureBatchStatus.pendingUpload,
+          failureReason: captureWaitingForConnectionReason,
+        );
+      }
+      return;
+    }
+
+    try {
+      await _apiClient
+          .markCaptureBatchReady(batchId: batch.id)
+          .timeout(_controlRequestTimeout);
+      await _markBatchStatus(batch.id, CaptureBatchStatus.readyForAi);
+    } on Object catch (error, stackTrace) {
+      _logSync('batch ready failed id=${batch.id}', error, stackTrace);
+      if (!_isConnectivityError(error)) {
+        await _markBatchStatus(
+          batch.id,
+          CaptureBatchStatus.failed,
+          failureReason: error.toString(),
+        );
+      }
+    }
   }
 
-  Future<void> _markCaptureFailed(String captureId) async {
+  Future<List<db.CaptureItemRow>> _itemsForBatch(String batchId) {
+    return (_database.select(_database.captureItems)
+          ..where(
+            (db.CaptureItems table) => table.batchId.equals(batchId),
+          )
+          ..orderBy(<OrderingTerm Function(db.$CaptureItemsTable)>[
+            (db.$CaptureItemsTable table) => OrderingTerm.asc(table.ordinal),
+          ]))
+        .get();
+  }
+
+  Future<void> _markCaptureStatus(
+    String captureId,
+    capture_domain.CaptureItemStatus status, {
+    String? remoteMediaRef,
+  }) async {
+    await (_database.update(_database.captureItems)
+          ..where((db.CaptureItems table) => table.id.equals(captureId)))
+        .write(
+      db.CaptureItemsCompanion(
+        status: Value<String>(status.name),
+        remoteMediaRef: remoteMediaRef == null
+            ? const Value<String?>.absent()
+            : Value<String?>(remoteMediaRef),
+        failureReason: const Value<String?>(null),
+      ),
+    );
+  }
+
+  Future<void> _markCaptureFailed(
+    String captureId, [
+    String? failureReason,
+  ]) async {
     await (_database.update(_database.captureItems)
           ..where((db.CaptureItems table) => table.id.equals(captureId)))
         .write(
       db.CaptureItemsCompanion(
         status: Value<String>(capture_domain.CaptureItemStatus.failed.name),
+        failureReason: Value<String?>(failureReason),
       ),
     );
   }
 
+  Future<void> _markBatchStatus(
+    String batchId,
+    CaptureBatchStatus status, {
+    String? failureReason,
+  }) async {
+    await (_database.update(_database.captureBatches)
+          ..where((db.$CaptureBatchesTable table) => table.id.equals(batchId)))
+        .write(
+      db.CaptureBatchesCompanion(
+        status: Value<String>(status.name),
+        updatedAt: Value<DateTime>(DateTime.now()),
+        failureReason: Value<String?>(failureReason),
+      ),
+    );
+  }
+
+  bool _isConnectivityError(Object error) {
+    if (error is SocketException) {
+      return true;
+    }
+    if (error is TimeoutException) {
+      return true;
+    }
+    final String message = error.toString().toLowerCase();
+    return message.contains('socket') ||
+        message.contains('network') ||
+        message.contains('connection') ||
+        message.contains('timed out') ||
+        message.contains('failed host lookup');
+  }
+
   Future<void> _processOperation(db.SyncOperationRow operation) async {
-    final Map<String, Object?> payload =
-        _payloadObject(operation.payloadJson);
+    final Map<String, Object?> payload = _payloadObject(operation.payloadJson);
     if (operation.entity == 'dish_note') {
       await _processNoteOperation(operation, payload);
       return;
@@ -348,39 +382,5 @@ class SyncRepository {
       case 'delete':
         await _apiClient.deleteDishNote(noteId: operation.entityId);
     }
-  }
-
-  Map<String, Object?> _payloadObject(String payloadJson) {
-    final Object? decoded = jsonDecode(payloadJson);
-    if (decoded is Map<String, dynamic>) {
-      return Map<String, Object?>.from(decoded);
-    }
-    return const <String, Object?>{};
-  }
-
-  String _requiredPayloadString(Map<String, Object?> payload, String key) {
-    final Object? value = payload[key];
-    if (value is String) {
-      return value;
-    }
-    throw StateError('Missing payload string: $key');
-  }
-
-  int? _payloadInt(Map<String, Object?> payload, String key) {
-    final Object? value = payload[key];
-    return value is int ? value : null;
-  }
-}
-
-void _logSync(String message, [Object? error, StackTrace? stackTrace]) {
-  developer.log(
-    message,
-    name: 'mymenu.sync',
-    error: error,
-    stackTrace: stackTrace,
-  );
-  debugPrint('mymenu.sync: $message${error == null ? '' : ' error=$error'}');
-  if (stackTrace != null) {
-    debugPrintStack(label: 'mymenu.sync stack', stackTrace: stackTrace);
   }
 }

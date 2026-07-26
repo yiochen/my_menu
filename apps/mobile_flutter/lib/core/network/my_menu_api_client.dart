@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 export 'package:mymenu/core/network/my_menu_api_models.dart';
 
 part 'fake_my_menu_api_client.dart';
+part 'supabase_my_menu_api_helpers.dart';
 
 class SupabaseApiConfig {
   const SupabaseApiConfig._();
@@ -47,10 +48,24 @@ class SupabaseApiConfig {
 }
 
 abstract class MyMenuApiClient {
+  Future<void> upsertCaptureBatch({
+    required String batchId,
+    required int itemCount,
+    required DateTime createdAt,
+  });
+
   Future<String> uploadCaptureMedia({
     required String captureId,
+    required String batchId,
+    required int ordinal,
     required String localMediaRef,
   });
+
+  Future<void> markCaptureBatchReady({required String batchId});
+
+  Future<List<ApiCaptureBatch>> getCaptureBatches(List<String> ids) async {
+    return const <ApiCaptureBatch>[];
+  }
 
   Future<ApiClassificationStart> classifyCapture({
     required String captureId,
@@ -91,15 +106,34 @@ abstract class MyMenuApiClient {
   Future<List<ApiReviewItem>> getReviewItems(List<String> ids);
 }
 
-class SupabaseMyMenuApiClient implements MyMenuApiClient {
+class SupabaseMyMenuApiClient extends MyMenuApiClient {
   SupabaseMyMenuApiClient({SupabaseClient? client})
       : _client = client ?? Supabase.instance.client;
 
   final SupabaseClient _client;
 
   @override
+  Future<void> upsertCaptureBatch({
+    required String batchId,
+    required int itemCount,
+    required DateTime createdAt,
+  }) async {
+    await _ensureSession();
+    await _client.rpc<Object?>(
+      'api_upsert_capture_batch',
+      params: <String, Object?>{
+        'p_batch_id': batchId,
+        'p_item_count': itemCount,
+        'p_created_at': createdAt.toUtc().toIso8601String(),
+      },
+    );
+  }
+
+  @override
   Future<String> uploadCaptureMedia({
     required String captureId,
+    required String batchId,
+    required int ordinal,
     required String localMediaRef,
   }) async {
     await _ensureSession();
@@ -114,6 +148,8 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
       'prepare-photo-upload',
       <String, Object?>{
         'captureId': captureId,
+        'batchId': batchId,
+        'ordinal': ordinal,
         'contentType': contentType,
         'byteSize': bytes.length,
       },
@@ -136,6 +172,8 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
       'create-photo',
       <String, Object?>{
         'captureId': captureId,
+        'batchId': batchId,
+        'ordinal': ordinal,
         'storagePath': storagePath,
         'contentType': contentType,
         'byteSize': bytes.length,
@@ -146,6 +184,20 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
     final String mediaRef = apiStringValue(image, 'mediaRef');
     _logApi('uploadCaptureMedia complete captureId=$captureId');
     return mediaRef;
+  }
+
+  @override
+  Future<void> markCaptureBatchReady({required String batchId}) async {
+    await _ensureSession();
+    await _client.rpc<Object?>(
+      'api_mark_capture_batch_ready',
+      params: <String, Object?>{'p_batch_id': batchId},
+    );
+  }
+
+  @override
+  Future<List<ApiCaptureBatch>> getCaptureBatches(List<String> ids) {
+    return _getCaptureBatches(this, ids);
   }
 
   @override
@@ -318,46 +370,8 @@ class SupabaseMyMenuApiClient implements MyMenuApiClient {
   Future<Map<String, Object?>> _invokeJson(
     String functionName,
     Map<String, Object?> body,
-  ) async {
-    _logApi('invoke $functionName start');
-    final FunctionResponse response;
-    try {
-      response = await _client.functions.invoke(
-        functionName,
-        body: body,
-      );
-    } on Object catch (error, stackTrace) {
-      _logApi('invoke $functionName threw', error, stackTrace);
-      rethrow;
-    }
-    _logApi('invoke $functionName status=${response.status}');
-    if (response.status < 200 || response.status >= 300) {
-      throw StateError(
-        'Supabase function failed: ${response.status} ${response.data}',
-      );
-    }
-    final Object? data = response.data;
-    if (data is Map<String, dynamic>) {
-      return Map<String, Object?>.from(data);
-    }
-    if (data is Map<String, Object?>) {
-      return data;
-    }
-    throw StateError('Supabase function returned non-object JSON.');
-  }
-
-  String _contentTypeForPath(String path) {
-    final String lower = path.toLowerCase();
-    if (lower.endsWith('.png')) {
-      return 'image/png';
-    }
-    if (lower.endsWith('.heic')) {
-      return 'image/heic';
-    }
-    if (lower.endsWith('.heif')) {
-      return 'image/heif';
-    }
-    return 'image/jpeg';
+  ) {
+    return _invokeSupabaseJson(this, functionName, body);
   }
 }
 

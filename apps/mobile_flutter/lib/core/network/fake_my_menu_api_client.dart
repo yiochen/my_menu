@@ -1,14 +1,26 @@
 part of 'my_menu_api_client.dart';
 
-class FakeMyMenuApiClient implements MyMenuApiClient {
+class FakeMyMenuApiClient extends MyMenuApiClient {
+  @override
+  Future<void> upsertCaptureBatch({
+    required String batchId,
+    required int itemCount,
+    required DateTime createdAt,
+  }) async {}
+
   @override
   Future<String> uploadCaptureMedia({
     required String captureId,
+    required String batchId,
+    required int ordinal,
     required String localMediaRef,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 450));
     return 'fake://captures/$captureId';
   }
+
+  @override
+  Future<void> markCaptureBatchReady({required String batchId}) async {}
 
   @override
   Future<ApiClassificationStart> classifyCapture({

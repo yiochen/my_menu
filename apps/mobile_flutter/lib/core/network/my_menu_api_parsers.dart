@@ -83,6 +83,8 @@ ApiCapture apiCaptureFromJson(Map<String, Object?> data) {
     kind: apiStringValue(data, 'kind'),
     status: apiStringValue(data, 'status'),
     capturedAt: DateTime.parse(apiStringValue(data, 'capturedAt')),
+    batchId: apiOptionalStringValue(data, 'batchId'),
+    ordinal: apiOptionalIntValue(data, 'ordinal'),
     ideaText: apiOptionalStringValue(data, 'ideaText'),
     appliedDishId: apiOptionalStringValue(data, 'appliedDishId'),
     failureReason: apiOptionalStringValue(data, 'failureReason'),

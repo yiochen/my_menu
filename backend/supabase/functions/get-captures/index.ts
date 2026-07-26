@@ -28,7 +28,7 @@ Deno.serve(async (request: Request) => {
     const { data: captureData, error: captureError } = await adminClient
       .from("captures")
       .select(
-        "id, kind, status, idea_text, applied_dish_id, failure_reason, captured_at",
+        "id, batch_id, ordinal, kind, status, idea_text, applied_dish_id, failure_reason, captured_at",
       )
       .eq("user_id", userId)
       .in("id", ids)
@@ -72,6 +72,8 @@ Deno.serve(async (request: Request) => {
       const image = imagesByCaptureId.get(id);
       items.push({
         id,
+        batchId: optionalStringValue(row, "batch_id"),
+        ordinal: optionalNumberValue(row, "ordinal"),
         kind: stringValue(row, "kind"),
         status: stringValue(row, "status"),
         ideaText: optionalStringValue(row, "idea_text"),
@@ -107,4 +109,9 @@ function stringValue(row: Record<string, unknown>, key: string) {
 function optionalStringValue(row: Record<string, unknown>, key: string) {
   const value = row[key];
   return typeof value === "string" ? value : null;
+}
+
+function optionalNumberValue(row: Record<string, unknown>, key: string) {
+  const value = row[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }

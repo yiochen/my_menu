@@ -7,9 +7,14 @@ import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
 class CaptureOfflineView extends StatelessWidget {
-  const CaptureOfflineView({required this.onClose, super.key});
+  const CaptureOfflineView({
+    required this.onClose,
+    required this.photoCount,
+    super.key,
+  });
 
   final VoidCallback onClose;
+  final int photoCount;
 
   @override
   Widget build(BuildContext context) {
@@ -23,17 +28,19 @@ class CaptureOfflineView extends StatelessWidget {
         color: MyMenuColors.muted,
         background: MyMenuColors.oat,
       ),
-      body: const WarmCard(
-        padding: EdgeInsets.all(16),
+      body: WarmCard(
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: <Widget>[
             CaptureStatusLine(
               icon: Icons.check,
-              title: 'Photo safe on this device',
+              title: photoCount == 1
+                  ? 'Photo safe on this device'
+                  : '$photoCount photos safe on this device',
               subtitle: 'Available in your capture queue',
             ),
-            Divider(height: 24),
-            CaptureStatusLine(
+            const Divider(height: 24),
+            const CaptureStatusLine(
               icon: Icons.cloud_off_outlined,
               title: 'Organization waiting',
               subtitle: 'Automatic matching needs a connection',

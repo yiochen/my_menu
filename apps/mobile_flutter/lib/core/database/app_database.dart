@@ -55,6 +55,8 @@ class SourcePhotos extends Table {
 @DataClassName('CaptureItemRow')
 class CaptureItems extends Table {
   TextColumn get id => text()();
+  TextColumn get batchId => text().nullable()();
+  IntColumn get ordinal => integer().withDefault(const Constant(0))();
   TextColumn get kind => text()();
   TextColumn get status => text()();
   DateTimeColumn get createdAt => dateTime()();
@@ -62,6 +64,19 @@ class CaptureItems extends Table {
   TextColumn get remoteMediaRef => text().nullable()();
   TextColumn get ideaText => text().nullable()();
   TextColumn get appliedDishId => text().nullable()();
+  TextColumn get failureReason => text().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{id};
+}
+
+@DataClassName('CaptureBatchRow')
+class CaptureBatches extends Table {
+  TextColumn get id => text()();
+  TextColumn get status => text()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+  TextColumn get failureReason => text().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
@@ -118,6 +133,7 @@ class SyncMetadata extends Table {
     Dishes,
     DishNotes,
     SourcePhotos,
+    CaptureBatches,
     CaptureItems,
     PlannedMeals,
     ReviewItems,
@@ -131,7 +147,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -142,6 +158,35 @@ class AppDatabase extends _$AppDatabase {
           await migrator.createTable(dishNotes);
           await migrator.createTable(syncMetadata);
           await _migrateJsonNotesToRows();
+        }
+        if (from < 3) {
+          await migrator.createTable(captureBatches);
+          await migrator.addColumn(captureItems, captureItems.batchId);
+          await migrator.addColumn(captureItems, captureItems.ordinal);
+          await migrator.addColumn(captureItems, captureItems.failureReason);
+          await customStatement('''
+            INSERT INTO capture_batches (
+              id,
+              status,
+              created_at,
+              updated_at,
+              failure_reason
+            )
+            SELECT
+              id,
+              CASE status
+                WHEN 'failed' THEN 'failed'
+                WHEN 'applied' THEN 'applied'
+                WHEN 'discarded' THEN 'discarded'
+                WHEN 'classifying' THEN 'processing'
+                ELSE 'pendingUpload'
+              END,
+              created_at,
+              created_at,
+              NULL
+            FROM capture_items
+          ''');
+          await customStatement('UPDATE capture_items SET batch_id = id');
         }
       },
     );

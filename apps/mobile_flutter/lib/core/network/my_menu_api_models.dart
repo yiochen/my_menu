@@ -8,6 +8,20 @@ class ApiClassificationStart {
   final String status;
 }
 
+class ApiCaptureBatch {
+  const ApiCaptureBatch({
+    required this.id,
+    required this.status,
+    required this.itemCount,
+    required this.uploadedItemCount,
+  });
+
+  final String id;
+  final String status;
+  final int itemCount;
+  final int uploadedItemCount;
+}
+
 class ApiSyncPull {
   const ApiSyncPull({
     required this.cursor,
@@ -52,6 +66,8 @@ class ApiCapture {
     required this.kind,
     required this.status,
     required this.capturedAt,
+    this.batchId,
+    this.ordinal,
     this.ideaText,
     this.appliedDishId,
     this.failureReason,
@@ -62,6 +78,8 @@ class ApiCapture {
   final String kind;
   final String status;
   final DateTime capturedAt;
+  final String? batchId;
+  final int? ordinal;
   final String? ideaText;
   final String? appliedDishId;
   final String? failureReason;
