@@ -45,6 +45,14 @@ export function optionalNumber(data: JsonRecord, key: string) {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
+export function requiredNumber(data: JsonRecord, key: string) {
+  const value = optionalNumber(data, key);
+  if (value == null) {
+    throw new Error(`Missing required number: ${key}`);
+  }
+  return value;
+}
+
 export function requiredObject(data: JsonRecord, key: string) {
   const value = data[key];
   if (

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mymenu/domain/capture/capture_batch.dart';
+import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/capture/add_idea_sheet.dart';
 import 'package:mymenu/features/capture/capture_outcome_sheet.dart';
@@ -37,6 +39,7 @@ void main() {
             state: MyMenuState(),
             initialStep: step,
             organizedStep: CaptureOutcomeStep.matched,
+            photoCount: 1,
           ),
           settle: step != CaptureOutcomeStep.saved,
         );
@@ -48,6 +51,59 @@ void main() {
         }
       });
     }
+
+    testWidgets('saved capture shows its real offline state', (
+      WidgetTester tester,
+    ) async {
+      final DateTime now = DateTime(2026, 7, 25);
+      final List<CaptureItem> items = <CaptureItem>[
+        CaptureItem(
+          id: 'offline_0',
+          batchId: 'offline_batch',
+          kind: CaptureItemKind.photo,
+          status: CaptureItemStatus.pendingUpload,
+          createdAt: now,
+          localMediaRef: '/tmp/zero.jpg',
+        ),
+        CaptureItem(
+          id: 'offline_1',
+          batchId: 'offline_batch',
+          ordinal: 1,
+          kind: CaptureItemKind.photo,
+          status: CaptureItemStatus.pendingUpload,
+          createdAt: now,
+          localMediaRef: '/tmp/one.jpg',
+        ),
+      ];
+      final CaptureBatch batch = CaptureBatch(
+        id: 'offline_batch',
+        status: CaptureBatchStatus.pendingUpload,
+        createdAt: now,
+        updatedAt: now,
+        items: items,
+        failureReason: captureWaitingForConnectionReason,
+      );
+      final MyMenuState state = MyMenuState.forTesting(
+        captureBatches: <CaptureBatch>[batch],
+        captureItems: items,
+      );
+
+      await _pumpMockupViewport(
+        tester,
+        CaptureOutcomeSheet(
+          state: state,
+          initialStep: CaptureOutcomeStep.saved,
+          organizedStep: CaptureOutcomeStep.matched,
+          photoCount: 2,
+          batchId: batch.id,
+        ),
+      );
+
+      expect(find.text('Captured—even offline'), findsOneWidget);
+      expect(find.text('2 photos safe on this device'), findsOneWidget);
+      expect(
+          find.textContaining('retry happens automatically'), findsOneWidget);
+    });
 
     testWidgets('retains an idea note after validation', (
       WidgetTester tester,

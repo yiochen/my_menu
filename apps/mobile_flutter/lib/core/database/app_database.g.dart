@@ -1398,6 +1398,321 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
   }
 }
 
+class $CaptureBatchesTable extends CaptureBatches
+    with TableInfo<$CaptureBatchesTable, CaptureBatchRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CaptureBatchesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+      'status', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _failureReasonMeta =
+      const VerificationMeta('failureReason');
+  @override
+  late final GeneratedColumn<String> failureReason = GeneratedColumn<String>(
+      'failure_reason', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, status, createdAt, updatedAt, failureReason];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'capture_batches';
+  @override
+  VerificationContext validateIntegrity(Insertable<CaptureBatchRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('status')) {
+      context.handle(_statusMeta,
+          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('failure_reason')) {
+      context.handle(
+          _failureReasonMeta,
+          failureReason.isAcceptableOrUnknown(
+              data['failure_reason']!, _failureReasonMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CaptureBatchRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CaptureBatchRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      status: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      failureReason: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}failure_reason']),
+    );
+  }
+
+  @override
+  $CaptureBatchesTable createAlias(String alias) {
+    return $CaptureBatchesTable(attachedDatabase, alias);
+  }
+}
+
+class CaptureBatchRow extends DataClass implements Insertable<CaptureBatchRow> {
+  final String id;
+  final String status;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final String? failureReason;
+  const CaptureBatchRow(
+      {required this.id,
+      required this.status,
+      required this.createdAt,
+      required this.updatedAt,
+      this.failureReason});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['status'] = Variable<String>(status);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || failureReason != null) {
+      map['failure_reason'] = Variable<String>(failureReason);
+    }
+    return map;
+  }
+
+  CaptureBatchesCompanion toCompanion(bool nullToAbsent) {
+    return CaptureBatchesCompanion(
+      id: Value(id),
+      status: Value(status),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      failureReason: failureReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(failureReason),
+    );
+  }
+
+  factory CaptureBatchRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CaptureBatchRow(
+      id: serializer.fromJson<String>(json['id']),
+      status: serializer.fromJson<String>(json['status']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      failureReason: serializer.fromJson<String?>(json['failureReason']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'status': serializer.toJson<String>(status),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'failureReason': serializer.toJson<String?>(failureReason),
+    };
+  }
+
+  CaptureBatchRow copyWith(
+          {String? id,
+          String? status,
+          DateTime? createdAt,
+          DateTime? updatedAt,
+          Value<String?> failureReason = const Value.absent()}) =>
+      CaptureBatchRow(
+        id: id ?? this.id,
+        status: status ?? this.status,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+        failureReason:
+            failureReason.present ? failureReason.value : this.failureReason,
+      );
+  CaptureBatchRow copyWithCompanion(CaptureBatchesCompanion data) {
+    return CaptureBatchRow(
+      id: data.id.present ? data.id.value : this.id,
+      status: data.status.present ? data.status.value : this.status,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      failureReason: data.failureReason.present
+          ? data.failureReason.value
+          : this.failureReason,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CaptureBatchRow(')
+          ..write('id: $id, ')
+          ..write('status: $status, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('failureReason: $failureReason')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, status, createdAt, updatedAt, failureReason);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CaptureBatchRow &&
+          other.id == this.id &&
+          other.status == this.status &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.failureReason == this.failureReason);
+}
+
+class CaptureBatchesCompanion extends UpdateCompanion<CaptureBatchRow> {
+  final Value<String> id;
+  final Value<String> status;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<String?> failureReason;
+  final Value<int> rowid;
+  const CaptureBatchesCompanion({
+    this.id = const Value.absent(),
+    this.status = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.failureReason = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CaptureBatchesCompanion.insert({
+    required String id,
+    required String status,
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.failureReason = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        status = Value(status),
+        createdAt = Value(createdAt),
+        updatedAt = Value(updatedAt);
+  static Insertable<CaptureBatchRow> custom({
+    Expression<String>? id,
+    Expression<String>? status,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? failureReason,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (status != null) 'status': status,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (failureReason != null) 'failure_reason': failureReason,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CaptureBatchesCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? status,
+      Value<DateTime>? createdAt,
+      Value<DateTime>? updatedAt,
+      Value<String?>? failureReason,
+      Value<int>? rowid}) {
+    return CaptureBatchesCompanion(
+      id: id ?? this.id,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      failureReason: failureReason ?? this.failureReason,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (failureReason.present) {
+      map['failure_reason'] = Variable<String>(failureReason.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CaptureBatchesCompanion(')
+          ..write('id: $id, ')
+          ..write('status: $status, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('failureReason: $failureReason, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $CaptureItemsTable extends CaptureItems
     with TableInfo<$CaptureItemsTable, CaptureItemRow> {
   @override
@@ -1409,6 +1724,20 @@ class $CaptureItemsTable extends CaptureItems
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
       'id', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _batchIdMeta =
+      const VerificationMeta('batchId');
+  @override
+  late final GeneratedColumn<String> batchId = GeneratedColumn<String>(
+      'batch_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _ordinalMeta =
+      const VerificationMeta('ordinal');
+  @override
+  late final GeneratedColumn<int> ordinal = GeneratedColumn<int>(
+      'ordinal', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
   static const VerificationMeta _kindMeta = const VerificationMeta('kind');
   @override
   late final GeneratedColumn<String> kind = GeneratedColumn<String>(
@@ -1449,16 +1778,25 @@ class $CaptureItemsTable extends CaptureItems
   late final GeneratedColumn<String> appliedDishId = GeneratedColumn<String>(
       'applied_dish_id', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _failureReasonMeta =
+      const VerificationMeta('failureReason');
+  @override
+  late final GeneratedColumn<String> failureReason = GeneratedColumn<String>(
+      'failure_reason', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
+        batchId,
+        ordinal,
         kind,
         status,
         createdAt,
         localMediaRef,
         remoteMediaRef,
         ideaText,
-        appliedDishId
+        appliedDishId,
+        failureReason
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1474,6 +1812,14 @@ class $CaptureItemsTable extends CaptureItems
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     } else if (isInserting) {
       context.missing(_idMeta);
+    }
+    if (data.containsKey('batch_id')) {
+      context.handle(_batchIdMeta,
+          batchId.isAcceptableOrUnknown(data['batch_id']!, _batchIdMeta));
+    }
+    if (data.containsKey('ordinal')) {
+      context.handle(_ordinalMeta,
+          ordinal.isAcceptableOrUnknown(data['ordinal']!, _ordinalMeta));
     }
     if (data.containsKey('kind')) {
       context.handle(
@@ -1515,6 +1861,12 @@ class $CaptureItemsTable extends CaptureItems
           appliedDishId.isAcceptableOrUnknown(
               data['applied_dish_id']!, _appliedDishIdMeta));
     }
+    if (data.containsKey('failure_reason')) {
+      context.handle(
+          _failureReasonMeta,
+          failureReason.isAcceptableOrUnknown(
+              data['failure_reason']!, _failureReasonMeta));
+    }
     return context;
   }
 
@@ -1526,6 +1878,10 @@ class $CaptureItemsTable extends CaptureItems
     return CaptureItemRow(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      batchId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}batch_id']),
+      ordinal: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}ordinal'])!,
       kind: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}kind'])!,
       status: attachedDatabase.typeMapping
@@ -1540,6 +1896,8 @@ class $CaptureItemsTable extends CaptureItems
           .read(DriftSqlType.string, data['${effectivePrefix}idea_text']),
       appliedDishId: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}applied_dish_id']),
+      failureReason: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}failure_reason']),
     );
   }
 
@@ -1551,6 +1909,8 @@ class $CaptureItemsTable extends CaptureItems
 
 class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
   final String id;
+  final String? batchId;
+  final int ordinal;
   final String kind;
   final String status;
   final DateTime createdAt;
@@ -1558,19 +1918,27 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
   final String? remoteMediaRef;
   final String? ideaText;
   final String? appliedDishId;
+  final String? failureReason;
   const CaptureItemRow(
       {required this.id,
+      this.batchId,
+      required this.ordinal,
       required this.kind,
       required this.status,
       required this.createdAt,
       this.localMediaRef,
       this.remoteMediaRef,
       this.ideaText,
-      this.appliedDishId});
+      this.appliedDishId,
+      this.failureReason});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
+    if (!nullToAbsent || batchId != null) {
+      map['batch_id'] = Variable<String>(batchId);
+    }
+    map['ordinal'] = Variable<int>(ordinal);
     map['kind'] = Variable<String>(kind);
     map['status'] = Variable<String>(status);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -1586,12 +1954,19 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
     if (!nullToAbsent || appliedDishId != null) {
       map['applied_dish_id'] = Variable<String>(appliedDishId);
     }
+    if (!nullToAbsent || failureReason != null) {
+      map['failure_reason'] = Variable<String>(failureReason);
+    }
     return map;
   }
 
   CaptureItemsCompanion toCompanion(bool nullToAbsent) {
     return CaptureItemsCompanion(
       id: Value(id),
+      batchId: batchId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(batchId),
+      ordinal: Value(ordinal),
       kind: Value(kind),
       status: Value(status),
       createdAt: Value(createdAt),
@@ -1607,6 +1982,9 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
       appliedDishId: appliedDishId == null && nullToAbsent
           ? const Value.absent()
           : Value(appliedDishId),
+      failureReason: failureReason == null && nullToAbsent
+          ? const Value.absent()
+          : Value(failureReason),
     );
   }
 
@@ -1615,6 +1993,8 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return CaptureItemRow(
       id: serializer.fromJson<String>(json['id']),
+      batchId: serializer.fromJson<String?>(json['batchId']),
+      ordinal: serializer.fromJson<int>(json['ordinal']),
       kind: serializer.fromJson<String>(json['kind']),
       status: serializer.fromJson<String>(json['status']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -1622,6 +2002,7 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
       remoteMediaRef: serializer.fromJson<String?>(json['remoteMediaRef']),
       ideaText: serializer.fromJson<String?>(json['ideaText']),
       appliedDishId: serializer.fromJson<String?>(json['appliedDishId']),
+      failureReason: serializer.fromJson<String?>(json['failureReason']),
     );
   }
   @override
@@ -1629,6 +2010,8 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
+      'batchId': serializer.toJson<String?>(batchId),
+      'ordinal': serializer.toJson<int>(ordinal),
       'kind': serializer.toJson<String>(kind),
       'status': serializer.toJson<String>(status),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -1636,20 +2019,26 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
       'remoteMediaRef': serializer.toJson<String?>(remoteMediaRef),
       'ideaText': serializer.toJson<String?>(ideaText),
       'appliedDishId': serializer.toJson<String?>(appliedDishId),
+      'failureReason': serializer.toJson<String?>(failureReason),
     };
   }
 
   CaptureItemRow copyWith(
           {String? id,
+          Value<String?> batchId = const Value.absent(),
+          int? ordinal,
           String? kind,
           String? status,
           DateTime? createdAt,
           Value<String?> localMediaRef = const Value.absent(),
           Value<String?> remoteMediaRef = const Value.absent(),
           Value<String?> ideaText = const Value.absent(),
-          Value<String?> appliedDishId = const Value.absent()}) =>
+          Value<String?> appliedDishId = const Value.absent(),
+          Value<String?> failureReason = const Value.absent()}) =>
       CaptureItemRow(
         id: id ?? this.id,
+        batchId: batchId.present ? batchId.value : this.batchId,
+        ordinal: ordinal ?? this.ordinal,
         kind: kind ?? this.kind,
         status: status ?? this.status,
         createdAt: createdAt ?? this.createdAt,
@@ -1660,10 +2049,14 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
         ideaText: ideaText.present ? ideaText.value : this.ideaText,
         appliedDishId:
             appliedDishId.present ? appliedDishId.value : this.appliedDishId,
+        failureReason:
+            failureReason.present ? failureReason.value : this.failureReason,
       );
   CaptureItemRow copyWithCompanion(CaptureItemsCompanion data) {
     return CaptureItemRow(
       id: data.id.present ? data.id.value : this.id,
+      batchId: data.batchId.present ? data.batchId.value : this.batchId,
+      ordinal: data.ordinal.present ? data.ordinal.value : this.ordinal,
       kind: data.kind.present ? data.kind.value : this.kind,
       status: data.status.present ? data.status.value : this.status,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
@@ -1677,6 +2070,9 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
       appliedDishId: data.appliedDishId.present
           ? data.appliedDishId.value
           : this.appliedDishId,
+      failureReason: data.failureReason.present
+          ? data.failureReason.value
+          : this.failureReason,
     );
   }
 
@@ -1684,36 +2080,44 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
   String toString() {
     return (StringBuffer('CaptureItemRow(')
           ..write('id: $id, ')
+          ..write('batchId: $batchId, ')
+          ..write('ordinal: $ordinal, ')
           ..write('kind: $kind, ')
           ..write('status: $status, ')
           ..write('createdAt: $createdAt, ')
           ..write('localMediaRef: $localMediaRef, ')
           ..write('remoteMediaRef: $remoteMediaRef, ')
           ..write('ideaText: $ideaText, ')
-          ..write('appliedDishId: $appliedDishId')
+          ..write('appliedDishId: $appliedDishId, ')
+          ..write('failureReason: $failureReason')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, kind, status, createdAt, localMediaRef,
-      remoteMediaRef, ideaText, appliedDishId);
+  int get hashCode => Object.hash(id, batchId, ordinal, kind, status, createdAt,
+      localMediaRef, remoteMediaRef, ideaText, appliedDishId, failureReason);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is CaptureItemRow &&
           other.id == this.id &&
+          other.batchId == this.batchId &&
+          other.ordinal == this.ordinal &&
           other.kind == this.kind &&
           other.status == this.status &&
           other.createdAt == this.createdAt &&
           other.localMediaRef == this.localMediaRef &&
           other.remoteMediaRef == this.remoteMediaRef &&
           other.ideaText == this.ideaText &&
-          other.appliedDishId == this.appliedDishId);
+          other.appliedDishId == this.appliedDishId &&
+          other.failureReason == this.failureReason);
 }
 
 class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
   final Value<String> id;
+  final Value<String?> batchId;
+  final Value<int> ordinal;
   final Value<String> kind;
   final Value<String> status;
   final Value<DateTime> createdAt;
@@ -1721,9 +2125,12 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
   final Value<String?> remoteMediaRef;
   final Value<String?> ideaText;
   final Value<String?> appliedDishId;
+  final Value<String?> failureReason;
   final Value<int> rowid;
   const CaptureItemsCompanion({
     this.id = const Value.absent(),
+    this.batchId = const Value.absent(),
+    this.ordinal = const Value.absent(),
     this.kind = const Value.absent(),
     this.status = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -1731,10 +2138,13 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
     this.remoteMediaRef = const Value.absent(),
     this.ideaText = const Value.absent(),
     this.appliedDishId = const Value.absent(),
+    this.failureReason = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   CaptureItemsCompanion.insert({
     required String id,
+    this.batchId = const Value.absent(),
+    this.ordinal = const Value.absent(),
     required String kind,
     required String status,
     required DateTime createdAt,
@@ -1742,6 +2152,7 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
     this.remoteMediaRef = const Value.absent(),
     this.ideaText = const Value.absent(),
     this.appliedDishId = const Value.absent(),
+    this.failureReason = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         kind = Value(kind),
@@ -1749,6 +2160,8 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
         createdAt = Value(createdAt);
   static Insertable<CaptureItemRow> custom({
     Expression<String>? id,
+    Expression<String>? batchId,
+    Expression<int>? ordinal,
     Expression<String>? kind,
     Expression<String>? status,
     Expression<DateTime>? createdAt,
@@ -1756,10 +2169,13 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
     Expression<String>? remoteMediaRef,
     Expression<String>? ideaText,
     Expression<String>? appliedDishId,
+    Expression<String>? failureReason,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (batchId != null) 'batch_id': batchId,
+      if (ordinal != null) 'ordinal': ordinal,
       if (kind != null) 'kind': kind,
       if (status != null) 'status': status,
       if (createdAt != null) 'created_at': createdAt,
@@ -1767,12 +2183,15 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
       if (remoteMediaRef != null) 'remote_media_ref': remoteMediaRef,
       if (ideaText != null) 'idea_text': ideaText,
       if (appliedDishId != null) 'applied_dish_id': appliedDishId,
+      if (failureReason != null) 'failure_reason': failureReason,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
   CaptureItemsCompanion copyWith(
       {Value<String>? id,
+      Value<String?>? batchId,
+      Value<int>? ordinal,
       Value<String>? kind,
       Value<String>? status,
       Value<DateTime>? createdAt,
@@ -1780,9 +2199,12 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
       Value<String?>? remoteMediaRef,
       Value<String?>? ideaText,
       Value<String?>? appliedDishId,
+      Value<String?>? failureReason,
       Value<int>? rowid}) {
     return CaptureItemsCompanion(
       id: id ?? this.id,
+      batchId: batchId ?? this.batchId,
+      ordinal: ordinal ?? this.ordinal,
       kind: kind ?? this.kind,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
@@ -1790,6 +2212,7 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
       remoteMediaRef: remoteMediaRef ?? this.remoteMediaRef,
       ideaText: ideaText ?? this.ideaText,
       appliedDishId: appliedDishId ?? this.appliedDishId,
+      failureReason: failureReason ?? this.failureReason,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1799,6 +2222,12 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<String>(id.value);
+    }
+    if (batchId.present) {
+      map['batch_id'] = Variable<String>(batchId.value);
+    }
+    if (ordinal.present) {
+      map['ordinal'] = Variable<int>(ordinal.value);
     }
     if (kind.present) {
       map['kind'] = Variable<String>(kind.value);
@@ -1821,6 +2250,9 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
     if (appliedDishId.present) {
       map['applied_dish_id'] = Variable<String>(appliedDishId.value);
     }
+    if (failureReason.present) {
+      map['failure_reason'] = Variable<String>(failureReason.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1831,6 +2263,8 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
   String toString() {
     return (StringBuffer('CaptureItemsCompanion(')
           ..write('id: $id, ')
+          ..write('batchId: $batchId, ')
+          ..write('ordinal: $ordinal, ')
           ..write('kind: $kind, ')
           ..write('status: $status, ')
           ..write('createdAt: $createdAt, ')
@@ -1838,6 +2272,7 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
           ..write('remoteMediaRef: $remoteMediaRef, ')
           ..write('ideaText: $ideaText, ')
           ..write('appliedDishId: $appliedDishId, ')
+          ..write('failureReason: $failureReason, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3033,6 +3468,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $DishesTable dishes = $DishesTable(this);
   late final $DishNotesTable dishNotes = $DishNotesTable(this);
   late final $SourcePhotosTable sourcePhotos = $SourcePhotosTable(this);
+  late final $CaptureBatchesTable captureBatches = $CaptureBatchesTable(this);
   late final $CaptureItemsTable captureItems = $CaptureItemsTable(this);
   late final $PlannedMealsTable plannedMeals = $PlannedMealsTable(this);
   late final $ReviewItemsTable reviewItems = $ReviewItemsTable(this);
@@ -3046,6 +3482,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         dishes,
         dishNotes,
         sourcePhotos,
+        captureBatches,
         captureItems,
         plannedMeals,
         reviewItems,
@@ -3731,9 +4168,186 @@ typedef $$SourcePhotosTableProcessedTableManager = ProcessedTableManager<
     ),
     SourcePhotoRow,
     PrefetchHooks Function()>;
+typedef $$CaptureBatchesTableCreateCompanionBuilder = CaptureBatchesCompanion
+    Function({
+  required String id,
+  required String status,
+  required DateTime createdAt,
+  required DateTime updatedAt,
+  Value<String?> failureReason,
+  Value<int> rowid,
+});
+typedef $$CaptureBatchesTableUpdateCompanionBuilder = CaptureBatchesCompanion
+    Function({
+  Value<String> id,
+  Value<String> status,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<String?> failureReason,
+  Value<int> rowid,
+});
+
+class $$CaptureBatchesTableFilterComposer
+    extends Composer<_$AppDatabase, $CaptureBatchesTable> {
+  $$CaptureBatchesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get failureReason => $composableBuilder(
+      column: $table.failureReason, builder: (column) => ColumnFilters(column));
+}
+
+class $$CaptureBatchesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CaptureBatchesTable> {
+  $$CaptureBatchesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get failureReason => $composableBuilder(
+      column: $table.failureReason,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$CaptureBatchesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CaptureBatchesTable> {
+  $$CaptureBatchesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get failureReason => $composableBuilder(
+      column: $table.failureReason, builder: (column) => column);
+}
+
+class $$CaptureBatchesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CaptureBatchesTable,
+    CaptureBatchRow,
+    $$CaptureBatchesTableFilterComposer,
+    $$CaptureBatchesTableOrderingComposer,
+    $$CaptureBatchesTableAnnotationComposer,
+    $$CaptureBatchesTableCreateCompanionBuilder,
+    $$CaptureBatchesTableUpdateCompanionBuilder,
+    (
+      CaptureBatchRow,
+      BaseReferences<_$AppDatabase, $CaptureBatchesTable, CaptureBatchRow>
+    ),
+    CaptureBatchRow,
+    PrefetchHooks Function()> {
+  $$CaptureBatchesTableTableManager(
+      _$AppDatabase db, $CaptureBatchesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CaptureBatchesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CaptureBatchesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CaptureBatchesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> status = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<String?> failureReason = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CaptureBatchesCompanion(
+            id: id,
+            status: status,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            failureReason: failureReason,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String status,
+            required DateTime createdAt,
+            required DateTime updatedAt,
+            Value<String?> failureReason = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CaptureBatchesCompanion.insert(
+            id: id,
+            status: status,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            failureReason: failureReason,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CaptureBatchesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $CaptureBatchesTable,
+    CaptureBatchRow,
+    $$CaptureBatchesTableFilterComposer,
+    $$CaptureBatchesTableOrderingComposer,
+    $$CaptureBatchesTableAnnotationComposer,
+    $$CaptureBatchesTableCreateCompanionBuilder,
+    $$CaptureBatchesTableUpdateCompanionBuilder,
+    (
+      CaptureBatchRow,
+      BaseReferences<_$AppDatabase, $CaptureBatchesTable, CaptureBatchRow>
+    ),
+    CaptureBatchRow,
+    PrefetchHooks Function()>;
 typedef $$CaptureItemsTableCreateCompanionBuilder = CaptureItemsCompanion
     Function({
   required String id,
+  Value<String?> batchId,
+  Value<int> ordinal,
   required String kind,
   required String status,
   required DateTime createdAt,
@@ -3741,11 +4355,14 @@ typedef $$CaptureItemsTableCreateCompanionBuilder = CaptureItemsCompanion
   Value<String?> remoteMediaRef,
   Value<String?> ideaText,
   Value<String?> appliedDishId,
+  Value<String?> failureReason,
   Value<int> rowid,
 });
 typedef $$CaptureItemsTableUpdateCompanionBuilder = CaptureItemsCompanion
     Function({
   Value<String> id,
+  Value<String?> batchId,
+  Value<int> ordinal,
   Value<String> kind,
   Value<String> status,
   Value<DateTime> createdAt,
@@ -3753,6 +4370,7 @@ typedef $$CaptureItemsTableUpdateCompanionBuilder = CaptureItemsCompanion
   Value<String?> remoteMediaRef,
   Value<String?> ideaText,
   Value<String?> appliedDishId,
+  Value<String?> failureReason,
   Value<int> rowid,
 });
 
@@ -3767,6 +4385,12 @@ class $$CaptureItemsTableFilterComposer
   });
   ColumnFilters<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get batchId => $composableBuilder(
+      column: $table.batchId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get ordinal => $composableBuilder(
+      column: $table.ordinal, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get kind => $composableBuilder(
       column: $table.kind, builder: (column) => ColumnFilters(column));
@@ -3789,6 +4413,9 @@ class $$CaptureItemsTableFilterComposer
 
   ColumnFilters<String> get appliedDishId => $composableBuilder(
       column: $table.appliedDishId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get failureReason => $composableBuilder(
+      column: $table.failureReason, builder: (column) => ColumnFilters(column));
 }
 
 class $$CaptureItemsTableOrderingComposer
@@ -3802,6 +4429,12 @@ class $$CaptureItemsTableOrderingComposer
   });
   ColumnOrderings<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get batchId => $composableBuilder(
+      column: $table.batchId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get ordinal => $composableBuilder(
+      column: $table.ordinal, builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get kind => $composableBuilder(
       column: $table.kind, builder: (column) => ColumnOrderings(column));
@@ -3826,6 +4459,10 @@ class $$CaptureItemsTableOrderingComposer
   ColumnOrderings<String> get appliedDishId => $composableBuilder(
       column: $table.appliedDishId,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get failureReason => $composableBuilder(
+      column: $table.failureReason,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$CaptureItemsTableAnnotationComposer
@@ -3839,6 +4476,12 @@ class $$CaptureItemsTableAnnotationComposer
   });
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get batchId =>
+      $composableBuilder(column: $table.batchId, builder: (column) => column);
+
+  GeneratedColumn<int> get ordinal =>
+      $composableBuilder(column: $table.ordinal, builder: (column) => column);
 
   GeneratedColumn<String> get kind =>
       $composableBuilder(column: $table.kind, builder: (column) => column);
@@ -3860,6 +4503,9 @@ class $$CaptureItemsTableAnnotationComposer
 
   GeneratedColumn<String> get appliedDishId => $composableBuilder(
       column: $table.appliedDishId, builder: (column) => column);
+
+  GeneratedColumn<String> get failureReason => $composableBuilder(
+      column: $table.failureReason, builder: (column) => column);
 }
 
 class $$CaptureItemsTableTableManager extends RootTableManager<
@@ -3889,6 +4535,8 @@ class $$CaptureItemsTableTableManager extends RootTableManager<
               $$CaptureItemsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<String> id = const Value.absent(),
+            Value<String?> batchId = const Value.absent(),
+            Value<int> ordinal = const Value.absent(),
             Value<String> kind = const Value.absent(),
             Value<String> status = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
@@ -3896,10 +4544,13 @@ class $$CaptureItemsTableTableManager extends RootTableManager<
             Value<String?> remoteMediaRef = const Value.absent(),
             Value<String?> ideaText = const Value.absent(),
             Value<String?> appliedDishId = const Value.absent(),
+            Value<String?> failureReason = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               CaptureItemsCompanion(
             id: id,
+            batchId: batchId,
+            ordinal: ordinal,
             kind: kind,
             status: status,
             createdAt: createdAt,
@@ -3907,10 +4558,13 @@ class $$CaptureItemsTableTableManager extends RootTableManager<
             remoteMediaRef: remoteMediaRef,
             ideaText: ideaText,
             appliedDishId: appliedDishId,
+            failureReason: failureReason,
             rowid: rowid,
           ),
           createCompanionCallback: ({
             required String id,
+            Value<String?> batchId = const Value.absent(),
+            Value<int> ordinal = const Value.absent(),
             required String kind,
             required String status,
             required DateTime createdAt,
@@ -3918,10 +4572,13 @@ class $$CaptureItemsTableTableManager extends RootTableManager<
             Value<String?> remoteMediaRef = const Value.absent(),
             Value<String?> ideaText = const Value.absent(),
             Value<String?> appliedDishId = const Value.absent(),
+            Value<String?> failureReason = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               CaptureItemsCompanion.insert(
             id: id,
+            batchId: batchId,
+            ordinal: ordinal,
             kind: kind,
             status: status,
             createdAt: createdAt,
@@ -3929,6 +4586,7 @@ class $$CaptureItemsTableTableManager extends RootTableManager<
             remoteMediaRef: remoteMediaRef,
             ideaText: ideaText,
             appliedDishId: appliedDishId,
+            failureReason: failureReason,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
@@ -4631,6 +5289,8 @@ class $AppDatabaseManager {
       $$DishNotesTableTableManager(_db, _db.dishNotes);
   $$SourcePhotosTableTableManager get sourcePhotos =>
       $$SourcePhotosTableTableManager(_db, _db.sourcePhotos);
+  $$CaptureBatchesTableTableManager get captureBatches =>
+      $$CaptureBatchesTableTableManager(_db, _db.captureBatches);
   $$CaptureItemsTableTableManager get captureItems =>
       $$CaptureItemsTableTableManager(_db, _db.captureItems);
   $$PlannedMealsTableTableManager get plannedMeals =>

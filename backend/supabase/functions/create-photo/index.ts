@@ -4,6 +4,7 @@ import {
   optionalNumber,
   optionalString,
   readJson,
+  requiredNumber,
   requiredString,
 } from "../_shared/http.ts";
 import { requireUser, rpcOne } from "../_shared/supabase.ts";
@@ -22,14 +23,18 @@ Deno.serve(async (request: Request) => {
 
     const body = await readJson(request);
     const captureId = requiredString(body, "captureId");
+    const batchId = requiredString(body, "batchId");
+    const ordinal = requiredNumber(body, "ordinal");
 
     // Triggered after Flutter uploads the photo bytes to the signed Storage URL
     // from prepare-photo-upload. The route records the capture and image metadata
-    // through api_create_photo_capture, leaving the capture classifying until
-    // classify starts the AI job or discard rejects it.
+    // through the ordered batch overload of api_create_photo_capture. The
+    // batch advances separately only after every item has uploaded.
     const result = await rpcOne(adminClient, "api_create_photo_capture", {
       p_user_id: userId,
+      p_batch_id: batchId,
       p_capture_id: captureId,
+      p_ordinal: ordinal,
       p_storage_path: requiredString(body, "storagePath"),
       p_content_type: requiredString(body, "contentType"),
       p_byte_size: optionalNumber(body, "byteSize"),
@@ -45,7 +50,9 @@ Deno.serve(async (request: Request) => {
       capture: {
         id: result.capture_id,
         kind: "photo",
-        status: "classifying",
+        status: "uploaded",
+        batchId,
+        ordinal,
         imageId: result.image_id,
       },
       image: {

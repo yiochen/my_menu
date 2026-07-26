@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/core/database/app_database.dart';
+import 'package:mymenu/core/network/network_status_monitor.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 
 import '../support/network_image_test_helper.dart';
@@ -302,6 +303,7 @@ void main() {
 Widget _testApp() {
   return MyMenuApp(
     database: AppDatabase.forTesting(NativeDatabase.memory()),
+    networkStatusMonitor: const InertNetworkStatusMonitor(),
   );
 }
 

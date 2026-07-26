@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
+import 'package:mymenu/core/network/network_status_monitor.dart';
+import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/capture/review_item.dart';
 import 'package:mymenu/domain/capture/seeded_review_items.dart';
@@ -13,19 +16,28 @@ import 'package:mymenu/domain/planning/seeded_plan.dart';
 import 'package:mymenu/domain/sync/repositories.dart';
 
 part 'my_menu_state_capture.dart';
+part 'my_menu_state_capture_persistence.dart';
 part 'my_menu_state_dishes.dart';
 part 'my_menu_state_planning.dart';
 part 'my_menu_state_sync.dart';
 
-class MyMenuState extends ChangeNotifier {
-  MyMenuState({AppRepositories? repositories})
-      : _dishes = List<Dish>.of(seededDishes),
+class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
+  MyMenuState({
+    AppRepositories? repositories,
+    NetworkStatusMonitor? networkStatusMonitor,
+  })  : _dishes = List<Dish>.of(seededDishes),
         _plan = buildSeededPlan(),
+        _captureBatches = const <CaptureBatch>[],
         _captureItems = const <CaptureItem>[],
         _reviewItems = List<ReviewItem>.of(seededReviewItems),
         _extraPlanDays = 0,
-        _repositories = repositories {
+        _repositories = repositories,
+        _networkStatusMonitor = networkStatusMonitor {
     if (_repositories != null) {
+      WidgetsBinding.instance.addObserver(this);
+      _networkStatusSubscription = _networkStatusMonitor?.changes.listen((_) {
+        _handleNetworkStatusChange();
+      });
       unawaited(_bootstrapRepositories());
     }
   }
@@ -34,21 +46,27 @@ class MyMenuState extends ChangeNotifier {
   MyMenuState.forTesting({
     List<Dish> dishes = const <Dish>[],
     List<PlannedMeal> plan = const <PlannedMeal>[],
+    List<CaptureBatch> captureBatches = const <CaptureBatch>[],
     List<CaptureItem> captureItems = const <CaptureItem>[],
     List<ReviewItem> reviewItems = const <ReviewItem>[],
   })  : _dishes = List<Dish>.of(dishes),
         _plan = List<PlannedMeal>.of(plan),
+        _captureBatches = List<CaptureBatch>.of(captureBatches),
         _captureItems = List<CaptureItem>.of(captureItems),
         _reviewItems = List<ReviewItem>.of(reviewItems),
         _extraPlanDays = 0,
-        _repositories = null;
+        _repositories = null,
+        _networkStatusMonitor = null;
 
   List<Dish> _dishes;
   List<PlannedMeal> _plan;
+  List<CaptureBatch> _captureBatches;
   List<CaptureItem> _captureItems;
   List<ReviewItem> _reviewItems;
   int? _extraPlanDays;
   final AppRepositories? _repositories;
+  final NetworkStatusMonitor? _networkStatusMonitor;
+  StreamSubscription<void>? _networkStatusSubscription;
   bool _isSyncingCaptures = false;
   Timer? _captureSyncTimer;
   DateTime? _captureSyncPollingDeadline;
@@ -57,6 +75,8 @@ class MyMenuState extends ChangeNotifier {
   static const Duration _captureSyncPollWindow = Duration(minutes: 2);
   List<Dish> get dishes => List<Dish>.unmodifiable(_dishes);
   List<PlannedMeal> get plan => List<PlannedMeal>.unmodifiable(_plan);
+  List<CaptureBatch> get captureBatches =>
+      List<CaptureBatch>.unmodifiable(_captureBatches);
   List<CaptureItem> get captureItems =>
       List<CaptureItem>.unmodifiable(_captureItems);
   List<ReviewItem> get reviewItems =>
@@ -64,8 +84,22 @@ class MyMenuState extends ChangeNotifier {
 
   @override
   void dispose() {
+    if (_repositories != null) {
+      WidgetsBinding.instance.removeObserver(this);
+    }
+    unawaited(_networkStatusSubscription?.cancel());
     _captureSyncTimer?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _repositories != null) {
+      if (_hasLocalCapturesWaitingForUpload()) {
+        _startCaptureSyncPollingWindow();
+      }
+      unawaited(refreshFromServer());
+    }
   }
 
   void _notifyChanged() {
@@ -234,79 +268,6 @@ class MyMenuState extends ChangeNotifier {
     );
 
     _dishes = <Dish>[nextDish, ..._dishes];
-    notifyListeners();
-  }
-
-  void addPhotoCaptures(List<String> imageRefs) {
-    unawaited(_createPhotoCaptures(imageRefs));
-  }
-
-  void discardCapture(String captureId) {
-    final AppRepositories? repositories = _repositories;
-    _captureItems = _captureItems.map((CaptureItem item) {
-      if (item.id != captureId) {
-        return item;
-      }
-      return CaptureItem(
-        id: item.id,
-        kind: item.kind,
-        status: CaptureItemStatus.discarded,
-        createdAt: item.createdAt,
-        localMediaRef: item.localMediaRef,
-        remoteMediaRef: item.remoteMediaRef,
-        text: item.text,
-        appliedDishId: item.appliedDishId,
-      );
-    }).toList(growable: false);
-    notifyListeners();
-    _updateCaptureSyncPolling();
-    if (repositories != null) {
-      unawaited(repositories.captureRepository.discardCapture(captureId));
-    }
-  }
-
-  Future<void> _bootstrapRepositories() async {
-    final AppRepositories repositories = _repositories!;
-    await repositories.seedIfNeeded();
-    await _reloadFromRepositories();
-    _updateCaptureSyncPolling();
-  }
-
-  Future<void> _createPhotoCaptures(List<String> imageRefs) async {
-    final AppRepositories? repositories = _repositories;
-    if (repositories == null) {
-      final List<ReviewItem> nextReviewItems = _reviewItemsWithPhotoCaptures(
-        imageRefs,
-        _reviewItems,
-      );
-      if (!identical(nextReviewItems, _reviewItems)) {
-        _reviewItems = nextReviewItems;
-        notifyListeners();
-      }
-      return;
-    }
-
-    await repositories.captureRepository.createPhotoCaptures(imageRefs);
-    _startCaptureSyncPollingWindow();
-    await _reloadFromRepositories();
-    await _syncCaptures();
-  }
-
-  Future<void> _createIdeaCapture(String text) async {
-    final AppRepositories? repositories = _repositories;
-    if (repositories == null) {
-      return;
-    }
-    await repositories.captureRepository.createIdeaCapture(text);
-    _startCaptureSyncPollingWindow();
-    await _reloadFromRepositories();
-    await _syncCaptures();
-  }
-
-  Future<void> _reloadFromRepositories() async {
-    final AppRepositories repositories = _repositories!;
-    _dishes = await repositories.dishRepository.listDishes();
-    _captureItems = await repositories.captureRepository.listFeedItems();
     notifyListeners();
   }
 

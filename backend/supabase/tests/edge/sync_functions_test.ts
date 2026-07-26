@@ -49,6 +49,83 @@ Deno.test("get-captures returns captures and missing ids", async () => {
   assertSignedUrl(objectValue(item, "image").mediaRef);
 });
 
+Deno.test("create-photo records an ordered batch item idempotently", async () => {
+  const session = await createSession();
+  const adminClient = createClient(baseUrl, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+  const batchId = crypto.randomUUID();
+  const captureId = crypto.randomUUID();
+  const storagePath =
+    `users/${session.userId}/captures/${captureId}/original.jpg`;
+
+  await postRpc(session, "api_upsert_capture_batch", {
+    p_batch_id: batchId,
+    p_item_count: 1,
+    p_created_at: "2026-07-25T12:00:00Z",
+  });
+  await checked(
+    adminClient.storage.from("menu-media").upload(
+      storagePath,
+      new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])], {
+        type: "image/jpeg",
+      }),
+      {
+        contentType: "image/jpeg",
+        upsert: true,
+      },
+    ),
+    "upload ordered capture image",
+  );
+
+  const request = {
+    batchId,
+    captureId,
+    ordinal: 0,
+    storagePath,
+    contentType: "image/jpeg",
+    byteSize: 4,
+    capturedAt: "2026-07-25T12:00:00Z",
+  };
+  const first = await postJson(session, "create-photo", request);
+  const second = await postJson(session, "create-photo", request);
+
+  assertEquals(objectValue(first, "capture").batchId, batchId);
+  assertEquals(objectValue(first, "capture").ordinal, 0);
+  assertEquals(objectValue(first, "capture").status, "uploaded");
+  assertEquals(
+    objectValue(second, "capture").id,
+    objectValue(first, "capture").id,
+  );
+  assertEquals(
+    objectValue(second, "capture").imageId,
+    objectValue(first, "capture").imageId,
+  );
+
+  const { count: captureCount, error: captureError } = await adminClient
+    .from("captures")
+    .select("id", { count: "exact", head: true })
+    .eq("id", captureId)
+    .eq("batch_id", batchId);
+  if (captureError != null) {
+    throw new Error(`count ordered captures: ${captureError.message}`);
+  }
+  assertEquals(captureCount, 1);
+
+  const { count: imageCount, error: imageError } = await adminClient
+    .from("dish_images")
+    .select("id", { count: "exact", head: true })
+    .eq("capture_id", captureId)
+    .eq("storage_path", storagePath);
+  if (imageError != null) {
+    throw new Error(`count ordered capture images: ${imageError.message}`);
+  }
+  assertEquals(imageCount, 1);
+});
+
 Deno.test("get-dishes returns hydrated dishes and missing ids", async () => {
   const fixture = await createFixture();
   const missingId = crypto.randomUUID();
@@ -346,6 +423,22 @@ async function postJson(
     );
   }
   return data;
+}
+
+async function postRpc(
+  session: Session,
+  functionName: string,
+  body: Record<string, unknown>,
+) {
+  const response = await fetch(`${baseUrl}/rest/v1/rpc/${functionName}`, {
+    method: "POST",
+    headers: session.headers,
+    body: JSON.stringify(body),
+  });
+  const text = await response.text();
+  if (response.status !== 200) {
+    throw new Error(`${functionName} returned ${response.status}: ${text}`);
+  }
 }
 
 async function checked<T extends { error: unknown }>(

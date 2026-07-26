@@ -54,8 +54,96 @@ cd "$BACKEND_DIR"
 echo "Starting local Supabase..."
 supabase start
 
+echo "Checking capture-batch migration against legacy photo data..."
+supabase db reset --yes --version 20260625000100
+docker exec -i supabase_db_mymenu psql -v ON_ERROR_STOP=1 -U postgres -d postgres <<'SQL'
+insert into auth.users (
+  id,
+  instance_id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  created_at,
+  updated_at
+)
+values (
+  '00000000-0000-4000-8000-000000000138',
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated',
+  'authenticated',
+  'capture-migration@example.com',
+  '',
+  now(),
+  now(),
+  now()
+);
+
+insert into public.captures (
+  id,
+  user_id,
+  kind,
+  status,
+  captured_at
+)
+values (
+  '40000000-0000-4000-8000-000000000138',
+  '00000000-0000-4000-8000-000000000138',
+  'photo',
+  'classifying',
+  '2026-07-25T12:00:00Z'
+);
+
+insert into public.dish_images (
+  id,
+  user_id,
+  capture_id,
+  kind,
+  storage_path,
+  content_type,
+  byte_size,
+  captured_at
+)
+values (
+  '50000000-0000-4000-8000-000000000138',
+  '00000000-0000-4000-8000-000000000138',
+  '40000000-0000-4000-8000-000000000138',
+  'capture_photo',
+  'users/00000000-0000-4000-8000-000000000138/captures/legacy/original.jpg',
+  'image/jpeg',
+  4,
+  '2026-07-25T12:00:00Z'
+);
+SQL
+supabase migration up --local
+docker exec -i supabase_db_mymenu psql -v ON_ERROR_STOP=1 -U postgres -d postgres <<'SQL'
+do $$
+begin
+  if not exists (
+    select 1
+    from public.capture_batches batches
+    join public.captures captures
+      on captures.batch_id = batches.id
+     and captures.ordinal = 0
+    join public.dish_images images
+      on images.capture_id = captures.id
+    where batches.id = '40000000-0000-4000-8000-000000000138'
+      and batches.user_id = '00000000-0000-4000-8000-000000000138'
+      and batches.item_count = 1
+      and images.id = '50000000-0000-4000-8000-000000000138'
+      and images.storage_path =
+        'users/00000000-0000-4000-8000-000000000138/captures/legacy/original.jpg'
+  ) then
+    raise exception
+      'Legacy capture, batch ordering, or media reference was not preserved';
+  end if;
+end
+$$;
+SQL
+
 echo "Resetting local Supabase database..."
-supabase db reset
+supabase db reset --yes
 
 echo "Running Supabase database tests..."
 supabase test db supabase/tests

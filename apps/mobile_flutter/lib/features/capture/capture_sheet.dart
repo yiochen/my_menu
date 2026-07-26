@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/capture/add_idea_sheet.dart';
+import 'package:mymenu/features/capture/camera_batch_sheet.dart';
+import 'package:mymenu/features/capture/capture_feed_sheet.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
 import 'package:mymenu/features/capture/capture_outcome_sheet.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
-enum CaptureAction { takePhoto, importPhotos, addIdea }
+enum CaptureAction { takePhoto, importPhotos, addIdea, recentCaptures }
 
 Future<void> showCaptureSheet(
   BuildContext context,
@@ -19,7 +22,10 @@ Future<void> showCaptureSheet(
     context: context,
     useSafeArea: true,
     isScrollControlled: true,
-    builder: (_) => const _CaptureActionSheet(),
+    builder: (_) => _CaptureActionSheet(
+      hasCaptures:
+          state.captureBatches.isNotEmpty || state.captureItems.isNotEmpty,
+    ),
   );
   if (!context.mounted || action == null) {
     return;
@@ -29,7 +35,7 @@ Future<void> showCaptureSheet(
       await _captureMedia(
         context,
         state,
-        mediaService.takePhoto,
+        () => collectCameraBatch(context, mediaService),
         organizedStep: CaptureOutcomeStep.matched,
       );
     case CaptureAction.importPhotos:
@@ -44,6 +50,8 @@ Future<void> showCaptureSheet(
       if (intent != null) {
         state.addIdea(intent.title);
       }
+    case CaptureAction.recentCaptures:
+      await showCaptureFeedSheet(context, state);
   }
 }
 
@@ -58,7 +66,10 @@ Future<void> _captureMedia(
     if (!context.mounted || imageRefs.isEmpty) {
       return;
     }
-    state.addPhotoCaptures(imageRefs);
+    final CaptureBatch? batch = await state.addPhotoCaptures(imageRefs);
+    if (!context.mounted) {
+      return;
+    }
     const String scenario = String.fromEnvironment(
       'MY_MENU_CAPTURE_SCENARIO',
       defaultValue: 'success',
@@ -70,6 +81,8 @@ Future<void> _captureMedia(
           ? CaptureOutcomeStep.offline
           : CaptureOutcomeStep.saved,
       organizedStep: organizedStep,
+      photoCount: imageRefs.length,
+      batchId: batch?.id,
     );
   } on PlatformException catch (_) {
     if (context.mounted) {
@@ -78,6 +91,7 @@ Future<void> _captureMedia(
         state: state,
         initialStep: CaptureOutcomeStep.permission,
         organizedStep: organizedStep,
+        photoCount: 0,
       );
     }
   } on Exception catch (_) {
@@ -87,13 +101,16 @@ Future<void> _captureMedia(
         state: state,
         initialStep: CaptureOutcomeStep.permission,
         organizedStep: organizedStep,
+        photoCount: 0,
       );
     }
   }
 }
 
 class _CaptureActionSheet extends StatelessWidget {
-  const _CaptureActionSheet();
+  const _CaptureActionSheet({required this.hasCaptures});
+
+  final bool hasCaptures;
 
   @override
   Widget build(BuildContext context) {
@@ -142,6 +159,15 @@ class _CaptureActionSheet extends StatelessWidget {
             primary: true,
             onTap: () => Navigator.pop(context, CaptureAction.takePhoto),
           ),
+          if (hasCaptures) ...<Widget>[
+            const SizedBox(height: 10),
+            _CaptureActionTile(
+              icon: Icons.collections_outlined,
+              title: 'Recent Captures',
+              subtitle: 'Check upload status or retry a photo',
+              onTap: () => Navigator.pop(context, CaptureAction.recentCaptures),
+            ),
+          ],
           const SizedBox(height: 10),
           _CaptureActionTile(
             icon: Icons.photo_library_outlined,

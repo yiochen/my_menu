@@ -1,6 +1,15 @@
 part of 'my_menu_state.dart';
 
 extension MyMenuStateSync on MyMenuState {
+  void _handleNetworkStatusChange() {
+    if (!_hasLocalCapturesWaitingForUpload()) {
+      return;
+    }
+    debugPrint('mymenu.sync: network changed; retry window restarted');
+    _startCaptureSyncPollingWindow();
+    unawaited(refreshFromServer());
+  }
+
   Future<void> refreshFromServer() async {
     final AppRepositories? repositories = _repositories;
     if (repositories == null || _isSyncingCaptures) {
@@ -21,7 +30,27 @@ extension MyMenuStateSync on MyMenuState {
     _isSyncingCaptures = true;
     try {
       await repositories.syncRepository.processPendingCaptures();
-      await repositories.syncRepository.pullCaptureSync();
+      await _reloadFromRepositories();
+      if (!_hasLocalCapturesWaitingForUpload()) {
+        try {
+          await repositories.syncRepository.pullCaptureSync();
+        } on Object catch (error, stackTrace) {
+          developer.log(
+            'Capture pull unavailable after local sync.',
+            name: 'mymenu.sync',
+            error: error,
+            stackTrace: stackTrace,
+          );
+        }
+        await _reloadFromRepositories();
+      }
+    } on Object catch (error, stackTrace) {
+      developer.log(
+        'Capture sync failed before completion.',
+        name: 'mymenu.sync',
+        error: error,
+        stackTrace: stackTrace,
+      );
       await _reloadFromRepositories();
     } finally {
       _isSyncingCaptures = false;
@@ -85,7 +114,7 @@ extension MyMenuStateSync on MyMenuState {
           _stopCaptureSyncPolling();
           return;
         }
-        unawaited(_pullCaptureSync());
+        unawaited(refreshFromServer());
       },
     );
   }
@@ -98,7 +127,9 @@ extension MyMenuStateSync on MyMenuState {
 
   bool _hasLocalCapturesWaitingForUpload() {
     return _captureItems.any(
-      (CaptureItem item) => item.status == CaptureItemStatus.pendingUpload,
+      (CaptureItem item) =>
+          item.status == CaptureItemStatus.pendingUpload ||
+          item.status == CaptureItemStatus.uploading,
     );
   }
 
@@ -107,6 +138,7 @@ extension MyMenuStateSync on MyMenuState {
       return switch (item.status) {
         CaptureItemStatus.localOnly ||
         CaptureItemStatus.pendingUpload ||
+        CaptureItemStatus.uploading ||
         CaptureItemStatus.uploaded ||
         CaptureItemStatus.classifying ||
         CaptureItemStatus.needsReview =>

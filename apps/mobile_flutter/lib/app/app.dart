@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymenu/app/app_providers.dart';
 import 'package:mymenu/app/home_shell.dart';
 import 'package:mymenu/core/database/app_database.dart';
+import 'package:mymenu/core/network/network_status_monitor.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/shared/theme/app_theme.dart';
 
@@ -31,9 +32,14 @@ class MyMenuScope extends InheritedNotifier<MyMenuState> {
 }
 
 class MyMenuApp extends StatelessWidget {
-  const MyMenuApp({this.database, super.key});
+  const MyMenuApp({
+    this.database,
+    this.networkStatusMonitor,
+    super.key,
+  });
 
   final AppDatabase? database;
+  final NetworkStatusMonitor? networkStatusMonitor;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +51,10 @@ class MyMenuApp extends StatelessWidget {
     return ProviderScope(
       overrides: [
         appDatabaseProvider.overrideWithValue(overrideDatabase),
+        if (networkStatusMonitor != null)
+          networkStatusMonitorProvider.overrideWithValue(
+            networkStatusMonitor!,
+          ),
       ],
       child: const _MyMenuAppView(),
     );
