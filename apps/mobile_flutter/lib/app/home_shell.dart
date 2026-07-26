@@ -14,15 +14,17 @@ import 'package:mymenu/features/review/review_sheet.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 
 class HomeShell extends StatefulWidget {
-  const HomeShell({super.key});
+  const HomeShell({this.captureMediaService, super.key});
+
+  final CaptureMediaService? captureMediaService;
 
   @override
   State<HomeShell> createState() => _HomeShellState();
 }
 
 class _HomeShellState extends State<HomeShell> {
-  final ImagePickerCaptureMediaService _captureMediaService =
-      ImagePickerCaptureMediaService();
+  late final CaptureMediaService _captureMediaService =
+      widget.captureMediaService ?? ImagePickerCaptureMediaService();
   int _selectedIndex = 0;
   String _query = '';
 

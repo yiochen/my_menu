@@ -311,7 +311,7 @@ AI operations should be modeled as jobs, not direct UI dependencies.
 
 Examples:
 
-- classify capture
+- group captures into cooking occasions by original local photo date
 - generate dish from idea
 - improve cover image
 
@@ -324,6 +324,13 @@ Flow:
 5. UI reacts from local state
 
 This keeps the app responsive even with slow or missing network.
+
+Capture batch grouping uses a durable `batch_grouping` job created in the same
+local transaction as the captures. Imported media keeps the original bytes and
+stores its EXIF original local date when available. Photos with the same local
+date are one cooking occasion; missing-date photos are kept as separate
+occasions. The client finalizes only after every photo upload succeeds, then
+polls sync events until the created dishes are hydrated locally.
 
 ## Suggested Drift Schema
 

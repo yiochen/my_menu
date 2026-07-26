@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/app/app.dart';
@@ -19,6 +20,105 @@ void main() {
   setUpAll(_loadGoldenFonts);
 
   group('MyMenu app shell', () {
+    testWidgets('debug controls stay above sheets and gate camera access', (
+      WidgetTester tester,
+    ) async {
+      addTearDown(() => timeDilation = 1);
+      await runWithMockNetworkImages(() async {
+        await tester.pumpWidget(_debugTestApp());
+        await tester.pumpAndSettle();
+
+        final Finder debugLauncher = find.byKey(
+          const ValueKey<String>('debug_controls_open'),
+        );
+        final Offset initialLauncherPosition = tester.getCenter(debugLauncher);
+        await tester.drag(debugLauncher, const Offset(-120, 180));
+        await tester.pumpAndSettle();
+        final Offset movedLauncherPosition = tester.getCenter(debugLauncher);
+        expect(
+          movedLauncherPosition.dx,
+          lessThan(initialLauncherPosition.dx),
+        );
+        expect(
+          movedLauncherPosition.dy,
+          greaterThan(initialLauncherPosition.dy),
+        );
+
+        await tester.tap(
+          debugLauncher,
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Debug controls'), findsOneWidget);
+        expect(find.text('Network'), findsOneWidget);
+        expect(find.text('Slow animation'), findsOneWidget);
+        expect(find.text('Camera access'), findsOneWidget);
+
+        await tester.tap(
+          find.descendant(
+            of: find.byKey(
+              const ValueKey<String>('debug_slow_animation_toggle'),
+            ),
+            matching: find.byType(Switch),
+          ),
+        );
+        await tester.pump();
+        expect(timeDilation, 5);
+        await tester.tap(
+          find.descendant(
+            of: find.byKey(
+              const ValueKey<String>('debug_slow_animation_toggle'),
+            ),
+            matching: find.byType(Switch),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(timeDilation, 1);
+
+        await tester.tap(
+          find.descendant(
+            of: find.byKey(const ValueKey<String>('debug_camera_toggle')),
+            matching: find.byType(Switch),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const ValueKey<String>('debug_controls_close')),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const ValueKey<String>('capture_fab')));
+        await tester.pumpAndSettle();
+        expect(find.text('Capture'), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey<String>('debug_controls_open')),
+          findsOneWidget,
+        );
+        expect(
+          tester.getCenter(debugLauncher),
+          movedLauncherPosition,
+        );
+
+        await tester.tap(
+          debugLauncher,
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const ValueKey<String>('debug_controls_panel')),
+          findsOneWidget,
+        );
+        await tester.tap(
+          find.byKey(const ValueKey<String>('debug_controls_close')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Take Photo'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Camera access is off'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      });
+    });
+
     testWidgets('shows the redesigned plan screen on launch', (
       WidgetTester tester,
     ) async {
@@ -304,6 +404,15 @@ Widget _testApp() {
   return MyMenuApp(
     database: AppDatabase.forTesting(NativeDatabase.memory()),
     networkStatusMonitor: const InertNetworkStatusMonitor(),
+    showDebugPanel: false,
+  );
+}
+
+Widget _debugTestApp() {
+  return MyMenuApp(
+    database: AppDatabase.forTesting(NativeDatabase.memory()),
+    networkStatusMonitor: const InertNetworkStatusMonitor(),
+    showDebugPanel: true,
   );
 }
 

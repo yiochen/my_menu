@@ -1,13 +1,3 @@
-class ApiClassificationStart {
-  const ApiClassificationStart({
-    required this.captureId,
-    required this.status,
-  });
-
-  final String captureId;
-  final String status;
-}
-
 class ApiCaptureBatch {
   const ApiCaptureBatch({
     required this.id,
@@ -48,6 +38,50 @@ class ApiSyncEvent {
   final Map<String, String> entityIds;
 }
 
+class ApiAiJob {
+  const ApiAiJob({
+    required this.id,
+    required this.jobType,
+    required this.subjectId,
+    required this.status,
+    required this.idempotencyKey,
+    required this.inputHash,
+    required this.inputVersion,
+    required this.attemptCount,
+    required this.maxAttempts,
+    required this.promptVersion,
+    required this.modelVersion,
+    required this.schemaVersion,
+    required this.createdAt,
+    required this.updatedAt,
+    this.nextRetryAt,
+    this.normalizedResult,
+    this.normalizedError,
+    this.startedAt,
+    this.completedAt,
+  });
+
+  final String id;
+  final String jobType;
+  final String subjectId;
+  final String status;
+  final String idempotencyKey;
+  final String inputHash;
+  final String inputVersion;
+  final int attemptCount;
+  final int maxAttempts;
+  final String promptVersion;
+  final String modelVersion;
+  final String schemaVersion;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final DateTime? nextRetryAt;
+  final Map<String, Object?>? normalizedResult;
+  final Map<String, Object?>? normalizedError;
+  final DateTime? startedAt;
+  final DateTime? completedAt;
+}
+
 class ApiImage {
   const ApiImage({
     required this.id,
@@ -69,6 +103,8 @@ class ApiCapture {
     this.batchId,
     this.ordinal,
     this.ideaText,
+    this.capturedLocalDate,
+    this.captureDateSource,
     this.appliedDishId,
     this.failureReason,
     this.image,
@@ -81,6 +117,8 @@ class ApiCapture {
   final String? batchId;
   final int? ordinal;
   final String? ideaText;
+  final String? capturedLocalDate;
+  final String? captureDateSource;
   final String? appliedDishId;
   final String? failureReason;
   final ApiImage? image;

@@ -2,7 +2,7 @@ part of 'my_menu_state.dart';
 
 extension MyMenuStateSync on MyMenuState {
   void _handleNetworkStatusChange() {
-    if (!_hasLocalCapturesWaitingForUpload()) {
+    if (!_hasLocalWorkWaitingForSync()) {
       return;
     }
     debugPrint('mymenu.sync: network changed; retry window restarted');
@@ -15,7 +15,7 @@ extension MyMenuStateSync on MyMenuState {
     if (repositories == null || _isSyncingCaptures) {
       return;
     }
-    if (_hasLocalCapturesWaitingForUpload()) {
+    if (_hasLocalWorkWaitingForSync()) {
       await _syncCaptures();
       return;
     }
@@ -29,9 +29,10 @@ extension MyMenuStateSync on MyMenuState {
     }
     _isSyncingCaptures = true;
     try {
+      await repositories.syncRepository.processPendingAiJobs();
       await repositories.syncRepository.processPendingCaptures();
       await _reloadFromRepositories();
-      if (!_hasLocalCapturesWaitingForUpload()) {
+      if (!_hasLocalWorkWaitingForSync()) {
         try {
           await repositories.syncRepository.pullCaptureSync();
         } on Object catch (error, stackTrace) {
@@ -84,8 +85,9 @@ extension MyMenuStateSync on MyMenuState {
     if (_repositories == null) {
       return;
     }
-    final bool hasUnresolvedCaptures = _hasUnresolvedCaptures();
-    if (!hasUnresolvedCaptures) {
+    final bool hasUnresolvedWork = _hasUnresolvedCaptures() ||
+        _aiJobs.any((AiJob job) => job.status.isActive);
+    if (!hasUnresolvedWork) {
       _stopCaptureSyncPolling();
       return;
     }
@@ -105,7 +107,8 @@ extension MyMenuStateSync on MyMenuState {
     _captureSyncTimer = Timer.periodic(
       MyMenuState._captureSyncPollInterval,
       (_) {
-        if (!_hasUnresolvedCaptures()) {
+        if (!_hasUnresolvedCaptures() &&
+            !_aiJobs.any((AiJob job) => job.status.isActive)) {
           _stopCaptureSyncPolling();
           return;
         }
@@ -131,6 +134,11 @@ extension MyMenuStateSync on MyMenuState {
           item.status == CaptureItemStatus.pendingUpload ||
           item.status == CaptureItemStatus.uploading,
     );
+  }
+
+  bool _hasLocalWorkWaitingForSync() {
+    return _hasLocalCapturesWaitingForUpload() ||
+        _aiJobs.any((AiJob job) => job.pendingAction != null);
   }
 
   bool _hasUnresolvedCaptures() {

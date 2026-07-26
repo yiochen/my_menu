@@ -1,8 +1,8 @@
 part of 'my_menu_state.dart';
 
 extension MyMenuStateCapturePersistence on MyMenuState {
-  Future<CaptureBatch?> addPhotoCaptures(List<String> imageRefs) {
-    return _createPhotoCaptures(imageRefs);
+  Future<CaptureBatch?> addPhotoCaptures(List<Object> capturedMedia) {
+    return _createPhotoCaptures(capturedMedia);
   }
 
   void discardCapture(String captureId) {
@@ -21,6 +21,9 @@ extension MyMenuStateCapturePersistence on MyMenuState {
         localMediaRef: item.localMediaRef,
         remoteMediaRef: item.remoteMediaRef,
         text: item.text,
+        capturedAt: item.capturedAt,
+        capturedLocalDate: item.capturedLocalDate,
+        captureDateSource: item.captureDateSource,
         appliedDishId: item.appliedDishId,
         failureReason: item.failureReason,
       );
@@ -37,16 +40,23 @@ extension MyMenuStateCapturePersistence on MyMenuState {
     await repositories.seedIfNeeded();
     await _reloadFromRepositories();
     _updateCaptureSyncPolling();
-    if (_hasLocalCapturesWaitingForUpload()) {
+    if (_hasLocalWorkWaitingForSync()) {
       unawaited(refreshFromServer());
     }
   }
 
-  Future<CaptureBatch?> _createPhotoCaptures(List<String> imageRefs) async {
+  Future<CaptureBatch?> _createPhotoCaptures(
+    List<Object> capturedMedia,
+  ) async {
     final AppRepositories? repositories = _repositories;
     if (repositories == null) {
       final List<ReviewItem> nextReviewItems = _reviewItemsWithPhotoCaptures(
-        imageRefs,
+        capturedMedia
+            .map(
+              (Object media) =>
+                  media is CapturedMedia ? media.path : media.toString(),
+            )
+            .toList(growable: false),
         _reviewItems,
       );
       if (!identical(nextReviewItems, _reviewItems)) {
@@ -57,7 +67,7 @@ extension MyMenuStateCapturePersistence on MyMenuState {
     }
 
     final CaptureBatch? batch =
-        await repositories.captureRepository.createPhotoBatch(imageRefs);
+        await repositories.captureRepository.createPhotoBatch(capturedMedia);
     if (batch == null) {
       return null;
     }
@@ -83,6 +93,7 @@ extension MyMenuStateCapturePersistence on MyMenuState {
     _dishes = await repositories.dishRepository.listDishes();
     _captureBatches = await repositories.captureRepository.listBatches();
     _captureItems = await repositories.captureRepository.listFeedItems();
+    _aiJobs = await repositories.aiJobRepository.listJobs();
     _notifyChanged();
   }
 

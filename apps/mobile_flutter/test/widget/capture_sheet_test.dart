@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/core/database/app_database.dart';
 import 'package:mymenu/core/network/my_menu_api_client.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
+import 'package:mymenu/domain/capture/captured_media.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/domain/sync/repositories.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
@@ -133,7 +134,9 @@ void main() {
       batch.items.map((item) => item.ordinal).toList(growable: false),
       <int>[0, 1, 2],
     );
-    expect(find.textContaining('All 3 photos'), findsOneWidget);
+    expect(find.text('New dish created'), findsOneWidget);
+    expect(find.text('Captured Dish · Jul 20'), findsOneWidget);
+    expect(find.text('1 cook · 3 photos'), findsOneWidget);
     state.dispose();
   });
 
@@ -169,7 +172,9 @@ void main() {
       batch.items.map((item) => item.ordinal).toList(growable: false),
       <int>[0, 1, 2, 3],
     );
-    expect(find.textContaining('All 4 photos'), findsOneWidget);
+    expect(find.text('New dish created'), findsOneWidget);
+    expect(find.text('Captured Dish · Jul 20'), findsOneWidget);
+    expect(find.text('1 cook · 4 photos'), findsOneWidget);
     state.dispose();
   });
 }
@@ -206,17 +211,27 @@ class _FakeCaptureMediaService implements CaptureMediaService {
   int _cameraIndex = 0;
 
   @override
-  Future<String?> takePhoto() async {
+  Future<CapturedMedia?> takePhoto() async {
     if (_cameraIndex >= cameraRefs.length) {
       return null;
     }
     final String result = cameraRefs[_cameraIndex];
     _cameraIndex += 1;
-    return result;
+    return _media(result);
   }
 
   @override
-  Future<List<String>> importPhotos() async => importRefs;
+  Future<List<CapturedMedia>> importPhotos() async =>
+      importRefs.map(_media).toList(growable: false);
+
+  CapturedMedia _media(String path) {
+    return CapturedMedia(
+      path: path,
+      capturedAt: DateTime(2026, 7, 20, 12),
+      capturedLocalDate: '2026-07-20',
+      dateSource: CaptureDateSource.exifOriginal,
+    );
+  }
 }
 
 class _CaptureTestApp extends StatelessWidget {

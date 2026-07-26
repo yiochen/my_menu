@@ -26,6 +26,9 @@ class CaptureItem {
     this.localMediaRef,
     this.remoteMediaRef,
     this.text,
+    this.capturedAt,
+    this.capturedLocalDate,
+    this.captureDateSource,
     this.appliedDishId,
     this.failureReason,
   });
@@ -39,6 +42,9 @@ class CaptureItem {
   final String? localMediaRef;
   final String? remoteMediaRef;
   final String? text;
+  final DateTime? capturedAt;
+  final String? capturedLocalDate;
+  final String? captureDateSource;
   final String? appliedDishId;
   final String? failureReason;
 }

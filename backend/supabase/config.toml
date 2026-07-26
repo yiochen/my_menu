@@ -29,7 +29,7 @@ verify_jwt = true
 enabled = true
 verify_jwt = true
 
-[functions.classify]
+[functions.finalize-capture-batch]
 enabled = true
 verify_jwt = true
 
@@ -37,7 +37,7 @@ verify_jwt = true
 enabled = true
 verify_jwt = true
 
-[functions.process-capture-async]
+[functions.process-ai-jobs]
 enabled = true
 verify_jwt = false
 

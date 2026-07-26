@@ -52,5 +52,6 @@ Widget _testApp() {
   return MyMenuApp(
     database: AppDatabase.forTesting(NativeDatabase.memory()),
     networkStatusMonitor: const InertNetworkStatusMonitor(),
+    showDebugPanel: false,
   );
 }

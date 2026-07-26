@@ -129,37 +129,53 @@ class CaptureMatchedView extends StatelessWidget {
 }
 
 class CaptureCreatedView extends StatelessWidget {
-  const CaptureCreatedView({required this.onClose, super.key});
+  const CaptureCreatedView({
+    required this.onClose,
+    this.dishes = const <Dish>[],
+    super.key,
+  });
 
+  final List<Dish> dishes;
   final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
     return CaptureOutcomeFrame(
       topLabel: 'Capture organized',
-      headline: 'New dish created',
-      description: 'It didn’t match your 24 dishes, so MyMenu started a new '
-          'living record.',
+      headline: dishes.length <= 1
+          ? 'New dish created'
+          : '${dishes.length} dishes created',
+      description: dishes.length <= 1
+          ? 'MyMenu organized this cooking occasion into a new living record.'
+          : 'Photos from different dates became separate cooking occasions.',
       art: const CaptureResultIcon(
         icon: Icons.restaurant_menu_rounded,
         color: MyMenuColors.green,
         background: MyMenuColors.greenSoft,
       ),
-      body: const WarmCard(
-        padding: EdgeInsets.all(16),
+      body: WarmCard(
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: <Widget>[
-            CaptureStatusLine(
-              icon: Icons.ramen_dining_rounded,
-              title: 'Charred Corn Ramen',
-              subtitle: '1 cook · 1 source photo',
-            ),
-            Divider(height: 24),
-            CaptureStatusLine(
-              icon: Icons.auto_awesome,
-              title: 'Recipe draft ready to review',
-              subtitle: 'Ingredients and steps are waiting',
-            ),
+            if (dishes.isEmpty)
+              const CaptureStatusLine(
+                icon: Icons.hourglass_top_rounded,
+                title: 'Finishing local sync',
+                subtitle: 'The created dish will appear in Menu shortly',
+              )
+            else
+              for (int index = 0;
+                  index < dishes.length;
+                  index += 1) ...<Widget>[
+                CaptureStatusLine(
+                  icon: Icons.ramen_dining_rounded,
+                  title: dishes[index].title,
+                  subtitle: '${dishes[index].madeCount} cook · '
+                      '${dishes[index].sourcePhotos.length} '
+                      '${dishes[index].sourcePhotos.length == 1 ? 'photo' : 'photos'}',
+                ),
+                if (index != dishes.length - 1) const Divider(height: 24),
+              ],
           ],
         ),
       ),

@@ -553,10 +553,20 @@ row points to `(storage_bucket, storage_path)`.
 4. Flutter uploads bytes to the signed URL.
 5. Flutter calls `create-photo`.
 6. The Edge Function creates:
-   - one `captures` row with status `classifying`
+   - one ordered `captures` row with status `uploaded`
    - one `dish_images` row with kind `capture_photo`
    - one `sync_events` row
-7. Classification later updates the capture and image rows.
+7. After all batch items exist, Flutter calls `finalize-capture-batch`.
+8. The finalizer durably queues a `batch_grouping` AI job and immediately
+   dispatches `process-ai-jobs` with `pg_net`.
+9. The worker groups captures by `captured_local_date`, atomically creates one
+   cooking occasion and new dish per date group, and emits sync events. A
+   one-minute database-native cron worker recovers queued work if immediate
+   dispatch is lost.
+
+Imported photos use their EXIF original local date. Photos from the same local
+date are one cooking occasion. Each photo without usable date metadata receives
+its own occasion.
 
 If step 4 fails, the server has no capture row. The local Flutter sync queue
 keeps retrying.
@@ -597,8 +607,8 @@ bucket URLs.
 
 These are the app-facing APIs. Names are written as Supabase Edge Function
 names. Use kebab-case to match the current function directories, such as
-`prepare-photo-upload`, `create-photo`, `classify`, `discard`, and
-`process-capture-async`.
+`prepare-photo-upload`, `create-photo`, `finalize-capture-batch`, `discard`, and
+`process-ai-jobs`.
 
 All requests require Supabase auth. All responses are JSON.
 
@@ -761,8 +771,12 @@ Request:
 
 ```json
 {
+  "batchId": "client-batch-uuid",
   "captureId": "client-capture-uuid",
+  "ordinal": 0,
   "capturedAt": "2026-06-20T12:30:00Z",
+  "capturedLocalDate": "2026-06-20",
+  "captureDateSource": "exif_original",
   "contentType": "image/jpeg",
   "byteSize": 2441180,
   "width": 3024,
@@ -778,7 +792,7 @@ Response:
   "capture": {
     "id": "client-capture-uuid",
     "kind": "photo",
-    "status": "classifying",
+    "status": "uploaded",
     "imageId": "image-uuid"
   },
   "image": {
@@ -790,17 +804,24 @@ Response:
 }
 ```
 
-### `create-idea`
+### `finalize-capture-batch`
 
-Creates an idea capture and starts classification.
+Queues durable capture organization after every photo is uploaded. For an idea,
+the same endpoint creates its one-item batch and capture before queueing.
 
 Request:
 
 ```json
 {
-  "captureId": "client-capture-uuid",
-  "ideaText": "kimchi fried rice",
-  "capturedAt": "2026-06-20T12:30:00Z"
+  "batchId": "client-batch-uuid",
+  "kind": "photo",
+  "job": {
+    "id": "client-job-uuid",
+    "idempotencyKey": "batch_grouping:client-batch-uuid:date-v1",
+    "inputHash": "stable-input-hash",
+    "inputVersion": "date-v1",
+    "maxAttempts": 3
+  }
 }
 ```
 
@@ -808,12 +829,11 @@ Response:
 
 ```json
 {
-  "capture": {
-    "id": "client-capture-uuid",
-    "kind": "idea",
-    "status": "classifying"
-  },
-  "cursor": 133
+  "job": {
+    "id": "client-job-uuid",
+    "job_type": "batch_grouping",
+    "status": "queued"
+  }
 }
 ```
 

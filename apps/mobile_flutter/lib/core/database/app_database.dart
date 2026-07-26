@@ -63,6 +63,9 @@ class CaptureItems extends Table {
   TextColumn get localMediaRef => text().nullable()();
   TextColumn get remoteMediaRef => text().nullable()();
   TextColumn get ideaText => text().nullable()();
+  DateTimeColumn get capturedAt => dateTime().nullable()();
+  TextColumn get capturedLocalDate => text().nullable()();
+  TextColumn get captureDateSource => text().nullable()();
   TextColumn get appliedDishId => text().nullable()();
   TextColumn get failureReason => text().nullable()();
 
@@ -128,6 +131,40 @@ class SyncMetadata extends Table {
   Set<Column<Object>> get primaryKey => <Column<Object>>{key};
 }
 
+@DataClassName('AiJobRow')
+class AiJobs extends Table {
+  TextColumn get id => text()();
+  TextColumn get jobType => text()();
+  TextColumn get subjectId => text()();
+  TextColumn get status => text()();
+  TextColumn get idempotencyKey => text()();
+  TextColumn get inputHash => text()();
+  TextColumn get inputVersion => text()();
+  IntColumn get attemptCount => integer().withDefault(const Constant(0))();
+  IntColumn get maxAttempts => integer().withDefault(const Constant(3))();
+  DateTimeColumn get nextRetryAt => dateTime().nullable()();
+  TextColumn get promptVersion => text().withDefault(const Constant('1'))();
+  TextColumn get modelVersion =>
+      text().withDefault(const Constant('default'))();
+  TextColumn get schemaVersion => text().withDefault(const Constant('1'))();
+  TextColumn get resultJson => text().nullable()();
+  TextColumn get errorJson => text().nullable()();
+  TextColumn get pendingAction => text().nullable()();
+  DateTimeColumn get startedAt => dateTime().nullable()();
+  DateTimeColumn get completedAt => dateTime().nullable()();
+  DateTimeColumn get dismissedAt => dateTime().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{id};
+
+  @override
+  List<Set<Column<Object>>> get uniqueKeys => <Set<Column<Object>>>[
+        <Column<Object>>{idempotencyKey},
+      ];
+}
+
 @DriftDatabase(
   tables: <Type>[
     Dishes,
@@ -139,6 +176,7 @@ class SyncMetadata extends Table {
     ReviewItems,
     SyncOperations,
     SyncMetadata,
+    AiJobs,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -147,7 +185,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration {
@@ -187,6 +225,20 @@ class AppDatabase extends _$AppDatabase {
             FROM capture_items
           ''');
           await customStatement('UPDATE capture_items SET batch_id = id');
+        }
+        if (from < 4) {
+          await migrator.createTable(aiJobs);
+        }
+        if (from < 5) {
+          await migrator.addColumn(captureItems, captureItems.capturedAt);
+          await migrator.addColumn(
+            captureItems,
+            captureItems.capturedLocalDate,
+          );
+          await migrator.addColumn(
+            captureItems,
+            captureItems.captureDateSource,
+          );
         }
       },
     );

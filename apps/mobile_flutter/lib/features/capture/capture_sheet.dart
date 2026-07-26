@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:mymenu/domain/capture/capture_batch.dart';
+import 'package:mymenu/domain/capture/captured_media.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/capture/add_idea_sheet.dart';
 import 'package:mymenu/features/capture/camera_batch_sheet.dart';
@@ -58,15 +59,15 @@ Future<void> showCaptureSheet(
 Future<void> _captureMedia(
   BuildContext context,
   MyMenuState state,
-  Future<List<String>> Function() capture, {
+  Future<List<CapturedMedia>> Function() capture, {
   required CaptureOutcomeStep organizedStep,
 }) async {
   try {
-    final List<String> imageRefs = await capture();
-    if (!context.mounted || imageRefs.isEmpty) {
+    final List<CapturedMedia> capturedMedia = await capture();
+    if (!context.mounted || capturedMedia.isEmpty) {
       return;
     }
-    final CaptureBatch? batch = await state.addPhotoCaptures(imageRefs);
+    final CaptureBatch? batch = await state.addPhotoCaptures(capturedMedia);
     if (!context.mounted) {
       return;
     }
@@ -81,7 +82,7 @@ Future<void> _captureMedia(
           ? CaptureOutcomeStep.offline
           : CaptureOutcomeStep.saved,
       organizedStep: organizedStep,
-      photoCount: imageRefs.length,
+      photoCount: capturedMedia.length,
       batchId: batch?.id,
     );
   } on PlatformException catch (_) {

@@ -1,15 +1,27 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:mymenu/app/app.dart';
+import 'package:mymenu/core/debug/debug_controls.dart';
+import 'package:mymenu/core/debug/shared_preferences_debug_controls.dart';
 import 'package:mymenu/core/network/my_menu_api_client.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
+  DebugControlsBootstrap? debugControlsBootstrap;
+  if (kDebugMode) {
+    final SharedPreferencesDebugControls controls =
+        await SharedPreferencesDebugControls.load();
+    debugControlsBootstrap = DebugControlsBootstrap(
+      settings: controls.settings,
+      persistence: controls,
+    );
+  }
   if (SupabaseApiConfig.shouldUseSupabase) {
     await Supabase.initialize(
       url: SupabaseApiConfig.url,
       publishableKey: SupabaseApiConfig.anonKey,
     );
   }
-  runApp(const MyMenuApp());
+  runApp(MyMenuApp(debugControlsBootstrap: debugControlsBootstrap));
 }
