@@ -4,8 +4,10 @@ import 'dart:developer' as developer;
 import 'package:flutter/widgets.dart';
 
 import 'package:mymenu/core/network/network_status_monitor.dart';
+import 'package:mymenu/domain/ai/ai_job.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
+import 'package:mymenu/domain/capture/captured_media.dart';
 import 'package:mymenu/domain/capture/review_item.dart';
 import 'package:mymenu/domain/capture/seeded_review_items.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
@@ -17,6 +19,7 @@ import 'package:mymenu/domain/sync/repositories.dart';
 
 part 'my_menu_state_capture.dart';
 part 'my_menu_state_capture_persistence.dart';
+part 'my_menu_state_ai.dart';
 part 'my_menu_state_dishes.dart';
 part 'my_menu_state_planning.dart';
 part 'my_menu_state_sync.dart';
@@ -29,6 +32,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
         _plan = buildSeededPlan(),
         _captureBatches = const <CaptureBatch>[],
         _captureItems = const <CaptureItem>[],
+        _aiJobs = const <AiJob>[],
         _reviewItems = List<ReviewItem>.of(seededReviewItems),
         _extraPlanDays = 0,
         _repositories = repositories,
@@ -48,11 +52,13 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
     List<PlannedMeal> plan = const <PlannedMeal>[],
     List<CaptureBatch> captureBatches = const <CaptureBatch>[],
     List<CaptureItem> captureItems = const <CaptureItem>[],
+    List<AiJob> aiJobs = const <AiJob>[],
     List<ReviewItem> reviewItems = const <ReviewItem>[],
   })  : _dishes = List<Dish>.of(dishes),
         _plan = List<PlannedMeal>.of(plan),
         _captureBatches = List<CaptureBatch>.of(captureBatches),
         _captureItems = List<CaptureItem>.of(captureItems),
+        _aiJobs = List<AiJob>.of(aiJobs),
         _reviewItems = List<ReviewItem>.of(reviewItems),
         _extraPlanDays = 0,
         _repositories = null,
@@ -62,6 +68,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
   List<PlannedMeal> _plan;
   List<CaptureBatch> _captureBatches;
   List<CaptureItem> _captureItems;
+  List<AiJob> _aiJobs;
   List<ReviewItem> _reviewItems;
   int? _extraPlanDays;
   final AppRepositories? _repositories;
@@ -79,6 +86,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
       List<CaptureBatch>.unmodifiable(_captureBatches);
   List<CaptureItem> get captureItems =>
       List<CaptureItem>.unmodifiable(_captureItems);
+  List<AiJob> get aiJobs => List<AiJob>.unmodifiable(_aiJobs);
   List<ReviewItem> get reviewItems =>
       List<ReviewItem>.unmodifiable(_reviewItems);
 
@@ -95,7 +103,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && _repositories != null) {
-      if (_hasLocalCapturesWaitingForUpload()) {
+      if (_hasLocalWorkWaitingForSync()) {
         _startCaptureSyncPollingWindow();
       }
       unawaited(refreshFromServer());

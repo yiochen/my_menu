@@ -1,11 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:mymenu/app/app_providers.dart';
 import 'package:mymenu/app/home_shell.dart';
 import 'package:mymenu/core/database/app_database.dart';
+import 'package:mymenu/core/debug/debug_controls.dart';
 import 'package:mymenu/core/network/network_status_monitor.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/features/debug/debug_controls_overlay.dart';
 import 'package:mymenu/shared/theme/app_theme.dart';
 
 class MyMenuScope extends InheritedNotifier<MyMenuState> {
@@ -34,46 +37,63 @@ class MyMenuScope extends InheritedNotifier<MyMenuState> {
 class MyMenuApp extends StatelessWidget {
   const MyMenuApp({
     this.database,
+    this.debugControlsBootstrap,
     this.networkStatusMonitor,
+    this.showDebugPanel,
     super.key,
   });
 
   final AppDatabase? database;
+  final DebugControlsBootstrap? debugControlsBootstrap;
   final NetworkStatusMonitor? networkStatusMonitor;
+  final bool? showDebugPanel;
 
   @override
   Widget build(BuildContext context) {
     final AppDatabase? overrideDatabase = database;
-    if (overrideDatabase == null) {
-      return const ProviderScope(child: _MyMenuAppView());
-    }
-
+    final bool debugPanelEnabled = kDebugMode && (showDebugPanel ?? true);
     return ProviderScope(
       overrides: [
-        appDatabaseProvider.overrideWithValue(overrideDatabase),
+        if (overrideDatabase != null)
+          appDatabaseProvider.overrideWithValue(overrideDatabase),
+        if (debugControlsBootstrap != null)
+          debugControlsBootstrapProvider.overrideWithValue(
+            debugControlsBootstrap,
+          ),
         if (networkStatusMonitor != null)
-          networkStatusMonitorProvider.overrideWithValue(
+          physicalNetworkStatusMonitorProvider.overrideWithValue(
             networkStatusMonitor!,
           ),
       ],
-      child: const _MyMenuAppView(),
+      child: _MyMenuAppView(debugPanelEnabled: debugPanelEnabled),
     );
   }
 }
 
 class _MyMenuAppView extends ConsumerWidget {
-  const _MyMenuAppView();
+  const _MyMenuAppView({required this.debugPanelEnabled});
+
+  final bool debugPanelEnabled;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final MyMenuState state = ref.watch(myMenuStateProvider);
+    final debugControls = ref.read(debugControlsProvider);
+    final captureMediaService = ref.watch(captureMediaServiceProvider);
     return MyMenuScope(
       notifier: state,
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'MyMenu',
         theme: AppTheme.data,
-        home: const HomeShell(),
+        home: HomeShell(captureMediaService: captureMediaService),
+        builder: (BuildContext context, Widget? child) {
+          return DebugControlsOverlay(
+            controller: debugControls,
+            enabled: debugPanelEnabled,
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
       ),
     );
   }

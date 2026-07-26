@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mymenu/domain/capture/captured_media.dart';
 import 'package:mymenu/domain/sync/repositories.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
@@ -7,17 +8,17 @@ import 'package:mymenu/shared/widgets/warm_components.dart';
 
 enum _CameraBatchIntent { takeAnother, done }
 
-Future<List<String>> collectCameraBatch(
+Future<List<CapturedMedia>> collectCameraBatch(
   BuildContext context,
   CaptureMediaService mediaService,
 ) async {
-  final List<String> imageRefs = <String>[];
-  while (imageRefs.length < CaptureRepository.maxBatchItems) {
-    final String? imageRef = await mediaService.takePhoto();
-    if (imageRef == null) {
+  final List<CapturedMedia> media = <CapturedMedia>[];
+  while (media.length < CaptureRepository.maxBatchItems) {
+    final CapturedMedia? captured = await mediaService.takePhoto();
+    if (captured == null) {
       break;
     }
-    imageRefs.add(imageRef);
+    media.add(captured);
     if (!context.mounted) {
       break;
     }
@@ -29,24 +30,24 @@ Future<List<String>> collectCameraBatch(
       isDismissible: false,
       enableDrag: false,
       builder: (BuildContext context) => _CameraBatchReview(
-        imageRefs: List<String>.unmodifiable(imageRefs),
+        media: List<CapturedMedia>.unmodifiable(media),
       ),
     );
     if (intent != _CameraBatchIntent.takeAnother) {
       break;
     }
   }
-  return imageRefs;
+  return media;
 }
 
 class _CameraBatchReview extends StatelessWidget {
-  const _CameraBatchReview({required this.imageRefs});
+  const _CameraBatchReview({required this.media});
 
-  final List<String> imageRefs;
+  final List<CapturedMedia> media;
 
   @override
   Widget build(BuildContext context) {
-    final bool atLimit = imageRefs.length >= CaptureRepository.maxBatchItems;
+    final bool atLimit = media.length >= CaptureRepository.maxBatchItems;
     return WarmPage(
       includeBottomChromeSpace: false,
       topPadding: 10,
@@ -60,7 +61,7 @@ class _CameraBatchReview extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            '${imageRefs.length} of ${CaptureRepository.maxBatchItems}',
+            '${media.length} of ${CaptureRepository.maxBatchItems}',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineSmall,
           ),
@@ -69,7 +70,7 @@ class _CameraBatchReview extends StatelessWidget {
             height: 104,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: imageRefs.length,
+              itemCount: media.length,
               separatorBuilder: (_, __) => const SizedBox(width: 10),
               itemBuilder: (BuildContext context, int index) {
                 return Stack(
@@ -77,7 +78,7 @@ class _CameraBatchReview extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(18),
                       child: AppImage(
-                        imageRef: imageRefs[index],
+                        imageRef: media[index].path,
                         width: 104,
                         height: 104,
                         fit: BoxFit.cover,

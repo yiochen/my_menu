@@ -76,6 +76,30 @@ ApiSyncEvent apiSyncEventFromJson(Map<String, Object?> data) {
   );
 }
 
+ApiAiJob apiAiJobFromJson(Map<String, Object?> data) {
+  return ApiAiJob(
+    id: apiStringValue(data, 'id'),
+    jobType: apiStringValue(data, 'job_type'),
+    subjectId: apiStringValue(data, 'subject_id'),
+    status: apiStringValue(data, 'status'),
+    idempotencyKey: apiStringValue(data, 'idempotency_key'),
+    inputHash: apiStringValue(data, 'input_hash'),
+    inputVersion: apiStringValue(data, 'input_version'),
+    attemptCount: apiIntValue(data, 'attempt_count'),
+    maxAttempts: apiIntValue(data, 'max_attempts'),
+    promptVersion: apiStringValue(data, 'prompt_version'),
+    modelVersion: apiStringValue(data, 'model_version'),
+    schemaVersion: apiStringValue(data, 'schema_version'),
+    nextRetryAt: apiOptionalDateTimeValue(data, 'next_retry_at'),
+    normalizedResult: apiOptionalMapValue(data, 'normalized_result'),
+    normalizedError: apiOptionalMapValue(data, 'normalized_error'),
+    startedAt: apiOptionalDateTimeValue(data, 'started_at'),
+    completedAt: apiOptionalDateTimeValue(data, 'completed_at'),
+    createdAt: DateTime.parse(apiStringValue(data, 'created_at')),
+    updatedAt: DateTime.parse(apiStringValue(data, 'updated_at')),
+  );
+}
+
 ApiCapture apiCaptureFromJson(Map<String, Object?> data) {
   final Map<String, Object?>? image = apiOptionalMapValue(data, 'image');
   return ApiCapture(
@@ -86,6 +110,8 @@ ApiCapture apiCaptureFromJson(Map<String, Object?> data) {
     batchId: apiOptionalStringValue(data, 'batchId'),
     ordinal: apiOptionalIntValue(data, 'ordinal'),
     ideaText: apiOptionalStringValue(data, 'ideaText'),
+    capturedLocalDate: apiOptionalStringValue(data, 'capturedLocalDate'),
+    captureDateSource: apiOptionalStringValue(data, 'captureDateSource'),
     appliedDishId: apiOptionalStringValue(data, 'appliedDishId'),
     failureReason: apiOptionalStringValue(data, 'failureReason'),
     image: image == null ? null : apiImageFromJson(image),

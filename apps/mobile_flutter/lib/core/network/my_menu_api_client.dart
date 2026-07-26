@@ -10,44 +10,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 export 'package:mymenu/core/network/my_menu_api_models.dart';
 
 part 'fake_my_menu_api_client.dart';
+part 'fake_capture_grouping.dart';
+part 'my_menu_ai_api.dart';
+part 'my_menu_api_config.dart';
+part 'supabase_capture_api.dart';
 part 'supabase_my_menu_api_helpers.dart';
 
-class SupabaseApiConfig {
-  const SupabaseApiConfig._();
-
-  static const String apiMode = String.fromEnvironment(
-    'MY_MENU_API_MODE',
-    defaultValue: 'auto',
-  );
-  static const String url = String.fromEnvironment('SUPABASE_URL');
-  static const String anonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
-
-  static bool get isConfigured => url.isNotEmpty && anonKey.isNotEmpty;
-
-  static bool get shouldUseSupabase {
-    switch (apiMode) {
-      case 'auto':
-        return isConfigured;
-      case 'fake':
-        return false;
-      case 'supabase':
-        if (!isConfigured) {
-          throw StateError(
-            'MY_MENU_API_MODE=supabase requires SUPABASE_URL and '
-            'SUPABASE_ANON_KEY.',
-          );
-        }
-        return true;
-      default:
-        throw StateError(
-          'Unsupported MY_MENU_API_MODE "$apiMode". Use auto, fake, or '
-          'supabase.',
-        );
-    }
-  }
-}
-
-abstract class MyMenuApiClient {
+abstract class MyMenuApiClient with AiJobApiDefaults {
   Future<void> upsertCaptureBatch({
     required String batchId,
     required int itemCount,
@@ -61,17 +30,60 @@ abstract class MyMenuApiClient {
     required String localMediaRef,
   });
 
-  Future<void> markCaptureBatchReady({required String batchId});
+  Future<String> uploadCaptureMediaWithMetadata({
+    required String captureId,
+    required String batchId,
+    required int ordinal,
+    required String localMediaRef,
+    required DateTime capturedAt,
+    required String? capturedLocalDate,
+    required String captureDateSource,
+  }) {
+    return uploadCaptureMedia(
+      captureId: captureId,
+      batchId: batchId,
+      ordinal: ordinal,
+      localMediaRef: localMediaRef,
+    );
+  }
+
+  Future<ApiAiJob> finalizeCaptureBatch({
+    required String batchId,
+    required String kind,
+    required String? ideaText,
+    required DateTime capturedAt,
+    required String? capturedLocalDate,
+    required String captureDateSource,
+    required String jobId,
+    required String idempotencyKey,
+    required String inputHash,
+    required String inputVersion,
+    required int maxAttempts,
+  }) {
+    final DateTime now = DateTime.now();
+    return Future<ApiAiJob>.value(
+      ApiAiJob(
+        id: jobId,
+        jobType: 'batch_grouping',
+        subjectId: batchId,
+        status: 'queued',
+        idempotencyKey: idempotencyKey,
+        inputHash: inputHash,
+        inputVersion: inputVersion,
+        attemptCount: 0,
+        maxAttempts: maxAttempts,
+        promptVersion: 'date-v1',
+        modelVersion: 'fake-date-grouper',
+        schemaVersion: '1',
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+  }
 
   Future<List<ApiCaptureBatch>> getCaptureBatches(List<String> ids) async {
     return const <ApiCaptureBatch>[];
   }
-
-  Future<ApiClassificationStart> classifyCapture({
-    required String captureId,
-    required String? remoteMediaRef,
-    required String? ideaText,
-  });
 
   Future<void> createDishNote({
     required String noteId,
@@ -106,120 +118,64 @@ abstract class MyMenuApiClient {
   Future<List<ApiReviewItem>> getReviewItems(List<String> ids);
 }
 
-class SupabaseMyMenuApiClient extends MyMenuApiClient {
+class SupabaseMyMenuApiClient extends MyMenuApiClient with SupabaseCaptureApi {
   SupabaseMyMenuApiClient({SupabaseClient? client})
       : _client = client ?? Supabase.instance.client;
 
+  @override
   final SupabaseClient _client;
 
   @override
-  Future<void> upsertCaptureBatch({
-    required String batchId,
-    required int itemCount,
-    required DateTime createdAt,
+  Future<ApiAiJob> scheduleAiJob({
+    required String jobId,
+    required String jobType,
+    required String subjectId,
+    required String idempotencyKey,
+    required String inputHash,
+    required String inputVersion,
+    required String promptVersion,
+    required String modelVersion,
+    required String schemaVersion,
+    required int maxAttempts,
   }) async {
-    await _ensureSession();
-    await _client.rpc<Object?>(
-      'api_upsert_capture_batch',
-      params: <String, Object?>{
-        'p_batch_id': batchId,
-        'p_item_count': itemCount,
-        'p_created_at': createdAt.toUtc().toIso8601String(),
-      },
-    );
-  }
-
-  @override
-  Future<String> uploadCaptureMedia({
-    required String captureId,
-    required String batchId,
-    required int ordinal,
-    required String localMediaRef,
-  }) async {
-    await _ensureSession();
-
-    final Uint8List bytes = await File(localMediaRef).readAsBytes();
-    final String contentType = _contentTypeForPath(localMediaRef);
-    _logApi(
-      'uploadCaptureMedia start captureId=$captureId '
-      'contentType=$contentType bytes=${bytes.length}',
-    );
-    final Map<String, Object?> prepare = await _invokeJson(
-      'prepare-photo-upload',
+    return _singleAiJobRpc(
+      this,
+      'api_schedule_ai_job',
       <String, Object?>{
-        'captureId': captureId,
-        'batchId': batchId,
-        'ordinal': ordinal,
-        'contentType': contentType,
-        'byteSize': bytes.length,
+        'p_job_id': jobId,
+        'p_job_type': jobType,
+        'p_subject_id': subjectId,
+        'p_idempotency_key': idempotencyKey,
+        'p_input_hash': inputHash,
+        'p_input_version': inputVersion,
+        'p_prompt_version': promptVersion,
+        'p_model_version': modelVersion,
+        'p_schema_version': schemaVersion,
+        'p_max_attempts': maxAttempts,
       },
-    );
-
-    final Map<String, Object?> upload = apiMapValue(prepare, 'upload');
-    final String storagePath = apiStringValue(prepare, 'storagePath');
-    final String token = apiStringValue(upload, 'token');
-
-    _logApi('uploadCaptureMedia storage upload start captureId=$captureId');
-    await _client.storage.from('menu-media').uploadBinaryToSignedUrl(
-          storagePath,
-          token,
-          bytes,
-          FileOptions(contentType: contentType, upsert: true),
-        );
-    _logApi('uploadCaptureMedia storage upload complete captureId=$captureId');
-
-    final Map<String, Object?> created = await _invokeJson(
-      'create-photo',
-      <String, Object?>{
-        'captureId': captureId,
-        'batchId': batchId,
-        'ordinal': ordinal,
-        'storagePath': storagePath,
-        'contentType': contentType,
-        'byteSize': bytes.length,
-        'capturedAt': DateTime.now().toUtc().toIso8601String(),
-      },
-    );
-    final Map<String, Object?> image = apiMapValue(created, 'image');
-    final String mediaRef = apiStringValue(image, 'mediaRef');
-    _logApi('uploadCaptureMedia complete captureId=$captureId');
-    return mediaRef;
-  }
-
-  @override
-  Future<void> markCaptureBatchReady({required String batchId}) async {
-    await _ensureSession();
-    await _client.rpc<Object?>(
-      'api_mark_capture_batch_ready',
-      params: <String, Object?>{'p_batch_id': batchId},
     );
   }
 
   @override
-  Future<List<ApiCaptureBatch>> getCaptureBatches(List<String> ids) {
-    return _getCaptureBatches(this, ids);
+  Future<List<ApiAiJob>> getAiJobs(List<String> ids) {
+    return _getAiJobs(this, ids);
   }
 
   @override
-  Future<ApiClassificationStart> classifyCapture({
-    required String captureId,
-    required String? remoteMediaRef,
-    required String? ideaText,
-  }) async {
-    await _ensureSession();
-
-    final Map<String, Object?> data = await _invokeJson(
-      'classify',
-      <String, Object?>{
-        'captureId': captureId,
-        if (remoteMediaRef != null) 'remoteMediaRef': remoteMediaRef,
-        if (ideaText != null) 'ideaText': ideaText,
-      },
+  Future<ApiAiJob> retryAiJob({required String jobId}) {
+    return _singleAiJobRpc(
+      this,
+      'api_retry_ai_job',
+      <String, Object?>{'p_job_id': jobId},
     );
+  }
 
-    return ApiClassificationStart(
-      captureId: apiStringValue(data, 'captureId'),
-      status: apiStringValue(data, 'status'),
+  @override
+  Future<ApiAiJob> cancelAiJob({required String jobId}) {
+    return _singleAiJobRpc(
+      this,
+      'api_cancel_ai_job',
+      <String, Object?>{'p_job_id': jobId},
     );
   }
 
@@ -358,6 +314,7 @@ class SupabaseMyMenuApiClient extends MyMenuApiClient {
         .toList(growable: false);
   }
 
+  @override
   Future<void> _ensureSession() async {
     if (_client.auth.currentSession != null) {
       return;
@@ -367,23 +324,11 @@ class SupabaseMyMenuApiClient extends MyMenuApiClient {
     _logApi('signInAnonymously complete');
   }
 
+  @override
   Future<Map<String, Object?>> _invokeJson(
     String functionName,
     Map<String, Object?> body,
   ) {
     return _invokeSupabaseJson(this, functionName, body);
-  }
-}
-
-void _logApi(String message, [Object? error, StackTrace? stackTrace]) {
-  developer.log(
-    message,
-    name: 'mymenu.api',
-    error: error,
-    stackTrace: stackTrace,
-  );
-  debugPrint('mymenu.api: $message${error == null ? '' : ' error=$error'}');
-  if (stackTrace != null) {
-    debugPrintStack(label: 'mymenu.api stack', stackTrace: stackTrace);
   }
 }

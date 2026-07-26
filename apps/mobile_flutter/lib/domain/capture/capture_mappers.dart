@@ -14,6 +14,9 @@ extension CaptureItemRowMapper on db.CaptureItemRow {
       localMediaRef: localMediaRef,
       remoteMediaRef: remoteMediaRef,
       text: ideaText,
+      capturedAt: capturedAt,
+      capturedLocalDate: capturedLocalDate,
+      captureDateSource: captureDateSource,
       appliedDishId: appliedDishId,
       failureReason: failureReason,
     );

@@ -49,6 +49,52 @@ Deno.test("get-captures returns captures and missing ids", async () => {
   assertSignedUrl(objectValue(item, "image").mediaRef);
 });
 
+Deno.test("prepare-photo-upload can resume an existing storage object", async () => {
+  const session = await createSession();
+  const adminClient = createClient(baseUrl, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+  const captureId = crypto.randomUUID();
+  const storagePath =
+    `users/${session.userId}/captures/${captureId}/original.jpg`;
+  const firstBytes = new Uint8Array([0xff, 0xd8, 0x01, 0xd9]);
+  const resumedBytes = new Uint8Array([0xff, 0xd8, 0x02, 0xd9]);
+
+  await checked(
+    adminClient.storage.from("menu-media").upload(
+      storagePath,
+      new Blob([firstBytes], { type: "image/jpeg" }),
+      {
+        contentType: "image/jpeg",
+        upsert: true,
+      },
+    ),
+    "upload interrupted capture image",
+  );
+
+  const prepared = await postJson(session, "prepare-photo-upload", {
+    captureId,
+    contentType: "image/jpeg",
+    byteSize: resumedBytes.length,
+  });
+  const upload = objectValue(prepared, "upload");
+  await checked(
+    adminClient.storage.from("menu-media").uploadToSignedUrl(
+      storagePath,
+      stringValue(upload, "token"),
+      new Blob([resumedBytes], { type: "image/jpeg" }),
+      {
+        contentType: "image/jpeg",
+        upsert: true,
+      },
+    ),
+    "resume interrupted capture image",
+  );
+});
+
 Deno.test("create-photo records an ordered batch item idempotently", async () => {
   const session = await createSession();
   const adminClient = createClient(baseUrl, serviceRoleKey, {
@@ -505,6 +551,14 @@ function numberValue(row: Record<string, unknown>, key: string) {
   const value = row[key];
   if (typeof value !== "number" || !Number.isFinite(value)) {
     throw new Error(`Expected number at ${key}: ${JSON.stringify(value)}`);
+  }
+  return value;
+}
+
+function stringValue(row: Record<string, unknown>, key: string) {
+  const value = row[key];
+  if (typeof value !== "string" || value.length === 0) {
+    throw new Error(`Expected string at ${key}: ${JSON.stringify(value)}`);
   }
   return value;
 }

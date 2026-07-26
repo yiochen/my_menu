@@ -51,6 +51,7 @@ VALUES (
 );
 
 SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.role', 'authenticated', true);
 SELECT set_config(
   'request.jwt.claim.sub',
   '00000000-0000-4000-8000-000000000101',
@@ -138,7 +139,7 @@ SELECT is(
 SELECT is(
   has_function_privilege(
     'anon',
-    'public.api_create_photo_capture(uuid,uuid,uuid,integer,text,text,bigint,integer,integer,text,timestamp with time zone)',
+    'public.api_create_photo_capture(uuid,uuid,uuid,integer,text,text,bigint,integer,integer,text,timestamp with time zone,date,text)',
     'EXECUTE'
   ),
   false,
@@ -148,7 +149,7 @@ SELECT is(
 SELECT is(
   has_function_privilege(
     'service_role',
-    'public.api_create_photo_capture(uuid,uuid,uuid,integer,text,text,bigint,integer,integer,text,timestamp with time zone)',
+    'public.api_create_photo_capture(uuid,uuid,uuid,integer,text,text,bigint,integer,integer,text,timestamp with time zone,date,text)',
     'EXECUTE'
   ),
   true,
@@ -181,22 +182,29 @@ SELECT lives_ok(
   'items upload independently'
 );
 
-SET LOCAL ROLE authenticated;
-SELECT set_config(
-  'request.jwt.claim.sub',
-  '00000000-0000-4000-8000-000000000101',
-  true
-);
+SET LOCAL ROLE service_role;
+SELECT set_config('request.jwt.claim.role', 'service_role', true);
 
-SELECT is(
-  (
-    SELECT ready
-    FROM public.api_mark_capture_batch_ready(
-      '30000000-0000-4000-8000-000000000101'
+SELECT throws_ok(
+  $$
+    SELECT *
+    FROM public.internal_finalize_capture_batch(
+      '00000000-0000-4000-8000-000000000101',
+      '30000000-0000-4000-8000-000000000101',
+      'photo',
+      null,
+      null,
+      null,
+      null,
+      '50000000-0000-4000-8000-000000000101',
+      'batch:30000000-0000-4000-8000-000000000101:date-v1',
+      'hash-101',
+      'date-v1',
+      3
     )
-  ),
-  false,
-  'two of three uploads do not mark the batch ready'
+  $$,
+  'Capture batch 30000000-0000-4000-8000-000000000101 is not ready: 2 of 3 items uploaded',
+  'an incomplete batch cannot queue its AI job'
 );
 
 SELECT is(
@@ -259,22 +267,28 @@ SELECT is(
   'repeated item request does not duplicate storage metadata'
 );
 
-SET LOCAL ROLE authenticated;
-SELECT set_config(
-  'request.jwt.claim.sub',
-  '00000000-0000-4000-8000-000000000101',
-  true
-);
+SET LOCAL ROLE service_role;
+SELECT set_config('request.jwt.claim.role', 'service_role', true);
 
-SELECT is(
-  (
-    SELECT ready
-    FROM public.api_mark_capture_batch_ready(
-      '30000000-0000-4000-8000-000000000101'
+SELECT lives_ok(
+  $$
+    SELECT *
+    FROM public.internal_finalize_capture_batch(
+      '00000000-0000-4000-8000-000000000101',
+      '30000000-0000-4000-8000-000000000101',
+      'photo',
+      null,
+      null,
+      null,
+      null,
+      '50000000-0000-4000-8000-000000000101',
+      'batch:30000000-0000-4000-8000-000000000101:date-v1',
+      'hash-101',
+      'date-v1',
+      3
     )
-  ),
-  true,
-  'batch becomes ready after every expected item has media metadata'
+  $$,
+  'a complete batch durably queues its AI job'
 );
 
 SELECT is(
@@ -283,8 +297,17 @@ SELECT is(
     FROM public.capture_batches
     WHERE id = '30000000-0000-4000-8000-000000000101'
   ),
-  'ready_for_ai',
-  'ready transition is stored on the batch'
+  'processing',
+  'queued AI work transitions the batch to processing'
+);
+
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+SELECT set_config('request.jwt.claim.role', 'authenticated', true);
+SELECT set_config(
+  'request.jwt.claim.sub',
+  '00000000-0000-4000-8000-000000000101',
+  true
 );
 
 SELECT is(
@@ -309,37 +332,16 @@ SELECT is(
     ORDER BY id DESC
     LIMIT 1
   ),
-  'ready_for_ai',
-  'ready transition emits a capture-batch sync event'
+  'processing',
+  'AI queueing emits a capture-batch processing event'
 );
 
-DO $$
-BEGIN
-  PERFORM *
-  FROM public.api_create_photo_capture(
-    '00000000-0000-4000-8000-000000000101',
-    '40000000-0000-4000-8000-000000000109',
-    'users/00000000-0000-4000-8000-000000000101/captures/40000000-0000-4000-8000-000000000109/original.jpg',
-    'image/jpeg',
-    null,
-    null,
-    null,
-    null,
-    now()
-  );
-END
-$$;
-
 SELECT is(
-  (
-    SELECT count(*)
-    FROM public.captures
-    WHERE captures.id = '40000000-0000-4000-8000-000000000109'
-      AND captures.batch_id = captures.id
-      AND captures.ordinal = 0
+  to_regprocedure(
+    'public.api_create_photo_capture(uuid,uuid,text,text,bigint,integer,integer,text,timestamp with time zone)'
   ),
-  1::bigint,
-  'legacy single-photo API produces the same valid one-item batch shape'
+  null::regprocedure,
+  'the legacy single-photo API is removed'
 );
 
 SELECT * FROM finish();

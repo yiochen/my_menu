@@ -57,6 +57,7 @@ extension SyncRepositoryPull on SyncRepository {
     final Set<String> captureBatchIds = <String>{};
     final Set<String> dishIds = <String>{};
     final Set<String> reviewItemIds = <String>{};
+    final Set<String> aiJobIds = <String>{};
     final Set<String> deletedCaptureIds = <String>{};
     final Set<String> deletedDishIds = <String>{};
     final Set<String> deletedReviewItemIds = <String>{};
@@ -66,6 +67,7 @@ extension SyncRepositoryPull on SyncRepository {
       final String? batchId = event.entityIds['batchId'];
       final String? dishId = event.entityIds['dishId'];
       final String? reviewItemId = event.entityIds['reviewItemId'];
+      final String? aiJobId = event.entityIds['aiJobId'];
 
       switch (event.type) {
         case 'capture_batch.pending_upload':
@@ -125,6 +127,15 @@ extension SyncRepositoryPull on SyncRepository {
           if (reviewItemId != null) {
             deletedReviewItemIds.add(reviewItemId);
           }
+        case 'ai_job.queued':
+        case 'ai_job.running':
+        case 'ai_job.retrying':
+        case 'ai_job.succeeded':
+        case 'ai_job.failed':
+        case 'ai_job.canceled':
+          if (aiJobId != null) {
+            aiJobIds.add(aiJobId);
+          }
         default:
       }
     }
@@ -137,6 +148,8 @@ extension SyncRepositoryPull on SyncRepository {
         await _apiClient.getDishes(dishIds.toList(growable: false));
     final List<ApiReviewItem> reviewItems =
         await _apiClient.getReviewItems(reviewItemIds.toList(growable: false));
+    final List<ApiAiJob> aiJobs =
+        await _apiClient.getAiJobs(aiJobIds.toList(growable: false));
 
     await _database.transaction(() async {
       await _deleteSyncedRows(
@@ -155,6 +168,9 @@ extension SyncRepositoryPull on SyncRepository {
       }
       for (final ApiReviewItem item in reviewItems) {
         await _upsertReviewItem(item);
+      }
+      for (final ApiAiJob job in aiJobs) {
+        await _upsertAiJob(job);
       }
     });
   }
@@ -230,6 +246,9 @@ extension SyncRepositoryPull on SyncRepository {
             localMediaRef: Value<String?>(existing?.localMediaRef),
             remoteMediaRef: Value<String?>(capture.image?.mediaRef),
             ideaText: Value<String?>(capture.ideaText),
+            capturedAt: Value<DateTime?>(capture.capturedAt),
+            capturedLocalDate: Value<String?>(capture.capturedLocalDate),
+            captureDateSource: Value<String?>(capture.captureDateSource),
             appliedDishId: Value<String?>(capture.appliedDishId),
             failureReason: Value<String?>(capture.failureReason),
           ),

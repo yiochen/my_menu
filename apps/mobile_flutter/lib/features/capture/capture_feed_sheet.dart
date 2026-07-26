@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:mymenu/domain/ai/ai_job.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/features/ai/ai_job_status_card.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/app_image.dart';
 
@@ -20,6 +22,7 @@ Future<void> showCaptureFeedSheet(
           animation: state,
           builder: (BuildContext context, _) {
             final List<CaptureBatch> batches = state.captureBatches;
+            final List<AiJob> aiJobs = state.aiJobs;
             return RefreshIndicator(
               onRefresh: state.refreshFromServer,
               child: ListView(
@@ -37,11 +40,39 @@ Future<void> showCaptureFeedSheet(
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 16),
+                  if (aiJobs.isNotEmpty) ...<Widget>[
+                    Text(
+                      'AI activity',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    for (final AiJob job in aiJobs) ...<Widget>[
+                      AiJobStatusCard(
+                        job: job,
+                        onRetry: job.status.canRetry
+                            ? () => state.retryAiJob(job.id)
+                            : null,
+                        onCancel: job.type != AiJobType.batchGrouping &&
+                                job.status.canCancel
+                            ? () => state.cancelAiJob(job.id)
+                            : null,
+                        onDismiss: job.status.canDismiss
+                            ? () => state.dismissAiJob(job.id)
+                            : null,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    const SizedBox(height: 4),
+                  ],
                   if (batches.isEmpty)
                     const Text('No capture batches yet.')
                   else
                     for (final CaptureBatch batch in batches) ...<Widget>[
-                      _CaptureBatchCard(batch: batch, state: state),
+                      _CaptureBatchCard(
+                        batch: batch,
+                        state: state,
+                        groupingJob: _groupingJobFor(aiJobs, batch.id),
+                      ),
                       const SizedBox(height: 12),
                     ],
                 ],
@@ -54,16 +85,36 @@ Future<void> showCaptureFeedSheet(
   );
 }
 
+AiJob? _groupingJobFor(List<AiJob> jobs, String batchId) {
+  final List<AiJob> matches = jobs
+      .where(
+        (AiJob job) =>
+            job.type == AiJobType.batchGrouping && job.subjectId == batchId,
+      )
+      .toList(growable: false)
+    ..sort(
+        (AiJob left, AiJob right) => right.updatedAt.compareTo(left.updatedAt));
+  return matches.firstOrNull;
+}
+
 class _CaptureBatchCard extends StatelessWidget {
-  const _CaptureBatchCard({required this.batch, required this.state});
+  const _CaptureBatchCard({
+    required this.batch,
+    required this.state,
+    required this.groupingJob,
+  });
 
   final CaptureBatch batch;
   final MyMenuState state;
+  final AiJob? groupingJob;
 
   @override
   Widget build(BuildContext context) {
-    final bool canRetry =
-        batch.failedItemCount > 0 || batch.status == CaptureBatchStatus.failed;
+    final bool canRetryAi = batch.status == CaptureBatchStatus.failed &&
+        groupingJob?.status == AiJobStatus.failed;
+    final bool canRetryUpload = batch.failedItemCount > 0 ||
+        (batch.status == CaptureBatchStatus.failed && !canRetryAi);
+    final bool canRetry = canRetryAi || canRetryUpload;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -99,14 +150,18 @@ class _CaptureBatchCard extends StatelessWidget {
               const SizedBox(height: 8),
               FilledButton.icon(
                 key: ValueKey<String>('retry_batch_${batch.id}'),
-                onPressed: () => state.retryCaptureBatch(batch.id),
+                onPressed: canRetryAi
+                    ? () => state.retryAiJob(groupingJob!.id)
+                    : () => state.retryCaptureBatch(batch.id),
                 icon: const Icon(Icons.refresh_rounded),
                 label: Text(
-                  batch.failedItemCount == 0
-                      ? 'Retry batch'
-                      : batch.failedItemCount == 1
-                          ? 'Retry failed photo'
-                          : 'Retry failed photos',
+                  canRetryAi
+                      ? 'Retry organization'
+                      : batch.failedItemCount == 0
+                          ? 'Retry batch'
+                          : batch.failedItemCount == 1
+                              ? 'Retry failed photo'
+                              : 'Retry failed photos',
                 ),
               ),
             ],
@@ -122,6 +177,20 @@ class _CaptureBatchCard extends StatelessWidget {
   }
 
   String _progressLabel(CaptureBatch batch) {
+    if (batch.status == CaptureBatchStatus.applied) {
+      final int dishCount = batch.items
+          .map((CaptureItem item) => item.appliedDishId)
+          .whereType<String>()
+          .toSet()
+          .length;
+      return dishCount == 1
+          ? 'Added as 1 cooking occasion'
+          : 'Added as $dishCount cooking occasions';
+    }
+    if (batch.status == CaptureBatchStatus.processing) {
+      return '${batch.items.length} of ${batch.items.length} uploaded · '
+          'organizing in the background';
+    }
     if (batch.isWaitingForConnection) {
       return 'Saved on this device · ${batch.uploadedItemCount} of '
           '${batch.items.length} uploaded';

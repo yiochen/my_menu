@@ -48,9 +48,10 @@ Add or update tests with backend changes:
   coverage under `supabase/tests/`
 - Edge Function routing, request validation, auth behavior, storage access, or
   RPC integration changes should include HTTP tests under `supabase/tests/edge/`
-- async capture processing is scheduled by `api_schedule_capture_processing`
-  with `pg_net`; test the database enqueue in pgTAP and test the internal worker
-  (`process-capture-async`) directly with Edge Function HTTP tests
+- capture organization is durably queued by `internal_finalize_capture_batch`;
+  `finalize-capture-batch` also dispatches `process-ai-jobs` with `pg_net`
+- test job creation, date grouping, leases, retries, and atomic completion in
+  pgTAP, and test the internal worker authorization with Edge Function HTTP tests
 - when a change intentionally has no useful test seam, document why in the PR
   or final handoff
 
@@ -83,3 +84,8 @@ the Supabase stack after the check.
 Do not commit secrets or local machine state, including Supabase access tokens,
 database passwords, production API keys, OAuth provider secrets, Edge Function
 secrets, or generated local environment files.
+
+Immediate AI dispatch occurs through `finalize-capture-batch` and the protected
+`process-ai-jobs` route. The recurring recovery path is database-native:
+`pg_cron` invokes `internal_process_capture_ai_jobs` once per minute, so it does
+not depend on a network request or another stored service key.

@@ -59,15 +59,33 @@ Deno.test("get-review-items requires a user session", async () => {
   await response.body?.cancel();
 });
 
+Deno.test("finalize-capture-batch requires a user session", async () => {
+  const response = await fetch(
+    `${baseUrl}/functions/v1/finalize-capture-batch`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        batchId: "30000000-0000-4000-8000-000000000010",
+        kind: "photo",
+        job: {},
+      }),
+    },
+  );
+
+  assertEquals(response.status, 401);
+  await response.body?.cancel();
+});
+
 function assertEquals(actual: unknown, expected: unknown) {
   if (actual !== expected) {
     throw new Error(`Expected ${expected}, got ${actual}`);
   }
 }
 
-Deno.test("process-capture-async requires the worker key", async () => {
+Deno.test("process-ai-jobs requires the worker key", async () => {
   const response = await fetch(
-    `${baseUrl}/functions/v1/process-capture-async`,
+    `${baseUrl}/functions/v1/process-ai-jobs`,
     {
       method: "POST",
       headers: {
@@ -75,10 +93,7 @@ Deno.test("process-capture-async requires the worker key", async () => {
         "Content-Type": "application/json",
         "x-mymenu-worker-key": "not-the-worker-key",
       },
-      body: JSON.stringify({
-        userId: "00000000-0000-4000-8000-000000000001",
-        captureId: "10000000-0000-4000-8000-000000000011",
-      }),
+      body: "{}",
     },
   );
 

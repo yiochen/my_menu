@@ -33,7 +33,7 @@ Deno.serve(async (request: Request) => {
     // after upload succeeds.
     const { data, error: uploadError } = await adminClient.storage
       .from("menu-media")
-      .createSignedUploadUrl(storagePath);
+      .createSignedUploadUrl(storagePath, { upsert: true });
 
     if (uploadError != null) {
       throw uploadError;

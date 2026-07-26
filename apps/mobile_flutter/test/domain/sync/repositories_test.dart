@@ -9,6 +9,7 @@ import 'package:mymenu/core/network/my_menu_api_client.dart';
 import 'package:mymenu/core/network/network_status_monitor.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
+import 'package:mymenu/domain/capture/captured_media.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/dishes/seeded_dishes.dart';
 import 'package:mymenu/domain/planning/seeded_plan.dart';
@@ -132,7 +133,7 @@ void main() {
       expect(operations.where((row) => row.completedAt != null), hasLength(1));
     });
 
-    test('photo capture sync marks its batch ready after upload', () async {
+    test('photo capture sync queues its batch for AI after upload', () async {
       await repositories.seedIfNeeded();
       await repositories.captureRepository.createPhotoCaptures(
         const <String>['/tmp/capture.jpg'],
@@ -147,8 +148,8 @@ void main() {
 
       expect(createdDishes, isEmpty);
       final batches = await repositories.captureRepository.listBatches();
-      expect(feedItems.single.status, CaptureItemStatus.uploaded);
-      expect(batches.single.status, CaptureBatchStatus.readyForAi);
+      expect(feedItems.single.status, CaptureItemStatus.classifying);
+      expect(batches.single.status, CaptureBatchStatus.processing);
       expect(feedItems.single.appliedDishId, isNull);
       expect(feedItems.single.remoteMediaRef, startsWith('fake://captures/'));
     });
@@ -205,7 +206,7 @@ void main() {
       expect(await database.select(database.syncOperations).get(), isEmpty);
     });
 
-    test('idea capture trims text and starts classifying', () async {
+    test('idea capture trims text and queues local sync', () async {
       final String? id = await repositories.captureRepository
           .createIdeaCapture('  kimchi rice  ');
 
@@ -215,7 +216,7 @@ void main() {
 
       expect(id, isNotNull);
       expect(feedItems.single.kind, CaptureItemKind.idea);
-      expect(feedItems.single.status, CaptureItemStatus.classifying);
+      expect(feedItems.single.status, CaptureItemStatus.pendingUpload);
       expect(feedItems.single.text, 'kimchi rice');
       expect(
         syncOperations
@@ -283,7 +284,6 @@ void main() {
       final feedItems = await repositories.captureRepository.listFeedItems();
 
       expect(apiClient.uploadedCaptureIds, hasLength(1));
-      expect(apiClient.classifiedRemoteMediaRefs, isEmpty);
       expect(apiClient.readyBatchIds, hasLength(1));
       expect(feedItems.single.remoteMediaRef, startsWith('remote://'));
     });
@@ -300,7 +300,6 @@ void main() {
 
       expect(createdDishes, isEmpty);
       expect(apiClient.uploadedCaptureIds, isEmpty);
-      expect(apiClient.classifiedCaptureIds, isEmpty);
     });
 
     test('sync repository marks captures failed when remote sync throws',
@@ -359,6 +358,41 @@ void main() {
       expect(batch.items.single.remoteMediaRef, isNull);
     });
 
+    test('restart recovers an upload whose storage object already exists',
+        () async {
+      final _RecordingApiClient apiClient = _RecordingApiClient();
+      repositories = AppRepositories(
+        database: database,
+        apiClient: apiClient,
+      );
+      final CaptureBatch batch =
+          (await repositories.captureRepository.createPhotoBatch(
+        const <String>['/tmp/interrupted.jpg'],
+      ))!;
+      final String captureId = batch.items.single.id;
+
+      await (database.update(database.captureItems)
+            ..where((table) => table.id.equals(captureId)))
+          .write(
+        const CaptureItemsCompanion(
+          status: Value<String>('failed'),
+          failureReason: Value<String?>(
+            'FunctionException(status: 500, details: '
+            '{error: The resource already exists})',
+          ),
+        ),
+      );
+
+      await repositories.syncRepository.processPendingCaptures();
+
+      final CaptureBatch recovered =
+          (await repositories.captureRepository.listBatches()).single;
+      expect(apiClient.uploadedCaptureIds, <String>[captureId]);
+      expect(recovered.items.single.status, CaptureItemStatus.classifying);
+      expect(recovered.items.single.failureReason, isNull);
+      expect(recovered.status, CaptureBatchStatus.processing);
+    });
+
     test('network change retries an offline batch and clears its marker',
         () async {
       final _HangingReconnectApiClient apiClient = _HangingReconnectApiClient();
@@ -394,7 +428,7 @@ void main() {
         () => state.captureBatches.any(
           (CaptureBatch batch) =>
               batch.id == createdBatch.id &&
-              batch.status == CaptureBatchStatus.readyForAi,
+              batch.status == CaptureBatchStatus.processing,
         ),
       );
 
@@ -443,7 +477,7 @@ void main() {
         orderedEquals(batch.items.map((CaptureItem item) => item.id)),
       );
       expect(apiClient.uploadedCaptureIds.toSet(), hasLength(3));
-      expect(synced.status, CaptureBatchStatus.readyForAi);
+      expect(synced.status, CaptureBatchStatus.processing);
     });
 
     test('partial retry uploads only the failed item', () async {
@@ -487,11 +521,11 @@ void main() {
       expect(apiClient.uploadedOrdinals, <int>[0, 1, 2, 1]);
       expect(
         refreshed.items.every(
-          (CaptureItem item) => item.status == CaptureItemStatus.uploaded,
+          (CaptureItem item) => item.status == CaptureItemStatus.classifying,
         ),
         isTrue,
       );
-      expect(refreshed.status, CaptureBatchStatus.readyForAi);
+      expect(refreshed.status, CaptureBatchStatus.processing);
       expect(apiClient.readyBatchIds, <String>[batch.id]);
     });
 
@@ -601,7 +635,7 @@ void main() {
       );
     });
 
-    test('fake API upload and idea classification start return expected DTOs',
+    test('fake API upload and batch finalization return expected DTOs',
         () async {
       final FakeMyMenuApiClient apiClient = FakeMyMenuApiClient();
 
@@ -611,15 +645,83 @@ void main() {
         ordinal: 0,
         localMediaRef: '/tmp/photo.jpg',
       );
-      final ApiClassificationStart result = await apiClient.classifyCapture(
-        captureId: 'capture_1',
-        remoteMediaRef: mediaRef,
-        ideaText: 'crispy tofu bowls',
+      final ApiAiJob result = await apiClient.finalizeCaptureBatch(
+        batchId: 'batch_1',
+        kind: 'photo',
+        ideaText: null,
+        capturedAt: DateTime.utc(2026, 7, 20),
+        capturedLocalDate: '2026-07-20',
+        captureDateSource: 'exif_original',
+        jobId: 'job_1',
+        idempotencyKey: 'batch_grouping:batch_1:date-v1',
+        inputHash: 'hash',
+        inputVersion: 'date-v1',
+        maxAttempts: 3,
       );
 
       expect(mediaRef, 'fake://captures/capture_1');
-      expect(result.captureId, 'capture_1');
-      expect(result.status, CaptureItemStatus.classifying.name);
+      expect(result.subjectId, 'batch_1');
+      expect(result.status, 'queued');
+    });
+
+    test('fake AI groups imported photos by original local date', () async {
+      await repositories.captureRepository.createPhotoBatch(
+        <CapturedMedia>[
+          CapturedMedia(
+            path: '/tmp/july20-a.jpg',
+            capturedAt: DateTime(2026, 7, 20, 12),
+            capturedLocalDate: '2026-07-20',
+            dateSource: CaptureDateSource.exifOriginal,
+          ),
+          CapturedMedia(
+            path: '/tmp/july20-b.jpg',
+            capturedAt: DateTime(2026, 7, 20, 18),
+            capturedLocalDate: '2026-07-20',
+            dateSource: CaptureDateSource.exifOriginal,
+          ),
+          CapturedMedia(
+            path: '/tmp/july21.jpg',
+            capturedAt: DateTime(2026, 7, 21, 12),
+            capturedLocalDate: '2026-07-21',
+            dateSource: CaptureDateSource.exifOriginal,
+          ),
+          CapturedMedia(
+            path: '/tmp/unknown.jpg',
+            capturedAt: DateTime(2026, 7, 22, 12),
+            capturedLocalDate: null,
+            dateSource: CaptureDateSource.unknown,
+          ),
+        ],
+      );
+
+      await repositories.syncRepository.processPendingCaptures();
+      await repositories.syncRepository.pullCaptureSync();
+
+      final List<Dish> dishes = await repositories.dishRepository.listDishes();
+      final List<CaptureItem> captures =
+          await repositories.captureRepository.listFeedItems();
+      final Set<String> july20DishIds = captures
+          .where((CaptureItem item) => item.capturedLocalDate == '2026-07-20')
+          .map((CaptureItem item) => item.appliedDishId)
+          .whereType<String>()
+          .toSet();
+
+      expect(dishes, hasLength(3));
+      expect(
+        dishes.map((Dish dish) => dish.title),
+        containsAll(<String>[
+          'Captured Dish · Jul 20',
+          'Captured Dish · Jul 21',
+          'Captured Dish',
+        ]),
+      );
+      expect(july20DishIds, hasLength(1));
+      expect(
+        dishes
+            .singleWhere((Dish dish) => dish.title.endsWith('Jul 20'))
+            .madeCount,
+        1,
+      );
     });
 
     test('pullCaptureSync applies capture result events and advances cursor',
@@ -649,8 +751,6 @@ void main() {
 
 class _RecordingApiClient extends MyMenuApiClient {
   final List<String> uploadedCaptureIds = <String>[];
-  final List<String> classifiedCaptureIds = <String>[];
-  final List<String?> classifiedRemoteMediaRefs = <String?>[];
   final List<String> createdNoteIds = <String>[];
   final List<String> readyBatchIds = <String>[];
 
@@ -673,21 +773,32 @@ class _RecordingApiClient extends MyMenuApiClient {
   }
 
   @override
-  Future<void> markCaptureBatchReady({required String batchId}) async {
-    readyBatchIds.add(batchId);
-  }
-
-  @override
-  Future<ApiClassificationStart> classifyCapture({
-    required String captureId,
-    required String? remoteMediaRef,
+  Future<ApiAiJob> finalizeCaptureBatch({
+    required String batchId,
+    required String kind,
     required String? ideaText,
-  }) async {
-    classifiedCaptureIds.add(captureId);
-    classifiedRemoteMediaRefs.add(remoteMediaRef);
-    return ApiClassificationStart(
-      captureId: captureId,
-      status: CaptureItemStatus.classifying.name,
+    required DateTime capturedAt,
+    required String? capturedLocalDate,
+    required String captureDateSource,
+    required String jobId,
+    required String idempotencyKey,
+    required String inputHash,
+    required String inputVersion,
+    required int maxAttempts,
+  }) {
+    readyBatchIds.add(batchId);
+    return super.finalizeCaptureBatch(
+      batchId: batchId,
+      kind: kind,
+      ideaText: ideaText,
+      capturedAt: capturedAt,
+      capturedLocalDate: capturedLocalDate,
+      captureDateSource: captureDateSource,
+      jobId: jobId,
+      idempotencyKey: idempotencyKey,
+      inputHash: inputHash,
+      inputVersion: inputVersion,
+      maxAttempts: maxAttempts,
     );
   }
 
@@ -785,6 +896,24 @@ class _ReconnectApiClient extends FakeMyMenuApiClient {
     uploadedCaptureIds.add(captureId);
     return 'remote://$captureId';
   }
+
+  @override
+  Future<String> uploadCaptureMediaWithMetadata({
+    required String captureId,
+    required String batchId,
+    required int ordinal,
+    required String localMediaRef,
+    required DateTime capturedAt,
+    required String? capturedLocalDate,
+    required String captureDateSource,
+  }) {
+    return uploadCaptureMedia(
+      captureId: captureId,
+      batchId: batchId,
+      ordinal: ordinal,
+      localMediaRef: localMediaRef,
+    );
+  }
 }
 
 class _HangingReconnectApiClient extends _ReconnectApiClient {
@@ -851,8 +980,51 @@ class _PartialFailureApiClient extends FakeMyMenuApiClient {
   }
 
   @override
-  Future<void> markCaptureBatchReady({required String batchId}) async {
+  Future<String> uploadCaptureMediaWithMetadata({
+    required String captureId,
+    required String batchId,
+    required int ordinal,
+    required String localMediaRef,
+    required DateTime capturedAt,
+    required String? capturedLocalDate,
+    required String captureDateSource,
+  }) {
+    return uploadCaptureMedia(
+      captureId: captureId,
+      batchId: batchId,
+      ordinal: ordinal,
+      localMediaRef: localMediaRef,
+    );
+  }
+
+  @override
+  Future<ApiAiJob> finalizeCaptureBatch({
+    required String batchId,
+    required String kind,
+    required String? ideaText,
+    required DateTime capturedAt,
+    required String? capturedLocalDate,
+    required String captureDateSource,
+    required String jobId,
+    required String idempotencyKey,
+    required String inputHash,
+    required String inputVersion,
+    required int maxAttempts,
+  }) {
     readyBatchIds.add(batchId);
+    return super.finalizeCaptureBatch(
+      batchId: batchId,
+      kind: kind,
+      ideaText: ideaText,
+      capturedAt: capturedAt,
+      capturedLocalDate: capturedLocalDate,
+      captureDateSource: captureDateSource,
+      jobId: jobId,
+      idempotencyKey: idempotencyKey,
+      inputHash: inputHash,
+      inputVersion: inputVersion,
+      maxAttempts: maxAttempts,
+    );
   }
 }
 
@@ -870,18 +1042,6 @@ class _ThrowingApiClient extends MyMenuApiClient {
     required String batchId,
     required int ordinal,
     required String localMediaRef,
-  }) {
-    throw StateError('Remote sync unavailable.');
-  }
-
-  @override
-  Future<void> markCaptureBatchReady({required String batchId}) async {}
-
-  @override
-  Future<ApiClassificationStart> classifyCapture({
-    required String captureId,
-    required String? remoteMediaRef,
-    required String? ideaText,
   }) {
     throw StateError('Remote sync unavailable.');
   }
@@ -961,20 +1121,6 @@ class _SyncResultApiClient extends MyMenuApiClient {
     required String localMediaRef,
   }) {
     throw StateError('Unexpected upload.');
-  }
-
-  @override
-  Future<void> markCaptureBatchReady({required String batchId}) {
-    throw StateError('Unexpected ready transition.');
-  }
-
-  @override
-  Future<ApiClassificationStart> classifyCapture({
-    required String captureId,
-    required String? remoteMediaRef,
-    required String? ideaText,
-  }) {
-    throw StateError('Unexpected classification.');
   }
 
   @override

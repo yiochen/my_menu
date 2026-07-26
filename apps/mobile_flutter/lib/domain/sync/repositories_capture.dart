@@ -57,18 +57,23 @@ class CaptureRepository {
     }).toList(growable: false);
   }
 
-  Future<CaptureBatch?> createPhotoBatch(List<String> imageRefs) async {
-    final List<String> refs = imageRefs
-        .map((String imageRef) => imageRef.trim())
-        .where((String imageRef) => imageRef.isNotEmpty)
+  Future<CaptureBatch?> createPhotoBatch(List<Object> capturedMedia) async {
+    final List<CapturedMedia> media = capturedMedia
+        .map(_normalizeCapturedMedia)
+        .where((CapturedMedia item) => item.path.trim().isNotEmpty)
         .take(maxBatchItems)
         .toList(growable: false);
-    if (refs.isEmpty) {
+    if (media.isEmpty) {
       return null;
     }
 
     final String batchId = _uuid.v4();
+    final String jobId = _uuid.v4();
     final DateTime now = DateTime.now();
+    final List<String> captureIds = List<String>.generate(
+      media.length,
+      (_) => _uuid.v4(),
+    );
     await _database.transaction(() async {
       await _database.into(_database.captureBatches).insert(
             db.CaptureBatchesCompanion.insert(
@@ -78,8 +83,9 @@ class CaptureRepository {
               updatedAt: now,
             ),
           );
-      for (int ordinal = 0; ordinal < refs.length; ordinal += 1) {
-        final String id = _uuid.v4();
+      for (int ordinal = 0; ordinal < media.length; ordinal += 1) {
+        final String id = captureIds[ordinal];
+        final CapturedMedia item = media[ordinal];
         await _database.into(_database.captureItems).insert(
               db.CaptureItemsCompanion.insert(
                 id: id,
@@ -88,20 +94,31 @@ class CaptureRepository {
                 kind: capture_domain.CaptureItemKind.photo.name,
                 status: capture_domain.CaptureItemStatus.pendingUpload.name,
                 createdAt: now,
-                localMediaRef: Value<String?>(refs[ordinal]),
+                localMediaRef: Value<String?>(item.path),
+                capturedAt: Value<DateTime?>(item.capturedAt),
+                capturedLocalDate: Value<String?>(item.capturedLocalDate),
+                captureDateSource: Value<String?>(item.dateSource.apiValue),
               ),
             );
         await _enqueueSync(id, 'capture_item', 'upsert');
       }
       await _enqueueSync(batchId, 'capture_batch', 'upsert');
+      await _insertGroupingJob(
+        jobId: jobId,
+        batchId: batchId,
+        captureIds: captureIds,
+        now: now,
+      );
     });
 
     return (await listBatches())
         .firstWhere((CaptureBatch batch) => batch.id == batchId);
   }
 
-  Future<List<String>> createPhotoCaptures(List<String> imageRefs) async {
-    final CaptureBatch? batch = await createPhotoBatch(imageRefs);
+  Future<List<String>> createPhotoCaptures(
+    List<Object> capturedMedia,
+  ) async {
+    final CaptureBatch? batch = await createPhotoBatch(capturedMedia);
     return batch?.items
             .map((capture_domain.CaptureItem item) => item.id)
             .toList(growable: false) ??
@@ -114,12 +131,14 @@ class CaptureRepository {
       return null;
     }
     final String id = _uuid.v4();
+    final String jobId = _uuid.v4();
     final DateTime now = DateTime.now();
+    final String localDate = _dateKey(now);
     await _database.transaction(() async {
       await _database.into(_database.captureBatches).insert(
             db.CaptureBatchesCompanion.insert(
               id: id,
-              status: CaptureBatchStatus.processing.name,
+              status: CaptureBatchStatus.pendingUpload.name,
               createdAt: now,
               updatedAt: now,
             ),
@@ -129,15 +148,75 @@ class CaptureRepository {
               id: id,
               batchId: Value<String?>(id),
               kind: capture_domain.CaptureItemKind.idea.name,
-              status: capture_domain.CaptureItemStatus.classifying.name,
+              status: capture_domain.CaptureItemStatus.pendingUpload.name,
               createdAt: now,
               ideaText: Value<String?>(trimmed),
+              capturedAt: Value<DateTime?>(now),
+              capturedLocalDate: Value<String?>(localDate),
+              captureDateSource: const Value<String?>('camera'),
             ),
           );
       await _enqueueSync(id, 'capture_item', 'upsert');
       await _enqueueSync(id, 'capture_batch', 'upsert');
+      await _insertGroupingJob(
+        jobId: jobId,
+        batchId: id,
+        captureIds: <String>[id],
+        now: now,
+      );
     });
     return id;
+  }
+
+  Future<void> _insertGroupingJob({
+    required String jobId,
+    required String batchId,
+    required List<String> captureIds,
+    required DateTime now,
+  }) async {
+    const String inputVersion = 'date-v1';
+    final String canonicalInput = jsonEncode(<String, Object?>{
+      'batchId': batchId,
+      'captureIds': captureIds,
+      'grouping': inputVersion,
+    });
+    await _database.into(_database.aiJobs).insert(
+          db.AiJobsCompanion.insert(
+            id: jobId,
+            jobType: AiJobType.batchGrouping.apiValue,
+            subjectId: batchId,
+            status: AiJobStatus.pendingOffline.databaseValue,
+            idempotencyKey:
+                '${AiJobType.batchGrouping.apiValue}:$batchId:$inputVersion',
+            inputHash: base64UrlEncode(utf8.encode(canonicalInput)),
+            inputVersion: inputVersion,
+            promptVersion: const Value<String>('date-v1'),
+            modelVersion: const Value<String>('fake-date-grouper'),
+            schemaVersion: const Value<String>('1'),
+            pendingAction: const Value<String?>('finalize_capture'),
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+  }
+
+  String _dateKey(DateTime date) {
+    final String month = date.month.toString().padLeft(2, '0');
+    final String day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
+  }
+
+  CapturedMedia _normalizeCapturedMedia(Object value) {
+    if (value is CapturedMedia) {
+      return value;
+    }
+    final DateTime now = DateTime.now();
+    return CapturedMedia(
+      path: value.toString(),
+      capturedAt: now,
+      capturedLocalDate: null,
+      dateSource: CaptureDateSource.unknown,
+    );
   }
 
   Future<void> discardCapture(String captureId) async {

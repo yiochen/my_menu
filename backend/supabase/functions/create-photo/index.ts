@@ -43,6 +43,8 @@ Deno.serve(async (request: Request) => {
       p_sha256: optionalString(body, "sha256"),
       p_captured_at: optionalString(body, "capturedAt") ??
         new Date().toISOString(),
+      p_captured_local_date: optionalString(body, "capturedLocalDate"),
+      p_capture_date_source: optionalString(body, "captureDateSource"),
     });
 
     const storagePath = requiredString(body, "storagePath");
@@ -54,6 +56,9 @@ Deno.serve(async (request: Request) => {
         batchId,
         ordinal,
         imageId: result.image_id,
+        capturedAt: optionalString(body, "capturedAt"),
+        capturedLocalDate: optionalString(body, "capturedLocalDate"),
+        captureDateSource: optionalString(body, "captureDateSource"),
       },
       image: {
         id: result.image_id,

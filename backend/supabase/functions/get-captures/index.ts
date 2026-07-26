@@ -28,7 +28,7 @@ Deno.serve(async (request: Request) => {
     const { data: captureData, error: captureError } = await adminClient
       .from("captures")
       .select(
-        "id, batch_id, ordinal, kind, status, idea_text, applied_dish_id, failure_reason, captured_at",
+        "id, batch_id, ordinal, kind, status, idea_text, applied_dish_id, failure_reason, captured_at, captured_local_date, capture_date_source",
       )
       .eq("user_id", userId)
       .in("id", ids)
@@ -80,6 +80,8 @@ Deno.serve(async (request: Request) => {
         appliedDishId: optionalStringValue(row, "applied_dish_id"),
         failureReason: optionalStringValue(row, "failure_reason"),
         capturedAt: stringValue(row, "captured_at"),
+        capturedLocalDate: optionalStringValue(row, "captured_local_date"),
+        captureDateSource: optionalStringValue(row, "capture_date_source"),
         image: image == null ? null : await imageDto(adminClient, image),
       });
     }
