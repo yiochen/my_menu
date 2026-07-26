@@ -111,13 +111,12 @@ class CaptureRepository {
       );
     });
 
-    return (await listBatches())
-        .firstWhere((CaptureBatch batch) => batch.id == batchId);
+    return (await listBatches()).firstWhere(
+      (CaptureBatch batch) => batch.id == batchId,
+    );
   }
 
-  Future<List<String>> createPhotoCaptures(
-    List<Object> capturedMedia,
-  ) async {
+  Future<List<String>> createPhotoCaptures(List<Object> capturedMedia) async {
     final CaptureBatch? batch = await createPhotoBatch(capturedMedia);
     return batch?.items
             .map((capture_domain.CaptureItem item) => item.id)
@@ -174,7 +173,7 @@ class CaptureRepository {
     required List<String> captureIds,
     required DateTime now,
   }) async {
-    const String inputVersion = 'date-v1';
+    const String inputVersion = 'batch-grouping-v2';
     final String canonicalInput = jsonEncode(<String, Object?>{
       'batchId': batchId,
       'captureIds': captureIds,
@@ -190,9 +189,9 @@ class CaptureRepository {
                 '${AiJobType.batchGrouping.apiValue}:$batchId:$inputVersion',
             inputHash: base64UrlEncode(utf8.encode(canonicalInput)),
             inputVersion: inputVersion,
-            promptVersion: const Value<String>('date-v1'),
-            modelVersion: const Value<String>('fake-date-grouper'),
-            schemaVersion: const Value<String>('1'),
+            promptVersion: const Value<String>('batch-grouping-v2'),
+            modelVersion: const Value<String>('server-selected'),
+            schemaVersion: const Value<String>('batch-grouping-v2'),
             pendingAction: const Value<String?>('finalize_capture'),
             createdAt: now,
             updatedAt: now,
@@ -220,8 +219,9 @@ class CaptureRepository {
   }
 
   Future<void> discardCapture(String captureId) async {
-    await (_database.update(_database.captureItems)
-          ..where((db.CaptureItems table) => table.id.equals(captureId)))
+    await (_database.update(
+      _database.captureItems,
+    )..where((db.CaptureItems table) => table.id.equals(captureId)))
         .write(
       db.CaptureItemsCompanion(
         status: Value<String>(capture_domain.CaptureItemStatus.discarded.name),
@@ -249,9 +249,9 @@ class CaptureRepository {
           failureReason: const Value<String?>(null),
         ),
       );
-      await (_database.update(_database.captureBatches)
-            ..where(
-                (db.$CaptureBatchesTable table) => table.id.equals(batchId)))
+      await (_database.update(
+        _database.captureBatches,
+      )..where((db.$CaptureBatchesTable table) => table.id.equals(batchId)))
           .write(
         db.CaptureBatchesCompanion(
           status: Value<String>(CaptureBatchStatus.pendingUpload.name),

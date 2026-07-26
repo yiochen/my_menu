@@ -132,32 +132,49 @@ class CaptureCreatedView extends StatelessWidget {
   const CaptureCreatedView({
     required this.onClose,
     this.dishes = const <Dish>[],
+    this.rejectedCount = 0,
     super.key,
   });
 
   final List<Dish> dishes;
+  final int rejectedCount;
   final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
+    final bool onlyRejected = dishes.isEmpty && rejectedCount > 0;
     return CaptureOutcomeFrame(
-      topLabel: 'Capture organized',
-      headline: dishes.length <= 1
-          ? 'New dish created'
-          : '${dishes.length} dishes created',
-      description: dishes.length <= 1
-          ? 'MyMenu organized this cooking occasion into a new living record.'
-          : 'Photos from different dates became separate cooking occasions.',
-      art: const CaptureResultIcon(
-        icon: Icons.restaurant_menu_rounded,
-        color: MyMenuColors.green,
-        background: MyMenuColors.greenSoft,
+      topLabel: onlyRejected ? 'Capture checked' : 'Capture organized',
+      headline: onlyRejected
+          ? 'No dish found'
+          : dishes.length <= 1
+              ? 'New dish created'
+              : '${dishes.length} dishes created',
+      description: onlyRejected
+          ? 'These photos do not appear to show a prepared dish, so nothing was added to Menu.'
+          : dishes.length <= 1
+              ? 'MyMenu organized this cooking occasion into a new living record.'
+              : 'Each visual group became a separate cooking occasion.',
+      art: CaptureResultIcon(
+        icon: onlyRejected
+            ? Icons.no_food_rounded
+            : Icons.restaurant_menu_rounded,
+        color: onlyRejected ? MyMenuColors.muted : MyMenuColors.green,
+        background: onlyRejected ? MyMenuColors.oat2 : MyMenuColors.greenSoft,
       ),
       body: WarmCard(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: <Widget>[
-            if (dishes.isEmpty)
+            if (onlyRejected)
+              CaptureStatusLine(
+                icon: Icons.photo_library_outlined,
+                title: rejectedCount == 1
+                    ? '1 photo skipped'
+                    : '$rejectedCount photos skipped',
+                subtitle: 'No menu items were created',
+              )
+            else if (dishes.isEmpty)
               const CaptureStatusLine(
                 icon: Icons.hourglass_top_rounded,
                 title: 'Finishing local sync',
@@ -167,8 +184,8 @@ class CaptureCreatedView extends StatelessWidget {
               for (int index = 0;
                   index < dishes.length;
                   index += 1) ...<Widget>[
-                CaptureStatusLine(
-                  icon: Icons.ramen_dining_rounded,
+                CaptureDishSafeSummary(
+                  dish: dishes[index],
                   title: dishes[index].title,
                   subtitle: '${dishes[index].madeCount} cook · '
                       '${dishes[index].sourcePhotos.length} '
@@ -176,22 +193,23 @@ class CaptureCreatedView extends StatelessWidget {
                 ),
                 if (index != dishes.length - 1) const Divider(height: 24),
               ],
+            if (!onlyRejected && rejectedCount > 0) ...<Widget>[
+              if (dishes.isNotEmpty) const Divider(height: 24),
+              CaptureStatusLine(
+                icon: Icons.no_food_outlined,
+                title: rejectedCount == 1
+                    ? '1 non-dish photo skipped'
+                    : '$rejectedCount non-dish photos skipped',
+                subtitle: 'Only prepared dishes were added to Menu',
+              ),
+            ],
           ],
         ),
       ),
       footer: Row(
         children: <Widget>[
           Expanded(
-            child: PrimaryPillButton(label: 'Correct', onPressed: onClose),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: PrimaryPillButton(
-              label: 'Undo',
-              onPressed: onClose,
-              backgroundColor: MyMenuColors.oat,
-              foregroundColor: MyMenuColors.ink,
-            ),
+            child: PrimaryPillButton(label: 'Done', onPressed: onClose),
           ),
         ],
       ),

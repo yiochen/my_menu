@@ -21,7 +21,8 @@ class CaptureOfflineView extends StatelessWidget {
     return CaptureOutcomeFrame(
       topLabel: 'Captured',
       headline: 'Captured—even offline',
-      description: 'Nothing else to do. MyMenu will organize it when a '
+      description:
+          'Nothing else to do. MyMenu will organize it when a '
           'connection returns.',
       art: const CaptureResultIcon(
         icon: Icons.cloud_off_outlined,
@@ -57,6 +58,61 @@ class CaptureOfflineView extends StatelessWidget {
   }
 }
 
+class CaptureFailedView extends StatelessWidget {
+  const CaptureFailedView({
+    required this.onRetry,
+    required this.onClose,
+    this.failureReason,
+    super.key,
+  });
+
+  final Future<void> Function() onRetry;
+  final VoidCallback onClose;
+  final String? failureReason;
+
+  @override
+  Widget build(BuildContext context) {
+    return CaptureOutcomeFrame(
+      topLabel: 'Organization paused',
+      headline: 'Your photos are still safe',
+      description:
+          'MyMenu could not organize this batch yet. Nothing was deleted.',
+      art: const CaptureResultIcon(
+        icon: Icons.error_outline_rounded,
+        color: MyMenuColors.red,
+        background: MyMenuColors.redSoft,
+      ),
+      body: WarmCard(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: <Widget>[
+            const CaptureStatusLine(
+              icon: Icons.photo_library_outlined,
+              title: 'Original captures preserved',
+              subtitle: 'Retrying will use the same source photos',
+            ),
+            if (failureReason case final String reason) ...<Widget>[
+              const Divider(height: 24),
+              CaptureStatusLine(
+                icon: Icons.info_outline,
+                title: 'What happened',
+                subtitle: reason,
+              ),
+            ],
+          ],
+        ),
+      ),
+      footer: PrimaryPillButton(
+        key: const ValueKey<String>('retry_capture_organization'),
+        label: 'Retry organization',
+        icon: Icons.refresh_rounded,
+        onPressed: onRetry,
+      ),
+      onClose: onClose,
+    );
+  }
+}
+
 class CapturePermissionView extends StatelessWidget {
   const CapturePermissionView({
     required this.state,
@@ -72,7 +128,8 @@ class CapturePermissionView extends StatelessWidget {
     return CaptureOutcomeFrame(
       topLabel: 'Camera access',
       headline: 'Camera access is off',
-      description: 'Turn it on in Settings to snap food directly. You can '
+      description:
+          'Turn it on in Settings to snap food directly. You can '
           'still import a photo or add an idea right now.',
       art: const CaptureResultIcon(
         icon: Icons.no_photography_outlined,

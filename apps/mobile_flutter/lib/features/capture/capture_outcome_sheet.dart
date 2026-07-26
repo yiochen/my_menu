@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
+import 'package:mymenu/domain/ai/ai_job.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
+import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_outcome_recovery.dart';
 import 'package:mymenu/features/capture/capture_outcome_success.dart';
 
-enum CaptureOutcomeStep { saved, matched, created, offline, permission }
+enum CaptureOutcomeStep { saved, matched, created, failed, offline, permission }
 
 Future<void> showCaptureOutcomeSheet(
   BuildContext context, {
@@ -78,6 +80,12 @@ class _CaptureOutcomeSheetState extends State<CaptureOutcomeSheet> {
               ),
             CaptureOutcomeStep.created => CaptureCreatedView(
                 dishes: _resultDishes(),
+                rejectedCount: _rejectedCount(),
+                onClose: _close,
+              ),
+            CaptureOutcomeStep.failed => CaptureFailedView(
+                failureReason: _batch()?.failureReason,
+                onRetry: _retry,
                 onClose: _close,
               ),
             CaptureOutcomeStep.offline => CaptureOfflineView(
@@ -106,15 +114,16 @@ class _CaptureOutcomeSheetState extends State<CaptureOutcomeSheet> {
         if (batch.status == CaptureBatchStatus.applied) {
           return CaptureOutcomeStep.created;
         }
+        if (batch.status == CaptureBatchStatus.failed) {
+          return CaptureOutcomeStep.failed;
+        }
       }
     }
     return _step;
   }
 
   List<Dish> _resultDishes() {
-    final CaptureBatch? batch = widget.state.captureBatches
-        .where((CaptureBatch item) => item.id == widget.batchId)
-        .firstOrNull;
+    final CaptureBatch? batch = _batch();
     if (batch == null) {
       return const <Dish>[];
     }
@@ -125,6 +134,39 @@ class _CaptureOutcomeSheetState extends State<CaptureOutcomeSheet> {
     return widget.state.dishes
         .where((Dish dish) => dishIds.contains(dish.id))
         .toList(growable: false);
+  }
+
+  int _rejectedCount() =>
+      _batch()
+          ?.items
+          .where(
+              (CaptureItem item) => item.status == CaptureItemStatus.discarded)
+          .length ??
+      0;
+
+  CaptureBatch? _batch() => widget.state.captureBatches
+      .where((CaptureBatch item) => item.id == widget.batchId)
+      .firstOrNull;
+
+  Future<void> _retry() async {
+    final String? batchId = widget.batchId;
+    if (batchId == null) {
+      return;
+    }
+    final AiJob? groupingJob = widget.state.aiJobs
+        .where(
+          (AiJob job) =>
+              job.type == AiJobType.batchGrouping &&
+              job.subjectId == batchId &&
+              job.status.canRetry,
+        )
+        .firstOrNull;
+    setState(() => _step = CaptureOutcomeStep.saved);
+    if (groupingJob != null) {
+      await widget.state.retryAiJob(groupingJob.id);
+    } else {
+      await widget.state.retryCaptureBatch(batchId);
+    }
   }
 
   void _close() => Navigator.pop(context);

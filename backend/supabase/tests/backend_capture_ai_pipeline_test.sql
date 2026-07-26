@@ -53,21 +53,16 @@ SELECT is(
 
 SELECT ok(
   (
-    SELECT command like '%internal_process_capture_ai_jobs%'
+    SELECT command like '%process-ai-jobs%'
     FROM cron.job
     WHERE jobname = 'mymenu-dispatch-ai-jobs'
   ),
-  'cron recovery runs the database-native AI worker'
+  'cron recovery dispatches the protected Edge AI worker'
 );
 
-SELECT is(
-  has_function_privilege(
-    'authenticated',
-    'public.internal_process_capture_ai_jobs(integer)',
-    'EXECUTE'
-  ),
-  false,
-  'authenticated clients cannot invoke the cron worker'
+SELECT ok(
+  to_regprocedure('public.internal_process_capture_ai_jobs(integer)') is null,
+  'the obsolete database-native fake worker is removed'
 );
 
 INSERT INTO public.capture_batches (id, user_id, status, item_count)

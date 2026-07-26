@@ -72,9 +72,9 @@ abstract class MyMenuApiClient with AiJobApiDefaults {
         inputVersion: inputVersion,
         attemptCount: 0,
         maxAttempts: maxAttempts,
-        promptVersion: 'date-v1',
-        modelVersion: 'fake-date-grouper',
-        schemaVersion: '1',
+        promptVersion: 'batch-grouping-v2',
+        modelVersion: 'server-selected',
+        schemaVersion: 'batch-grouping-v2',
         createdAt: now,
         updatedAt: now,
       ),
@@ -106,10 +106,7 @@ abstract class MyMenuApiClient with AiJobApiDefaults {
     required Map<String, Object?> patch,
   });
 
-  Future<ApiSyncPull> pullSync({
-    required int afterCursor,
-    required int limit,
-  });
+  Future<ApiSyncPull> pullSync({required int afterCursor, required int limit});
 
   Future<List<ApiCapture>> getCaptures(List<String> ids);
 
@@ -138,22 +135,18 @@ class SupabaseMyMenuApiClient extends MyMenuApiClient with SupabaseCaptureApi {
     required String schemaVersion,
     required int maxAttempts,
   }) async {
-    return _singleAiJobRpc(
-      this,
-      'api_schedule_ai_job',
-      <String, Object?>{
-        'p_job_id': jobId,
-        'p_job_type': jobType,
-        'p_subject_id': subjectId,
-        'p_idempotency_key': idempotencyKey,
-        'p_input_hash': inputHash,
-        'p_input_version': inputVersion,
-        'p_prompt_version': promptVersion,
-        'p_model_version': modelVersion,
-        'p_schema_version': schemaVersion,
-        'p_max_attempts': maxAttempts,
-      },
-    );
+    return _singleAiJobRpc(this, 'api_schedule_ai_job', <String, Object?>{
+      'p_job_id': jobId,
+      'p_job_type': jobType,
+      'p_subject_id': subjectId,
+      'p_idempotency_key': idempotencyKey,
+      'p_input_hash': inputHash,
+      'p_input_version': inputVersion,
+      'p_prompt_version': promptVersion,
+      'p_model_version': modelVersion,
+      'p_schema_version': schemaVersion,
+      'p_max_attempts': maxAttempts,
+    });
   }
 
   @override
@@ -163,20 +156,16 @@ class SupabaseMyMenuApiClient extends MyMenuApiClient with SupabaseCaptureApi {
 
   @override
   Future<ApiAiJob> retryAiJob({required String jobId}) {
-    return _singleAiJobRpc(
-      this,
-      'api_retry_ai_job',
-      <String, Object?>{'p_job_id': jobId},
-    );
+    return _singleAiJobRpc(this, 'api_retry_ai_job', <String, Object?>{
+      'p_job_id': jobId,
+    });
   }
 
   @override
   Future<ApiAiJob> cancelAiJob({required String jobId}) {
-    return _singleAiJobRpc(
-      this,
-      'api_cancel_ai_job',
-      <String, Object?>{'p_job_id': jobId},
-    );
+    return _singleAiJobRpc(this, 'api_cancel_ai_job', <String, Object?>{
+      'p_job_id': jobId,
+    });
   }
 
   @override
@@ -187,15 +176,12 @@ class SupabaseMyMenuApiClient extends MyMenuApiClient with SupabaseCaptureApi {
     required int position,
   }) async {
     await _ensureSession();
-    await _invokeJson(
-      'createDishNote',
-      <String, Object?>{
-        'noteId': noteId,
-        'dishId': dishId,
-        'body': body,
-        'position': position,
-      },
-    );
+    await _invokeJson('createDishNote', <String, Object?>{
+      'noteId': noteId,
+      'dishId': dishId,
+      'body': body,
+      'position': position,
+    });
   }
 
   @override
@@ -205,23 +191,17 @@ class SupabaseMyMenuApiClient extends MyMenuApiClient with SupabaseCaptureApi {
     required int? position,
   }) async {
     await _ensureSession();
-    await _invokeJson(
-      'updateDishNote',
-      <String, Object?>{
-        'noteId': noteId,
-        'body': body,
-        if (position != null) 'position': position,
-      },
-    );
+    await _invokeJson('updateDishNote', <String, Object?>{
+      'noteId': noteId,
+      'body': body,
+      if (position != null) 'position': position,
+    });
   }
 
   @override
   Future<void> deleteDishNote({required String noteId}) async {
     await _ensureSession();
-    await _invokeJson(
-      'deleteDishNote',
-      <String, Object?>{'noteId': noteId},
-    );
+    await _invokeJson('deleteDishNote', <String, Object?>{'noteId': noteId});
   }
 
   @override
@@ -231,14 +211,11 @@ class SupabaseMyMenuApiClient extends MyMenuApiClient with SupabaseCaptureApi {
     required Map<String, Object?> patch,
   }) async {
     await _ensureSession();
-    await _invokeJson(
-      'updateDish',
-      <String, Object?>{
-        'clientMutationId': clientMutationId,
-        'dishId': dishId,
-        'patch': patch,
-      },
-    );
+    await _invokeJson('updateDish', <String, Object?>{
+      'clientMutationId': clientMutationId,
+      'dishId': dishId,
+      'patch': patch,
+    });
   }
 
   @override
@@ -250,19 +227,17 @@ class SupabaseMyMenuApiClient extends MyMenuApiClient with SupabaseCaptureApi {
 
     final Map<String, Object?> data = await _invokeJson(
       'sync-pull',
-      <String, Object?>{
-        'afterCursor': afterCursor,
-        'limit': limit,
-      },
+      <String, Object?>{'afterCursor': afterCursor, 'limit': limit},
     );
 
     return ApiSyncPull(
       cursor: apiIntValue(data, 'cursor'),
       hasMore: apiBoolValue(data, 'hasMore'),
       requiresBootstrap: apiBoolValue(data, 'requiresBootstrap'),
-      events: apiListValue(data, 'events')
-          .map(apiSyncEventFromJson)
-          .toList(growable: false),
+      events: apiListValue(
+        data,
+        'events',
+      ).map(apiSyncEventFromJson).toList(growable: false),
     );
   }
 
@@ -277,9 +252,10 @@ class SupabaseMyMenuApiClient extends MyMenuApiClient with SupabaseCaptureApi {
       'get-captures',
       <String, Object?>{'ids': ids},
     );
-    return apiListValue(data, 'items')
-        .map(apiCaptureFromJson)
-        .toList(growable: false);
+    return apiListValue(
+      data,
+      'items',
+    ).map(apiCaptureFromJson).toList(growable: false);
   }
 
   @override
@@ -293,9 +269,10 @@ class SupabaseMyMenuApiClient extends MyMenuApiClient with SupabaseCaptureApi {
       'get-dishes',
       <String, Object?>{'ids': ids},
     );
-    return apiListValue(data, 'items')
-        .map(apiDishFromJson)
-        .toList(growable: false);
+    return apiListValue(
+      data,
+      'items',
+    ).map(apiDishFromJson).toList(growable: false);
   }
 
   @override
@@ -309,9 +286,10 @@ class SupabaseMyMenuApiClient extends MyMenuApiClient with SupabaseCaptureApi {
       'get-review-items',
       <String, Object?>{'ids': ids},
     );
-    return apiListValue(data, 'items')
-        .map(apiReviewItemFromJson)
-        .toList(growable: false);
+    return apiListValue(
+      data,
+      'items',
+    ).map(apiReviewItemFromJson).toList(growable: false);
   }
 
   @override

@@ -8,6 +8,8 @@ import {
   requiredObject,
   requiredString,
 } from "../_shared/http.ts";
+import { batchGroupingContract } from "../_shared/ai/grouping_contract.ts";
+import { requireAiWorkerKey } from "../_shared/ai/worker_config.ts";
 import { requireEnv, requireUser, rpcOne } from "../_shared/supabase.ts";
 
 Deno.serve(async (request: Request) => {
@@ -31,7 +33,7 @@ Deno.serve(async (request: Request) => {
 
     const row = await rpcOne(
       adminClient,
-      "internal_finalize_capture_batch",
+      "internal_finalize_capture_batch_v2",
       {
         p_user_id: userId,
         p_batch_id: requiredString(body, "batchId"),
@@ -44,6 +46,10 @@ Deno.serve(async (request: Request) => {
         p_idempotency_key: requiredString(job, "idempotencyKey"),
         p_input_hash: requiredString(job, "inputHash"),
         p_input_version: requiredString(job, "inputVersion"),
+        p_provider: aiProvider(),
+        p_prompt_version: batchGroupingContract.promptVersion,
+        p_model_version: aiModel(),
+        p_schema_version: batchGroupingContract.schemaVersion,
         p_max_attempts: requiredNumber(job, "maxAttempts"),
       },
     );
@@ -52,7 +58,7 @@ Deno.serve(async (request: Request) => {
       p_function_url: `${
         requireEnv("SUPABASE_URL")
       }/functions/v1/process-ai-jobs`,
-      p_worker_key: requireEnv("SUPABASE_SERVICE_ROLE_KEY"),
+      p_worker_key: requireAiWorkerKey(),
     });
 
     return json({ job: row });
@@ -64,6 +70,20 @@ Deno.serve(async (request: Request) => {
     );
   }
 });
+
+function aiProvider() {
+  return (Deno.env.get("AI_PROVIDER") ?? "fake").trim().toLowerCase();
+}
+
+function aiModel() {
+  const configured = Deno.env.get("AI_MODEL")?.trim();
+  if (configured != null && configured.length > 0) {
+    return configured;
+  }
+  return aiProvider() === "google"
+    ? "gemini-3.6-flash"
+    : "fake-date-grouper-v2";
+}
 
 async function rpcOneValue(
   client: any,

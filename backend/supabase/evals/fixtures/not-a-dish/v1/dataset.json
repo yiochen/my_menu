@@ -1,0 +1,38 @@
+{
+  "datasetVersion": "not-a-dish-v1",
+  "description": "User-provided real-world photos that must not create MyMenu dish records.",
+  "cases": [
+    {
+      "id": "landscapes-and-living-birds",
+      "name": "landscapes and living birds are rejected as not dishes",
+      "captures": [
+        {
+          "id": "21000000-0000-4000-8000-000000000001",
+          "fixture": "images/ocean-sunset.jpg",
+          "capturedLocalDate": "2026-07-26"
+        },
+        {
+          "id": "21000000-0000-4000-8000-000000000002",
+          "fixture": "images/mountain-ocean-sunset.jpg",
+          "capturedLocalDate": "2026-07-26"
+        },
+        {
+          "id": "21000000-0000-4000-8000-000000000003",
+          "fixture": "images/red-crested-bird-a.jpg",
+          "capturedLocalDate": "2026-07-26"
+        },
+        {
+          "id": "21000000-0000-4000-8000-000000000004",
+          "fixture": "images/red-crested-bird-b.jpg",
+          "capturedLocalDate": "2026-07-26"
+        }
+      ],
+      "expectedRejectedCaptureIds": [
+        "21000000-0000-4000-8000-000000000001",
+        "21000000-0000-4000-8000-000000000002",
+        "21000000-0000-4000-8000-000000000003",
+        "21000000-0000-4000-8000-000000000004"
+      ]
+    }
+  ]
+}

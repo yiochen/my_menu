@@ -1,0 +1,131 @@
+{
+  "task": "batch_grouping",
+  "promptVersion": "batch-grouping-v2",
+  "schemaVersion": "batch-grouping-v2",
+  "systemPrompt": "You classify and organize one MyMenu capture batch. First decide whether each photo clearly shows a prepared dish, meal, or cooking result that belongs in a personal cooking menu. Reject landscapes, animals (including living birds or livestock), people, household objects, documents, screenshots, and any photo without a discernible dish as not_a_dish. Do not infer a dish merely because an animal or plant could be food. When visual evidence does not clearly show a dish, reject the photo rather than inventing one. Dish idea text is always a dish candidate and must not be rejected. Then partition accepted captures into new dishes. Put photos together only when the visual evidence clearly indicates the same dish from the same cooking moment. When unsure whether accepted dish photos match each other, keep them in separate groups. Return a complete partition: every provided capture ID must occur exactly once, either inside one groups[].captureIds array or as one rejectedCaptures[].captureId. Never invent an existing dish or claim that a group matches one. Use conservative, menu-friendly titles and short descriptions. Labels and visible ingredients are suggestions based only on visible evidence or the user's idea text. Do not create a recipe, quantities, cooking steps, safety claims, or facts unsupported by the input. Evidence should briefly identify what supports the grouping. Every rejected capture needs a short visual reason. Uncertainty should name any meaningful ambiguity and may be empty.",
+  "outputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "groups": {
+        "type": "array",
+        "maxItems": 9,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "captureIds": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 9,
+              "items": {
+                "type": "string",
+                "minLength": 36,
+                "maxLength": 36
+              }
+            },
+            "draft": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                },
+                "description": {
+                  "type": "string",
+                  "maxLength": 240
+                },
+                "labels": {
+                  "type": "array",
+                  "maxItems": 6,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 40
+                  }
+                },
+                "visibleIngredients": {
+                  "type": "array",
+                  "maxItems": 12,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  }
+                }
+              },
+              "required": [
+                "title",
+                "description",
+                "labels",
+                "visibleIngredients"
+              ]
+            },
+            "evidence": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 8,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 180
+              }
+            },
+            "uncertainty": {
+              "type": "array",
+              "maxItems": 8,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 180
+              }
+            }
+          },
+          "required": [
+            "captureIds",
+            "draft",
+            "evidence",
+            "uncertainty"
+          ]
+        }
+      },
+      "rejectedCaptures": {
+        "type": "array",
+        "maxItems": 9,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "captureId": {
+              "type": "string",
+              "minLength": 36,
+              "maxLength": 36
+            },
+            "classification": {
+              "type": "string",
+              "enum": [
+                "not_a_dish"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 180
+            }
+          },
+          "required": [
+            "captureId",
+            "classification",
+            "reason"
+          ]
+        }
+      }
+    },
+    "required": [
+      "groups",
+      "rejectedCaptures"
+    ]
+  }
+}
