@@ -1,0 +1,71 @@
+{
+  "datasetVersion": "everyday-dishes-v1",
+  "description": "Generated casual smartphone-style photos for evaluating conservative dish grouping and draft naming.",
+  "cases": [
+    {
+      "id": "same-meal-two-views-plus-different-dish",
+      "name": "two views of one fried rice group while pasta stays separate",
+      "captures": [
+        {
+          "id": "20000000-0000-4000-8000-000000000001",
+          "fixture": "images/chicken-fried-rice-a.jpg",
+          "capturedLocalDate": "2026-07-26"
+        },
+        {
+          "id": "20000000-0000-4000-8000-000000000002",
+          "fixture": "images/chicken-fried-rice-b.jpg",
+          "capturedLocalDate": "2026-07-26"
+        },
+        {
+          "id": "20000000-0000-4000-8000-000000000003",
+          "fixture": "images/spaghetti-marinara.jpg",
+          "capturedLocalDate": "2026-07-26"
+        }
+      ],
+      "expectedGroups": [
+        {
+          "captureIds": [
+            "20000000-0000-4000-8000-000000000001",
+            "20000000-0000-4000-8000-000000000002"
+          ],
+          "titleContainsAny": [
+            "fried rice",
+            "rice"
+          ]
+        },
+        {
+          "captureIds": [
+            "20000000-0000-4000-8000-000000000003"
+          ],
+          "titleContainsAny": [
+            "spaghetti",
+            "pasta",
+            "marinara"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "single-everyday-breakfast",
+      "name": "one oatmeal photo produces one usable breakfast draft",
+      "captures": [
+        {
+          "id": "20000000-0000-4000-8000-000000000004",
+          "fixture": "images/banana-blueberry-oatmeal.jpg",
+          "capturedLocalDate": "2026-07-26"
+        }
+      ],
+      "expectedGroups": [
+        {
+          "captureIds": [
+            "20000000-0000-4000-8000-000000000004"
+          ],
+          "titleContainsAny": [
+            "oat",
+            "porridge"
+          ]
+        }
+      ]
+    }
+  ]
+}

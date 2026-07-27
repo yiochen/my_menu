@@ -148,10 +148,18 @@ supabase db reset --yes
 echo "Running Supabase database tests..."
 supabase test db supabase/tests
 
+echo "Running deterministic AI grouping evals..."
+deno test --allow-env --allow-net --allow-read --allow-sys \
+  supabase/evals/batch_grouping_eval_test.ts
+
 if find "$EDGE_TEST_DIR" -type f \( -name '*_test.ts' -o -name '*.test.ts' \) 2>/dev/null | grep -q .; then
   echo "Serving Supabase Edge Functions..."
   rm -f "$FUNCTION_LOG"
-  supabase functions serve >"$FUNCTION_LOG" 2>&1 &
+  STATUS_JSON="$(supabase status -o json)"
+  AI_WORKER_KEY="$(printf '%s' "$STATUS_JSON" | jq -r '.SERVICE_ROLE_KEY')" \
+    AI_PROVIDER=fake \
+    AI_MODEL=fake-date-grouper-v2 \
+    supabase functions serve >"$FUNCTION_LOG" 2>&1 &
   FUNCTION_PID="$!"
 
   echo "Waiting for Edge Function server..."
@@ -168,10 +176,10 @@ if find "$EDGE_TEST_DIR" -type f \( -name '*_test.ts' -o -name '*.test.ts' \) 2>
   fi
 
   echo "Running Edge Function HTTP tests..."
-  STATUS_JSON="$(supabase status -o json)"
   SUPABASE_URL=http://127.0.0.1:54321 \
     SUPABASE_ANON_KEY="$(printf '%s' "$STATUS_JSON" | jq -r '.ANON_KEY')" \
     SUPABASE_SERVICE_ROLE_KEY="$(printf '%s' "$STATUS_JSON" | jq -r '.SERVICE_ROLE_KEY')" \
+    AI_WORKER_KEY="$(printf '%s' "$STATUS_JSON" | jq -r '.SERVICE_ROLE_KEY')" \
     deno test --allow-net --allow-env --allow-read "$EDGE_TEST_DIR"
 else
   echo "No Edge Function HTTP tests found under $EDGE_TEST_DIR; skipping."

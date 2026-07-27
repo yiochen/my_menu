@@ -44,6 +44,14 @@ class AiJobStatusCard extends StatelessWidget {
               _detailLabel(job),
               style: Theme.of(context).textTheme.bodySmall,
             ),
+            if (job.modelVersion != 'default' &&
+                job.modelVersion != 'server-selected') ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                job.runtimeLabel,
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+            ],
             if (job.errorMessage case final String errorMessage) ...<Widget>[
               const SizedBox(height: 6),
               Text(
@@ -111,9 +119,9 @@ class _StatusPill extends StatelessWidget {
         child: Text(
           display.label,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: display.foreground,
-                fontWeight: FontWeight.w800,
-              ),
+            color: display.foreground,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ),
     );
@@ -132,47 +140,47 @@ class _AiJobDisplay {
 _AiJobDisplay _displayFor(AiJobStatus status) {
   return switch (status) {
     AiJobStatus.pendingOffline => const _AiJobDisplay(
-        'Saved offline',
-        Icons.cloud_off_outlined,
-        MyMenuColors.orangeDark,
-        MyMenuColors.orangeSoft,
-      ),
+      'Saved offline',
+      Icons.cloud_off_outlined,
+      MyMenuColors.orangeDark,
+      MyMenuColors.orangeSoft,
+    ),
     AiJobStatus.queued => const _AiJobDisplay(
-        'Queued',
-        Icons.schedule_rounded,
-        MyMenuColors.orangeDark,
-        MyMenuColors.orangeSoft,
-      ),
+      'Queued',
+      Icons.schedule_rounded,
+      MyMenuColors.orangeDark,
+      MyMenuColors.orangeSoft,
+    ),
     AiJobStatus.running => const _AiJobDisplay(
-        'Processing',
-        Icons.auto_awesome,
-        MyMenuColors.orangeDark,
-        MyMenuColors.orangeSoft,
-      ),
+      'Processing',
+      Icons.auto_awesome,
+      MyMenuColors.orangeDark,
+      MyMenuColors.orangeSoft,
+    ),
     AiJobStatus.retrying => const _AiJobDisplay(
-        'Retrying',
-        Icons.sync_rounded,
-        MyMenuColors.orangeDark,
-        MyMenuColors.orangeSoft,
-      ),
+      'Retrying',
+      Icons.sync_rounded,
+      MyMenuColors.orangeDark,
+      MyMenuColors.orangeSoft,
+    ),
     AiJobStatus.succeeded => const _AiJobDisplay(
-        'Completed',
-        Icons.check_circle_outline_rounded,
-        MyMenuColors.green,
-        MyMenuColors.greenSoft,
-      ),
+      'Completed',
+      Icons.check_circle_outline_rounded,
+      MyMenuColors.green,
+      MyMenuColors.greenSoft,
+    ),
     AiJobStatus.failed => _AiJobDisplay(
-        'Failed',
-        Icons.error_outline_rounded,
-        Colors.red.shade800,
-        Colors.red.shade50,
-      ),
+      'Failed',
+      Icons.error_outline_rounded,
+      Colors.red.shade800,
+      Colors.red.shade50,
+    ),
     AiJobStatus.canceled => const _AiJobDisplay(
-        'Canceled',
-        Icons.cancel_outlined,
-        MyMenuColors.muted,
-        MyMenuColors.oat,
-      ),
+      'Canceled',
+      Icons.cancel_outlined,
+      MyMenuColors.muted,
+      MyMenuColors.oat,
+    ),
   };
 }
 
@@ -183,9 +191,10 @@ String _detailLabel(AiJob job) {
     AiJobStatus.queued => 'Waiting for AI processing to start.',
     AiJobStatus.running =>
       'AI is working in the background. You can keep using MyMenu.',
-    AiJobStatus.retrying => job.nextRetryAt == null
-        ? 'A temporary problem occurred. Retrying automatically.'
-        : 'A temporary problem occurred. The next attempt is scheduled.',
+    AiJobStatus.retrying =>
+      job.nextRetryAt == null
+          ? 'A temporary problem occurred. Retrying automatically.'
+          : 'A temporary problem occurred. The next attempt is scheduled.',
     AiJobStatus.succeeded => 'The result is saved and ready to use.',
     AiJobStatus.failed =>
       'The original item is still available. Retry when you are ready.',

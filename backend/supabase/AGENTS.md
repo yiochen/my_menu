@@ -86,6 +86,7 @@ database passwords, production API keys, OAuth provider secrets, Edge Function
 secrets, or generated local environment files.
 
 Immediate AI dispatch occurs through `finalize-capture-batch` and the protected
-`process-ai-jobs` route. The recurring recovery path is database-native:
-`pg_cron` invokes `internal_process_capture_ai_jobs` once per minute, so it does
-not depend on a network request or another stored service key.
+`process-ai-jobs` route. The recurring recovery path uses `pg_cron` and
+`pg_net` to invoke that same Edge worker once per minute. The worker is guarded
+by the dedicated `AI_WORKER_KEY`, which is stored in Supabase Vault for cron
+dispatch and must not be the service-role key.

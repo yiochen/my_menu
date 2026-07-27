@@ -37,7 +37,7 @@ Future<void> showCaptureSheet(
         context,
         state,
         () => collectCameraBatch(context, mediaService),
-        organizedStep: CaptureOutcomeStep.matched,
+        organizedStep: CaptureOutcomeStep.created,
       );
     case CaptureAction.importPhotos:
       await _captureMedia(
@@ -122,10 +122,7 @@ class _CaptureActionSheet extends StatelessWidget {
         shrinkWrap: true,
         padding: EdgeInsets.zero,
         children: <Widget>[
-          SheetTopBar(
-            title: 'Capture',
-            onClose: () => Navigator.pop(context),
-          ),
+          SheetTopBar(title: 'Capture', onClose: () => Navigator.pop(context)),
           const SizedBox(height: 12),
           Container(
             width: 88,
@@ -213,8 +210,9 @@ class _CaptureActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color background =
-        primary ? MyMenuColors.orangeAction : MyMenuColors.surface;
+    final Color background = primary
+        ? MyMenuColors.orangeAction
+        : MyMenuColors.surface;
     final Color foreground = primary ? Colors.white : MyMenuColors.ink;
     return Material(
       color: background,
@@ -243,16 +241,15 @@ class _CaptureActionTile extends StatelessWidget {
                   children: <Widget>[
                     Text(
                       title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: foreground,
-                          ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleMedium?.copyWith(color: foreground),
                     ),
                     Text(
                       subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color:
-                                primary ? Colors.white70 : MyMenuColors.muted,
-                          ),
+                        color: primary ? Colors.white70 : MyMenuColors.muted,
+                      ),
                     ),
                   ],
                 ),

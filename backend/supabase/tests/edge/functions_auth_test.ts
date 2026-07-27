@@ -1,5 +1,6 @@
 const baseUrl = Deno.env.get("SUPABASE_URL") ?? "http://127.0.0.1:54321";
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const aiWorkerKey = Deno.env.get("AI_WORKER_KEY") ?? serviceRoleKey;
 
 Deno.test("prepare-photo-upload requires a user session", async () => {
   const response = await fetch(`${baseUrl}/functions/v1/prepare-photo-upload`, {
@@ -98,5 +99,22 @@ Deno.test("process-ai-jobs requires the worker key", async () => {
   );
 
   assertEquals(response.status, 403);
+  await response.body?.cancel();
+});
+
+Deno.test("process-ai-jobs accepts the dedicated worker key", async () => {
+  const response = await fetch(
+    `${baseUrl}/functions/v1/process-ai-jobs`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-mymenu-worker-key": aiWorkerKey,
+      },
+      body: "{}",
+    },
+  );
+
+  assertEquals(response.status, 202);
   await response.body?.cancel();
 });

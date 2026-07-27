@@ -9,6 +9,7 @@ import 'package:mymenu/domain/capture/captured_media.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/domain/sync/repositories.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
+import 'package:mymenu/features/capture/capture_outcome_success.dart';
 import 'package:mymenu/features/capture/capture_sheet.dart';
 
 void main() {
@@ -176,6 +177,26 @@ void main() {
     expect(find.text('Captured Dish · Jul 20'), findsOneWidget);
     expect(find.text('1 cook · 4 photos'), findsOneWidget);
     state.dispose();
+  });
+
+  testWidgets('all rejected photos report that no dish was created', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CaptureCreatedView(
+            rejectedCount: 4,
+            onClose: () {},
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('No dish found'), findsOneWidget);
+    expect(find.text('4 photos skipped'), findsOneWidget);
+    expect(find.text('No menu items were created'), findsOneWidget);
+    expect(find.text('New dish created'), findsNothing);
   });
 }
 

@@ -173,9 +173,9 @@ class FakeMyMenuApiClient extends MyMenuApiClient {
       idempotencyKey: idempotencyKey,
       inputHash: inputHash,
       inputVersion: inputVersion,
-      promptVersion: 'date-v1',
-      modelVersion: 'fake-date-grouper',
-      schemaVersion: '1',
+      promptVersion: 'batch-grouping-v2',
+      modelVersion: 'server-selected',
+      schemaVersion: 'batch-grouping-v2',
       maxAttempts: maxAttempts,
     );
     return job;
