@@ -53,6 +53,14 @@ verify_jwt = true
 enabled = true
 verify_jwt = true
 
+[functions.delete-dishes]
+enabled = true
+verify_jwt = true
+
+[functions.delete-capture-batch]
+enabled = true
+verify_jwt = true
+
 [functions.get-review-items]
 enabled = true
 verify_jwt = true

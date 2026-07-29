@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="mocklens:form-factor" content="phone">
+<meta name="mocklens:primary-device" content="iphone-14">
+<meta name="mocklens:target-devices" content="iphone-se,iphone-14,pixel-7">
+<meta name="mocklens:viewport" content="390x844">
+<title>Confirm deleting dishes</title>
+<link rel="stylesheet" href="./shared.css">
+<style>
+  .selection-preview { padding-top: 0; filter: saturate(.72); }
+  .selection-preview-topbar { min-height: 46px; padding: 0 6px; display: grid; grid-template-columns: 40px 1fr 82px; align-items: center; gap: 6px; border: 1px solid rgba(54,45,37,.08); border-radius: 18px; background: var(--oat); }
+  .selection-preview-topbar strong { font-size: 16px; }
+  .selection-preview-topbar .text-button { justify-self: end; padding: 2px; font-size: 13px; white-space: nowrap; }
+  .selection-preview-close { width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; background: transparent; }
+  .selection-preview .dish-card { opacity: .78; }
+  .selected-preview { border: 2px solid var(--orange-action); }
+  .backdrop { position: fixed; z-index: 30; inset: 0; background: rgba(31,25,20,.43); }
+  .confirm-sheet { position: fixed; z-index: 31; left: 0; right: 0; bottom: 0; max-height: 82vh; padding: 12px 18px 28px; display: grid; gap: 14px; border-radius: 30px 30px 0 0; background: var(--cream); box-shadow: 0 -16px 54px rgba(31,25,20,.18); }
+  .sheet-handle { width: 42px; height: 5px; margin: 0 auto 2px; border-radius: 999px; background: #d4cec6; }
+  .danger-mark { width: 46px; height: 46px; border-radius: 16px; display: grid; place-items: center; color: var(--red); background: var(--red-soft); }
+  .delete-list { display: grid; gap: 8px; }
+  .delete-row { min-height: 52px; padding: 7px 9px; display: flex; align-items: center; gap: 10px; border-radius: 16px; background: var(--oat); }
+  .delete-thumb { width: 38px; height: 38px; flex: 0 0 38px; overflow: hidden; border-radius: 12px; }
+  .scope-list { display: grid; gap: 7px; padding: 12px 14px; border-radius: 17px; background: #f7f2ec; }
+  .scope-row { display: flex; align-items: flex-start; gap: 8px; }
+  .scope-dot { width: 18px; height: 18px; flex: 0 0 18px; margin-top: 1px; display: grid; place-items: center; border-radius: 50%; color: var(--red); background: var(--red-soft); font-size: 10px; font-weight: 900; }
+  .confirm-actions { display: grid; grid-template-columns: 1fr 1.18fr; gap: 10px; }
+  .danger-button { min-height: 50px; border: 0; border-radius: 999px; color: white; background: var(--red); font-size: 14px; font-weight: 850; box-shadow: 0 10px 22px rgba(199,80,69,.20); }
+  @media (max-height: 700px) {
+    .confirm-sheet { gap: 10px; padding-bottom: 18px; }
+    .scope-list { gap: 4px; padding: 9px 12px; }
+    .delete-row { min-height: 46px; }
+    .delete-thumb { width: 32px; height: 32px; flex-basis: 32px; }
+  }
+</style>
+</head>
+<body>
+<main class="screen stack menu-screen selection-preview" aria-hidden="true">
+  <header class="menu-sticky-bar"><div class="selection-preview-topbar"><button class="selection-preview-close"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button><strong>2 selected</strong><button class="text-button">Select all</button></div></header>
+  <div class="section-head"><h2>All dishes</h2><span class="small muted">24 total</span></div>
+  <div class="dish-grid">
+    <article class="card dish-card selected-preview"><div class="image-wrap"><img class="food-image" src="../assets/miso-salmon.svg" alt=""></div><div class="copy"><h3>Miso Salmon Bowl</h3><p class="tiny muted">8 cooks · 12 photos</p></div></article>
+    <article class="card dish-card selected-preview"><div class="image-wrap"><img class="food-image" src="../assets/linguine.svg" alt=""></div><div class="copy"><h3>Lemon Garlic Linguine</h3><p class="tiny muted">5 cooks · 7 photos</p></div></article>
+    <article class="card dish-card"><div class="image-wrap"><img class="food-image" src="../assets/katsu.svg" alt=""></div><div class="copy"><h3>Chicken Katsu Curry</h3><p class="tiny muted">3 cooks · 5 photos</p></div></article>
+    <article class="card dish-card"><div class="image-wrap"><img class="food-image" src="../assets/pho.svg" alt=""></div><div class="copy"><h3>Sunday Pho</h3><p class="tiny muted">12 cooks · 18 photos</p></div></article>
+  </div>
+</main>
+<div class="backdrop" data-mocklens-ignore="Modal confirmation intentionally covers the inactive selection screen."></div>
+<section class="confirm-sheet" role="dialog" aria-modal="true" aria-labelledby="delete-title" data-mocklens-ignore="Modal confirmation intentionally covers the inactive selection screen.">
+  <div class="sheet-handle"></div>
+  <div class="row gap-12"><div class="danger-mark"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13M10 11v5m4-5v5"/></svg></div><div><p class="eyebrow">Remove from MyMenu</p><h2 id="delete-title">Delete 2 dishes?</h2></div></div>
+  <div class="delete-list">
+    <div class="delete-row"><div class="delete-thumb"><img class="food-image" src="../assets/miso-salmon.svg" alt=""></div><div class="grow"><strong class="small">Miso Salmon Bowl</strong><p class="tiny muted">8 cooks · 12 source photos</p></div></div>
+    <div class="delete-row"><div class="delete-thumb"><img class="food-image" src="../assets/linguine.svg" alt=""></div><div class="grow"><strong class="small">Lemon Garlic Linguine</strong><p class="tiny muted">5 cooks · 7 source photos</p></div></div>
+  </div>
+  <div class="scope-list">
+    <div class="scope-row"><span class="scope-dot">−</span><p class="tiny">Cooking history, notes, and MyMenu’s source copies are removed.</p></div>
+    <div class="scope-row"><span class="scope-dot">−</span><p class="tiny">Planned meals using these dishes are also removed.</p></div>
+    <div class="scope-row"><span class="scope-dot">✓</span><p class="tiny"><strong>Photos in your phone’s library are not changed.</strong></p></div>
+  </div>
+  <p class="tiny muted">This happens locally first and syncs to your other devices. You can undo briefly.</p>
+  <div class="confirm-actions">
+    <button class="button secondary" data-mocklens-action="Keep dishes is the single dismissal path and returns to the unchanged two-item selection.">Keep dishes</button>
+    <button class="danger-button" data-mocklens-action="Delete 2 dishes removes both dishes and their dependent MyMenu history locally, exits selection mode, and shows a short Undo recovery above Menu navigation.">Delete 2 dishes</button>
+  </div>
+</section>
+</body>
+</html>

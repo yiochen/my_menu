@@ -135,9 +135,8 @@ void main() {
       batch.items.map((item) => item.ordinal).toList(growable: false),
       <int>[0, 1, 2],
     );
-    expect(find.text('New dish created'), findsOneWidget);
-    expect(find.text('Captured Dish · Jul 20'), findsOneWidget);
-    expect(find.text('1 cook · 3 photos'), findsOneWidget);
+    expect(find.textContaining('dish placeholder'), findsOneWidget);
+    expect(find.text('3 photos organized into 1 dish'), findsNothing);
     state.dispose();
   });
 
@@ -173,9 +172,8 @@ void main() {
       batch.items.map((item) => item.ordinal).toList(growable: false),
       <int>[0, 1, 2, 3],
     );
-    expect(find.text('New dish created'), findsOneWidget);
-    expect(find.text('Captured Dish · Jul 20'), findsOneWidget);
-    expect(find.text('1 cook · 4 photos'), findsOneWidget);
+    expect(find.textContaining('dish placeholder'), findsOneWidget);
+    expect(find.text('4 photos organized into 1 dish'), findsNothing);
     state.dispose();
   });
 

@@ -136,6 +136,7 @@ class ApiDish {
     required this.ingredients,
     required this.steps,
     required this.notes,
+    this.createdAt,
     this.prepMinutes,
     this.difficulty,
     this.lastMadeAt,
@@ -156,12 +157,15 @@ class ApiDish {
   final List<String> ingredients;
   final List<String> steps;
   final List<String> notes;
+  final DateTime? createdAt;
 }
 
 class ApiSourcePhoto {
   const ApiSourcePhoto({
     required this.id,
     required this.mediaRef,
+    this.captureId,
+    this.cookingOccasionId,
     this.capturedAt,
     this.note,
     this.confidenceLabel,
@@ -169,6 +173,8 @@ class ApiSourcePhoto {
 
   final String id;
   final String mediaRef;
+  final String? captureId;
+  final String? cookingOccasionId;
   final DateTime? capturedAt;
   final String? note;
   final String? confidenceLabel;

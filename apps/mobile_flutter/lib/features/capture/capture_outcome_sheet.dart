@@ -5,6 +5,7 @@ import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/features/capture/capture_grouping_result.dart';
 import 'package:mymenu/features/capture/capture_outcome_recovery.dart';
 import 'package:mymenu/features/capture/capture_outcome_success.dart';
 
@@ -78,11 +79,7 @@ class _CaptureOutcomeSheetState extends State<CaptureOutcomeSheet> {
                 dish: widget.state.dishById('dish_salmon'),
                 onClose: _close,
               ),
-            CaptureOutcomeStep.created => CaptureCreatedView(
-                dishes: _resultDishes(),
-                rejectedCount: _rejectedCount(),
-                onClose: _close,
-              ),
+            CaptureOutcomeStep.created => _createdView(),
             CaptureOutcomeStep.failed => CaptureFailedView(
                 failureReason: _batch()?.failureReason,
                 onRetry: _retry,
@@ -120,6 +117,23 @@ class _CaptureOutcomeSheetState extends State<CaptureOutcomeSheet> {
       }
     }
     return _step;
+  }
+
+  Widget _createdView() {
+    final String? batchId = widget.batchId;
+    if (batchId != null &&
+        (_resultDishes().isNotEmpty || _rejectedCount() > 0)) {
+      return CaptureGroupingResultView(
+        state: widget.state,
+        batchId: batchId,
+        onClose: _close,
+      );
+    }
+    return CaptureCreatedView(
+      dishes: _resultDishes(),
+      rejectedCount: _rejectedCount(),
+      onClose: _close,
+    );
   }
 
   List<Dish> _resultDishes() {

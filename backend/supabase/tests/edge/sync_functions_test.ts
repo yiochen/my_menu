@@ -189,6 +189,7 @@ Deno.test("get-dishes returns hydrated dishes and missing ids", async () => {
   assertEquals(item.difficulty, "easy");
   assertEquals(item.isFavorite, true);
   assertEquals(item.madeCount, 1);
+  assertEquals(typeof item.createdAt, "string");
   assertEquals(objectValue(item, "coverImage").id, fixture.imageId);
   assertEquals(arrayValue(item, "ingredients"), ["noodles", "soy sauce"]);
   assertEquals(arrayValue(item, "steps"), ["boil noodles", "toss with sauce"]);
@@ -196,9 +197,36 @@ Deno.test("get-dishes returns hydrated dishes and missing ids", async () => {
 
   const sourcePhoto = objectValue(arrayValue(item, "sourcePhotos")[0]);
   assertEquals(sourcePhoto.id, fixture.imageId);
+  assertEquals(sourcePhoto.captureId, fixture.captureId);
+  assertEquals(sourcePhoto.cookingOccasionId, null);
   assertEquals(sourcePhoto.note, "Added from capture.");
   assertEquals(sourcePhoto.confidenceLabel, "high");
   assertSignedUrl(sourcePhoto.mediaRef);
+});
+
+Deno.test("get-dishes allows a deliberately blank description", async () => {
+  const fixture = await createFixture();
+  const adminClient = createClient(baseUrl, serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
+
+  await checked(
+    adminClient.from("dishes").update({ description: "" }).eq(
+      "id",
+      fixture.dishId,
+    ),
+    "clear dish description",
+  );
+
+  const body = await postJson(fixture.session, "get-dishes", {
+    ids: [fixture.dishId],
+  });
+
+  const item = objectValue(arrayValue(body, "items")[0]);
+  assertEquals(item.description, "");
 });
 
 Deno.test("get-review-items returns review items and missing ids", async () => {

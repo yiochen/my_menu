@@ -2,11 +2,10 @@ part of 'my_menu_state.dart';
 
 extension MyMenuStateSync on MyMenuState {
   void _handleNetworkStatusChange() {
-    if (!_hasLocalWorkWaitingForSync()) {
-      return;
+    if (_hasLocalWorkWaitingForSync()) {
+      debugPrint('mymenu.sync: network changed; retry window restarted');
+      _startCaptureSyncPollingWindow();
     }
-    debugPrint('mymenu.sync: network changed; retry window restarted');
-    _startCaptureSyncPollingWindow();
     unawaited(refreshFromServer());
   }
 
@@ -29,6 +28,7 @@ extension MyMenuStateSync on MyMenuState {
     }
     _isSyncingCaptures = true;
     try {
+      await repositories.syncRepository.processPendingOperations();
       await repositories.syncRepository.processPendingAiJobs();
       await repositories.syncRepository.processPendingCaptures();
       await _reloadFromRepositories();
@@ -66,8 +66,16 @@ extension MyMenuStateSync on MyMenuState {
     }
     _isSyncingCaptures = true;
     try {
+      await repositories.syncRepository.processPendingOperations();
       await repositories.syncRepository.pullCaptureSync();
       await _reloadFromRepositories();
+    } on Object catch (error, stackTrace) {
+      developer.log(
+        'Capture pull unavailable.',
+        name: 'mymenu.sync',
+        error: error,
+        stackTrace: stackTrace,
+      );
     } finally {
       _isSyncingCaptures = false;
       _updateCaptureSyncPolling();

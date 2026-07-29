@@ -1,12 +1,15 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/core/database/app_database.dart';
+import 'package:mymenu/core/files/dish_image_cache.dart';
 import 'package:mymenu/core/network/my_menu_api_client.dart';
 import 'package:mymenu/core/network/network_status_monitor.dart';
+import 'package:mymenu/domain/ai/ai_job.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
@@ -57,6 +60,88 @@ void main() {
 
       expect(dishes.length, seededDishes.length);
       expect(plannedMeals.length, buildSeededPlan().length);
+    });
+
+    test('loading plans removes references to missing dishes', () async {
+      await repositories.seedIfNeeded();
+      await database.into(database.plannedMeals).insert(
+            PlannedMealsCompanion.insert(
+              id: 'orphaned_plan',
+              dayKey: '2026-07-28',
+              dishId: 'deleted_dish',
+            ),
+          );
+
+      final Set<String> validDishIds =
+          (await database.select(database.dishes).get())
+              .map((DishRow dish) => dish.id)
+              .toSet();
+      final meals = await repositories.planRepository.listMeals(
+        validDishIds: validDishIds,
+      );
+
+      expect(
+        meals.map((meal) => meal.id),
+        isNot(contains('orphaned_plan')),
+      );
+      expect(
+        await (database.select(database.plannedMeals)
+              ..where(
+                (PlannedMeals table) => table.id.equals('orphaned_plan'),
+              ))
+            .get(),
+        isEmpty,
+      );
+    });
+
+    test('sync caches local dish web images once', () async {
+      final Directory supportDirectory =
+          await Directory.systemTemp.createTemp('mymenu_seed_image_cache_');
+      addTearDown(() => supportDirectory.delete(recursive: true));
+      var downloadCount = 0;
+      repositories = AppRepositories(
+        database: database,
+        apiClient: FakeMyMenuApiClient(),
+        dishImageCache: DishImageCache(
+          directoryProvider: () async => supportDirectory,
+          downloader: (Uri uri) async {
+            downloadCount += 1;
+            return <int>[1, 2, 3];
+          },
+        ),
+      );
+      await repositories.seedIfNeeded();
+      final int remoteMediaCount =
+          (await database.select(database.sourcePhotos).get())
+                  .where(
+                    (SourcePhotoRow photo) => photo.url.startsWith('https://'),
+                  )
+                  .length +
+              (await database.select(database.dishes).get())
+                  .where(
+                    (DishRow dish) => dish.heroImageUrl.startsWith('https://'),
+                  )
+                  .length;
+
+      await repositories.syncRepository.pullCaptureSync();
+      await repositories.syncRepository.pullCaptureSync();
+
+      final List<SourcePhotoRow> cachedSources =
+          await database.select(database.sourcePhotos).get();
+      final List<DishRow> cachedDishes =
+          await database.select(database.dishes).get();
+      expect(remoteMediaCount, greaterThan(0));
+      expect(downloadCount, remoteMediaCount);
+      expect(
+        cachedSources
+            .every((SourcePhotoRow photo) => File(photo.url).existsSync()),
+        isTrue,
+      );
+      expect(
+        cachedDishes
+            .every((DishRow dish) => File(dish.heroImageUrl).existsSync()),
+        isTrue,
+      );
     });
 
     test('dish repository upserts and hydrates source photos', () async {
@@ -112,6 +197,176 @@ void main() {
             .where((row) => row.entity == 'dish_note'),
         hasLength(3),
       );
+    });
+
+    test(
+        'dish deletion removes local history, notes, plans, captures, jobs, '
+        'corrections, reviews, and owned files', () async {
+      final Directory supportDirectory =
+          await Directory.systemTemp.createTemp('mymenu_delete_cache_');
+      final Directory captureDirectory =
+          await Directory.systemTemp.createTemp('mymenu_delete_capture_');
+      addTearDown(() => supportDirectory.delete(recursive: true));
+      addTearDown(() => captureDirectory.delete(recursive: true));
+      final DishImageCache cache = DishImageCache(
+        directoryProvider: () async => supportDirectory,
+        downloader: (_) async => <int>[1, 2, 3, 4],
+      );
+      final _RecordingApiClient apiClient = _RecordingApiClient();
+      repositories = AppRepositories(
+        database: database,
+        apiClient: apiClient,
+        dishImageCache: cache,
+      );
+      await repositories.seedIfNeeded();
+      const String dishId = 'dish_salmon';
+      const String captureId = 'capture_delete_graph';
+      const String batchId = 'batch_delete_graph';
+      const String correctionId = 'correction_delete_graph';
+      final DateTime now = DateTime.utc(2026, 7, 28);
+      final File captureFile =
+          File('${captureDirectory.path}/owned_source.jpg');
+      await captureFile.writeAsBytes(<int>[5, 6, 7]);
+      final SourcePhotoRow source = await (database.select(
+        database.sourcePhotos,
+      )
+            ..where((SourcePhotos table) => table.dishId.equals(dishId))
+            ..limit(1))
+          .getSingle();
+      final String cachedSource = await cache.resolve(
+        cacheKey: source.id,
+        remoteRef: 'https://example.test/source.jpg',
+      );
+      await (database.update(database.sourcePhotos)
+            ..where((SourcePhotos table) => table.id.equals(source.id)))
+          .write(
+        SourcePhotosCompanion(url: Value<String>(cachedSource)),
+      );
+      await database.into(database.captureBatches).insert(
+            CaptureBatchesCompanion.insert(
+              id: batchId,
+              status: CaptureBatchStatus.applied.name,
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+      await database.into(database.captureItems).insert(
+            CaptureItemsCompanion.insert(
+              id: captureId,
+              batchId: const Value<String?>(batchId),
+              kind: CaptureItemKind.photo.name,
+              status: CaptureItemStatus.applied.name,
+              createdAt: now,
+              localMediaRef: Value<String?>(captureFile.path),
+              appliedDishId: const Value<String?>(dishId),
+            ),
+          );
+      await database.into(database.captureCorrections).insert(
+            CaptureCorrectionsCompanion.insert(
+              id: correctionId,
+              batchId: batchId,
+              actionType: 'move',
+              captureIdsJson: jsonEncode(<String>[captureId]),
+              previousDishIdsJson: jsonEncode(<String>[dishId]),
+              targetDishId: dishId,
+              status: 'applied',
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+      await database.into(database.plannedMeals).insert(
+            PlannedMealsCompanion.insert(
+              id: 'plan_delete_graph',
+              dayKey: '2026-07-29',
+              dishId: dishId,
+            ),
+          );
+      await database.into(database.reviewItems).insert(
+            ReviewItemsCompanion.insert(
+              id: 'review_delete_graph',
+              captureId: const Value<String?>(captureId),
+              summary: 'Related review',
+              suggestedDishIdsJson: jsonEncode(<String>[dishId]),
+              confidenceLabel: 'high',
+            ),
+          );
+      await database.into(database.aiJobs).insert(
+            AiJobsCompanion.insert(
+              id: 'job_delete_graph',
+              jobType: 'cover_generation',
+              subjectId: dishId,
+              status: 'succeeded',
+              idempotencyKey: 'cover:$dishId',
+              inputHash: 'hash',
+              inputVersion: '1',
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+
+      await repositories.dishRepository.deleteDishes(<String>[dishId]);
+
+      expect(
+        await (database.select(database.dishes)
+              ..where((Dishes table) => table.id.equals(dishId)))
+            .getSingleOrNull(),
+        isNull,
+      );
+      expect(
+        await (database.select(database.dishNotes)
+              ..where((DishNotes table) => table.dishId.equals(dishId)))
+            .get(),
+        isEmpty,
+      );
+      expect(
+        await (database.select(database.sourcePhotos)
+              ..where((SourcePhotos table) => table.dishId.equals(dishId)))
+            .get(),
+        isEmpty,
+      );
+      expect(
+        await (database.select(database.plannedMeals)
+              ..where((PlannedMeals table) => table.dishId.equals(dishId)))
+            .get(),
+        isEmpty,
+      );
+      expect(
+        await (database.select(database.captureItems)
+              ..where((CaptureItems table) => table.id.equals(captureId)))
+            .getSingleOrNull(),
+        isNull,
+      );
+      expect(
+        await (database.select(database.captureBatches)
+              ..where((CaptureBatches table) => table.id.equals(batchId)))
+            .getSingleOrNull(),
+        isNull,
+      );
+      expect(
+        await database.select(database.captureCorrections).get(),
+        isEmpty,
+      );
+      expect(
+        await database.select(database.reviewItems).get(),
+        isEmpty,
+      );
+      expect(
+        await (database.select(database.aiJobs)
+              ..where((AiJobs table) => table.subjectId.equals(dishId)))
+            .get(),
+        isEmpty,
+      );
+      expect(captureFile.existsSync(), isFalse);
+      expect(File(cachedSource).existsSync(), isFalse);
+      expect(
+        (await repositories.dishRepository.listDishes())
+            .any((Dish dish) => dish.id == 'dish_linguine'),
+        isTrue,
+      );
+
+      await repositories.syncRepository.processPendingOperations();
+
+      expect(apiClient.deletedDishIds, <String>[dishId]);
     });
 
     test('sync repository sends pending note operations', () async {
@@ -268,6 +523,148 @@ void main() {
 
       expect(createdDishes, isEmpty);
       expect(feedItems.single.status, CaptureItemStatus.discarded);
+    });
+
+    test('deleting an unclassified capture removes it locally and syncs',
+        () async {
+      final DateTime now = DateTime.utc(2026, 7, 27);
+      await database.into(database.captureItems).insert(
+            CaptureItemsCompanion.insert(
+              id: 'unclassified_capture',
+              batchId: const Value<String?>('unclassified_batch'),
+              kind: 'photo',
+              status: 'discarded',
+              createdAt: now,
+              failureReason:
+                  const Value<String?>('No prepared dish was recognized.'),
+            ),
+          );
+
+      await repositories.captureRepository
+          .deleteCapture('unclassified_capture');
+
+      expect(
+        await (database.select(database.captureItems)
+              ..where(
+                (CaptureItems table) => table.id.equals('unclassified_capture'),
+              ))
+            .getSingleOrNull(),
+        isNull,
+      );
+      expect(
+        (await database.select(database.syncOperations).get()).where(
+          (SyncOperationRow row) =>
+              row.entity == 'capture_item' &&
+              row.operationType == 'delete' &&
+              row.completedAt == null,
+        ),
+        hasLength(1),
+      );
+
+      await repositories.syncRepository.processPendingOperations();
+
+      expect(
+        (await database.select(database.syncOperations).get()).where(
+          (SyncOperationRow row) =>
+              row.entity == 'capture_item' && row.completedAt == null,
+        ),
+        isEmpty,
+      );
+    });
+
+    test('deleting a pending batch removes its local graph and syncs',
+        () async {
+      final Directory directory =
+          await Directory.systemTemp.createTemp('mymenu_pending_batch_');
+      addTearDown(() => directory.delete(recursive: true));
+      final File firstFile = File('${directory.path}/first.jpg');
+      final File secondFile = File('${directory.path}/second.jpg');
+      await firstFile.writeAsBytes(<int>[1, 2]);
+      await secondFile.writeAsBytes(<int>[3, 4]);
+      final DateTime now = DateTime.utc(2026, 7, 28);
+      const String batchId = 'pending_batch_to_delete';
+      const List<String> captureIds = <String>[
+        'pending_capture_a',
+        'pending_capture_b',
+      ];
+      final _RecordingApiClient apiClient = _RecordingApiClient();
+      repositories = AppRepositories(
+        database: database,
+        apiClient: apiClient,
+      );
+      await database.into(database.captureBatches).insert(
+            CaptureBatchesCompanion.insert(
+              id: batchId,
+              status: CaptureBatchStatus.pendingUpload.name,
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+      await database.batch((Batch batch) {
+        for (var index = 0; index < captureIds.length; index += 1) {
+          batch.insert(
+            database.captureItems,
+            CaptureItemsCompanion.insert(
+              id: captureIds[index],
+              batchId: const Value<String?>(batchId),
+              ordinal: Value<int>(index),
+              kind: CaptureItemKind.photo.name,
+              status: CaptureItemStatus.pendingUpload.name,
+              createdAt: now,
+              localMediaRef: Value<String?>(
+                index == 0 ? firstFile.path : secondFile.path,
+              ),
+            ),
+          );
+        }
+      });
+      await database.into(database.aiJobs).insert(
+            AiJobsCompanion.insert(
+              id: 'pending_batch_job',
+              jobType: AiJobType.batchGrouping.apiValue,
+              subjectId: batchId,
+              status: AiJobStatus.pendingOffline.databaseValue,
+              idempotencyKey: 'pending:$batchId',
+              inputHash: 'hash',
+              inputVersion: '1',
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+      await database.into(database.reviewItems).insert(
+            ReviewItemsCompanion.insert(
+              id: 'pending_batch_review',
+              captureId: Value<String?>(captureIds.first),
+              summary: 'Pending review',
+              suggestedDishIdsJson: '[]',
+              confidenceLabel: 'low',
+            ),
+          );
+
+      await repositories.captureRepository.deleteBatch(batchId);
+
+      expect(await database.select(database.captureBatches).get(), isEmpty);
+      expect(await database.select(database.captureItems).get(), isEmpty);
+      expect(await database.select(database.aiJobs).get(), isEmpty);
+      expect(await database.select(database.reviewItems).get(), isEmpty);
+      expect(firstFile.existsSync(), isFalse);
+      expect(secondFile.existsSync(), isFalse);
+      final List<SyncOperationRow> operations =
+          await database.select(database.syncOperations).get();
+      expect(
+        operations.where(
+          (SyncOperationRow row) =>
+              row.entity == 'capture_batch' &&
+              row.entityId == batchId &&
+              row.operationType == 'delete' &&
+              row.completedAt == null,
+        ),
+        hasLength(1),
+      );
+
+      await repositories.syncRepository.processPendingOperations();
+
+      expect(apiClient.deletedBatchIds, <String>[batchId]);
     });
 
     test('sync repository uploads photos before marking batch ready', () async {
@@ -726,6 +1123,20 @@ void main() {
 
     test('pullCaptureSync applies capture result events and advances cursor',
         () async {
+      final Directory mediaDirectory =
+          await Directory.systemTemp.createTemp('mymenu_local_source_');
+      addTearDown(() => mediaDirectory.delete(recursive: true));
+      final File localPhoto = File('${mediaDirectory.path}/capture.jpg');
+      await localPhoto.writeAsBytes(<int>[0xff, 0xd8, 0xff, 0xd9]);
+      await database.into(database.captureItems).insert(
+            CaptureItemsCompanion.insert(
+              id: 'capture_sync_result',
+              kind: 'photo',
+              status: 'uploaded',
+              createdAt: DateTime.utc(2026, 6, 20, 12),
+              localMediaRef: Value<String?>(localPhoto.path),
+            ),
+          );
       repositories = AppRepositories(
         database: database,
         apiClient: _SyncResultApiClient(),
@@ -742,17 +1153,71 @@ void main() {
       expect(feedItems.single.status, CaptureItemStatus.applied);
       expect(feedItems.single.appliedDishId, 'dish_sync_result');
       expect(dishes.single.title, 'Sync Result Noodles');
+      expect(dishes.single.sourcePhotos.single.url, localPhoto.path);
       expect(
-          dishes.single.sourcePhotos.single.url, 'https://example.com/a.jpg');
+        dishes.single.sourcePhotos.single.cookingOccasionId,
+        'occasion_sync_result',
+      );
+      expect(
+        dishes.single.createdAt?.toUtc(),
+        DateTime.utc(2026, 6, 20, 11),
+      );
       expect(cursor.value, '42');
     });
+
+    test(
+        'authoritative dish deletion survives a later hydration failure '
+        'without deleting unrelated zero-history dishes', () async {
+      await repositories.dishRepository.upsertDish(
+        _zeroHistoryDish(id: 'emptied_ai_dish', title: 'Old capture dish'),
+      );
+      await repositories.dishRepository.upsertDish(
+        _zeroHistoryDish(id: 'idea_dish', title: 'Dinner idea'),
+      );
+      repositories = AppRepositories(
+        database: database,
+        apiClient: _DeleteThenHydrationFailureApiClient(),
+      );
+
+      await expectLater(
+        repositories.syncRepository.pullCaptureSync(),
+        throwsA(isA<StateError>()),
+      );
+
+      final Set<String> dishIds =
+          (await repositories.dishRepository.listDishes())
+              .map((Dish dish) => dish.id)
+              .toSet();
+      expect(dishIds, isNot(contains('emptied_ai_dish')));
+      expect(dishIds, contains('idea_dish'));
+    });
   });
+}
+
+Dish _zeroHistoryDish({required String id, required String title}) {
+  return Dish(
+    id: id,
+    title: title,
+    description: '',
+    heroImageUrl: '',
+    category: 'Idea',
+    prepMinutes: 0,
+    difficulty: 'Not set',
+    madeCount: 0,
+    lastMadeLabel: 'Not cooked yet',
+    ingredients: const <String>[],
+    recipeSteps: const <String>[],
+    notes: const <DishNote>[],
+    sourcePhotos: const <SourcePhoto>[],
+  );
 }
 
 class _RecordingApiClient extends MyMenuApiClient {
   final List<String> uploadedCaptureIds = <String>[];
   final List<String> createdNoteIds = <String>[];
   final List<String> readyBatchIds = <String>[];
+  final List<String> deletedDishIds = <String>[];
+  final List<String> deletedBatchIds = <String>[];
 
   @override
   Future<void> upsertCaptureBatch({
@@ -821,6 +1286,16 @@ class _RecordingApiClient extends MyMenuApiClient {
 
   @override
   Future<void> deleteDishNote({required String noteId}) async {}
+
+  @override
+  Future<void> deleteDishes({required List<String> dishIds}) async {
+    deletedDishIds.addAll(dishIds);
+  }
+
+  @override
+  Future<void> deleteCaptureBatch({required String batchId}) async {
+    deletedBatchIds.add(batchId);
+  }
 
   @override
   Future<void> updateDish({
@@ -1228,6 +1703,8 @@ class _SyncResultApiClient extends MyMenuApiClient {
             ApiSourcePhoto(
               id: 'source_sync_result',
               mediaRef: 'https://example.com/a.jpg',
+              captureId: 'capture_sync_result',
+              cookingOccasionId: 'occasion_sync_result',
               capturedAt: DateTime.utc(2026, 6, 20, 12),
               confidenceLabel: 'AI',
             ),
@@ -1235,6 +1712,7 @@ class _SyncResultApiClient extends MyMenuApiClient {
           ingredients: const <String>['noodles'],
           steps: const <String>['Cook noodles.'],
           notes: const <String>['Synced from server.'],
+          createdAt: DateTime.utc(2026, 6, 20, 11),
         ),
     ];
   }
@@ -1242,5 +1720,36 @@ class _SyncResultApiClient extends MyMenuApiClient {
   @override
   Future<List<ApiReviewItem>> getReviewItems(List<String> ids) async {
     return const <ApiReviewItem>[];
+  }
+}
+
+class _DeleteThenHydrationFailureApiClient extends FakeMyMenuApiClient {
+  @override
+  Future<ApiSyncPull> pullSync({
+    required int afterCursor,
+    required int limit,
+  }) async {
+    return const ApiSyncPull(
+      cursor: 2,
+      hasMore: false,
+      requiresBootstrap: false,
+      events: <ApiSyncEvent>[
+        ApiSyncEvent(
+          cursor: 1,
+          type: 'dish.deleted',
+          entityIds: <String, String>{'dishId': 'emptied_ai_dish'},
+        ),
+        ApiSyncEvent(
+          cursor: 2,
+          type: 'dish.created',
+          entityIds: <String, String>{'dishId': 'new_split_dish'},
+        ),
+      ],
+    );
+  }
+
+  @override
+  Future<List<ApiDish>> getDishes(List<String> ids) {
+    throw StateError('Dish hydration failed.');
   }
 }

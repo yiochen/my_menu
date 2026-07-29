@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:mymenu/core/network/network_status_monitor.dart';
 import 'package:mymenu/domain/ai/ai_job.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
+import 'package:mymenu/domain/capture/capture_correction.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
 import 'package:mymenu/domain/capture/review_item.dart';
@@ -19,8 +20,11 @@ import 'package:mymenu/domain/sync/repositories.dart';
 
 part 'my_menu_state_capture.dart';
 part 'my_menu_state_capture_persistence.dart';
+part 'my_menu_state_capture_deletion.dart';
+part 'my_menu_state_capture_corrections.dart';
 part 'my_menu_state_ai.dart';
 part 'my_menu_state_dishes.dart';
+part 'my_menu_state_dish_deletion.dart';
 part 'my_menu_state_planning.dart';
 part 'my_menu_state_sync.dart';
 
@@ -32,6 +36,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
         _plan = buildSeededPlan(),
         _captureBatches = const <CaptureBatch>[],
         _captureItems = const <CaptureItem>[],
+        _captureCorrections = const <CaptureCorrection>[],
         _aiJobs = const <AiJob>[],
         _reviewItems = List<ReviewItem>.of(seededReviewItems),
         _extraPlanDays = 0,
@@ -52,12 +57,14 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
     List<PlannedMeal> plan = const <PlannedMeal>[],
     List<CaptureBatch> captureBatches = const <CaptureBatch>[],
     List<CaptureItem> captureItems = const <CaptureItem>[],
+    List<CaptureCorrection> captureCorrections = const <CaptureCorrection>[],
     List<AiJob> aiJobs = const <AiJob>[],
     List<ReviewItem> reviewItems = const <ReviewItem>[],
   })  : _dishes = List<Dish>.of(dishes),
         _plan = List<PlannedMeal>.of(plan),
         _captureBatches = List<CaptureBatch>.of(captureBatches),
         _captureItems = List<CaptureItem>.of(captureItems),
+        _captureCorrections = List<CaptureCorrection>.of(captureCorrections),
         _aiJobs = List<AiJob>.of(aiJobs),
         _reviewItems = List<ReviewItem>.of(reviewItems),
         _extraPlanDays = 0,
@@ -68,28 +75,50 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
   List<PlannedMeal> _plan;
   List<CaptureBatch> _captureBatches;
   List<CaptureItem> _captureItems;
+  List<CaptureCorrection> _captureCorrections;
   List<AiJob> _aiJobs;
   List<ReviewItem> _reviewItems;
   int? _extraPlanDays;
   final AppRepositories? _repositories;
   final NetworkStatusMonitor? _networkStatusMonitor;
+  final Map<String, _PendingDishDeletion> _pendingDishDeletions =
+      <String, _PendingDishDeletion>{};
+  final Map<String, _PendingCaptureBatchDeletion>
+      _pendingCaptureBatchDeletions = <String, _PendingCaptureBatchDeletion>{};
   StreamSubscription<void>? _networkStatusSubscription;
   bool _isSyncingCaptures = false;
   Timer? _captureSyncTimer;
   DateTime? _captureSyncPollingDeadline;
-
   static const Duration _captureSyncPollInterval = Duration(seconds: 5);
   static const Duration _captureSyncPollWindow = Duration(minutes: 2);
-  List<Dish> get dishes => List<Dish>.unmodifiable(_dishes);
-  List<PlannedMeal> get plan => List<PlannedMeal>.unmodifiable(_plan);
-  List<CaptureBatch> get captureBatches =>
-      List<CaptureBatch>.unmodifiable(_captureBatches);
-  List<CaptureItem> get captureItems =>
-      List<CaptureItem>.unmodifiable(_captureItems);
-  List<AiJob> get aiJobs => List<AiJob>.unmodifiable(_aiJobs);
-  List<ReviewItem> get reviewItems =>
-      List<ReviewItem>.unmodifiable(_reviewItems);
-
+  List<Dish> get dishes => List<Dish>.unmodifiable(
+        _dishes.where(
+          (Dish dish) => !_pendingCaptureResultDishIds.contains(dish.id),
+        ),
+      );
+  List<PlannedMeal> get plan => _validPlannedMeals;
+  List<CaptureBatch> get captureBatches => List<CaptureBatch>.unmodifiable(
+        _captureBatches.where(
+          (CaptureBatch batch) => !_pendingCaptureBatchIds.contains(batch.id),
+        ),
+      );
+  List<CaptureItem> get captureItems => List<CaptureItem>.unmodifiable(
+        _captureItems.where(
+          (CaptureItem item) => !_pendingCaptureIds.contains(item.id),
+        ),
+      );
+  List<CaptureCorrection> get captureCorrections =>
+      List<CaptureCorrection>.unmodifiable(_captureCorrections);
+  List<AiJob> get aiJobs => List<AiJob>.unmodifiable(
+        _aiJobs.where(
+          (AiJob job) => !_pendingCaptureBatchIds.contains(job.subjectId),
+        ),
+      );
+  List<ReviewItem> get reviewItems => List<ReviewItem>.unmodifiable(
+        _reviewItems.where(
+          (ReviewItem item) => !_pendingCaptureIds.contains(item.captureId),
+        ),
+      );
   @override
   void dispose() {
     if (_repositories != null) {
@@ -133,7 +162,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   List<PlannedMeal> plannedMealsForDay(String dayKey) {
-    return _plan
+    return plan
         .where((PlannedMeal meal) => meal.dayKey == dayKey)
         .toList(growable: false);
   }
@@ -146,7 +175,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
       return dishes;
     }
 
-    return _dishes.where((Dish dish) {
+    return dishes.where((Dish dish) {
       return dish.title.toLowerCase().contains(normalized) ||
           dish.description.toLowerCase().contains(normalized) ||
           dish.category.toLowerCase().contains(normalized);
@@ -217,6 +246,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
         'Add real source photos after the next cook.',
       ]),
       sourcePhotos: const <SourcePhoto>[],
+      createdAt: DateTime.now(),
     );
 
     _dishes = <Dish>[nextDish, ..._dishes];
@@ -273,6 +303,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
           confidenceLabel: '73%',
         ),
       ],
+      createdAt: DateTime.now(),
     );
 
     _dishes = <Dish>[nextDish, ..._dishes];

@@ -1,5 +1,28 @@
 part of 'drag_drop_board.dart';
 
+class MultiSelectDragDropPayload<GroupId, ItemId, Item> {
+  const MultiSelectDragDropPayload({
+    required this.items,
+    required this.itemIds,
+    required this.sourceGroupIds,
+  })  : assert(
+          items.length == itemIds.length,
+          'Each dragged item must have one item ID.',
+        ),
+        assert(
+          items.length == sourceGroupIds.length,
+          'Each dragged item must have one source group ID.',
+        );
+
+  final List<Item> items;
+  final List<ItemId> itemIds;
+  final List<GroupId> sourceGroupIds;
+
+  int get length => items.length;
+
+  bool contains(ItemId itemId) => itemIds.contains(itemId);
+}
+
 class DragDropPayload<GroupId, ItemId, Item> {
   const DragDropPayload({
     required this.item,

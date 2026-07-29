@@ -138,6 +138,7 @@ ApiDish apiDishFromJson(Map<String, Object?> data) {
     ingredients: apiStringListValue(data, 'ingredients'),
     steps: apiStringListValue(data, 'steps'),
     notes: apiStringListValue(data, 'notes'),
+    createdAt: apiOptionalDateTimeValue(data, 'createdAt'),
   );
 }
 
@@ -164,6 +165,8 @@ ApiSourcePhoto apiSourcePhotoFromJson(Map<String, Object?> data) {
   return ApiSourcePhoto(
     id: apiStringValue(data, 'id'),
     mediaRef: apiStringValue(data, 'mediaRef'),
+    captureId: apiOptionalStringValue(data, 'captureId'),
+    cookingOccasionId: apiOptionalStringValue(data, 'cookingOccasionId'),
     capturedAt: apiOptionalDateTimeValue(data, 'capturedAt'),
     note: apiOptionalStringValue(data, 'note'),
     confidenceLabel: apiOptionalStringValue(data, 'confidenceLabel'),

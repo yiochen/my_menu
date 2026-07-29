@@ -1,9 +1,10 @@
 part of 'repositories.dart';
 
 class DishRepository {
-  DishRepository(this._database);
+  DishRepository(this._database, this._dishImageCache);
 
   final db.AppDatabase _database;
+  final DishImageCache _dishImageCache;
 
   Future<void> seedIfNeeded() async {
     final int existingCount =
@@ -42,6 +43,155 @@ class DishRepository {
     await _database
         .into(_database.dishes)
         .insertOnConflictUpdate(dish.toCompanion());
+  }
+
+  Future<void> deleteDishes(Iterable<String> dishIds) {
+    return deleteLocalDishes(dishIds, enqueueRemote: true);
+  }
+
+  Future<void> deleteLocalDishes(
+    Iterable<String> dishIds, {
+    required bool enqueueRemote,
+  }) async {
+    final List<String> ids = dishIds
+        .map((String id) => id.trim())
+        .where((String id) => id.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
+    if (ids.isEmpty) {
+      return;
+    }
+
+    final List<db.DishRow> dishRows = await (_database.select(
+      _database.dishes,
+    )..where((db.Dishes table) => table.id.isIn(ids)))
+        .get();
+    final List<db.SourcePhotoRow> sourceRows = await (_database.select(
+      _database.sourcePhotos,
+    )..where((db.SourcePhotos table) => table.dishId.isIn(ids)))
+        .get();
+    final List<db.DishNoteRow> noteRows = await (_database.select(
+      _database.dishNotes,
+    )..where((db.DishNotes table) => table.dishId.isIn(ids)))
+        .get();
+    final List<db.CaptureItemRow> captureRows = await (_database.select(
+      _database.captureItems,
+    )..where((db.CaptureItems table) => table.appliedDishId.isIn(ids)))
+        .get();
+    final List<db.CaptureCorrectionRow> correctionRows =
+        await _relatedCorrections(ids, captureRows);
+    final List<String> captureIds =
+        captureRows.map((db.CaptureItemRow row) => row.id).toList();
+    final Set<String> batchIds = captureRows
+        .map((db.CaptureItemRow row) => row.batchId)
+        .whereType<String>()
+        .toSet();
+
+    await _database.transaction(() async {
+      await _deleteSupersededSyncOperations(
+        dishIds: ids,
+        noteIds: noteRows.map((db.DishNoteRow row) => row.id).toList(),
+        captureIds: captureIds,
+        batchIds: batchIds.toList(),
+        correctionIds: correctionRows
+            .map((db.CaptureCorrectionRow row) => row.id)
+            .toList(),
+      );
+      if (correctionRows.isNotEmpty) {
+        final List<String> correctionIds = correctionRows
+            .map((db.CaptureCorrectionRow row) => row.id)
+            .toList(growable: false);
+        await (_database.delete(_database.captureCorrections)
+              ..where(
+                (db.CaptureCorrections table) => table.id.isIn(correctionIds),
+              ))
+            .go();
+      }
+      await _removeDeletedDishReviewItems(
+        dishIds: ids,
+        captureIds: captureIds,
+      );
+      await (_database.delete(_database.sourcePhotos)
+            ..where((db.SourcePhotos table) => table.dishId.isIn(ids)))
+          .go();
+      await (_database.delete(_database.dishNotes)
+            ..where((db.DishNotes table) => table.dishId.isIn(ids)))
+          .go();
+      await (_database.delete(_database.plannedMeals)
+            ..where((db.PlannedMeals table) => table.dishId.isIn(ids)))
+          .go();
+      await (_database.delete(_database.captureItems)
+            ..where((db.CaptureItems table) => table.appliedDishId.isIn(ids)))
+          .go();
+      await (_database.delete(_database.aiJobs)
+            ..where(
+              (db.AiJobs table) =>
+                  table.subjectId.isIn(<String>[...ids, ...batchIds]),
+            ))
+          .go();
+      await (_database.delete(_database.dishes)
+            ..where((db.Dishes table) => table.id.isIn(ids)))
+          .go();
+
+      for (final String batchId in batchIds) {
+        final Expression<int> countExpression =
+            _database.captureItems.id.count();
+        final int remaining = await (_database.selectOnly(
+          _database.captureItems,
+        )
+              ..addColumns(<Expression<Object>>[countExpression])
+              ..where(_database.captureItems.batchId.equals(batchId)))
+            .map(
+              (TypedResult row) => row.read(countExpression) ?? 0,
+            )
+            .getSingle();
+        if (remaining != 0) {
+          continue;
+        }
+        await (_database.delete(_database.captureBatches)
+              ..where(
+                (db.CaptureBatches table) => table.id.equals(batchId),
+              ))
+            .go();
+      }
+
+      if (enqueueRemote && dishRows.isNotEmpty) {
+        final String operationId = const Uuid().v4();
+        await _database.into(_database.syncOperations).insert(
+              db.SyncOperationsCompanion.insert(
+                id: operationId,
+                entity: 'dish_collection',
+                entityId: operationId,
+                operationType: 'delete',
+                payloadJson: jsonEncode(<String, Object?>{
+                  'dishIds': dishRows
+                      .map((db.DishRow row) => row.id)
+                      .toList(growable: false),
+                }),
+                createdAt: DateTime.now(),
+              ),
+            );
+      }
+    });
+
+    await _dishImageCache.remove(
+      cacheKeys: <String>[
+        ...dishRows.expand(
+          (db.DishRow row) => <String>[
+            '${row.id}_hero',
+            '${row.id}_fallback',
+          ],
+        ),
+        ...sourceRows.map((db.SourcePhotoRow row) => row.id),
+      ],
+      localRefs: <String>[
+        ...dishRows.map((db.DishRow row) => row.heroImageUrl),
+        ...sourceRows.map((db.SourcePhotoRow row) => row.url),
+      ],
+    );
+    await _deleteOwnedCaptureFiles(
+      captureRows.map((db.CaptureItemRow row) => row.localMediaRef),
+    );
   }
 
   Future<DishNote> createNote(String dishId, String body) async {
@@ -180,6 +330,9 @@ class DishRepository {
           dishId: dish.id,
           url: photo.url,
           capturedLabel: photo.capturedLabel,
+          captureId: Value<String?>(photo.captureId),
+          cookingOccasionId: Value<String?>(photo.cookingOccasionId),
+          capturedAt: Value<DateTime?>(photo.capturedAt),
           note: Value<String?>(photo.note),
           confidenceLabel: Value<String?>(photo.confidenceLabel),
         ),

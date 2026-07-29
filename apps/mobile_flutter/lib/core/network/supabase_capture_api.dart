@@ -148,4 +148,76 @@ mixin SupabaseCaptureApi on MyMenuApiClient {
   Future<List<ApiCaptureBatch>> getCaptureBatches(List<String> ids) {
     return _getCaptureBatches(this as SupabaseMyMenuApiClient, ids);
   }
+
+  @override
+  Future<void> deleteCapture({required String captureId}) async {
+    await _ensureSession();
+    await _client.rpc<Object?>(
+      'api_delete_capture',
+      params: <String, Object?>{'p_capture_id': captureId},
+    );
+  }
+
+  @override
+  Future<void> deleteCaptureBatch({required String batchId}) async {
+    await _ensureSession();
+    await _client.functions.invoke(
+      'delete-capture-batch',
+      body: <String, Object?>{'batchId': batchId},
+    );
+  }
+
+  @override
+  Future<void> correctCaptureGrouping({
+    required String clientMutationId,
+    required String batchId,
+    required String actionType,
+    required List<String> captureIds,
+    required String targetDishId,
+    String? newDishTitle,
+  }) async {
+    await _ensureSession();
+    final bool isUnclassifiedAssignment =
+        actionType == 'assign' || actionType == 'assignSplit';
+    if (isUnclassifiedAssignment) {
+      await _client.rpc<Object?>(
+        'api_assign_unclassified_capture_grouping',
+        params: <String, Object?>{
+          'p_client_mutation_id': clientMutationId,
+          'p_batch_id': batchId,
+          'p_action_type': actionType,
+          'p_capture_ids': captureIds,
+          'p_target_dish_id': targetDishId,
+          'p_new_dish_title': newDishTitle,
+        },
+      );
+      return;
+    }
+    await _client.rpc<Object?>(
+      'api_correct_capture_grouping',
+      params: <String, Object?>{
+        'p_client_mutation_id': clientMutationId,
+        'p_batch_id': batchId,
+        'p_action_type': actionType,
+        'p_capture_ids': captureIds,
+        'p_target_dish_id': targetDishId,
+        'p_new_dish_title': newDishTitle,
+      },
+    );
+  }
+
+  @override
+  Future<void> undoCaptureGrouping({
+    required String clientMutationId,
+    required String actionId,
+  }) async {
+    await _ensureSession();
+    await _client.rpc<Object?>(
+      'api_undo_capture_grouping',
+      params: <String, Object?>{
+        'p_client_mutation_id': clientMutationId,
+        'p_action_id': actionId,
+      },
+    );
+  }
 }

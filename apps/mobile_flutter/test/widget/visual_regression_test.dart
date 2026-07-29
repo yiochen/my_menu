@@ -10,6 +10,7 @@ import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/dishes/seeded_dishes.dart';
 import 'package:mymenu/domain/planning/seeded_plan.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/features/menu/menu_grid_card.dart';
 import 'package:mymenu/features/menu/menu_screen.dart';
 import 'package:mymenu/shared/theme/app_theme.dart';
 
@@ -62,8 +63,35 @@ void main() {
         await tester.tap(find.text('Menu'));
         await tester.pumpAndSettle();
 
-        expect(find.text('My Menu'), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey<String>('menu_compact_search_header')),
+          findsOneWidget,
+        );
         await _expectFullAppGolden(tester, 'ui_menu_home');
+      });
+    });
+
+    testWidgets('menu multi-select and delete confirmation', (
+      WidgetTester tester,
+    ) async {
+      await runWithMockNetworkImages(() async {
+        await _pumpGoldenApp(tester, appState);
+        await tester.tap(find.text('Menu'));
+        await tester.pumpAndSettle();
+
+        await tester.longPress(find.byType(MenuGridCard).first);
+        await tester.pumpAndSettle();
+        expect(find.text('1 selected'), findsOneWidget);
+        expect(find.text('Delete 1'), findsOneWidget);
+        await _expectFullAppGolden(tester, 'ui_menu_multi_select');
+
+        await tester.tap(
+          find.byKey(const ValueKey<String>('menu_delete_selected')),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Delete this dish?'), findsOneWidget);
+        expect(find.textContaining('phone’s library'), findsOneWidget);
+        await _expectFullAppGolden(tester, 'ui_menu_delete_confirm');
       });
     });
 
@@ -173,10 +201,10 @@ void main() {
           find.text('Capture your first cooking moment'),
           findsOneWidget,
         );
-        expect(find.text('My Menu'), findsOneWidget);
+        expect(find.text('My Menu'), findsNothing);
         expect(
-          tester.getTopLeft(find.text('My Menu')).dy,
-          inInclusiveRange(47, 160),
+          find.byKey(const ValueKey<String>('menu_compact_search_header')),
+          findsOneWidget,
         );
         expect(find.text('24 dishes'), findsNothing);
         expect(

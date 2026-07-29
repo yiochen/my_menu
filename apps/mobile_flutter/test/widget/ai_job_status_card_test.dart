@@ -77,6 +77,32 @@ void main() {
     await tester.tap(find.text('Cancel'));
     expect(cancelCount, 1);
   });
+
+  testWidgets('completed result card clearly opens its result',
+      (WidgetTester tester) async {
+    var openCount = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AiJobStatusCard(
+            job: _job(AiJobStatus.succeeded),
+            onOpenResult: () => openCount += 1,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Open result'), findsOneWidget);
+    expect(
+      find.text('The result is ready. Tap to review or correct it.'),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey<String>('ai_job_job_succeeded')),
+    );
+
+    expect(openCount, 1);
+  });
 }
 
 AiJob _job(AiJobStatus status) {

@@ -21,6 +21,14 @@ int? _payloadInt(Map<String, Object?> payload, String key) {
   return value is int ? value : null;
 }
 
+List<String> _payloadStringList(Map<String, Object?> payload, String key) {
+  final Object? value = payload[key];
+  if (value is List<dynamic>) {
+    return value.whereType<String>().toList(growable: false);
+  }
+  throw StateError('Missing payload string list: $key');
+}
+
 void _logSync(String message, [Object? error, StackTrace? stackTrace]) {
   developer.log(
     message,

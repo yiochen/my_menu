@@ -9,6 +9,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/core/database/app_database.dart';
 import 'package:mymenu/core/network/network_status_monitor.dart';
+import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/features/plan/plan_screen.dart';
+import 'package:mymenu/shared/theme/app_theme.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 
 import '../support/network_image_test_helper.dart';
@@ -171,6 +174,31 @@ void main() {
       });
     });
 
+    testWidgets('empty menu does not build a broken plan suggestion', (
+      WidgetTester tester,
+    ) async {
+      final MyMenuState state = MyMenuState.forTesting();
+      addTearDown(state.dispose);
+
+      await tester.pumpWidget(
+        MyMenuScope(
+          notifier: state,
+          child: MaterialApp(
+            theme: AppTheme.data,
+            home: Scaffold(
+              body: PlanScreen(onOpenReview: () {}),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Nothing planned yet'), findsOneWidget);
+      expect(find.text('Add a dish'), findsOneWidget);
+      expect(find.text('Suggestion · not planned'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('can save a dish idea from the capture-first flow', (
       WidgetTester tester,
     ) async {
@@ -278,8 +306,11 @@ void main() {
         expect(tester.getTopLeft(menu).dy, 0);
         expect(tester.getBottomRight(menu).dy, 844);
         final CustomScrollView menuScrollView = tester.widget(menu);
+        final SliverAppBar stickyHeader =
+            menuScrollView.slivers.first as SliverAppBar;
+        expect(stickyHeader.pinned, isTrue);
         final SliverPadding menuContent =
-            menuScrollView.slivers.single as SliverPadding;
+            menuScrollView.slivers[1] as SliverPadding;
         final EdgeInsets menuPadding =
             menuContent.padding.resolve(TextDirection.ltr);
         expect(menuPadding.left, MyMenuUnits.pageGutter);
@@ -301,20 +332,75 @@ void main() {
             menuCard.foregroundDecoration! as BoxDecoration;
         expect(cardForeground.border, isNotNull);
         expect(cardDecoration.boxShadow, isNotEmpty);
-        expect(
-          tester.getTopLeft(find.text('Your personal restaurant')).dy,
-          greaterThan(47),
+        final Finder compactSearch = find.byKey(
+          const ValueKey<String>('menu_compact_search_header'),
         );
+        final double initialHeaderTop = tester.getTopLeft(compactSearch).dy;
+        expect(initialHeaderTop, greaterThanOrEqualTo(47));
+        expect(find.text('Your personal restaurant'), findsNothing);
+        expect(find.text('My Menu'), findsNothing);
         expect(tester.takeException(), isNull);
 
-        await tester.drag(menu, const Offset(0, -32));
+        await tester.drag(menu, const Offset(0, -260));
+        await tester.pumpAndSettle();
+
+        expect(tester.getTopLeft(compactSearch).dy, initialHeaderTop);
+        expect(tester.takeException(), isNull);
+      });
+    });
+
+    testWidgets('long press replaces menu chrome and bottom navigation', (
+      WidgetTester tester,
+    ) async {
+      await runWithMockNetworkImages(() async {
+        await tester.pumpWidget(_testApp());
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Menu'));
         await tester.pumpAndSettle();
 
         expect(
-          tester.getTopLeft(find.text('Your personal restaurant')).dy,
-          lessThan(47),
+          find.byKey(const ValueKey<String>('bottom_shell_golden')),
+          findsOneWidget,
         );
-        expect(tester.takeException(), isNull);
+        final Finder salmonCard = find.byKey(
+          const ValueKey<String>('menu_dish_dish_salmon'),
+        );
+        await tester.scrollUntilVisible(
+          salmonCard,
+          180,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.ensureVisible(salmonCard);
+        await tester.pumpAndSettle();
+        await tester.longPress(salmonCard);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey<String>('menu_selection_header')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey<String>('menu_compact_search_header')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const ValueKey<String>('bottom_shell_golden')),
+          findsNothing,
+        );
+
+        await tester.tap(
+          find.byKey(const ValueKey<String>('menu_selection_close')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey<String>('menu_compact_search_header')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey<String>('bottom_shell_golden')),
+          findsOneWidget,
+        );
       });
     });
 
@@ -344,9 +430,9 @@ void main() {
         await tester.pumpAndSettle();
 
         final Finder heading = find.byKey(
-          const ValueKey<String>('menu_heading_golden'),
+          const ValueKey<String>('menu_compact_search_header'),
         );
-        expect(tester.getSize(heading), const Size(354, 55));
+        expect(tester.getSize(heading), const Size(354, 46));
         await expectLater(
           heading,
           matchesGoldenFile(

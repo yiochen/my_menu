@@ -156,6 +156,162 @@
       "createdAt": "2026-07-24T20:13:01.075Z",
       "updatedAt": "2026-07-24T20:21:09.000Z",
       "resolvedAt": "2026-07-24T20:21:09.000Z"
+    },
+    {
+      "id": "a1d4b3d5-53cb-4338-b559-0dee78a00e2c",
+      "status": "resolved",
+      "screen": "batch-correct.iphone-14",
+      "device": "iphone-14",
+      "source": "screens/batch-correct.iphone-14.html",
+      "selector": "section.selection-panel:nth-of-type(2)",
+      "element": {
+        "tag": "section",
+        "text": "1 photo selectedWhat should change?Clear↗Move to another dishKeep it in this batch›＋Make a new dishGive this photo its own history›"
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "rect": {
+        "x": 18,
+        "y": 636.203125,
+        "width": 339,
+        "height": 179.75
+      },
+      "message": "instead of having this, just ask user to drag and drop across different dishes. Make sure to support multi-select and so people can batch-select and drop. In the text description, teach user how to do that.\n\nThis section become two drop zone\n1. move to another dish outside of current batch\n2. Create a new dish",
+      "createdAt": "2026-07-27T06:13:08.324Z",
+      "updatedAt": "2026-07-27T06:32:07.000Z",
+      "resolvedAt": "2026-07-27T06:32:07.000Z"
+    },
+    {
+      "id": "c2ef7db3-7dcb-4db9-a8ef-1d4a845b374c",
+      "status": "resolved",
+      "screen": "batch-correct.iphone-14",
+      "device": "iphone-14",
+      "source": "screens/batch-correct.iphone-14.html",
+      "selector": "main.screen.sheet-screen",
+      "element": {
+        "tag": "main",
+        "text": "Correct grouping Choose one photoThen move it to another dish from this batch or make it a separate dish. Originals never change. Miso Salmon Bowl2 selected by AI Charred Corn Ramen1 selected by AI Crispy Tofu Salad1 selected by AI 1 photo selectedWhat should change?Clear↗Move to another dishKeep it"
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "rect": {
+        "x": 0,
+        "y": -44.5,
+        "width": 375,
+        "height": 888.453125
+      },
+      "message": "Let's not introduce the concept of \"batch\"m that's too technical.",
+      "createdAt": "2026-07-27T06:13:39.936Z",
+      "updatedAt": "2026-07-27T06:32:07.000Z",
+      "resolvedAt": "2026-07-27T06:32:07.000Z"
+    },
+    {
+      "id": "94c1223b-9af5-489d-84a3-a2e8ff42d0b5",
+      "status": "resolved",
+      "screen": "batch-move.iphone-14",
+      "device": "iphone-14",
+      "source": "screens/batch-move.iphone-14.html",
+      "selector": "main.screen.sheet-screen",
+      "element": {
+        "tag": "main",
+        "text": "Move photo From Miso Salmon BowlChoose its right dishOnly this source association moves. Other dishes in this capture batchCharred Corn RamenNew dish · 1 photo nowCrispy Tofu SaladNew dish · 1 photo now ◎After the move: Miso Salmon has 1 batch photo; Charred Corn Ramen has 2. Move photoThe original"
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 844
+      },
+      "message": "We don't need this screen since we want user to just drag and drop within a batch. We should repurpose this screen to move to a dish outside of batch. We need to have a search bar where people search for existing dishes.",
+      "createdAt": "2026-07-27T06:17:07.986Z",
+      "updatedAt": "2026-07-27T06:32:07.000Z",
+      "resolvedAt": "2026-07-27T06:32:07.000Z"
+    },
+    {
+      "id": "904feb73-1c4d-4144-a3e5-db8309dfb127",
+      "status": "resolved",
+      "screen": "batch-split.iphone-14",
+      "device": "iphone-14",
+      "source": "screens/batch-split.iphone-14.html",
+      "selector": "header.topbar",
+      "element": {
+        "tag": "header",
+        "text": "Make separate dish"
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "rect": {
+        "x": 18,
+        "y": 24,
+        "width": 354,
+        "height": 103.28125
+      },
+      "message": "Call it \"Make a new dish\"",
+      "createdAt": "2026-07-27T06:19:03.298Z",
+      "updatedAt": "2026-07-27T06:32:07.000Z",
+      "resolvedAt": "2026-07-27T06:32:07.000Z"
+    },
+    {
+      "id": "fc1d174f-3d55-476d-b6c1-4e4810cde3c2",
+      "status": "resolved",
+      "screen": "batch-split.iphone-14",
+      "device": "iphone-14",
+      "source": "screens/batch-split.iphone-14.html",
+      "selector": "section.card.pad",
+      "element": {
+        "tag": "section",
+        "text": "✓Exactly one new dishOne cooking occasion · one source association↺Safe to retryA repeated save will not create a duplicate"
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "rect": {
+        "x": 18,
+        "y": 500.5390625,
+        "width": 354,
+        "height": 184.171875
+      },
+      "message": "It's unclear what these are. We can remove them",
+      "createdAt": "2026-07-27T06:19:47.495Z",
+      "updatedAt": "2026-07-27T06:32:07.000Z",
+      "resolvedAt": "2026-07-27T06:32:07.000Z"
+    },
+    {
+      "id": "3f7bf315-84e5-4770-af5d-37f5fee15622",
+      "status": "resolved",
+      "screen": "batch-split.iphone-14",
+      "device": "iphone-14",
+      "source": "screens/batch-split.iphone-14.html",
+      "selector": "button.button.full",
+      "element": {
+        "tag": "button",
+        "text": "Create separate dish"
+      },
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "rect": {
+        "x": 18,
+        "y": 766,
+        "width": 354,
+        "height": 50
+      },
+      "message": "just \"Create\"",
+      "createdAt": "2026-07-27T06:20:08.645Z",
+      "updatedAt": "2026-07-27T06:32:07.000Z",
+      "resolvedAt": "2026-07-27T06:32:07.000Z"
     }
   ]
 }

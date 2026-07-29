@@ -159,7 +159,7 @@ class _LatestNote extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Eyebrow('Latest note · Jul 18'),
+                const Eyebrow('Latest note'),
                 const SizedBox(height: 3),
                 Text(
                   dish.notes.first.body,

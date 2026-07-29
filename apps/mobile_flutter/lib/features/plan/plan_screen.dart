@@ -80,12 +80,14 @@ class _PlanScreenState extends State<PlanScreen> {
           ),
           const SizedBox(height: 16),
           if (_weekOffset == 0) ...<Widget>[
-            PlanSuggestionCard(
-              state: state,
-              date: _selectedDate,
-              onAdded: () => setState(() {}),
-            ),
-            const SizedBox(height: 16),
+            if (state.dishes.isNotEmpty) ...<Widget>[
+              PlanSuggestionCard(
+                state: state,
+                date: _selectedDate,
+                onAdded: () => setState(() {}),
+              ),
+              const SizedBox(height: 16),
+            ],
             if (state.reviewItems.isNotEmpty)
               PlanReviewCard(
                 key: const ValueKey<String>('plan_review_card'),

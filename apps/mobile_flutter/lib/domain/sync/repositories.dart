@@ -6,9 +6,11 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mymenu/core/database/app_database.dart' as db;
+import 'package:mymenu/core/files/dish_image_cache.dart';
 import 'package:mymenu/core/network/my_menu_api_client.dart';
 import 'package:mymenu/domain/ai/ai_job.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
+import 'package:mymenu/domain/capture/capture_correction.dart';
 import 'package:mymenu/domain/capture/capture_item.dart' as capture_domain;
 import 'package:mymenu/domain/capture/capture_mappers.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
@@ -20,10 +22,15 @@ import 'package:mymenu/domain/planning/seeded_plan.dart';
 import 'package:uuid/uuid.dart';
 
 part 'repositories_dishes.dart';
+part 'repositories_dish_deletion.dart';
 part 'repositories_ai.dart';
 part 'repositories_planning.dart';
 part 'repositories_capture.dart';
+part 'repositories_capture_deletion.dart';
+part 'repositories_capture_corrections.dart';
+part 'repositories_capture_correction_support.dart';
 part 'repositories_capture_sync.dart';
+part 'repositories_dish_hydration.dart';
 part 'repositories_support.dart';
 part 'repositories_sync.dart';
 
@@ -32,24 +39,32 @@ class AppRepositories {
     required this.database,
     required this.apiClient,
     this.captureControlRequestTimeout = const Duration(seconds: 5),
-  })  : dishRepository = DishRepository(database),
-        planRepository = PlanRepository(database),
-        captureRepository = CaptureRepository(database),
-        aiJobRepository = AiJobRepository(database),
-        syncRepository = SyncRepository(
-          database,
-          apiClient,
-          controlRequestTimeout: captureControlRequestTimeout,
-        );
+    DishImageCache? dishImageCache,
+  }) {
+    final DishImageCache resolvedImageCache =
+        dishImageCache ?? DishImageCache();
+    dishRepository = DishRepository(database, resolvedImageCache);
+    planRepository = PlanRepository(database);
+    captureRepository = CaptureRepository(database);
+    captureCorrectionRepository = CaptureCorrectionRepository(database);
+    aiJobRepository = AiJobRepository(database);
+    syncRepository = SyncRepository(
+      database,
+      apiClient,
+      controlRequestTimeout: captureControlRequestTimeout,
+      dishImageCache: resolvedImageCache,
+    );
+  }
 
   final db.AppDatabase database;
   final MyMenuApiClient apiClient;
   final Duration captureControlRequestTimeout;
-  final DishRepository dishRepository;
-  final PlanRepository planRepository;
-  final CaptureRepository captureRepository;
-  final AiJobRepository aiJobRepository;
-  final SyncRepository syncRepository;
+  late final DishRepository dishRepository;
+  late final PlanRepository planRepository;
+  late final CaptureRepository captureRepository;
+  late final CaptureCorrectionRepository captureCorrectionRepository;
+  late final AiJobRepository aiJobRepository;
+  late final SyncRepository syncRepository;
 
   Future<void> seedIfNeeded() async {
     await dishRepository.seedIfNeeded();
@@ -62,11 +77,14 @@ class SyncRepository {
     this._database,
     this._apiClient, {
     required Duration controlRequestTimeout,
-  }) : _controlRequestTimeout = controlRequestTimeout;
+    required DishImageCache dishImageCache,
+  })  : _controlRequestTimeout = controlRequestTimeout,
+        _dishImageCache = dishImageCache;
 
   final db.AppDatabase _database;
   final MyMenuApiClient _apiClient;
   final Duration _controlRequestTimeout;
+  final DishImageCache _dishImageCache;
   static const String _captureSyncCursorKey = 'capture_sync_cursor';
 
   Future<void> processPendingOperations() async {
@@ -76,7 +94,11 @@ class SyncRepository {
                 (db.SyncOperations table) =>
                     table.completedAt.isNull() &
                     (table.entity.equals('dish_note') |
-                        table.entity.equals('dish')),
+                        table.entity.equals('dish') |
+                        table.entity.equals('dish_collection') |
+                        table.entity.equals('capture_item') |
+                        table.entity.equals('capture_batch') |
+                        table.entity.equals('capture_correction')),
               )
               ..orderBy(<OrderingTerm Function(db.$SyncOperationsTable)>[
                 (db.SyncOperations table) => OrderingTerm.asc(table.createdAt),
@@ -96,6 +118,23 @@ class SyncRepository {
           ),
         );
       } on Object catch (error, stackTrace) {
+        if (operation.entity == 'capture_correction' &&
+            operation.operationType != 'undo' &&
+            !_isNetworkFailure(error)) {
+          await CaptureCorrectionRepository(_database).rollbackFailed(
+            operation.entityId,
+            error,
+          );
+          await (_database.update(_database.syncOperations)
+                ..where(
+                  (db.SyncOperations table) => table.id.equals(operation.id),
+                ))
+              .write(
+            db.SyncOperationsCompanion(
+              completedAt: Value<DateTime?>(DateTime.now()),
+            ),
+          );
+        }
         developer.log(
           'Edit sync failed.',
           name: 'mymenu.sync',
@@ -118,6 +157,43 @@ class SyncRepository {
         dishId: operation.entityId,
         patch: payload,
       );
+      return;
+    }
+    if (operation.entity == 'dish_collection' &&
+        operation.operationType == 'delete') {
+      await _apiClient.deleteDishes(
+        dishIds: _payloadStringList(payload, 'dishIds'),
+      );
+      return;
+    }
+    if (operation.entity == 'capture_item' &&
+        operation.operationType == 'delete') {
+      await _apiClient.deleteCapture(captureId: operation.entityId);
+      return;
+    }
+    if (operation.entity == 'capture_batch' &&
+        operation.operationType == 'delete') {
+      await _apiClient.deleteCaptureBatch(batchId: operation.entityId);
+      return;
+    }
+    if (operation.entity == 'capture_correction') {
+      if (operation.operationType == 'undo') {
+        await _apiClient.undoCaptureGrouping(
+          clientMutationId: operation.id,
+          actionId: operation.entityId,
+        );
+        return;
+      }
+      await _apiClient.correctCaptureGrouping(
+        clientMutationId: operation.id,
+        batchId: _requiredPayloadString(payload, 'batchId'),
+        actionType: operation.operationType,
+        captureIds: _payloadStringList(payload, 'captureIds'),
+        targetDishId: _requiredPayloadString(payload, 'targetDishId'),
+        newDishTitle: payload['newDishTitle'] as String?,
+      );
+      await CaptureCorrectionRepository(_database)
+          .markSynced(operation.entityId);
     }
   }
 
@@ -143,4 +219,16 @@ class SyncRepository {
         await _apiClient.deleteDishNote(noteId: operation.entityId);
     }
   }
+}
+
+bool _isNetworkFailure(Object error) {
+  if (error is SocketException || error is TimeoutException) {
+    return true;
+  }
+  final String message = error.toString().toLowerCase();
+  return message.contains('socket') ||
+      message.contains('network') ||
+      message.contains('connection') ||
+      message.contains('timed out') ||
+      message.contains('failed host lookup');
 }

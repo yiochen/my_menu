@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
@@ -7,9 +8,22 @@ import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/dish_artwork.dart';
 
 class MenuGridCard extends StatelessWidget {
-  const MenuGridCard({required this.dish, super.key});
+  const MenuGridCard({
+    required this.dish,
+    this.selected = false,
+    this.selectionMode = false,
+    this.onTap,
+    this.onLongPress,
+    this.onSelect,
+    super.key,
+  });
 
   final Dish dish;
+  final bool selected;
+  final bool selectionMode;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+  final VoidCallback? onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -19,30 +33,54 @@ class MenuGridCard extends StatelessWidget {
             titleStyle.height!;
     final double titleSlotHeight = (titleLineHeight * 2).ceilToDouble();
 
-    return Container(
-      key: ValueKey<String>('menu_dish_${dish.id}'),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: myMenuCardShadow,
-      ),
-      foregroundDecoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: MyMenuColors.line),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(
-              builder: (_) => DishDetailScreen(dishId: dish.id),
-            ),
+    return Semantics(
+      selected: selectionMode ? selected : null,
+      customSemanticsActions: onSelect == null && onLongPress == null
+          ? const <CustomSemanticsAction, VoidCallback>{}
+          : <CustomSemanticsAction, VoidCallback>{
+              const CustomSemanticsAction(label: 'Select dish'):
+                  onSelect ?? onLongPress!,
+            },
+      child: Container(
+        key: ValueKey<String>('menu_dish_${dish.id}'),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: selected
+              ? const <BoxShadow>[
+                  BoxShadow(
+                    color: Color(0x24C94B00),
+                    blurRadius: 26,
+                    offset: Offset(0, 10),
+                  ),
+                ]
+              : myMenuCardShadow,
+        ),
+        foregroundDecoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? MyMenuColors.orangeAction : MyMenuColors.line,
+            width: selected ? 2 : 1,
           ),
-          child: _MenuCardBody(
-            dish: dish,
-            titleStyle: titleStyle,
-            titleSlotHeight: titleSlotHeight,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap ??
+                () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => DishDetailScreen(dishId: dish.id),
+                      ),
+                    ),
+            onLongPress: onLongPress,
+            child: _MenuCardBody(
+              dish: dish,
+              titleStyle: titleStyle,
+              titleSlotHeight: titleSlotHeight,
+              selected: selected,
+              selectionMode: selectionMode,
+            ),
           ),
         ),
       ),
@@ -55,11 +93,15 @@ class _MenuCardBody extends StatelessWidget {
     required this.dish,
     required this.titleStyle,
     required this.titleSlotHeight,
+    required this.selected,
+    required this.selectionMode,
   });
 
   final Dish dish;
   final TextStyle titleStyle;
   final double titleSlotHeight;
+  final bool selected;
+  final bool selectionMode;
 
   @override
   Widget build(BuildContext context) {
@@ -71,13 +113,29 @@ class _MenuCardBody extends StatelessWidget {
             fit: StackFit.expand,
             children: <Widget>[
               DishArtwork(dish: dish),
+              if (selectionMode)
+                Positioned.fill(
+                  child: ColoredBox(
+                    color: selected
+                        ? MyMenuColors.orangeAction.withValues(alpha: 0.12)
+                        : Colors.transparent,
+                  ),
+                ),
+              if (selectionMode)
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: _SelectionIndicator(selected: selected),
+                ),
               if (dish.isFavorite)
                 Positioned(
                   left: 10,
                   bottom: 10,
                   child: GestureDetector(
-                    onTap: () =>
-                        MyMenuScope.read(context).toggleFavorite(dish.id),
+                    onTap: selectionMode
+                        ? null
+                        : () =>
+                            MyMenuScope.read(context).toggleFavorite(dish.id),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
@@ -134,6 +192,32 @@ class _MenuCardBody extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _SelectionIndicator extends StatelessWidget {
+  const _SelectionIndicator({required this.selected});
+
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 140),
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: selected ? MyMenuColors.orangeAction : const Color(0xEFFFFFFF),
+        border: Border.all(
+          color: selected ? Colors.white : MyMenuColors.softInk,
+          width: 2,
+        ),
+      ),
+      child: selected
+          ? const Icon(Icons.check_rounded, color: Colors.white, size: 18)
+          : null,
     );
   }
 }
