@@ -1,6 +1,13 @@
 part of 'my_menu_state.dart';
 
 extension MyMenuStatePlanning on MyMenuState {
+  List<PlannedMeal> get _validPlannedMeals {
+    final Set<String> dishIds = dishes.map((Dish dish) => dish.id).toSet();
+    return List<PlannedMeal>.unmodifiable(
+      _plan.where((PlannedMeal meal) => dishIds.contains(meal.dishId)),
+    );
+  }
+
   void addPlannedMeal(String dayKey, String dishId, {String? label}) {
     _plan = <PlannedMeal>[
       ..._plan,

@@ -9,6 +9,7 @@ class FakeMyMenuApiClient extends MyMenuApiClient {
   final Map<String, String> _batchStatuses = <String, String>{};
   final List<ApiSyncEvent> _events = <ApiSyncEvent>[];
   int _cursor = 0;
+  final Set<String> _captureCorrectionMutationIds = <String>{};
 
   @override
   Future<ApiAiJob> scheduleAiJob({
@@ -200,6 +201,14 @@ class FakeMyMenuApiClient extends MyMenuApiClient {
   Future<void> deleteDishNote({required String noteId}) async {}
 
   @override
+  Future<void> deleteDishes({required List<String> dishIds}) async {
+    for (final String dishId in dishIds) {
+      _dishes.remove(dishId);
+      _emit('dish.deleted', <String, String>{'dishId': dishId});
+    }
+  }
+
+  @override
   Future<void> updateDish({
     required String clientMutationId,
     required String dishId,
@@ -265,6 +274,75 @@ class FakeMyMenuApiClient extends MyMenuApiClient {
         )
         .toList(growable: false);
   }
+
+  @override
+  Future<void> deleteCapture({required String captureId}) async {
+    _captures.remove(captureId);
+    _emit(
+      'capture.deleted',
+      <String, String>{'captureId': captureId},
+    );
+  }
+
+  @override
+  Future<void> deleteCaptureBatch({required String batchId}) async {
+    final List<String> captureIds = _captures.values
+        .where((_FakeCaptureRecord item) => item.batchId == batchId)
+        .map((_FakeCaptureRecord item) => item.id)
+        .toList(growable: false);
+    for (final String captureId in captureIds) {
+      _captures.remove(captureId);
+      _emit(
+        'capture.deleted',
+        <String, String>{'captureId': captureId, 'batchId': batchId},
+      );
+    }
+    _aiJobs.removeWhere((_, ApiAiJob job) => job.subjectId == batchId);
+    _batchItemCounts.remove(batchId);
+    _batchStatuses.remove(batchId);
+    _emit(
+      'capture_batch.deleted',
+      <String, String>{'batchId': batchId},
+    );
+  }
+
+  @override
+  Future<void> correctCaptureGrouping({
+    required String clientMutationId,
+    required String batchId,
+    required String actionType,
+    required List<String> captureIds,
+    required String targetDishId,
+    String? newDishTitle,
+  }) async {
+    if (!_captureCorrectionMutationIds.add(clientMutationId)) {
+      return;
+    }
+    for (final String captureId in captureIds) {
+      final _FakeCaptureRecord? capture = _captures[captureId];
+      if (capture != null && capture.batchId == batchId) {
+        capture
+          ..appliedDishId = targetDishId
+          ..status = 'applied';
+        _emit(
+          'capture.applied_to_existing_dish',
+          <String, String>{
+            'captureId': captureId,
+            'batchId': batchId,
+            'dishId': targetDishId,
+          },
+        );
+      }
+    }
+  }
+
+  @override
+  Future<void> undoCaptureGrouping({
+    required String clientMutationId,
+    required String actionId,
+  }) async {
+    _captureCorrectionMutationIds.add(clientMutationId);
+  }
 }
 
 ApiAiJob _copyAiJob(
@@ -296,53 +374,4 @@ ApiAiJob _copyAiJob(
     startedAt: job.startedAt,
     completedAt: completedAt ?? job.completedAt,
   );
-}
-
-class _FakeCaptureRecord {
-  _FakeCaptureRecord({
-    required this.id,
-    required this.batchId,
-    required this.ordinal,
-    required this.kind,
-    required this.status,
-    required this.capturedAt,
-    required this.capturedLocalDate,
-    required this.captureDateSource,
-    this.mediaRef,
-    this.ideaText,
-  });
-
-  final String id;
-  final String batchId;
-  final int ordinal;
-  final String kind;
-  String status;
-  final DateTime capturedAt;
-  final String? capturedLocalDate;
-  final String captureDateSource;
-  final String? mediaRef;
-  final String? ideaText;
-  String? appliedDishId;
-
-  ApiCapture toApi() {
-    return ApiCapture(
-      id: id,
-      kind: kind,
-      status: status,
-      capturedAt: capturedAt,
-      batchId: batchId,
-      ordinal: ordinal,
-      ideaText: ideaText,
-      capturedLocalDate: capturedLocalDate,
-      captureDateSource: captureDateSource,
-      appliedDishId: appliedDishId,
-      image: mediaRef == null
-          ? null
-          : ApiImage(
-              id: 'fake-image-$id',
-              kind: status == 'applied' ? 'source_photo' : 'capture_photo',
-              mediaRef: mediaRef!,
-            ),
-    );
-  }
 }

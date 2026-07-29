@@ -14,6 +14,7 @@ class Dish {
     required this.notes,
     required this.sourcePhotos,
     this.isFavorite = false,
+    this.createdAt,
   });
 
   final String id;
@@ -30,8 +31,10 @@ class Dish {
   final List<DishNote> notes;
   final List<SourcePhoto> sourcePhotos;
   final bool isFavorite;
+  final DateTime? createdAt;
 
   Dish copyWith({
+    String? id,
     String? title,
     String? description,
     String? heroImageUrl,
@@ -45,9 +48,10 @@ class Dish {
     List<DishNote>? notes,
     List<SourcePhoto>? sourcePhotos,
     bool? isFavorite,
+    DateTime? createdAt,
   }) {
     return Dish(
-      id: id,
+      id: id ?? this.id,
       title: title ?? this.title,
       description: description ?? this.description,
       heroImageUrl: heroImageUrl ?? this.heroImageUrl,
@@ -61,6 +65,7 @@ class Dish {
       notes: notes ?? this.notes,
       sourcePhotos: sourcePhotos ?? this.sourcePhotos,
       isFavorite: isFavorite ?? this.isFavorite,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 }
@@ -95,12 +100,20 @@ class SourcePhoto {
   const SourcePhoto({
     required this.url,
     required this.capturedLabel,
+    this.id,
+    this.captureId,
+    this.cookingOccasionId,
+    this.capturedAt,
     this.note,
     this.confidenceLabel,
   });
 
+  final String? id;
   final String url;
   final String capturedLabel;
+  final String? captureId;
+  final String? cookingOccasionId;
+  final DateTime? capturedAt;
   final String? note;
   final String? confidenceLabel;
 }

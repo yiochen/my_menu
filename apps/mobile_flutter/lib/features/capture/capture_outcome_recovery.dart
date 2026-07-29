@@ -21,8 +21,7 @@ class CaptureOfflineView extends StatelessWidget {
     return CaptureOutcomeFrame(
       topLabel: 'Captured',
       headline: 'Captured—even offline',
-      description:
-          'Nothing else to do. MyMenu will organize it when a '
+      description: 'Nothing else to do. MyMenu will organize it when a '
           'connection returns.',
       art: const CaptureResultIcon(
         icon: Icons.cloud_off_outlined,
@@ -128,8 +127,7 @@ class CapturePermissionView extends StatelessWidget {
     return CaptureOutcomeFrame(
       topLabel: 'Camera access',
       headline: 'Camera access is off',
-      description:
-          'Turn it on in Settings to snap food directly. You can '
+      description: 'Turn it on in Settings to snap food directly. You can '
           'still import a photo or add an idea right now.',
       art: const CaptureResultIcon(
         icon: Icons.no_photography_outlined,

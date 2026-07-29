@@ -37,14 +37,12 @@ Future<void> showCaptureSheet(
         context,
         state,
         () => collectCameraBatch(context, mediaService),
-        organizedStep: CaptureOutcomeStep.created,
       );
     case CaptureAction.importPhotos:
       await _captureMedia(
         context,
         state,
         mediaService.importPhotos,
-        organizedStep: CaptureOutcomeStep.created,
       );
     case CaptureAction.addIdea:
       final AddIdeaIntent? intent = await showAddIdeaSheet(context);
@@ -59,9 +57,8 @@ Future<void> showCaptureSheet(
 Future<void> _captureMedia(
   BuildContext context,
   MyMenuState state,
-  Future<List<CapturedMedia>> Function() capture, {
-  required CaptureOutcomeStep organizedStep,
-}) async {
+  Future<List<CapturedMedia>> Function() capture,
+) async {
   try {
     final List<CapturedMedia> capturedMedia = await capture();
     if (!context.mounted || capturedMedia.isEmpty) {
@@ -71,27 +68,25 @@ Future<void> _captureMedia(
     if (!context.mounted) {
       return;
     }
-    const String scenario = String.fromEnvironment(
-      'MY_MENU_CAPTURE_SCENARIO',
-      defaultValue: 'success',
-    );
-    await showCaptureOutcomeSheet(
-      context,
-      state: state,
-      initialStep: scenario == 'offline'
-          ? CaptureOutcomeStep.offline
-          : CaptureOutcomeStep.saved,
-      organizedStep: organizedStep,
-      photoCount: capturedMedia.length,
-      batchId: batch?.id,
-    );
+    if (batch != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            capturedMedia.length == 1
+                ? 'Photo is uploading. A dish placeholder shows its progress.'
+                : '${capturedMedia.length} photos are uploading. A dish '
+                    'placeholder shows their progress.',
+          ),
+        ),
+      );
+    }
   } on PlatformException catch (_) {
     if (context.mounted) {
       await showCaptureOutcomeSheet(
         context,
         state: state,
         initialStep: CaptureOutcomeStep.permission,
-        organizedStep: organizedStep,
+        organizedStep: CaptureOutcomeStep.created,
         photoCount: 0,
       );
     }
@@ -101,7 +96,7 @@ Future<void> _captureMedia(
         context,
         state: state,
         initialStep: CaptureOutcomeStep.permission,
-        organizedStep: organizedStep,
+        organizedStep: CaptureOutcomeStep.created,
         photoCount: 0,
       );
     }
@@ -210,9 +205,8 @@ class _CaptureActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color background = primary
-        ? MyMenuColors.orangeAction
-        : MyMenuColors.surface;
+    final Color background =
+        primary ? MyMenuColors.orangeAction : MyMenuColors.surface;
     final Color foreground = primary ? Colors.white : MyMenuColors.ink;
     return Material(
       color: background,
@@ -248,8 +242,9 @@ class _CaptureActionTile extends StatelessWidget {
                     Text(
                       subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: primary ? Colors.white70 : MyMenuColors.muted,
-                      ),
+                            color:
+                                primary ? Colors.white70 : MyMenuColors.muted,
+                          ),
                     ),
                   ],
                 ),

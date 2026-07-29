@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="mocklens:form-factor" content="phone">
+<meta name="mocklens:primary-device" content="iphone-14">
+<meta name="mocklens:target-devices" content="iphone-se,iphone-14,pixel-7">
+<meta name="mocklens:viewport" content="390x844">
+<title>Menu after scrolling</title>
+<link rel="stylesheet" href="./shared.css">
+<style>
+  .scrolled-menu .menu-sticky-bar { box-shadow: 0 10px 24px rgba(48,35,24,.09); }
+</style>
+</head>
+<body>
+<main class="screen stack menu-screen scrolled-menu">
+  <header class="menu-sticky-bar" data-mocklens-action="After the user scrolls past filters and the collection heading, this compact search utility remains pinned at the top. Long-pressing any finished card replaces this exact bar with the multi-select header."><button class="menu-search-bar" style="width:100%;text-align:left"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span>Search dishes, notes, ingredients</span></button></header>
+  <div class="dish-grid">
+    <article class="card dish-card" data-mocklens-action="Tap opens Chicken Katsu Curry. Long-press enters selection mode with this dish selected; assistive technologies expose Select dish as a custom action."><div class="image-wrap"><img class="food-image" src="../assets/katsu.svg" alt="Chicken katsu curry"></div><div class="copy"><h3>Chicken Katsu Curry</h3><p class="tiny muted">3 cooks · 5 photos</p><p class="memory-cue">✎ Crispier crumbs next time</p></div></article>
+    <article class="card dish-card"><div class="image-wrap"><img class="food-image" src="../assets/pho.svg" alt="Pho"></div><div class="copy"><h3>Sunday Pho</h3><p class="tiny muted">12 cooks · 18 photos</p><p class="memory-cue">↻ Evolving since 2024</p></div></article>
+    <article class="card dish-card"><div class="image-wrap"><img class="food-image" src="../assets/linguine.svg" alt="Garlic noodles"></div><div class="copy"><h3>Garlic Butter Noodles</h3><p class="tiny muted">1 cook · 2 photos</p></div></article>
+    <article class="card dish-card"><div class="image-wrap"><img class="food-image" src="../assets/miso-salmon.svg" alt="Sesame tofu bowl"></div><div class="copy"><h3>Sesame Tofu Bowl</h3><p class="tiny muted">2 cooks · 3 photos</p></div></article>
+    <article class="card dish-card"><div class="image-wrap"><img class="food-image" src="../assets/katsu.svg" alt="Weeknight dumpling idea"></div><div class="copy"><h3>Weeknight Dumpling Idea</h3><p class="tiny muted">Not cooked yet</p></div></article>
+    <article class="card dish-card"><div class="image-wrap"><img class="food-image" src="../assets/pho.svg" alt="Ginger chicken soup"></div><div class="copy"><h3>Ginger Chicken Soup</h3><p class="tiny muted">4 cooks · 6 photos</p></div></article>
+  </div>
+</main>
+<nav class="bottom-nav" aria-label="Primary"><a class="nav-item" href="#"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4m8-4v4M3 10h18"/></svg><span>Plan</span></a><button class="nav-fab" aria-label="Capture"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></button><a class="nav-item active" href="#"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5A1.5 1.5 0 014 18.5zM20 5.5C20 4.7 19.3 4 18.5 4H13v16h5.5a1.5 1.5 0 001.5-1.5z"/></svg><span>Menu</span></a></nav>
+</body>
+</html>

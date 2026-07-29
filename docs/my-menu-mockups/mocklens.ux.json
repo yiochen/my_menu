@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "goal": "Help a home cook capture first, see automatic organization succeed, build trustworthy cooking-event history, improve a dish cover safely, and plan one or more dishes for any selected day.",
+  "goal": "Help a home cook capture first, keep browsing while photos organize, inspect and durably correct grouping, recover uncertain or non-dish photos without a permanent inbox, manage and bulk-delete dishes safely from Menu, build trustworthy cooking-event history, improve a dish cover safely, and plan one or more dishes for any selected day.",
   "delivery": {
     "screens": [
       "plan.iphone-14",
@@ -9,13 +9,25 @@
       "plan-actions.iphone-14",
       "plan-removed.iphone-14",
       "menu.iphone-14",
+      "menu-scrolled.iphone-14",
+      "menu-delete-select.iphone-14",
+      "menu-delete-confirm.iphone-14",
+      "menu-dishes-deleted.iphone-14",
       "menu-empty.iphone-14",
       "menu-search-empty.iphone-14",
       "dish-detail.iphone-14",
       "dish-memory.iphone-14",
       "cook-again.iphone-14",
       "capture.iphone-14",
-      "capture-saved.iphone-14",
+      "menu-processing.iphone-14",
+      "processing-status.iphone-14",
+      "batch-outcome.iphone-14",
+      "batch-correct.iphone-14",
+      "batch-move.iphone-14",
+      "batch-split.iphone-14",
+      "batch-corrected.iphone-14",
+      "batch-sync-error.iphone-14",
+      "batch-undone.iphone-14",
       "capture-matched.iphone-14",
       "capture-created.iphone-14",
       "capture-offline.iphone-14",
@@ -24,6 +36,12 @@
       "add-idea-validation.iphone-14",
       "review.iphone-14",
       "review-search-empty.iphone-14",
+      "unsorted-photos.iphone-14",
+      "unsorted-photo-actions.iphone-14",
+      "unsorted-assign.iphone-14",
+      "unsorted-assigned.iphone-14",
+      "unsorted-delete.iphone-14",
+      "unsorted-deleted.iphone-14",
       "improve-cover.iphone-14",
       "improve-cover-generating.iphone-14",
       "improve-cover-result.iphone-14",
@@ -36,8 +54,8 @@
     {
       "id": "stable-two-tab-shell",
       "kind": "screen-family",
-      "description": "Plan and Menu keep the stable floating Plan–capture–Menu shell, with no permanent Capture or Review tab and no competing empty-state capture button.",
-      "screens": ["plan.iphone-14", "plan-next-week.iphone-14", "menu.iphone-14", "menu-empty.iphone-14", "menu-search-empty.iphone-14"]
+      "description": "Plan and Menu keep the stable floating Plan–capture–Menu shell; Menu uses one compact sticky search utility bar that is replaced in place during transient selection, with no permanent Capture or Review tab and no competing empty-state capture button.",
+      "screens": ["plan.iphone-14", "plan-next-week.iphone-14", "menu.iphone-14", "menu-scrolled.iphone-14", "menu-empty.iphone-14", "menu-search-empty.iphone-14"]
     },
     {
       "id": "single-day-multi-dish-planning",
@@ -60,8 +78,26 @@
     {
       "id": "automatic-capture-happy-path",
       "kind": "flow",
-      "description": "Take Photo captures without classification, confirms immediate local save while AI organizes, then visibly demonstrates both automatic existing-dish matching and new-dish creation with Correct and Undo paths.",
-      "screens": ["capture.iphone-14", "capture-saved.iphone-14", "capture-matched.iphone-14", "capture-created.iphone-14"]
+      "description": "Take Photo and Import Photos capture without a destination decision; starting upload closes Capture automatically, returns to Menu with one temporary organizing dish card for the batch, and preserves automatic existing-dish and new-dish outcomes.",
+      "screens": ["capture.iphone-14", "menu-processing.iphone-14", "capture-matched.iphone-14", "capture-created.iphone-14"]
+    },
+    {
+      "id": "visible-background-processing",
+      "kind": "flow",
+      "description": "The temporary organizing dish card occupies the expected newest-dish position, has a reduced-motion-safe loading treatment, opens detailed locally-saved, upload, organization, and review status, and can be dismissed without cancelling work.",
+      "screens": ["menu-processing.iphone-14", "processing-status.iphone-14", "batch-outcome.iphone-14"]
+    },
+    {
+      "id": "correctable-batch-outcome",
+      "kind": "flow",
+      "description": "A completed capture visibly reconciles 4 photos into 3 dish groups and shows every source thumbnail exactly once; correction teaches users to select one or more photos and drag them together onto another visible dish, or onto two dedicated drop zones for searching the full Menu or creating one new dish, with tappable alternatives to every drag action and no technical batch language.",
+      "screens": ["batch-outcome.iphone-14", "batch-correct.iphone-14", "batch-move.iphone-14", "batch-split.iphone-14"]
+    },
+    {
+      "id": "durable-correction-and-undo",
+      "kind": "flow",
+      "description": "A move applies locally first, updates both visible group counts, is visibly marked as user-authored, remains safe across offline/restart and AI retry, supports atomic Undo of the latest eligible change, and shows authoritative rollback plus recovery when sync rejects stale state.",
+      "screens": ["batch-corrected.iphone-14", "batch-undone.iphone-14", "batch-sync-error.iphone-14"]
     },
     {
       "id": "capture-offline-and-permission-recovery",
@@ -80,6 +116,24 @@
       "kind": "flow",
       "description": "Review remains contextual, uses unambiguous progress wording, supports existing-dish and new-dish outcomes, and demonstrates an empty alternate-dish search with clear query correction.",
       "screens": ["plan.iphone-14", "review.iphone-14", "review-search-empty.iphone-14"]
+    },
+    {
+      "id": "contextual-unsorted-photos",
+      "kind": "screen-family",
+      "description": "Uncertain and non-dish captures never become dish cards automatically; when present, a contextual Menu card opens a recoverable Unsorted Photos collection that labels why each photo was held and disappears when empty, without creating a permanent tab or inbox.",
+      "screens": ["menu-processing.iphone-14", "unsorted-photos.iphone-14"]
+    },
+    {
+      "id": "manual-unsorted-assignment",
+      "kind": "flow",
+      "description": "An unsorted photo exposes one primary Assign to dish action, supports search and suggested existing dishes, creates one source in the captured-date cooking occasion, removes the item from Unsorted, and marks the association as durable user intent.",
+      "screens": ["unsorted-photo-actions.iphone-14", "unsorted-assign.iphone-14", "unsorted-assigned.iphone-14"]
+    },
+    {
+      "id": "recoverable-unsorted-deletion",
+      "kind": "flow",
+      "description": "Delete remains subordinate until a single destructive confirmation, clearly scopes removal to MyMenu local and synced storage, returns to the collection with a decremented count, and offers a short Undo path before permanent removal.",
+      "screens": ["unsorted-photo-actions.iphone-14", "unsorted-delete.iphone-14", "unsorted-deleted.iphone-14"]
     },
     {
       "id": "successful-cover-improvement",
@@ -108,8 +162,20 @@
     {
       "id": "clear-menu-count-and-controls",
       "kind": "screen-family",
-      "description": "Menu labels the collection as 24 dishes, uses All, Favorites, Recently added, and Filters to control one unified dish grid without duplicate Favorites and All sections, and covers a search-empty state with concise query-clearing guidance.",
-      "screens": ["menu.iphone-14", "menu-search-empty.iphone-14"]
+      "description": "Menu labels the normal collection as 24 and the two-dish deletion result as 22 beside the All dishes heading rather than in persistent header chrome, uses All, Favorites, Recently added, and Filters to control one unified dish grid without duplicate sections, and covers a search-empty state with concise query-clearing guidance.",
+      "screens": ["menu.iphone-14", "menu-dishes-deleted.iphone-14", "menu-search-empty.iphone-14"]
+    },
+    {
+      "id": "bulk-menu-dish-deletion",
+      "kind": "flow",
+      "description": "Long-pressing a finished Menu card gives haptic feedback, selects it, and replaces the sticky search utility bar with a close–count–Select all header; assistive technologies expose a semantic Select dish action without requiring the gesture. Multi-select works across current filtered results without opening dishes, allows ideas and dishes with no history, excludes temporary processing placeholders, keeps destructive emphasis subordinate until one confirmation names the selected dishes and scopes dependent MyMenu removal while preserving phone-library originals, then applies locally, updates 24 to 22, and offers one atomic Undo.",
+      "screens": ["menu.iphone-14", "menu-processing.iphone-14", "menu-delete-select.iphone-14", "menu-delete-confirm.iphone-14", "menu-dishes-deleted.iphone-14"]
+    },
+    {
+      "id": "compact-sticky-menu-header",
+      "kind": "screen-family",
+      "description": "Every Menu collection state removes the tagline, oversized My Menu title, decorative avatar, header count badge, and persistent Select label in favor of one compact sticky search utility bar; filters and dish counts stay with collection content, and selection replaces the bar in the same position without shifting the grid's interaction model.",
+      "screens": ["menu.iphone-14", "menu-scrolled.iphone-14", "menu-processing.iphone-14", "menu-delete-select.iphone-14", "menu-delete-confirm.iphone-14", "menu-dishes-deleted.iphone-14", "menu-empty.iphone-14", "menu-search-empty.iphone-14"]
     },
     {
       "id": "menu-empty-single-capture-action",
@@ -121,13 +187,13 @@
       "id": "warm-minimal-visual-system",
       "kind": "screen-family",
       "description": "Every delivery screen retains the shared cream, orange, charcoal, soft-surface, high-radius, rounded-type, and ambient-shadow system with one dominant filled action per task region.",
-      "screens": ["plan.iphone-14", "plan-next-week.iphone-14", "plan-add.iphone-14", "plan-actions.iphone-14", "plan-removed.iphone-14", "menu.iphone-14", "menu-empty.iphone-14", "menu-search-empty.iphone-14", "dish-detail.iphone-14", "dish-memory.iphone-14", "cook-again.iphone-14", "capture.iphone-14", "capture-saved.iphone-14", "capture-matched.iphone-14", "capture-created.iphone-14", "capture-offline.iphone-14", "capture-permission.iphone-14", "add-idea.iphone-14", "add-idea-validation.iphone-14", "review.iphone-14", "review-search-empty.iphone-14", "improve-cover.iphone-14", "improve-cover-generating.iphone-14", "improve-cover-result.iphone-14", "improve-cover-offline.iphone-14", "improve-cover-error.iphone-14"]
+      "screens": ["plan.iphone-14", "plan-next-week.iphone-14", "plan-add.iphone-14", "plan-actions.iphone-14", "plan-removed.iphone-14", "menu.iphone-14", "menu-scrolled.iphone-14", "menu-delete-select.iphone-14", "menu-delete-confirm.iphone-14", "menu-dishes-deleted.iphone-14", "menu-processing.iphone-14", "menu-empty.iphone-14", "menu-search-empty.iphone-14", "dish-detail.iphone-14", "dish-memory.iphone-14", "cook-again.iphone-14", "capture.iphone-14", "processing-status.iphone-14", "batch-outcome.iphone-14", "batch-correct.iphone-14", "batch-move.iphone-14", "batch-split.iphone-14", "batch-corrected.iphone-14", "batch-sync-error.iphone-14", "batch-undone.iphone-14", "capture-matched.iphone-14", "capture-created.iphone-14", "capture-offline.iphone-14", "capture-permission.iphone-14", "add-idea.iphone-14", "add-idea-validation.iphone-14", "review.iphone-14", "review-search-empty.iphone-14", "unsorted-photos.iphone-14", "unsorted-photo-actions.iphone-14", "unsorted-assign.iphone-14", "unsorted-assigned.iphone-14", "unsorted-delete.iphone-14", "unsorted-deleted.iphone-14", "improve-cover.iphone-14", "improve-cover-generating.iphone-14", "improve-cover-result.iphone-14", "improve-cover-offline.iphone-14", "improve-cover-error.iphone-14"]
     },
     {
       "id": "compact-device-resilience",
       "kind": "screen-family",
-      "description": "Seven-day calendars, multiple planned dishes, long names, grouped history, comparison states, bottom actions, and recovery copy remain readable and reachable on iPhone SE, iPhone 14, and Pixel 7 without clipped or covered controls.",
-      "screens": ["plan.iphone-14", "plan-next-week.iphone-14", "plan-actions.iphone-14", "plan-removed.iphone-14", "menu.iphone-14", "dish-detail.iphone-14", "dish-memory.iphone-14", "capture-saved.iphone-14", "improve-cover.iphone-14", "improve-cover-result.iphone-14", "add-idea-validation.iphone-14", "review-search-empty.iphone-14"]
+      "description": "Seven-day calendars, multiple planned dishes, compact sticky and replacement selection headers, long names, grouped history, comparison states, bottom actions, and recovery copy remain readable and reachable on iPhone SE, iPhone 14, and Pixel 7 without clipped or covered controls.",
+      "screens": ["plan.iphone-14", "plan-next-week.iphone-14", "plan-actions.iphone-14", "plan-removed.iphone-14", "menu.iphone-14", "menu-scrolled.iphone-14", "menu-delete-select.iphone-14", "menu-delete-confirm.iphone-14", "menu-dishes-deleted.iphone-14", "menu-processing.iphone-14", "dish-detail.iphone-14", "dish-memory.iphone-14", "processing-status.iphone-14", "batch-outcome.iphone-14", "batch-correct.iphone-14", "batch-corrected.iphone-14", "batch-sync-error.iphone-14", "unsorted-photos.iphone-14", "unsorted-delete.iphone-14", "improve-cover.iphone-14", "improve-cover-result.iphone-14", "add-idea-validation.iphone-14", "review-search-empty.iphone-14"]
     }
   ]
 }

@@ -2,6 +2,7 @@ part of 'repositories.dart';
 
 extension SyncRepositoryPull on SyncRepository {
   Future<void> pullCaptureSync({int maxPages = 5}) async {
+    await _refreshKnownDishes();
     var cursor = await _readCaptureSyncCursor();
     for (var page = 0; page < maxPages; page += 1) {
       final ApiSyncPull result = await _apiClient
@@ -25,6 +26,36 @@ extension SyncRepositoryPull on SyncRepository {
       if (!result.hasMore) {
         return;
       }
+    }
+  }
+
+  Future<void> _refreshKnownDishes() async {
+    final List<db.DishRow> localDishes =
+        await _database.select(_database.dishes).get();
+    final List<db.SourcePhotoRow> sourcePhotos =
+        await _database.select(_database.sourcePhotos).get();
+    await _cacheLocalDishMedia(localDishes, sourcePhotos);
+    final Set<String> dishesWithUncachedSources = sourcePhotos
+        .where((db.SourcePhotoRow photo) => _mediaNeedsRefresh(photo.url))
+        .map((db.SourcePhotoRow photo) => photo.dishId)
+        .toSet();
+    final List<String> remoteDishIds = localDishes
+        .where(
+          (db.DishRow dish) =>
+              Uuid.isValidUUID(fromString: dish.id) &&
+              (_mediaNeedsRefresh(dish.heroImageUrl) ||
+                  dishesWithUncachedSources.contains(dish.id)),
+        )
+        .map((db.DishRow dish) => dish.id)
+        .toList(growable: false);
+    if (remoteDishIds.isEmpty) {
+      return;
+    }
+    final List<ApiDish> dishes = await _apiClient
+        .getDishes(remoteDishIds)
+        .timeout(_controlRequestTimeout);
+    for (final ApiDish dish in dishes) {
+      await _upsertDish(dish);
     }
   }
 
@@ -59,8 +90,10 @@ extension SyncRepositoryPull on SyncRepository {
     final Set<String> reviewItemIds = <String>{};
     final Set<String> aiJobIds = <String>{};
     final Set<String> deletedCaptureIds = <String>{};
+    final Set<String> deletedCaptureBatchIds = <String>{};
     final Set<String> deletedDishIds = <String>{};
     final Set<String> deletedReviewItemIds = <String>{};
+    final Set<String> deletedAiJobIds = <String>{};
 
     for (final ApiSyncEvent event in events) {
       final String? captureId = event.entityIds['captureId'];
@@ -79,6 +112,10 @@ extension SyncRepositoryPull on SyncRepository {
         case 'capture_batch.discarded':
           if (batchId != null) {
             captureBatchIds.add(batchId);
+          }
+        case 'capture_batch.deleted':
+          if (batchId != null) {
+            deletedCaptureBatchIds.add(batchId);
           }
         case 'capture.uploaded':
         case 'capture.classifying':
@@ -136,9 +173,30 @@ extension SyncRepositoryPull on SyncRepository {
           if (aiJobId != null) {
             aiJobIds.add(aiJobId);
           }
+        case 'ai_job.deleted':
+          if (aiJobId != null) {
+            deletedAiJobIds.add(aiJobId);
+          }
         default:
       }
     }
+    captureBatchIds.removeAll(deletedCaptureBatchIds);
+    captureIds.removeAll(deletedCaptureIds);
+    dishIds.removeAll(deletedDishIds);
+    reviewItemIds.removeAll(deletedReviewItemIds);
+    aiJobIds.removeAll(deletedAiJobIds);
+
+    // Apply authoritative removals before hydrating upserts. If one of the
+    // follow-up fetches fails, deleted dishes must not linger locally as empty
+    // cards. Replaying the same deletion is safe because each delete is
+    // idempotent.
+    await _deleteSyncedRows(
+      captureIds: deletedCaptureIds,
+      captureBatchIds: deletedCaptureBatchIds,
+      dishIds: deletedDishIds,
+      reviewItemIds: deletedReviewItemIds,
+      aiJobIds: deletedAiJobIds,
+    );
 
     final List<ApiCaptureBatch> batches = await _apiClient
         .getCaptureBatches(captureBatchIds.toList(growable: false));
@@ -152,19 +210,11 @@ extension SyncRepositoryPull on SyncRepository {
         await _apiClient.getAiJobs(aiJobIds.toList(growable: false));
 
     await _database.transaction(() async {
-      await _deleteSyncedRows(
-        captureIds: deletedCaptureIds,
-        dishIds: deletedDishIds,
-        reviewItemIds: deletedReviewItemIds,
-      );
       for (final ApiCaptureBatch batch in batches) {
         await _upsertCaptureBatch(batch);
       }
       for (final ApiCapture capture in captures) {
         await _upsertCapture(capture);
-      }
-      for (final ApiDish dish in dishes) {
-        await _upsertDish(dish);
       }
       for (final ApiReviewItem item in reviewItems) {
         await _upsertReviewItem(item);
@@ -173,6 +223,9 @@ extension SyncRepositoryPull on SyncRepository {
         await _upsertAiJob(job);
       }
     });
+    for (final ApiDish dish in dishes) {
+      await _upsertDish(dish);
+    }
   }
 
   Future<void> _upsertCaptureBatch(ApiCaptureBatch batch) async {
@@ -203,29 +256,58 @@ extension SyncRepositoryPull on SyncRepository {
 
   Future<void> _deleteSyncedRows({
     required Set<String> captureIds,
+    required Set<String> captureBatchIds,
     required Set<String> dishIds,
     required Set<String> reviewItemIds,
+    required Set<String> aiJobIds,
   }) async {
-    for (final String captureId in captureIds) {
-      await (_database.delete(_database.captureItems)
-            ..where((db.CaptureItems table) => table.id.equals(captureId)))
-          .go();
-    }
-    for (final String dishId in dishIds) {
-      await (_database.delete(_database.sourcePhotos)
-            ..where((db.SourcePhotos table) => table.dishId.equals(dishId)))
-          .go();
-      await (_database.delete(_database.plannedMeals)
-            ..where((db.PlannedMeals table) => table.dishId.equals(dishId)))
-          .go();
-      await (_database.delete(_database.dishes)
-            ..where((db.Dishes table) => table.id.equals(dishId)))
-          .go();
-    }
-    for (final String reviewItemId in reviewItemIds) {
-      await (_database.delete(_database.reviewItems)
-            ..where((db.ReviewItems table) => table.id.equals(reviewItemId)))
-          .go();
+    await DishRepository(_database, _dishImageCache).deleteLocalDishes(
+      dishIds,
+      enqueueRemote: false,
+    );
+    final List<db.CaptureItemRow> captureRows = captureIds.isEmpty
+        ? const <db.CaptureItemRow>[]
+        : await (_database.select(_database.captureItems)
+              ..where(
+                (db.CaptureItems table) => table.id.isIn(captureIds),
+              ))
+            .get();
+    await _database.transaction(() async {
+      for (final String captureId in captureIds) {
+        await (_database.delete(_database.captureItems)
+              ..where((db.CaptureItems table) => table.id.equals(captureId)))
+            .go();
+      }
+      for (final String reviewItemId in reviewItemIds) {
+        await (_database.delete(_database.reviewItems)
+              ..where(
+                (db.ReviewItems table) => table.id.equals(reviewItemId),
+              ))
+            .go();
+      }
+      for (final String aiJobId in aiJobIds) {
+        await (_database.delete(_database.aiJobs)
+              ..where((db.AiJobs table) => table.id.equals(aiJobId)))
+            .go();
+      }
+      for (final String batchId in captureBatchIds) {
+        await (_database.delete(_database.captureBatches)
+              ..where((db.CaptureBatches table) => table.id.equals(batchId)))
+            .go();
+      }
+    });
+    for (final String path in captureRows
+        .map((db.CaptureItemRow row) => row.localMediaRef)
+        .whereType<String>()
+        .toSet()) {
+      try {
+        final File file = File(path);
+        if (file.existsSync()) {
+          await file.delete();
+        }
+      } on Object {
+        // The authoritative row is gone; a missing local copy is harmless.
+      }
     }
   }
 
@@ -255,96 +337,16 @@ extension SyncRepositoryPull on SyncRepository {
         );
   }
 
-  Future<void> _upsertDish(ApiDish apiDish) async {
-    final Dish dish = _dishFromApi(apiDish);
-    await _database.into(_database.dishes).insertOnConflictUpdate(
-          dish.toCompanion(),
-        );
-    await (_database.delete(_database.sourcePhotos)
-          ..where((db.SourcePhotos table) => table.dishId.equals(apiDish.id)))
-        .go();
-    await (_database.delete(_database.dishNotes)
-          ..where((db.DishNotes table) => table.dishId.equals(apiDish.id)))
-        .go();
-    for (final ApiSourcePhoto photo in apiDish.sourcePhotos) {
-      await _database.into(_database.sourcePhotos).insertOnConflictUpdate(
-            db.SourcePhotosCompanion.insert(
-              id: photo.id,
-              dishId: apiDish.id,
-              url: photo.mediaRef,
-              capturedLabel: _capturedLabel(photo.capturedAt),
-              note: Value<String?>(photo.note),
-              confidenceLabel: Value<String?>(photo.confidenceLabel),
-            ),
-          );
-    }
-    for (int index = 0; index < apiDish.notes.length; index += 1) {
-      final DateTime now = DateTime.now();
-      await _database.into(_database.dishNotes).insertOnConflictUpdate(
-            db.DishNotesCompanion.insert(
-              id: '${apiDish.id}_server_note_$index',
-              dishId: apiDish.id,
-              body: apiDish.notes[index],
-              position: index,
-              createdAt: now,
-              updatedAt: now,
-            ),
-          );
-    }
-  }
-
   Future<void> _upsertReviewItem(ApiReviewItem item) async {
     await _database.into(_database.reviewItems).insertOnConflictUpdate(
           db.ReviewItemsCompanion.insert(
             id: item.id,
+            captureId: Value<String?>(item.captureId),
             summary: item.summary,
             suggestedDishIdsJson: jsonEncode(item.suggestedDishIds),
             confidenceLabel: item.confidenceLabel ?? item.status,
           ),
         );
-  }
-
-  Dish _dishFromApi(ApiDish dish) {
-    final String fallbackImage = seededDishes.first.heroImageUrl;
-    final String heroImageUrl = dish.coverImage?.mediaRef ??
-        (dish.sourcePhotos.isEmpty
-            ? fallbackImage
-            : dish.sourcePhotos.first.mediaRef);
-    final String category = dish.labels.isEmpty ? 'capture' : dish.labels.first;
-    return Dish(
-      id: dish.id,
-      title: dish.title,
-      description: dish.description,
-      heroImageUrl: heroImageUrl,
-      category: category,
-      prepMinutes: dish.prepMinutes ?? 30,
-      difficulty: dish.difficulty ?? 'Draft',
-      madeCount: dish.madeCount,
-      lastMadeLabel: _lastMadeLabel(dish.lastMadeAt),
-      ingredients: dish.ingredients,
-      recipeSteps: dish.steps,
-      notes: _notesFromApi(dish),
-      sourcePhotos: dish.sourcePhotos.map((ApiSourcePhoto photo) {
-        return SourcePhoto(
-          url: photo.mediaRef,
-          capturedLabel: _capturedLabel(photo.capturedAt),
-          note: photo.note,
-          confidenceLabel: photo.confidenceLabel,
-        );
-      }).toList(growable: false),
-      isFavorite: dish.isFavorite,
-    );
-  }
-
-  List<DishNote> _notesFromApi(ApiDish dish) {
-    return dish.notes.asMap().entries.map((MapEntry<int, String> entry) {
-      return DishNote(
-        id: '${dish.id}_server_note_${entry.key}',
-        dishId: dish.id,
-        body: entry.value,
-        position: entry.key,
-      );
-    }).toList(growable: false);
   }
 
   String _localCaptureStatus(String status) {

@@ -20,6 +20,7 @@ class Dishes extends Table {
   TextColumn get recipeStepsJson => text()();
   TextColumn get notesJson => text()();
   BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
@@ -47,6 +48,9 @@ class SourcePhotos extends Table {
   TextColumn get capturedLabel => text()();
   TextColumn get note => text().nullable()();
   TextColumn get confidenceLabel => text().nullable()();
+  TextColumn get captureId => text().nullable()();
+  TextColumn get cookingOccasionId => text().nullable()();
+  DateTimeColumn get capturedAt => dateTime().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
@@ -85,6 +89,25 @@ class CaptureBatches extends Table {
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
 }
 
+@DataClassName('CaptureCorrectionRow')
+class CaptureCorrections extends Table {
+  TextColumn get id => text()();
+  TextColumn get batchId => text()();
+  TextColumn get actionType => text()();
+  TextColumn get captureIdsJson => text()();
+  TextColumn get previousDishIdsJson => text()();
+  TextColumn get targetDishId => text()();
+  TextColumn get createdDishId => text().nullable()();
+  TextColumn get status => text()();
+  TextColumn get error => text().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+  DateTimeColumn get undoneAt => dateTime().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => <Column<Object>>{id};
+}
+
 @DataClassName('PlannedMealRow')
 class PlannedMeals extends Table {
   TextColumn get id => text()();
@@ -99,6 +122,7 @@ class PlannedMeals extends Table {
 @DataClassName('ReviewItemRow')
 class ReviewItems extends Table {
   TextColumn get id => text()();
+  TextColumn get captureId => text().nullable()();
   TextColumn get summary => text()();
   TextColumn get suggestedDishIdsJson => text()();
   TextColumn get confidenceLabel => text()();
@@ -172,6 +196,7 @@ class AiJobs extends Table {
     SourcePhotos,
     CaptureBatches,
     CaptureItems,
+    CaptureCorrections,
     PlannedMeals,
     ReviewItems,
     SyncOperations,
@@ -185,7 +210,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration {
@@ -239,6 +264,37 @@ class AppDatabase extends _$AppDatabase {
             captureItems,
             captureItems.captureDateSource,
           );
+        }
+        if (from < 6) {
+          await migrator.createTable(captureCorrections);
+        }
+        if (from < 7) {
+          final Set<String> existingTables = (await customSelect(
+            "SELECT name FROM sqlite_master WHERE type = 'table'",
+          ).get())
+              .map((QueryRow row) => row.read<String>('name'))
+              .toSet();
+          if (existingTables.contains('dishes')) {
+            await migrator.addColumn(dishes, dishes.createdAt);
+          }
+          if (existingTables.contains('source_photos')) {
+            await migrator.addColumn(sourcePhotos, sourcePhotos.captureId);
+            await migrator.addColumn(
+              sourcePhotos,
+              sourcePhotos.cookingOccasionId,
+            );
+            await migrator.addColumn(sourcePhotos, sourcePhotos.capturedAt);
+          }
+        }
+        if (from < 8) {
+          final Set<String> existingTables = (await customSelect(
+            "SELECT name FROM sqlite_master WHERE type = 'table'",
+          ).get())
+              .map((QueryRow row) => row.read<String>('name'))
+              .toSet();
+          if (existingTables.contains('review_items')) {
+            await migrator.addColumn(reviewItems, reviewItems.captureId);
+          }
         }
       },
     );

@@ -27,6 +27,7 @@ class _HomeShellState extends State<HomeShell> {
       widget.captureMediaService ?? ImagePickerCaptureMediaService();
   int _selectedIndex = 0;
   String _query = '';
+  bool _menuSelectionActive = false;
 
   @override
   Widget build(BuildContext context) {
@@ -59,19 +60,30 @@ class _HomeShellState extends State<HomeShell> {
                       onQueryChanged: (String value) {
                         setState(() => _query = value);
                       },
+                      onSelectionModeChanged: (bool active) {
+                        if (_menuSelectionActive != active) {
+                          setState(() => _menuSelectionActive = active);
+                        }
+                      },
                     ),
                 },
-                _FloatingBottomShell(
-                  selectedIndex: _selectedIndex,
-                  onSelect: (int value) {
-                    setState(() => _selectedIndex = value);
-                  },
-                  onCapture: () => showCaptureSheet(
-                    context,
-                    state,
-                    _captureMediaService,
+                if (!_menuSelectionActive)
+                  _FloatingBottomShell(
+                    selectedIndex: _selectedIndex,
+                    onSelect: (int value) {
+                      setState(() {
+                        _selectedIndex = value;
+                        if (value != 1) {
+                          _menuSelectionActive = false;
+                        }
+                      });
+                    },
+                    onCapture: () => showCaptureSheet(
+                      context,
+                      state,
+                      _captureMediaService,
+                    ),
                   ),
-                ),
               ],
             );
           },

@@ -235,7 +235,8 @@ class _AppDialogActions extends StatelessWidget {
                 icon: Icon(action.icon ?? Icons.check, size: 18),
                 label: Text(action.label),
                 style: FilledButton.styleFrom(
-                  backgroundColor: _dialogInk,
+                  backgroundColor:
+                      action.isDestructive ? _dialogDestructive : _dialogInk,
                   foregroundColor: _dialogPaper,
                   textStyle: const TextStyle(fontWeight: FontWeight.w800),
                   padding: const EdgeInsets.symmetric(

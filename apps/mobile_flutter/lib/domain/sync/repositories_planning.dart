@@ -26,4 +26,31 @@ class PlanRepository {
       }
     });
   }
+
+  Future<List<planning_domain.PlannedMeal>> listMeals({
+    required Set<String> validDishIds,
+  }) async {
+    final List<db.PlannedMealRow> rows =
+        await _database.select(_database.plannedMeals).get();
+    final List<String> orphanIds = rows
+        .where((db.PlannedMealRow row) => !validDishIds.contains(row.dishId))
+        .map((db.PlannedMealRow row) => row.id)
+        .toList(growable: false);
+    if (orphanIds.isNotEmpty) {
+      await (_database.delete(_database.plannedMeals)
+            ..where((db.PlannedMeals table) => table.id.isIn(orphanIds)))
+          .go();
+    }
+    return rows
+        .where((db.PlannedMealRow row) => validDishIds.contains(row.dishId))
+        .map(
+          (db.PlannedMealRow row) => planning_domain.PlannedMeal(
+            id: row.id,
+            dayKey: row.dayKey,
+            dishId: row.dishId,
+            label: row.label,
+          ),
+        )
+        .toList(growable: false);
+  }
 }

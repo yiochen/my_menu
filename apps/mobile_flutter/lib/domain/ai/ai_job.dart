@@ -45,9 +45,9 @@ enum AiJobStatus {
   }
 
   String get databaseValue => switch (this) {
-    pendingOffline => 'pending_offline',
-    _ => name,
-  };
+        pendingOffline => 'pending_offline',
+        _ => name,
+      };
 }
 
 class AiJob {
@@ -106,15 +106,12 @@ class AiJob {
 
   String get runtimeLabel {
     final Object? provenance = normalizedResult?['provenance'];
-    final Object? provider = provenance is Map<String, Object?>
-        ? provenance['provider']
-        : null;
-    final Object? model = provenance is Map<String, Object?>
-        ? provenance['model']
-        : null;
-    final String resolvedModel = model is String && model.trim().isNotEmpty
-        ? model
-        : modelVersion;
+    final Object? provider =
+        provenance is Map<String, Object?> ? provenance['provider'] : null;
+    final Object? model =
+        provenance is Map<String, Object?> ? provenance['model'] : null;
+    final String resolvedModel =
+        model is String && model.trim().isNotEmpty ? model : modelVersion;
     return provider is String && provider.trim().isNotEmpty
         ? '${provider.trim()} · $resolvedModel'
         : resolvedModel;

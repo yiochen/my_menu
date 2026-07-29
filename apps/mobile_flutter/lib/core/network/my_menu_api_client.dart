@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 export 'package:mymenu/core/network/my_menu_api_models.dart';
 
 part 'fake_my_menu_api_client.dart';
+part 'fake_capture_record.dart';
 part 'fake_capture_grouping.dart';
 part 'my_menu_ai_api.dart';
 part 'my_menu_api_config.dart';
@@ -85,6 +86,40 @@ abstract class MyMenuApiClient with AiJobApiDefaults {
     return const <ApiCaptureBatch>[];
   }
 
+  Future<void> deleteCapture({required String captureId}) {
+    return Future<void>.error(
+      UnsupportedError('Capture deletion is unavailable.'),
+    );
+  }
+
+  Future<void> deleteCaptureBatch({required String batchId}) {
+    return Future<void>.error(
+      UnsupportedError('Capture batch deletion is unavailable.'),
+    );
+  }
+
+  Future<void> correctCaptureGrouping({
+    required String clientMutationId,
+    required String batchId,
+    required String actionType,
+    required List<String> captureIds,
+    required String targetDishId,
+    String? newDishTitle,
+  }) {
+    return Future<void>.error(
+      UnsupportedError('Capture grouping correction is unavailable.'),
+    );
+  }
+
+  Future<void> undoCaptureGrouping({
+    required String clientMutationId,
+    required String actionId,
+  }) {
+    return Future<void>.error(
+      UnsupportedError('Capture grouping undo is unavailable.'),
+    );
+  }
+
   Future<void> createDishNote({
     required String noteId,
     required String dishId,
@@ -99,6 +134,12 @@ abstract class MyMenuApiClient with AiJobApiDefaults {
   });
 
   Future<void> deleteDishNote({required String noteId});
+
+  Future<void> deleteDishes({required List<String> dishIds}) {
+    return Future<void>.error(
+      UnsupportedError('Dish deletion is unavailable.'),
+    );
+  }
 
   Future<void> updateDish({
     required String clientMutationId,
@@ -202,6 +243,15 @@ class SupabaseMyMenuApiClient extends MyMenuApiClient with SupabaseCaptureApi {
   Future<void> deleteDishNote({required String noteId}) async {
     await _ensureSession();
     await _invokeJson('deleteDishNote', <String, Object?>{'noteId': noteId});
+  }
+
+  @override
+  Future<void> deleteDishes({required List<String> dishIds}) async {
+    if (dishIds.isEmpty) {
+      return;
+    }
+    await _ensureSession();
+    await _invokeJson('delete-dishes', <String, Object?>{'dishIds': dishIds});
   }
 
   @override

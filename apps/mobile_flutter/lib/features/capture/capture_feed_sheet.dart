@@ -4,8 +4,12 @@ import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/ai/ai_job_status_card.dart';
+import 'package:mymenu/features/capture/capture_batch_removal_dialog.dart';
+import 'package:mymenu/features/capture/capture_outcome_sheet.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/app_image.dart';
+
+part 'capture_feed_batch_card.dart';
 
 Future<void> showCaptureFeedSheet(
   BuildContext context,
@@ -35,11 +39,27 @@ Future<void> showCaptureFeedSheet(
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Each card is one capture batch. Photos stay in the order '
-                    'you took or selected them.',
+                    'Photos stay in the order you took or selected them. '
+                    'Open an organized result to correct its grouping.',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 16),
+                  if (batches.isNotEmpty) ...<Widget>[
+                    Text(
+                      'Capture results',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    for (final CaptureBatch batch in batches) ...<Widget>[
+                      _CaptureBatchCard(
+                        batch: batch,
+                        state: state,
+                        groupingJob: _groupingJobFor(aiJobs, batch.id),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    const SizedBox(height: 4),
+                  ],
                   if (aiJobs.isNotEmpty) ...<Widget>[
                     Text(
                       'AI activity',
@@ -59,22 +79,19 @@ Future<void> showCaptureFeedSheet(
                         onDismiss: job.status.canDismiss
                             ? () => state.dismissAiJob(job.id)
                             : null,
+                        onOpenResult: _canOpenResult(job, batches)
+                            ? () => _openBatchResult(
+                                  context,
+                                  state,
+                                  _batchFor(batches, job.subjectId)!,
+                                )
+                            : null,
                       ),
                       const SizedBox(height: 12),
                     ],
                     const SizedBox(height: 4),
                   ],
-                  if (batches.isEmpty)
-                    const Text('No capture batches yet.')
-                  else
-                    for (final CaptureBatch batch in batches) ...<Widget>[
-                      _CaptureBatchCard(
-                        batch: batch,
-                        state: state,
-                        groupingJob: _groupingJobFor(aiJobs, batch.id),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
+                  if (batches.isEmpty) const Text('No captures yet.')
                 ],
               ),
             );
@@ -82,6 +99,31 @@ Future<void> showCaptureFeedSheet(
         ),
       );
     },
+  );
+}
+
+CaptureBatch? _batchFor(List<CaptureBatch> batches, String batchId) {
+  return batches.where((CaptureBatch batch) => batch.id == batchId).firstOrNull;
+}
+
+bool _canOpenResult(AiJob job, List<CaptureBatch> batches) {
+  return job.type == AiJobType.batchGrouping &&
+      job.status == AiJobStatus.succeeded &&
+      _batchFor(batches, job.subjectId)?.status == CaptureBatchStatus.applied;
+}
+
+Future<void> _openBatchResult(
+  BuildContext context,
+  MyMenuState state,
+  CaptureBatch batch,
+) {
+  return showCaptureOutcomeSheet(
+    context,
+    state: state,
+    initialStep: CaptureOutcomeStep.created,
+    organizedStep: CaptureOutcomeStep.created,
+    photoCount: batch.items.length,
+    batchId: batch.id,
   );
 }
 
@@ -95,232 +137,4 @@ AiJob? _groupingJobFor(List<AiJob> jobs, String batchId) {
     ..sort(
         (AiJob left, AiJob right) => right.updatedAt.compareTo(left.updatedAt));
   return matches.firstOrNull;
-}
-
-class _CaptureBatchCard extends StatelessWidget {
-  const _CaptureBatchCard({
-    required this.batch,
-    required this.state,
-    required this.groupingJob,
-  });
-
-  final CaptureBatch batch;
-  final MyMenuState state;
-  final AiJob? groupingJob;
-
-  @override
-  Widget build(BuildContext context) {
-    final bool canRetryAi = batch.status == CaptureBatchStatus.failed &&
-        groupingJob?.status == AiJobStatus.failed;
-    final bool canRetryUpload = batch.failedItemCount > 0 ||
-        (batch.status == CaptureBatchStatus.failed && !canRetryAi);
-    final bool canRetry = canRetryAi || canRetryUpload;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    _batchTitle(batch),
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                _BatchStatusPill(batch: batch),
-              ],
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 82,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: batch.items.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (BuildContext context, int index) {
-                  return _CapturePreview(item: batch.items[index]);
-                },
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(_progressLabel(batch)),
-            if (canRetry) ...<Widget>[
-              const SizedBox(height: 8),
-              FilledButton.icon(
-                key: ValueKey<String>('retry_batch_${batch.id}'),
-                onPressed: canRetryAi
-                    ? () => state.retryAiJob(groupingJob!.id)
-                    : () => state.retryCaptureBatch(batch.id),
-                icon: const Icon(Icons.refresh_rounded),
-                label: Text(
-                  canRetryAi
-                      ? 'Retry organization'
-                      : batch.failedItemCount == 0
-                          ? 'Retry batch'
-                          : batch.failedItemCount == 1
-                              ? 'Retry failed photo'
-                              : 'Retry failed photos',
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _batchTitle(CaptureBatch batch) {
-    final int count = batch.items.length;
-    return '$count ${count == 1 ? 'photo' : 'photos'}';
-  }
-
-  String _progressLabel(CaptureBatch batch) {
-    if (batch.status == CaptureBatchStatus.applied) {
-      final int dishCount = batch.items
-          .map((CaptureItem item) => item.appliedDishId)
-          .whereType<String>()
-          .toSet()
-          .length;
-      return dishCount == 1
-          ? 'Added as 1 cooking occasion'
-          : 'Added as $dishCount cooking occasions';
-    }
-    if (batch.status == CaptureBatchStatus.processing) {
-      return '${batch.items.length} of ${batch.items.length} uploaded · '
-          'organizing in the background';
-    }
-    if (batch.isWaitingForConnection) {
-      return 'Saved on this device · ${batch.uploadedItemCount} of '
-          '${batch.items.length} uploaded';
-    }
-    if (batch.failedItemCount > 0) {
-      return '${batch.uploadedItemCount} of ${batch.items.length} uploaded · '
-          '${batch.failedItemCount} failed';
-    }
-    return '${batch.uploadedItemCount} of ${batch.items.length} uploaded';
-  }
-}
-
-class _BatchStatusPill extends StatelessWidget {
-  const _BatchStatusPill({required this.batch});
-
-  final CaptureBatch batch;
-
-  @override
-  Widget build(BuildContext context) {
-    final (String, Color, Color) display = batch.isWaitingForConnection
-        ? ('Saved offline', MyMenuColors.orangeDark, MyMenuColors.orangeSoft)
-        : switch (batch.status) {
-            CaptureBatchStatus.local || CaptureBatchStatus.pendingUpload => (
-                'Pending',
-                MyMenuColors.orangeDark,
-                MyMenuColors.orangeSoft
-              ),
-            CaptureBatchStatus.uploading => (
-                'Uploading',
-                MyMenuColors.orangeDark,
-                MyMenuColors.orangeSoft
-              ),
-            CaptureBatchStatus.readyForAi => (
-                'Uploaded',
-                MyMenuColors.green,
-                MyMenuColors.greenSoft
-              ),
-            CaptureBatchStatus.processing => (
-                'Processing',
-                MyMenuColors.orangeDark,
-                MyMenuColors.orangeSoft
-              ),
-            CaptureBatchStatus.applied => (
-                'Added',
-                MyMenuColors.green,
-                MyMenuColors.greenSoft
-              ),
-            CaptureBatchStatus.failed => (
-                'Needs retry',
-                Colors.red.shade800,
-                Colors.red.shade50
-              ),
-            CaptureBatchStatus.discarded => (
-                'Discarded',
-                MyMenuColors.muted,
-                MyMenuColors.oat
-              ),
-          };
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: display.$3,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        child: Text(
-          display.$1,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: display.$2,
-                fontWeight: FontWeight.w800,
-              ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CapturePreview extends StatelessWidget {
-  const _CapturePreview({required this.item});
-
-  final CaptureItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    final String? imageRef = item.localMediaRef ?? item.remoteMediaRef;
-    return Stack(
-      children: <Widget>[
-        ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: imageRef == null
-              ? Container(
-                  width: 82,
-                  height: 82,
-                  color: MyMenuColors.oat,
-                  child: const Icon(Icons.edit_outlined),
-                )
-              : AppImage(
-                  imageRef: imageRef,
-                  width: 82,
-                  height: 82,
-                  fit: BoxFit.cover,
-                ),
-        ),
-        Positioned(
-          left: 6,
-          top: 6,
-          child: CircleAvatar(
-            radius: 11,
-            backgroundColor: MyMenuColors.ink.withValues(alpha: 0.75),
-            child: Text(
-              '${item.ordinal + 1}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ),
-        if (item.status == CaptureItemStatus.failed)
-          const Positioned(
-            right: 5,
-            bottom: 5,
-            child: CircleAvatar(
-              radius: 11,
-              backgroundColor: Colors.red,
-              child: Icon(Icons.error_outline, size: 15, color: Colors.white),
-            ),
-          ),
-      ],
-    );
-  }
 }

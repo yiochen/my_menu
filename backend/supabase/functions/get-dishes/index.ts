@@ -28,7 +28,7 @@ Deno.serve(async (request: Request) => {
     const { data: dishData, error: dishError } = await adminClient
       .from("dishes")
       .select(
-        "id, title, description, cover_image_id, labels, prep_minutes, difficulty, is_favorite",
+        "id, title, description, cover_image_id, labels, prep_minutes, difficulty, is_favorite, created_at",
       )
       .eq("user_id", userId)
       .in("id", ids)
@@ -79,7 +79,7 @@ Deno.serve(async (request: Request) => {
       items.push({
         id,
         title: stringValue(dish, "title"),
-        description: stringValue(dish, "description"),
+        description: optionalStringValue(dish, "description") ?? "",
         labels: stringArrayValue(dish, "labels"),
         prepMinutes: optionalNumberValue(dish, "prep_minutes"),
         difficulty: optionalStringValue(dish, "difficulty"),
@@ -93,6 +93,7 @@ Deno.serve(async (request: Request) => {
         ingredients: ingredientsByDishId.get(id) ?? [],
         steps: stepsByDishId.get(id) ?? [],
         notes: notesByDishId.get(id) ?? [],
+        createdAt: optionalStringValue(dish, "created_at"),
       });
     }
 
@@ -144,7 +145,7 @@ async function loadImages(
   const { data, error } = await adminClient
     .from("dish_images")
     .select(
-      "id, dish_id, kind, storage_bucket, storage_path, note, confidence_label, captured_at, created_at",
+      "id, dish_id, capture_id, cooking_occasion_id, kind, storage_bucket, storage_path, note, confidence_label, captured_at, created_at",
     )
     .eq("user_id", userId)
     .in("dish_id", dishIds)
@@ -211,6 +212,8 @@ async function sourcePhotoDtos(
         stringValue(row, "storage_path"),
       ),
       capturedAt: optionalStringValue(row, "captured_at"),
+      captureId: optionalStringValue(row, "capture_id"),
+      cookingOccasionId: optionalStringValue(row, "cooking_occasion_id"),
       note: optionalStringValue(row, "note"),
       confidenceLabel: optionalStringValue(row, "confidence_label"),
     });

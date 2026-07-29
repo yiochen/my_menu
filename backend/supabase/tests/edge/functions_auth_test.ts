@@ -49,6 +49,35 @@ Deno.test("get-dishes requires a user session", async () => {
   await response.body?.cancel();
 });
 
+Deno.test("delete-dishes requires a user session", async () => {
+  const response = await fetch(`${baseUrl}/functions/v1/delete-dishes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      dishIds: ["70000000-0000-4000-8000-000000000001"],
+    }),
+  });
+
+  assertEquals(response.status, 401);
+  await response.body?.cancel();
+});
+
+Deno.test("delete-capture-batch requires a user session", async () => {
+  const response = await fetch(
+    `${baseUrl}/functions/v1/delete-capture-batch`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        batchId: "70000000-0000-4000-8000-000000000001",
+      }),
+    },
+  );
+
+  assertEquals(response.status, 401);
+  await response.body?.cancel();
+});
+
 Deno.test("get-review-items requires a user session", async () => {
   const response = await fetch(`${baseUrl}/functions/v1/get-review-items`, {
     method: "POST",

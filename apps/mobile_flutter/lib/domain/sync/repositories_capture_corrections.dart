@@ -1,0 +1,388 @@
+part of 'repositories.dart';
+
+class CaptureCorrectionRepository {
+  CaptureCorrectionRepository(this._database);
+
+  final db.AppDatabase _database;
+  final Uuid _uuid = const Uuid();
+
+  Future<List<CaptureCorrection>> listCorrections() async {
+    final List<db.CaptureCorrectionRow> rows =
+        await (_database.select(_database.captureCorrections)
+              ..orderBy(
+                <OrderingTerm Function(db.$CaptureCorrectionsTable)>[
+                  (db.$CaptureCorrectionsTable table) =>
+                      OrderingTerm.desc(table.createdAt),
+                ],
+              ))
+            .get();
+    return rows.map(_correctionFromRow).toList(growable: false);
+  }
+
+  Future<CaptureCorrection?> moveCaptures({
+    required String batchId,
+    required List<String> captureIds,
+    required String targetDishId,
+  }) {
+    return _applyCorrection(
+      batchId: batchId,
+      captureIds: captureIds,
+      targetDishId: targetDishId,
+      type: CaptureCorrectionType.move,
+    );
+  }
+
+  Future<CaptureCorrection?> splitCaptures({
+    required String batchId,
+    required List<String> captureIds,
+    required String title,
+  }) {
+    final String trimmed = title.trim();
+    if (trimmed.isEmpty) {
+      throw ArgumentError.value(title, 'title', 'A new dish needs a name.');
+    }
+    return _applyCorrection(
+      batchId: batchId,
+      captureIds: captureIds,
+      targetDishId: _uuid.v4(),
+      type: CaptureCorrectionType.split,
+      newDishTitle: trimmed,
+    );
+  }
+
+  Future<CaptureCorrection?> assignCaptures({
+    required String batchId,
+    required List<String> captureIds,
+    required String targetDishId,
+  }) {
+    return _applyCorrection(
+      batchId: batchId,
+      captureIds: captureIds,
+      targetDishId: targetDishId,
+      type: CaptureCorrectionType.assign,
+    );
+  }
+
+  Future<CaptureCorrection?> assignCapturesToNewDish({
+    required String batchId,
+    required List<String> captureIds,
+    required String title,
+  }) {
+    final String trimmed = title.trim();
+    if (trimmed.isEmpty) {
+      throw ArgumentError.value(title, 'title', 'A new dish needs a name.');
+    }
+    return _applyCorrection(
+      batchId: batchId,
+      captureIds: captureIds,
+      targetDishId: _uuid.v4(),
+      type: CaptureCorrectionType.assignSplit,
+      newDishTitle: trimmed,
+    );
+  }
+
+  Future<CaptureCorrection?> _applyCorrection({
+    required String batchId,
+    required List<String> captureIds,
+    required String targetDishId,
+    required CaptureCorrectionType type,
+    String? newDishTitle,
+  }) async {
+    final List<String> selectedIds = captureIds.toSet().toList(growable: false);
+    if (selectedIds.isEmpty) {
+      return null;
+    }
+    final List<db.CaptureItemRow> items =
+        await (_database.select(_database.captureItems)
+              ..where(
+                (db.CaptureItems table) =>
+                    table.batchId.equals(batchId) & table.id.isIn(selectedIds),
+              ))
+            .get();
+    final bool isAssignment = type == CaptureCorrectionType.assign ||
+        type == CaptureCorrectionType.assignSplit;
+    final bool hasExpectedState = isAssignment
+        ? items.every(
+            (db.CaptureItemRow item) =>
+                item.status ==
+                    capture_domain.CaptureItemStatus.discarded.name &&
+                item.appliedDishId == null,
+          )
+        : items.every(
+            (db.CaptureItemRow item) =>
+                item.status == capture_domain.CaptureItemStatus.applied.name &&
+                item.appliedDishId != null,
+          );
+    if (items.length != selectedIds.length || !hasExpectedState) {
+      throw StateError(
+        isAssignment
+            ? 'Every selected photo must be unclassified.'
+            : 'Every selected photo must be actively organized.',
+      );
+    }
+    if (type == CaptureCorrectionType.move &&
+        items.every(
+          (db.CaptureItemRow item) => item.appliedDishId == targetDishId,
+        )) {
+      return null;
+    }
+
+    final String actionId = _uuid.v4();
+    final DateTime now = DateTime.now();
+    final Map<String, Object?> previousStates = <String, Object?>{
+      for (final db.CaptureItemRow item in items)
+        item.id: <String, Object?>{
+          'dishId': item.appliedDishId,
+          'status': item.status,
+          'failureReason': item.failureReason,
+        },
+    };
+
+    await _database.transaction(() async {
+      if (type == CaptureCorrectionType.split ||
+          type == CaptureCorrectionType.assignSplit) {
+        await _insertLocalDish(
+          id: targetDishId,
+          title: newDishTitle!,
+          items: items,
+        );
+      }
+      await _moveLocalAssignments(
+        batchId: batchId,
+        items: items,
+        targetDishId: targetDishId,
+      );
+      await _database.into(_database.captureCorrections).insert(
+            db.CaptureCorrectionsCompanion.insert(
+              id: actionId,
+              batchId: batchId,
+              actionType: type.name,
+              captureIdsJson: jsonEncode(selectedIds),
+              previousDishIdsJson: jsonEncode(previousStates),
+              targetDishId: targetDishId,
+              createdDishId: Value<String?>(
+                type == CaptureCorrectionType.split ||
+                        type == CaptureCorrectionType.assignSplit
+                    ? targetDishId
+                    : null,
+              ),
+              status: CaptureCorrectionStatus.pending.name,
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+      await _database.into(_database.syncOperations).insert(
+            db.SyncOperationsCompanion.insert(
+              id: actionId,
+              entity: 'capture_correction',
+              entityId: actionId,
+              operationType: type.name,
+              payloadJson: jsonEncode(<String, Object?>{
+                'batchId': batchId,
+                'captureIds': selectedIds,
+                'targetDishId': targetDishId,
+                if (newDishTitle != null) 'newDishTitle': newDishTitle,
+              }),
+              createdAt: now,
+            ),
+          );
+    });
+
+    return (await listCorrections())
+        .firstWhere((CaptureCorrection item) => item.id == actionId);
+  }
+
+  Future<CaptureCorrection?> undoLatest(String batchId) async {
+    final db.CaptureCorrectionRow? row =
+        await (_database.select(_database.captureCorrections)
+              ..where(
+                (db.CaptureCorrections table) =>
+                    table.batchId.equals(batchId) &
+                    table.status.isIn(<String>[
+                      CaptureCorrectionStatus.pending.name,
+                      CaptureCorrectionStatus.synced.name,
+                    ]),
+              )
+              ..orderBy(
+                <OrderingTerm Function(db.$CaptureCorrectionsTable)>[
+                  (db.$CaptureCorrectionsTable table) =>
+                      OrderingTerm.desc(table.createdAt),
+                ],
+              )
+              ..limit(1))
+            .getSingleOrNull();
+    if (row == null) {
+      return null;
+    }
+    final CaptureCorrection correction = _correctionFromRow(row);
+    final List<db.CaptureItemRow> items =
+        await (_database.select(_database.captureItems)
+              ..where(
+                (db.CaptureItems table) => table.id.isIn(correction.captureIds),
+              ))
+            .get();
+    final String undoMutationId = _uuid.v4();
+    final DateTime now = DateTime.now();
+    final Set<String> affectedDishIds = <String>{
+      correction.targetDishId,
+      ...correction.previousDishIds.values,
+    };
+    final Map<String, bool> beforePresence = await _batchPresence(
+      correction.batchId,
+      affectedDishIds,
+    );
+
+    await _database.transaction(() async {
+      for (final db.CaptureItemRow item in items) {
+        if (correction.previouslyUnclassifiedCaptureIds.contains(item.id)) {
+          await _restoreUnclassifiedLocalAssignment(
+            item: item,
+            sourceDishId: correction.targetDishId,
+            failureReason: correction.previousFailureReasons[item.id],
+          );
+        } else {
+          final String previousDishId = correction.previousDishIds[item.id]!;
+          await _moveOneLocalAssignment(
+            item: item,
+            targetDishId: previousDishId,
+          );
+        }
+      }
+      await _adjustDishCounts(
+        dishIds: affectedDishIds,
+        beforePresence: beforePresence,
+        afterPresence: await _batchPresence(
+          correction.batchId,
+          affectedDishIds,
+        ),
+      );
+      if (correction.createdDishId case final String createdDishId) {
+        await (_database.delete(_database.sourcePhotos)
+              ..where(
+                (db.SourcePhotos table) => table.dishId.equals(createdDishId),
+              ))
+            .go();
+        await (_database.delete(_database.dishes)
+              ..where((db.Dishes table) => table.id.equals(createdDishId)))
+            .go();
+      }
+      await (_database.update(_database.captureCorrections)
+            ..where(
+              (db.CaptureCorrections table) => table.id.equals(correction.id),
+            ))
+          .write(
+        db.CaptureCorrectionsCompanion(
+          status: Value<String>(CaptureCorrectionStatus.undone.name),
+          updatedAt: Value<DateTime>(now),
+          undoneAt: Value<DateTime?>(now),
+          error: const Value<String?>(null),
+        ),
+      );
+      await _database.into(_database.syncOperations).insert(
+            db.SyncOperationsCompanion.insert(
+              id: undoMutationId,
+              entity: 'capture_correction',
+              entityId: correction.id,
+              operationType: 'undo',
+              payloadJson: jsonEncode(<String, Object?>{
+                'actionId': correction.id,
+              }),
+              createdAt: now,
+            ),
+          );
+    });
+    return _correctionFromRow(
+      await (_database.select(_database.captureCorrections)
+            ..where(
+              (db.CaptureCorrections table) => table.id.equals(correction.id),
+            ))
+          .getSingle(),
+    );
+  }
+
+  Future<void> markSynced(String actionId) async {
+    await (_database.update(_database.captureCorrections)
+          ..where(
+            (db.CaptureCorrections table) => table.id.equals(actionId),
+          ))
+        .write(
+      db.CaptureCorrectionsCompanion(
+        status: Value<String>(CaptureCorrectionStatus.synced.name),
+        updatedAt: Value<DateTime>(DateTime.now()),
+        error: const Value<String?>(null),
+      ),
+    );
+  }
+
+  Future<void> rollbackFailed(String actionId, Object error) async {
+    final db.CaptureCorrectionRow? row =
+        await (_database.select(_database.captureCorrections)
+              ..where(
+                (db.CaptureCorrections table) => table.id.equals(actionId),
+              ))
+            .getSingleOrNull();
+    if (row == null || row.status != CaptureCorrectionStatus.pending.name) {
+      return;
+    }
+    final CaptureCorrection correction = _correctionFromRow(row);
+    final List<db.CaptureItemRow> items =
+        await (_database.select(_database.captureItems)
+              ..where(
+                (db.CaptureItems table) => table.id.isIn(correction.captureIds),
+              ))
+            .get();
+    final Set<String> affectedDishIds = <String>{
+      correction.targetDishId,
+      ...correction.previousDishIds.values,
+    };
+    final Map<String, bool> beforePresence = await _batchPresence(
+      correction.batchId,
+      affectedDishIds,
+    );
+    await _database.transaction(() async {
+      for (final db.CaptureItemRow item in items) {
+        if (correction.previouslyUnclassifiedCaptureIds.contains(item.id)) {
+          await _restoreUnclassifiedLocalAssignment(
+            item: item,
+            sourceDishId: correction.targetDishId,
+            failureReason: correction.previousFailureReasons[item.id],
+          );
+        } else {
+          await _moveOneLocalAssignment(
+            item: item,
+            targetDishId: correction.previousDishIds[item.id]!,
+          );
+        }
+      }
+      await _adjustDishCounts(
+        dishIds: affectedDishIds,
+        beforePresence: beforePresence,
+        afterPresence: await _batchPresence(
+          correction.batchId,
+          affectedDishIds,
+        ),
+      );
+      if (correction.createdDishId case final String createdDishId) {
+        await (_database.delete(_database.sourcePhotos)
+              ..where(
+                (db.SourcePhotos table) => table.dishId.equals(createdDishId),
+              ))
+            .go();
+        await (_database.delete(_database.dishes)
+              ..where((db.Dishes table) => table.id.equals(createdDishId)))
+            .go();
+      }
+      await (_database.update(_database.captureCorrections)
+            ..where(
+              (db.CaptureCorrections table) => table.id.equals(actionId),
+            ))
+          .write(
+        db.CaptureCorrectionsCompanion(
+          status: Value<String>(CaptureCorrectionStatus.failed.name),
+          updatedAt: Value<DateTime>(DateTime.now()),
+          error: Value<String?>(error.toString()),
+        ),
+      );
+    });
+  }
+}

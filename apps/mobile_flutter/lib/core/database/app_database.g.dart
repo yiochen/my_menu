@@ -88,6 +88,12 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, DishRow> {
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('CHECK ("is_favorite" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -102,7 +108,8 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, DishRow> {
         ingredientsJson,
         recipeStepsJson,
         notesJson,
-        isFavorite
+        isFavorite,
+        createdAt
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -205,6 +212,10 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, DishRow> {
           isFavorite.isAcceptableOrUnknown(
               data['is_favorite']!, _isFavoriteMeta));
     }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
     return context;
   }
 
@@ -240,6 +251,8 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, DishRow> {
           .read(DriftSqlType.string, data['${effectivePrefix}notes_json'])!,
       isFavorite: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}is_favorite'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at']),
     );
   }
 
@@ -263,6 +276,7 @@ class DishRow extends DataClass implements Insertable<DishRow> {
   final String recipeStepsJson;
   final String notesJson;
   final bool isFavorite;
+  final DateTime? createdAt;
   const DishRow(
       {required this.id,
       required this.title,
@@ -276,7 +290,8 @@ class DishRow extends DataClass implements Insertable<DishRow> {
       required this.ingredientsJson,
       required this.recipeStepsJson,
       required this.notesJson,
-      required this.isFavorite});
+      required this.isFavorite,
+      this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -293,6 +308,9 @@ class DishRow extends DataClass implements Insertable<DishRow> {
     map['recipe_steps_json'] = Variable<String>(recipeStepsJson);
     map['notes_json'] = Variable<String>(notesJson);
     map['is_favorite'] = Variable<bool>(isFavorite);
+    if (!nullToAbsent || createdAt != null) {
+      map['created_at'] = Variable<DateTime>(createdAt);
+    }
     return map;
   }
 
@@ -311,6 +329,9 @@ class DishRow extends DataClass implements Insertable<DishRow> {
       recipeStepsJson: Value(recipeStepsJson),
       notesJson: Value(notesJson),
       isFavorite: Value(isFavorite),
+      createdAt: createdAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdAt),
     );
   }
 
@@ -331,6 +352,7 @@ class DishRow extends DataClass implements Insertable<DishRow> {
       recipeStepsJson: serializer.fromJson<String>(json['recipeStepsJson']),
       notesJson: serializer.fromJson<String>(json['notesJson']),
       isFavorite: serializer.fromJson<bool>(json['isFavorite']),
+      createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
     );
   }
   @override
@@ -350,6 +372,7 @@ class DishRow extends DataClass implements Insertable<DishRow> {
       'recipeStepsJson': serializer.toJson<String>(recipeStepsJson),
       'notesJson': serializer.toJson<String>(notesJson),
       'isFavorite': serializer.toJson<bool>(isFavorite),
+      'createdAt': serializer.toJson<DateTime?>(createdAt),
     };
   }
 
@@ -366,7 +389,8 @@ class DishRow extends DataClass implements Insertable<DishRow> {
           String? ingredientsJson,
           String? recipeStepsJson,
           String? notesJson,
-          bool? isFavorite}) =>
+          bool? isFavorite,
+          Value<DateTime?> createdAt = const Value.absent()}) =>
       DishRow(
         id: id ?? this.id,
         title: title ?? this.title,
@@ -381,6 +405,7 @@ class DishRow extends DataClass implements Insertable<DishRow> {
         recipeStepsJson: recipeStepsJson ?? this.recipeStepsJson,
         notesJson: notesJson ?? this.notesJson,
         isFavorite: isFavorite ?? this.isFavorite,
+        createdAt: createdAt.present ? createdAt.value : this.createdAt,
       );
   DishRow copyWithCompanion(DishesCompanion data) {
     return DishRow(
@@ -409,6 +434,7 @@ class DishRow extends DataClass implements Insertable<DishRow> {
       notesJson: data.notesJson.present ? data.notesJson.value : this.notesJson,
       isFavorite:
           data.isFavorite.present ? data.isFavorite.value : this.isFavorite,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
 
@@ -427,7 +453,8 @@ class DishRow extends DataClass implements Insertable<DishRow> {
           ..write('ingredientsJson: $ingredientsJson, ')
           ..write('recipeStepsJson: $recipeStepsJson, ')
           ..write('notesJson: $notesJson, ')
-          ..write('isFavorite: $isFavorite')
+          ..write('isFavorite: $isFavorite, ')
+          ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
@@ -446,7 +473,8 @@ class DishRow extends DataClass implements Insertable<DishRow> {
       ingredientsJson,
       recipeStepsJson,
       notesJson,
-      isFavorite);
+      isFavorite,
+      createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -463,7 +491,8 @@ class DishRow extends DataClass implements Insertable<DishRow> {
           other.ingredientsJson == this.ingredientsJson &&
           other.recipeStepsJson == this.recipeStepsJson &&
           other.notesJson == this.notesJson &&
-          other.isFavorite == this.isFavorite);
+          other.isFavorite == this.isFavorite &&
+          other.createdAt == this.createdAt);
 }
 
 class DishesCompanion extends UpdateCompanion<DishRow> {
@@ -480,6 +509,7 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
   final Value<String> recipeStepsJson;
   final Value<String> notesJson;
   final Value<bool> isFavorite;
+  final Value<DateTime?> createdAt;
   final Value<int> rowid;
   const DishesCompanion({
     this.id = const Value.absent(),
@@ -495,6 +525,7 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
     this.recipeStepsJson = const Value.absent(),
     this.notesJson = const Value.absent(),
     this.isFavorite = const Value.absent(),
+    this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DishesCompanion.insert({
@@ -511,6 +542,7 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
     required String recipeStepsJson,
     required String notesJson,
     this.isFavorite = const Value.absent(),
+    this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         title = Value(title),
@@ -538,6 +570,7 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
     Expression<String>? recipeStepsJson,
     Expression<String>? notesJson,
     Expression<bool>? isFavorite,
+    Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -554,6 +587,7 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
       if (recipeStepsJson != null) 'recipe_steps_json': recipeStepsJson,
       if (notesJson != null) 'notes_json': notesJson,
       if (isFavorite != null) 'is_favorite': isFavorite,
+      if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -572,6 +606,7 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
       Value<String>? recipeStepsJson,
       Value<String>? notesJson,
       Value<bool>? isFavorite,
+      Value<DateTime?>? createdAt,
       Value<int>? rowid}) {
     return DishesCompanion(
       id: id ?? this.id,
@@ -587,6 +622,7 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
       recipeStepsJson: recipeStepsJson ?? this.recipeStepsJson,
       notesJson: notesJson ?? this.notesJson,
       isFavorite: isFavorite ?? this.isFavorite,
+      createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -633,6 +669,9 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
     if (isFavorite.present) {
       map['is_favorite'] = Variable<bool>(isFavorite.value);
     }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -655,6 +694,7 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
           ..write('recipeStepsJson: $recipeStepsJson, ')
           ..write('notesJson: $notesJson, ')
           ..write('isFavorite: $isFavorite, ')
+          ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1082,9 +1122,36 @@ class $SourcePhotosTable extends SourcePhotos
   late final GeneratedColumn<String> confidenceLabel = GeneratedColumn<String>(
       'confidence_label', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _captureIdMeta =
+      const VerificationMeta('captureId');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, dishId, url, capturedLabel, note, confidenceLabel];
+  late final GeneratedColumn<String> captureId = GeneratedColumn<String>(
+      'capture_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _cookingOccasionIdMeta =
+      const VerificationMeta('cookingOccasionId');
+  @override
+  late final GeneratedColumn<String> cookingOccasionId =
+      GeneratedColumn<String>('cooking_occasion_id', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _capturedAtMeta =
+      const VerificationMeta('capturedAt');
+  @override
+  late final GeneratedColumn<DateTime> capturedAt = GeneratedColumn<DateTime>(
+      'captured_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        dishId,
+        url,
+        capturedLabel,
+        note,
+        confidenceLabel,
+        captureId,
+        cookingOccasionId,
+        capturedAt
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1130,6 +1197,22 @@ class $SourcePhotosTable extends SourcePhotos
           confidenceLabel.isAcceptableOrUnknown(
               data['confidence_label']!, _confidenceLabelMeta));
     }
+    if (data.containsKey('capture_id')) {
+      context.handle(_captureIdMeta,
+          captureId.isAcceptableOrUnknown(data['capture_id']!, _captureIdMeta));
+    }
+    if (data.containsKey('cooking_occasion_id')) {
+      context.handle(
+          _cookingOccasionIdMeta,
+          cookingOccasionId.isAcceptableOrUnknown(
+              data['cooking_occasion_id']!, _cookingOccasionIdMeta));
+    }
+    if (data.containsKey('captured_at')) {
+      context.handle(
+          _capturedAtMeta,
+          capturedAt.isAcceptableOrUnknown(
+              data['captured_at']!, _capturedAtMeta));
+    }
     return context;
   }
 
@@ -1151,6 +1234,12 @@ class $SourcePhotosTable extends SourcePhotos
           .read(DriftSqlType.string, data['${effectivePrefix}note']),
       confidenceLabel: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}confidence_label']),
+      captureId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}capture_id']),
+      cookingOccasionId: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}cooking_occasion_id']),
+      capturedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}captured_at']),
     );
   }
 
@@ -1167,13 +1256,19 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
   final String capturedLabel;
   final String? note;
   final String? confidenceLabel;
+  final String? captureId;
+  final String? cookingOccasionId;
+  final DateTime? capturedAt;
   const SourcePhotoRow(
       {required this.id,
       required this.dishId,
       required this.url,
       required this.capturedLabel,
       this.note,
-      this.confidenceLabel});
+      this.confidenceLabel,
+      this.captureId,
+      this.cookingOccasionId,
+      this.capturedAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1186,6 +1281,15 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
     }
     if (!nullToAbsent || confidenceLabel != null) {
       map['confidence_label'] = Variable<String>(confidenceLabel);
+    }
+    if (!nullToAbsent || captureId != null) {
+      map['capture_id'] = Variable<String>(captureId);
+    }
+    if (!nullToAbsent || cookingOccasionId != null) {
+      map['cooking_occasion_id'] = Variable<String>(cookingOccasionId);
+    }
+    if (!nullToAbsent || capturedAt != null) {
+      map['captured_at'] = Variable<DateTime>(capturedAt);
     }
     return map;
   }
@@ -1200,6 +1304,15 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
       confidenceLabel: confidenceLabel == null && nullToAbsent
           ? const Value.absent()
           : Value(confidenceLabel),
+      captureId: captureId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(captureId),
+      cookingOccasionId: cookingOccasionId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cookingOccasionId),
+      capturedAt: capturedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(capturedAt),
     );
   }
 
@@ -1213,6 +1326,10 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
       capturedLabel: serializer.fromJson<String>(json['capturedLabel']),
       note: serializer.fromJson<String?>(json['note']),
       confidenceLabel: serializer.fromJson<String?>(json['confidenceLabel']),
+      captureId: serializer.fromJson<String?>(json['captureId']),
+      cookingOccasionId:
+          serializer.fromJson<String?>(json['cookingOccasionId']),
+      capturedAt: serializer.fromJson<DateTime?>(json['capturedAt']),
     );
   }
   @override
@@ -1225,6 +1342,9 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
       'capturedLabel': serializer.toJson<String>(capturedLabel),
       'note': serializer.toJson<String?>(note),
       'confidenceLabel': serializer.toJson<String?>(confidenceLabel),
+      'captureId': serializer.toJson<String?>(captureId),
+      'cookingOccasionId': serializer.toJson<String?>(cookingOccasionId),
+      'capturedAt': serializer.toJson<DateTime?>(capturedAt),
     };
   }
 
@@ -1234,7 +1354,10 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
           String? url,
           String? capturedLabel,
           Value<String?> note = const Value.absent(),
-          Value<String?> confidenceLabel = const Value.absent()}) =>
+          Value<String?> confidenceLabel = const Value.absent(),
+          Value<String?> captureId = const Value.absent(),
+          Value<String?> cookingOccasionId = const Value.absent(),
+          Value<DateTime?> capturedAt = const Value.absent()}) =>
       SourcePhotoRow(
         id: id ?? this.id,
         dishId: dishId ?? this.dishId,
@@ -1244,6 +1367,11 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
         confidenceLabel: confidenceLabel.present
             ? confidenceLabel.value
             : this.confidenceLabel,
+        captureId: captureId.present ? captureId.value : this.captureId,
+        cookingOccasionId: cookingOccasionId.present
+            ? cookingOccasionId.value
+            : this.cookingOccasionId,
+        capturedAt: capturedAt.present ? capturedAt.value : this.capturedAt,
       );
   SourcePhotoRow copyWithCompanion(SourcePhotosCompanion data) {
     return SourcePhotoRow(
@@ -1257,6 +1385,12 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
       confidenceLabel: data.confidenceLabel.present
           ? data.confidenceLabel.value
           : this.confidenceLabel,
+      captureId: data.captureId.present ? data.captureId.value : this.captureId,
+      cookingOccasionId: data.cookingOccasionId.present
+          ? data.cookingOccasionId.value
+          : this.cookingOccasionId,
+      capturedAt:
+          data.capturedAt.present ? data.capturedAt.value : this.capturedAt,
     );
   }
 
@@ -1268,14 +1402,17 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
           ..write('url: $url, ')
           ..write('capturedLabel: $capturedLabel, ')
           ..write('note: $note, ')
-          ..write('confidenceLabel: $confidenceLabel')
+          ..write('confidenceLabel: $confidenceLabel, ')
+          ..write('captureId: $captureId, ')
+          ..write('cookingOccasionId: $cookingOccasionId, ')
+          ..write('capturedAt: $capturedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, dishId, url, capturedLabel, note, confidenceLabel);
+  int get hashCode => Object.hash(id, dishId, url, capturedLabel, note,
+      confidenceLabel, captureId, cookingOccasionId, capturedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1285,7 +1422,10 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
           other.url == this.url &&
           other.capturedLabel == this.capturedLabel &&
           other.note == this.note &&
-          other.confidenceLabel == this.confidenceLabel);
+          other.confidenceLabel == this.confidenceLabel &&
+          other.captureId == this.captureId &&
+          other.cookingOccasionId == this.cookingOccasionId &&
+          other.capturedAt == this.capturedAt);
 }
 
 class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
@@ -1295,6 +1435,9 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
   final Value<String> capturedLabel;
   final Value<String?> note;
   final Value<String?> confidenceLabel;
+  final Value<String?> captureId;
+  final Value<String?> cookingOccasionId;
+  final Value<DateTime?> capturedAt;
   final Value<int> rowid;
   const SourcePhotosCompanion({
     this.id = const Value.absent(),
@@ -1303,6 +1446,9 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
     this.capturedLabel = const Value.absent(),
     this.note = const Value.absent(),
     this.confidenceLabel = const Value.absent(),
+    this.captureId = const Value.absent(),
+    this.cookingOccasionId = const Value.absent(),
+    this.capturedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   SourcePhotosCompanion.insert({
@@ -1312,6 +1458,9 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
     required String capturedLabel,
     this.note = const Value.absent(),
     this.confidenceLabel = const Value.absent(),
+    this.captureId = const Value.absent(),
+    this.cookingOccasionId = const Value.absent(),
+    this.capturedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         dishId = Value(dishId),
@@ -1324,6 +1473,9 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
     Expression<String>? capturedLabel,
     Expression<String>? note,
     Expression<String>? confidenceLabel,
+    Expression<String>? captureId,
+    Expression<String>? cookingOccasionId,
+    Expression<DateTime>? capturedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1333,6 +1485,9 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
       if (capturedLabel != null) 'captured_label': capturedLabel,
       if (note != null) 'note': note,
       if (confidenceLabel != null) 'confidence_label': confidenceLabel,
+      if (captureId != null) 'capture_id': captureId,
+      if (cookingOccasionId != null) 'cooking_occasion_id': cookingOccasionId,
+      if (capturedAt != null) 'captured_at': capturedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1344,6 +1499,9 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
       Value<String>? capturedLabel,
       Value<String?>? note,
       Value<String?>? confidenceLabel,
+      Value<String?>? captureId,
+      Value<String?>? cookingOccasionId,
+      Value<DateTime?>? capturedAt,
       Value<int>? rowid}) {
     return SourcePhotosCompanion(
       id: id ?? this.id,
@@ -1352,6 +1510,9 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
       capturedLabel: capturedLabel ?? this.capturedLabel,
       note: note ?? this.note,
       confidenceLabel: confidenceLabel ?? this.confidenceLabel,
+      captureId: captureId ?? this.captureId,
+      cookingOccasionId: cookingOccasionId ?? this.cookingOccasionId,
+      capturedAt: capturedAt ?? this.capturedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1377,6 +1538,15 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
     if (confidenceLabel.present) {
       map['confidence_label'] = Variable<String>(confidenceLabel.value);
     }
+    if (captureId.present) {
+      map['capture_id'] = Variable<String>(captureId.value);
+    }
+    if (cookingOccasionId.present) {
+      map['cooking_occasion_id'] = Variable<String>(cookingOccasionId.value);
+    }
+    if (capturedAt.present) {
+      map['captured_at'] = Variable<DateTime>(capturedAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1392,6 +1562,9 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
           ..write('capturedLabel: $capturedLabel, ')
           ..write('note: $note, ')
           ..write('confidenceLabel: $confidenceLabel, ')
+          ..write('captureId: $captureId, ')
+          ..write('cookingOccasionId: $cookingOccasionId, ')
+          ..write('capturedAt: $capturedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2426,6 +2599,625 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
   }
 }
 
+class $CaptureCorrectionsTable extends CaptureCorrections
+    with TableInfo<$CaptureCorrectionsTable, CaptureCorrectionRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CaptureCorrectionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _batchIdMeta =
+      const VerificationMeta('batchId');
+  @override
+  late final GeneratedColumn<String> batchId = GeneratedColumn<String>(
+      'batch_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _actionTypeMeta =
+      const VerificationMeta('actionType');
+  @override
+  late final GeneratedColumn<String> actionType = GeneratedColumn<String>(
+      'action_type', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _captureIdsJsonMeta =
+      const VerificationMeta('captureIdsJson');
+  @override
+  late final GeneratedColumn<String> captureIdsJson = GeneratedColumn<String>(
+      'capture_ids_json', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _previousDishIdsJsonMeta =
+      const VerificationMeta('previousDishIdsJson');
+  @override
+  late final GeneratedColumn<String> previousDishIdsJson =
+      GeneratedColumn<String>('previous_dish_ids_json', aliasedName, false,
+          type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _targetDishIdMeta =
+      const VerificationMeta('targetDishId');
+  @override
+  late final GeneratedColumn<String> targetDishId = GeneratedColumn<String>(
+      'target_dish_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _createdDishIdMeta =
+      const VerificationMeta('createdDishId');
+  @override
+  late final GeneratedColumn<String> createdDishId = GeneratedColumn<String>(
+      'created_dish_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _statusMeta = const VerificationMeta('status');
+  @override
+  late final GeneratedColumn<String> status = GeneratedColumn<String>(
+      'status', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _errorMeta = const VerificationMeta('error');
+  @override
+  late final GeneratedColumn<String> error = GeneratedColumn<String>(
+      'error', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _undoneAtMeta =
+      const VerificationMeta('undoneAt');
+  @override
+  late final GeneratedColumn<DateTime> undoneAt = GeneratedColumn<DateTime>(
+      'undone_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        batchId,
+        actionType,
+        captureIdsJson,
+        previousDishIdsJson,
+        targetDishId,
+        createdDishId,
+        status,
+        error,
+        createdAt,
+        updatedAt,
+        undoneAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'capture_corrections';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<CaptureCorrectionRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('batch_id')) {
+      context.handle(_batchIdMeta,
+          batchId.isAcceptableOrUnknown(data['batch_id']!, _batchIdMeta));
+    } else if (isInserting) {
+      context.missing(_batchIdMeta);
+    }
+    if (data.containsKey('action_type')) {
+      context.handle(
+          _actionTypeMeta,
+          actionType.isAcceptableOrUnknown(
+              data['action_type']!, _actionTypeMeta));
+    } else if (isInserting) {
+      context.missing(_actionTypeMeta);
+    }
+    if (data.containsKey('capture_ids_json')) {
+      context.handle(
+          _captureIdsJsonMeta,
+          captureIdsJson.isAcceptableOrUnknown(
+              data['capture_ids_json']!, _captureIdsJsonMeta));
+    } else if (isInserting) {
+      context.missing(_captureIdsJsonMeta);
+    }
+    if (data.containsKey('previous_dish_ids_json')) {
+      context.handle(
+          _previousDishIdsJsonMeta,
+          previousDishIdsJson.isAcceptableOrUnknown(
+              data['previous_dish_ids_json']!, _previousDishIdsJsonMeta));
+    } else if (isInserting) {
+      context.missing(_previousDishIdsJsonMeta);
+    }
+    if (data.containsKey('target_dish_id')) {
+      context.handle(
+          _targetDishIdMeta,
+          targetDishId.isAcceptableOrUnknown(
+              data['target_dish_id']!, _targetDishIdMeta));
+    } else if (isInserting) {
+      context.missing(_targetDishIdMeta);
+    }
+    if (data.containsKey('created_dish_id')) {
+      context.handle(
+          _createdDishIdMeta,
+          createdDishId.isAcceptableOrUnknown(
+              data['created_dish_id']!, _createdDishIdMeta));
+    }
+    if (data.containsKey('status')) {
+      context.handle(_statusMeta,
+          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
+    } else if (isInserting) {
+      context.missing(_statusMeta);
+    }
+    if (data.containsKey('error')) {
+      context.handle(
+          _errorMeta, error.isAcceptableOrUnknown(data['error']!, _errorMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('undone_at')) {
+      context.handle(_undoneAtMeta,
+          undoneAt.isAcceptableOrUnknown(data['undone_at']!, _undoneAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CaptureCorrectionRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CaptureCorrectionRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      batchId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}batch_id'])!,
+      actionType: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}action_type'])!,
+      captureIdsJson: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}capture_ids_json'])!,
+      previousDishIdsJson: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}previous_dish_ids_json'])!,
+      targetDishId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}target_dish_id'])!,
+      createdDishId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}created_dish_id']),
+      status: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
+      error: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}error']),
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      undoneAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}undone_at']),
+    );
+  }
+
+  @override
+  $CaptureCorrectionsTable createAlias(String alias) {
+    return $CaptureCorrectionsTable(attachedDatabase, alias);
+  }
+}
+
+class CaptureCorrectionRow extends DataClass
+    implements Insertable<CaptureCorrectionRow> {
+  final String id;
+  final String batchId;
+  final String actionType;
+  final String captureIdsJson;
+  final String previousDishIdsJson;
+  final String targetDishId;
+  final String? createdDishId;
+  final String status;
+  final String? error;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final DateTime? undoneAt;
+  const CaptureCorrectionRow(
+      {required this.id,
+      required this.batchId,
+      required this.actionType,
+      required this.captureIdsJson,
+      required this.previousDishIdsJson,
+      required this.targetDishId,
+      this.createdDishId,
+      required this.status,
+      this.error,
+      required this.createdAt,
+      required this.updatedAt,
+      this.undoneAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['batch_id'] = Variable<String>(batchId);
+    map['action_type'] = Variable<String>(actionType);
+    map['capture_ids_json'] = Variable<String>(captureIdsJson);
+    map['previous_dish_ids_json'] = Variable<String>(previousDishIdsJson);
+    map['target_dish_id'] = Variable<String>(targetDishId);
+    if (!nullToAbsent || createdDishId != null) {
+      map['created_dish_id'] = Variable<String>(createdDishId);
+    }
+    map['status'] = Variable<String>(status);
+    if (!nullToAbsent || error != null) {
+      map['error'] = Variable<String>(error);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || undoneAt != null) {
+      map['undone_at'] = Variable<DateTime>(undoneAt);
+    }
+    return map;
+  }
+
+  CaptureCorrectionsCompanion toCompanion(bool nullToAbsent) {
+    return CaptureCorrectionsCompanion(
+      id: Value(id),
+      batchId: Value(batchId),
+      actionType: Value(actionType),
+      captureIdsJson: Value(captureIdsJson),
+      previousDishIdsJson: Value(previousDishIdsJson),
+      targetDishId: Value(targetDishId),
+      createdDishId: createdDishId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdDishId),
+      status: Value(status),
+      error:
+          error == null && nullToAbsent ? const Value.absent() : Value(error),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      undoneAt: undoneAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(undoneAt),
+    );
+  }
+
+  factory CaptureCorrectionRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CaptureCorrectionRow(
+      id: serializer.fromJson<String>(json['id']),
+      batchId: serializer.fromJson<String>(json['batchId']),
+      actionType: serializer.fromJson<String>(json['actionType']),
+      captureIdsJson: serializer.fromJson<String>(json['captureIdsJson']),
+      previousDishIdsJson:
+          serializer.fromJson<String>(json['previousDishIdsJson']),
+      targetDishId: serializer.fromJson<String>(json['targetDishId']),
+      createdDishId: serializer.fromJson<String?>(json['createdDishId']),
+      status: serializer.fromJson<String>(json['status']),
+      error: serializer.fromJson<String?>(json['error']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      undoneAt: serializer.fromJson<DateTime?>(json['undoneAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'batchId': serializer.toJson<String>(batchId),
+      'actionType': serializer.toJson<String>(actionType),
+      'captureIdsJson': serializer.toJson<String>(captureIdsJson),
+      'previousDishIdsJson': serializer.toJson<String>(previousDishIdsJson),
+      'targetDishId': serializer.toJson<String>(targetDishId),
+      'createdDishId': serializer.toJson<String?>(createdDishId),
+      'status': serializer.toJson<String>(status),
+      'error': serializer.toJson<String?>(error),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'undoneAt': serializer.toJson<DateTime?>(undoneAt),
+    };
+  }
+
+  CaptureCorrectionRow copyWith(
+          {String? id,
+          String? batchId,
+          String? actionType,
+          String? captureIdsJson,
+          String? previousDishIdsJson,
+          String? targetDishId,
+          Value<String?> createdDishId = const Value.absent(),
+          String? status,
+          Value<String?> error = const Value.absent(),
+          DateTime? createdAt,
+          DateTime? updatedAt,
+          Value<DateTime?> undoneAt = const Value.absent()}) =>
+      CaptureCorrectionRow(
+        id: id ?? this.id,
+        batchId: batchId ?? this.batchId,
+        actionType: actionType ?? this.actionType,
+        captureIdsJson: captureIdsJson ?? this.captureIdsJson,
+        previousDishIdsJson: previousDishIdsJson ?? this.previousDishIdsJson,
+        targetDishId: targetDishId ?? this.targetDishId,
+        createdDishId:
+            createdDishId.present ? createdDishId.value : this.createdDishId,
+        status: status ?? this.status,
+        error: error.present ? error.value : this.error,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+        undoneAt: undoneAt.present ? undoneAt.value : this.undoneAt,
+      );
+  CaptureCorrectionRow copyWithCompanion(CaptureCorrectionsCompanion data) {
+    return CaptureCorrectionRow(
+      id: data.id.present ? data.id.value : this.id,
+      batchId: data.batchId.present ? data.batchId.value : this.batchId,
+      actionType:
+          data.actionType.present ? data.actionType.value : this.actionType,
+      captureIdsJson: data.captureIdsJson.present
+          ? data.captureIdsJson.value
+          : this.captureIdsJson,
+      previousDishIdsJson: data.previousDishIdsJson.present
+          ? data.previousDishIdsJson.value
+          : this.previousDishIdsJson,
+      targetDishId: data.targetDishId.present
+          ? data.targetDishId.value
+          : this.targetDishId,
+      createdDishId: data.createdDishId.present
+          ? data.createdDishId.value
+          : this.createdDishId,
+      status: data.status.present ? data.status.value : this.status,
+      error: data.error.present ? data.error.value : this.error,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      undoneAt: data.undoneAt.present ? data.undoneAt.value : this.undoneAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CaptureCorrectionRow(')
+          ..write('id: $id, ')
+          ..write('batchId: $batchId, ')
+          ..write('actionType: $actionType, ')
+          ..write('captureIdsJson: $captureIdsJson, ')
+          ..write('previousDishIdsJson: $previousDishIdsJson, ')
+          ..write('targetDishId: $targetDishId, ')
+          ..write('createdDishId: $createdDishId, ')
+          ..write('status: $status, ')
+          ..write('error: $error, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('undoneAt: $undoneAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      batchId,
+      actionType,
+      captureIdsJson,
+      previousDishIdsJson,
+      targetDishId,
+      createdDishId,
+      status,
+      error,
+      createdAt,
+      updatedAt,
+      undoneAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CaptureCorrectionRow &&
+          other.id == this.id &&
+          other.batchId == this.batchId &&
+          other.actionType == this.actionType &&
+          other.captureIdsJson == this.captureIdsJson &&
+          other.previousDishIdsJson == this.previousDishIdsJson &&
+          other.targetDishId == this.targetDishId &&
+          other.createdDishId == this.createdDishId &&
+          other.status == this.status &&
+          other.error == this.error &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.undoneAt == this.undoneAt);
+}
+
+class CaptureCorrectionsCompanion
+    extends UpdateCompanion<CaptureCorrectionRow> {
+  final Value<String> id;
+  final Value<String> batchId;
+  final Value<String> actionType;
+  final Value<String> captureIdsJson;
+  final Value<String> previousDishIdsJson;
+  final Value<String> targetDishId;
+  final Value<String?> createdDishId;
+  final Value<String> status;
+  final Value<String?> error;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<DateTime?> undoneAt;
+  final Value<int> rowid;
+  const CaptureCorrectionsCompanion({
+    this.id = const Value.absent(),
+    this.batchId = const Value.absent(),
+    this.actionType = const Value.absent(),
+    this.captureIdsJson = const Value.absent(),
+    this.previousDishIdsJson = const Value.absent(),
+    this.targetDishId = const Value.absent(),
+    this.createdDishId = const Value.absent(),
+    this.status = const Value.absent(),
+    this.error = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.undoneAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CaptureCorrectionsCompanion.insert({
+    required String id,
+    required String batchId,
+    required String actionType,
+    required String captureIdsJson,
+    required String previousDishIdsJson,
+    required String targetDishId,
+    this.createdDishId = const Value.absent(),
+    required String status,
+    this.error = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.undoneAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        batchId = Value(batchId),
+        actionType = Value(actionType),
+        captureIdsJson = Value(captureIdsJson),
+        previousDishIdsJson = Value(previousDishIdsJson),
+        targetDishId = Value(targetDishId),
+        status = Value(status),
+        createdAt = Value(createdAt),
+        updatedAt = Value(updatedAt);
+  static Insertable<CaptureCorrectionRow> custom({
+    Expression<String>? id,
+    Expression<String>? batchId,
+    Expression<String>? actionType,
+    Expression<String>? captureIdsJson,
+    Expression<String>? previousDishIdsJson,
+    Expression<String>? targetDishId,
+    Expression<String>? createdDishId,
+    Expression<String>? status,
+    Expression<String>? error,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<DateTime>? undoneAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (batchId != null) 'batch_id': batchId,
+      if (actionType != null) 'action_type': actionType,
+      if (captureIdsJson != null) 'capture_ids_json': captureIdsJson,
+      if (previousDishIdsJson != null)
+        'previous_dish_ids_json': previousDishIdsJson,
+      if (targetDishId != null) 'target_dish_id': targetDishId,
+      if (createdDishId != null) 'created_dish_id': createdDishId,
+      if (status != null) 'status': status,
+      if (error != null) 'error': error,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (undoneAt != null) 'undone_at': undoneAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CaptureCorrectionsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? batchId,
+      Value<String>? actionType,
+      Value<String>? captureIdsJson,
+      Value<String>? previousDishIdsJson,
+      Value<String>? targetDishId,
+      Value<String?>? createdDishId,
+      Value<String>? status,
+      Value<String?>? error,
+      Value<DateTime>? createdAt,
+      Value<DateTime>? updatedAt,
+      Value<DateTime?>? undoneAt,
+      Value<int>? rowid}) {
+    return CaptureCorrectionsCompanion(
+      id: id ?? this.id,
+      batchId: batchId ?? this.batchId,
+      actionType: actionType ?? this.actionType,
+      captureIdsJson: captureIdsJson ?? this.captureIdsJson,
+      previousDishIdsJson: previousDishIdsJson ?? this.previousDishIdsJson,
+      targetDishId: targetDishId ?? this.targetDishId,
+      createdDishId: createdDishId ?? this.createdDishId,
+      status: status ?? this.status,
+      error: error ?? this.error,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      undoneAt: undoneAt ?? this.undoneAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (batchId.present) {
+      map['batch_id'] = Variable<String>(batchId.value);
+    }
+    if (actionType.present) {
+      map['action_type'] = Variable<String>(actionType.value);
+    }
+    if (captureIdsJson.present) {
+      map['capture_ids_json'] = Variable<String>(captureIdsJson.value);
+    }
+    if (previousDishIdsJson.present) {
+      map['previous_dish_ids_json'] =
+          Variable<String>(previousDishIdsJson.value);
+    }
+    if (targetDishId.present) {
+      map['target_dish_id'] = Variable<String>(targetDishId.value);
+    }
+    if (createdDishId.present) {
+      map['created_dish_id'] = Variable<String>(createdDishId.value);
+    }
+    if (status.present) {
+      map['status'] = Variable<String>(status.value);
+    }
+    if (error.present) {
+      map['error'] = Variable<String>(error.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (undoneAt.present) {
+      map['undone_at'] = Variable<DateTime>(undoneAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CaptureCorrectionsCompanion(')
+          ..write('id: $id, ')
+          ..write('batchId: $batchId, ')
+          ..write('actionType: $actionType, ')
+          ..write('captureIdsJson: $captureIdsJson, ')
+          ..write('previousDishIdsJson: $previousDishIdsJson, ')
+          ..write('targetDishId: $targetDishId, ')
+          ..write('createdDishId: $createdDishId, ')
+          ..write('status: $status, ')
+          ..write('error: $error, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('undoneAt: $undoneAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $PlannedMealsTable extends PlannedMeals
     with TableInfo<$PlannedMealsTable, PlannedMealRow> {
   @override
@@ -2705,6 +3497,12 @@ class $ReviewItemsTable extends ReviewItems
   late final GeneratedColumn<String> id = GeneratedColumn<String>(
       'id', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _captureIdMeta =
+      const VerificationMeta('captureId');
+  @override
+  late final GeneratedColumn<String> captureId = GeneratedColumn<String>(
+      'capture_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _summaryMeta =
       const VerificationMeta('summary');
   @override
@@ -2731,7 +3529,7 @@ class $ReviewItemsTable extends ReviewItems
       type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, summary, suggestedDishIdsJson, confidenceLabel, imageRef];
+      [id, captureId, summary, suggestedDishIdsJson, confidenceLabel, imageRef];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -2746,6 +3544,10 @@ class $ReviewItemsTable extends ReviewItems
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     } else if (isInserting) {
       context.missing(_idMeta);
+    }
+    if (data.containsKey('capture_id')) {
+      context.handle(_captureIdMeta,
+          captureId.isAcceptableOrUnknown(data['capture_id']!, _captureIdMeta));
     }
     if (data.containsKey('summary')) {
       context.handle(_summaryMeta,
@@ -2784,6 +3586,8 @@ class $ReviewItemsTable extends ReviewItems
     return ReviewItemRow(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      captureId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}capture_id']),
       summary: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}summary'])!,
       suggestedDishIdsJson: attachedDatabase.typeMapping.read(
@@ -2804,12 +3608,14 @@ class $ReviewItemsTable extends ReviewItems
 
 class ReviewItemRow extends DataClass implements Insertable<ReviewItemRow> {
   final String id;
+  final String? captureId;
   final String summary;
   final String suggestedDishIdsJson;
   final String confidenceLabel;
   final String? imageRef;
   const ReviewItemRow(
       {required this.id,
+      this.captureId,
       required this.summary,
       required this.suggestedDishIdsJson,
       required this.confidenceLabel,
@@ -2818,6 +3624,9 @@ class ReviewItemRow extends DataClass implements Insertable<ReviewItemRow> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
+    if (!nullToAbsent || captureId != null) {
+      map['capture_id'] = Variable<String>(captureId);
+    }
     map['summary'] = Variable<String>(summary);
     map['suggested_dish_ids_json'] = Variable<String>(suggestedDishIdsJson);
     map['confidence_label'] = Variable<String>(confidenceLabel);
@@ -2830,6 +3639,9 @@ class ReviewItemRow extends DataClass implements Insertable<ReviewItemRow> {
   ReviewItemsCompanion toCompanion(bool nullToAbsent) {
     return ReviewItemsCompanion(
       id: Value(id),
+      captureId: captureId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(captureId),
       summary: Value(summary),
       suggestedDishIdsJson: Value(suggestedDishIdsJson),
       confidenceLabel: Value(confidenceLabel),
@@ -2844,6 +3656,7 @@ class ReviewItemRow extends DataClass implements Insertable<ReviewItemRow> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return ReviewItemRow(
       id: serializer.fromJson<String>(json['id']),
+      captureId: serializer.fromJson<String?>(json['captureId']),
       summary: serializer.fromJson<String>(json['summary']),
       suggestedDishIdsJson:
           serializer.fromJson<String>(json['suggestedDishIdsJson']),
@@ -2856,6 +3669,7 @@ class ReviewItemRow extends DataClass implements Insertable<ReviewItemRow> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
+      'captureId': serializer.toJson<String?>(captureId),
       'summary': serializer.toJson<String>(summary),
       'suggestedDishIdsJson': serializer.toJson<String>(suggestedDishIdsJson),
       'confidenceLabel': serializer.toJson<String>(confidenceLabel),
@@ -2865,12 +3679,14 @@ class ReviewItemRow extends DataClass implements Insertable<ReviewItemRow> {
 
   ReviewItemRow copyWith(
           {String? id,
+          Value<String?> captureId = const Value.absent(),
           String? summary,
           String? suggestedDishIdsJson,
           String? confidenceLabel,
           Value<String?> imageRef = const Value.absent()}) =>
       ReviewItemRow(
         id: id ?? this.id,
+        captureId: captureId.present ? captureId.value : this.captureId,
         summary: summary ?? this.summary,
         suggestedDishIdsJson: suggestedDishIdsJson ?? this.suggestedDishIdsJson,
         confidenceLabel: confidenceLabel ?? this.confidenceLabel,
@@ -2879,6 +3695,7 @@ class ReviewItemRow extends DataClass implements Insertable<ReviewItemRow> {
   ReviewItemRow copyWithCompanion(ReviewItemsCompanion data) {
     return ReviewItemRow(
       id: data.id.present ? data.id.value : this.id,
+      captureId: data.captureId.present ? data.captureId.value : this.captureId,
       summary: data.summary.present ? data.summary.value : this.summary,
       suggestedDishIdsJson: data.suggestedDishIdsJson.present
           ? data.suggestedDishIdsJson.value
@@ -2894,6 +3711,7 @@ class ReviewItemRow extends DataClass implements Insertable<ReviewItemRow> {
   String toString() {
     return (StringBuffer('ReviewItemRow(')
           ..write('id: $id, ')
+          ..write('captureId: $captureId, ')
           ..write('summary: $summary, ')
           ..write('suggestedDishIdsJson: $suggestedDishIdsJson, ')
           ..write('confidenceLabel: $confidenceLabel, ')
@@ -2903,13 +3721,14 @@ class ReviewItemRow extends DataClass implements Insertable<ReviewItemRow> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, summary, suggestedDishIdsJson, confidenceLabel, imageRef);
+  int get hashCode => Object.hash(
+      id, captureId, summary, suggestedDishIdsJson, confidenceLabel, imageRef);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is ReviewItemRow &&
           other.id == this.id &&
+          other.captureId == this.captureId &&
           other.summary == this.summary &&
           other.suggestedDishIdsJson == this.suggestedDishIdsJson &&
           other.confidenceLabel == this.confidenceLabel &&
@@ -2918,6 +3737,7 @@ class ReviewItemRow extends DataClass implements Insertable<ReviewItemRow> {
 
 class ReviewItemsCompanion extends UpdateCompanion<ReviewItemRow> {
   final Value<String> id;
+  final Value<String?> captureId;
   final Value<String> summary;
   final Value<String> suggestedDishIdsJson;
   final Value<String> confidenceLabel;
@@ -2925,6 +3745,7 @@ class ReviewItemsCompanion extends UpdateCompanion<ReviewItemRow> {
   final Value<int> rowid;
   const ReviewItemsCompanion({
     this.id = const Value.absent(),
+    this.captureId = const Value.absent(),
     this.summary = const Value.absent(),
     this.suggestedDishIdsJson = const Value.absent(),
     this.confidenceLabel = const Value.absent(),
@@ -2933,6 +3754,7 @@ class ReviewItemsCompanion extends UpdateCompanion<ReviewItemRow> {
   });
   ReviewItemsCompanion.insert({
     required String id,
+    this.captureId = const Value.absent(),
     required String summary,
     required String suggestedDishIdsJson,
     required String confidenceLabel,
@@ -2944,6 +3766,7 @@ class ReviewItemsCompanion extends UpdateCompanion<ReviewItemRow> {
         confidenceLabel = Value(confidenceLabel);
   static Insertable<ReviewItemRow> custom({
     Expression<String>? id,
+    Expression<String>? captureId,
     Expression<String>? summary,
     Expression<String>? suggestedDishIdsJson,
     Expression<String>? confidenceLabel,
@@ -2952,6 +3775,7 @@ class ReviewItemsCompanion extends UpdateCompanion<ReviewItemRow> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (captureId != null) 'capture_id': captureId,
       if (summary != null) 'summary': summary,
       if (suggestedDishIdsJson != null)
         'suggested_dish_ids_json': suggestedDishIdsJson,
@@ -2963,6 +3787,7 @@ class ReviewItemsCompanion extends UpdateCompanion<ReviewItemRow> {
 
   ReviewItemsCompanion copyWith(
       {Value<String>? id,
+      Value<String?>? captureId,
       Value<String>? summary,
       Value<String>? suggestedDishIdsJson,
       Value<String>? confidenceLabel,
@@ -2970,6 +3795,7 @@ class ReviewItemsCompanion extends UpdateCompanion<ReviewItemRow> {
       Value<int>? rowid}) {
     return ReviewItemsCompanion(
       id: id ?? this.id,
+      captureId: captureId ?? this.captureId,
       summary: summary ?? this.summary,
       suggestedDishIdsJson: suggestedDishIdsJson ?? this.suggestedDishIdsJson,
       confidenceLabel: confidenceLabel ?? this.confidenceLabel,
@@ -2983,6 +3809,9 @@ class ReviewItemsCompanion extends UpdateCompanion<ReviewItemRow> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<String>(id.value);
+    }
+    if (captureId.present) {
+      map['capture_id'] = Variable<String>(captureId.value);
     }
     if (summary.present) {
       map['summary'] = Variable<String>(summary.value);
@@ -3007,6 +3836,7 @@ class ReviewItemsCompanion extends UpdateCompanion<ReviewItemRow> {
   String toString() {
     return (StringBuffer('ReviewItemsCompanion(')
           ..write('id: $id, ')
+          ..write('captureId: $captureId, ')
           ..write('summary: $summary, ')
           ..write('suggestedDishIdsJson: $suggestedDishIdsJson, ')
           ..write('confidenceLabel: $confidenceLabel, ')
@@ -4609,6 +5439,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SourcePhotosTable sourcePhotos = $SourcePhotosTable(this);
   late final $CaptureBatchesTable captureBatches = $CaptureBatchesTable(this);
   late final $CaptureItemsTable captureItems = $CaptureItemsTable(this);
+  late final $CaptureCorrectionsTable captureCorrections =
+      $CaptureCorrectionsTable(this);
   late final $PlannedMealsTable plannedMeals = $PlannedMealsTable(this);
   late final $ReviewItemsTable reviewItems = $ReviewItemsTable(this);
   late final $SyncOperationsTable syncOperations = $SyncOperationsTable(this);
@@ -4624,6 +5456,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         sourcePhotos,
         captureBatches,
         captureItems,
+        captureCorrections,
         plannedMeals,
         reviewItems,
         syncOperations,
@@ -4646,6 +5479,7 @@ typedef $$DishesTableCreateCompanionBuilder = DishesCompanion Function({
   required String recipeStepsJson,
   required String notesJson,
   Value<bool> isFavorite,
+  Value<DateTime?> createdAt,
   Value<int> rowid,
 });
 typedef $$DishesTableUpdateCompanionBuilder = DishesCompanion Function({
@@ -4662,6 +5496,7 @@ typedef $$DishesTableUpdateCompanionBuilder = DishesCompanion Function({
   Value<String> recipeStepsJson,
   Value<String> notesJson,
   Value<bool> isFavorite,
+  Value<DateTime?> createdAt,
   Value<int> rowid,
 });
 
@@ -4714,6 +5549,9 @@ class $$DishesTableFilterComposer
 
   ColumnFilters<bool> get isFavorite => $composableBuilder(
       column: $table.isFavorite, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
 }
 
 class $$DishesTableOrderingComposer
@@ -4767,6 +5605,9 @@ class $$DishesTableOrderingComposer
 
   ColumnOrderings<bool> get isFavorite => $composableBuilder(
       column: $table.isFavorite, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 }
 
 class $$DishesTableAnnotationComposer
@@ -4816,6 +5657,9 @@ class $$DishesTableAnnotationComposer
 
   GeneratedColumn<bool> get isFavorite => $composableBuilder(
       column: $table.isFavorite, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
 }
 
 class $$DishesTableTableManager extends RootTableManager<
@@ -4854,6 +5698,7 @@ class $$DishesTableTableManager extends RootTableManager<
             Value<String> recipeStepsJson = const Value.absent(),
             Value<String> notesJson = const Value.absent(),
             Value<bool> isFavorite = const Value.absent(),
+            Value<DateTime?> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               DishesCompanion(
@@ -4870,6 +5715,7 @@ class $$DishesTableTableManager extends RootTableManager<
             recipeStepsJson: recipeStepsJson,
             notesJson: notesJson,
             isFavorite: isFavorite,
+            createdAt: createdAt,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -4886,6 +5732,7 @@ class $$DishesTableTableManager extends RootTableManager<
             required String recipeStepsJson,
             required String notesJson,
             Value<bool> isFavorite = const Value.absent(),
+            Value<DateTime?> createdAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               DishesCompanion.insert(
@@ -4902,6 +5749,7 @@ class $$DishesTableTableManager extends RootTableManager<
             recipeStepsJson: recipeStepsJson,
             notesJson: notesJson,
             isFavorite: isFavorite,
+            createdAt: createdAt,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
@@ -5126,6 +5974,9 @@ typedef $$SourcePhotosTableCreateCompanionBuilder = SourcePhotosCompanion
   required String capturedLabel,
   Value<String?> note,
   Value<String?> confidenceLabel,
+  Value<String?> captureId,
+  Value<String?> cookingOccasionId,
+  Value<DateTime?> capturedAt,
   Value<int> rowid,
 });
 typedef $$SourcePhotosTableUpdateCompanionBuilder = SourcePhotosCompanion
@@ -5136,6 +5987,9 @@ typedef $$SourcePhotosTableUpdateCompanionBuilder = SourcePhotosCompanion
   Value<String> capturedLabel,
   Value<String?> note,
   Value<String?> confidenceLabel,
+  Value<String?> captureId,
+  Value<String?> cookingOccasionId,
+  Value<DateTime?> capturedAt,
   Value<int> rowid,
 });
 
@@ -5166,6 +6020,16 @@ class $$SourcePhotosTableFilterComposer
   ColumnFilters<String> get confidenceLabel => $composableBuilder(
       column: $table.confidenceLabel,
       builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get captureId => $composableBuilder(
+      column: $table.captureId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get cookingOccasionId => $composableBuilder(
+      column: $table.cookingOccasionId,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get capturedAt => $composableBuilder(
+      column: $table.capturedAt, builder: (column) => ColumnFilters(column));
 }
 
 class $$SourcePhotosTableOrderingComposer
@@ -5196,6 +6060,16 @@ class $$SourcePhotosTableOrderingComposer
   ColumnOrderings<String> get confidenceLabel => $composableBuilder(
       column: $table.confidenceLabel,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get captureId => $composableBuilder(
+      column: $table.captureId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get cookingOccasionId => $composableBuilder(
+      column: $table.cookingOccasionId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get capturedAt => $composableBuilder(
+      column: $table.capturedAt, builder: (column) => ColumnOrderings(column));
 }
 
 class $$SourcePhotosTableAnnotationComposer
@@ -5224,6 +6098,15 @@ class $$SourcePhotosTableAnnotationComposer
 
   GeneratedColumn<String> get confidenceLabel => $composableBuilder(
       column: $table.confidenceLabel, builder: (column) => column);
+
+  GeneratedColumn<String> get captureId =>
+      $composableBuilder(column: $table.captureId, builder: (column) => column);
+
+  GeneratedColumn<String> get cookingOccasionId => $composableBuilder(
+      column: $table.cookingOccasionId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get capturedAt => $composableBuilder(
+      column: $table.capturedAt, builder: (column) => column);
 }
 
 class $$SourcePhotosTableTableManager extends RootTableManager<
@@ -5258,6 +6141,9 @@ class $$SourcePhotosTableTableManager extends RootTableManager<
             Value<String> capturedLabel = const Value.absent(),
             Value<String?> note = const Value.absent(),
             Value<String?> confidenceLabel = const Value.absent(),
+            Value<String?> captureId = const Value.absent(),
+            Value<String?> cookingOccasionId = const Value.absent(),
+            Value<DateTime?> capturedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               SourcePhotosCompanion(
@@ -5267,6 +6153,9 @@ class $$SourcePhotosTableTableManager extends RootTableManager<
             capturedLabel: capturedLabel,
             note: note,
             confidenceLabel: confidenceLabel,
+            captureId: captureId,
+            cookingOccasionId: cookingOccasionId,
+            capturedAt: capturedAt,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -5276,6 +6165,9 @@ class $$SourcePhotosTableTableManager extends RootTableManager<
             required String capturedLabel,
             Value<String?> note = const Value.absent(),
             Value<String?> confidenceLabel = const Value.absent(),
+            Value<String?> captureId = const Value.absent(),
+            Value<String?> cookingOccasionId = const Value.absent(),
+            Value<DateTime?> capturedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               SourcePhotosCompanion.insert(
@@ -5285,6 +6177,9 @@ class $$SourcePhotosTableTableManager extends RootTableManager<
             capturedLabel: capturedLabel,
             note: note,
             confidenceLabel: confidenceLabel,
+            captureId: captureId,
+            cookingOccasionId: cookingOccasionId,
+            capturedAt: capturedAt,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
@@ -5801,6 +6696,294 @@ typedef $$CaptureItemsTableProcessedTableManager = ProcessedTableManager<
     ),
     CaptureItemRow,
     PrefetchHooks Function()>;
+typedef $$CaptureCorrectionsTableCreateCompanionBuilder
+    = CaptureCorrectionsCompanion Function({
+  required String id,
+  required String batchId,
+  required String actionType,
+  required String captureIdsJson,
+  required String previousDishIdsJson,
+  required String targetDishId,
+  Value<String?> createdDishId,
+  required String status,
+  Value<String?> error,
+  required DateTime createdAt,
+  required DateTime updatedAt,
+  Value<DateTime?> undoneAt,
+  Value<int> rowid,
+});
+typedef $$CaptureCorrectionsTableUpdateCompanionBuilder
+    = CaptureCorrectionsCompanion Function({
+  Value<String> id,
+  Value<String> batchId,
+  Value<String> actionType,
+  Value<String> captureIdsJson,
+  Value<String> previousDishIdsJson,
+  Value<String> targetDishId,
+  Value<String?> createdDishId,
+  Value<String> status,
+  Value<String?> error,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<DateTime?> undoneAt,
+  Value<int> rowid,
+});
+
+class $$CaptureCorrectionsTableFilterComposer
+    extends Composer<_$AppDatabase, $CaptureCorrectionsTable> {
+  $$CaptureCorrectionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get batchId => $composableBuilder(
+      column: $table.batchId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get actionType => $composableBuilder(
+      column: $table.actionType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get captureIdsJson => $composableBuilder(
+      column: $table.captureIdsJson,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get previousDishIdsJson => $composableBuilder(
+      column: $table.previousDishIdsJson,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get targetDishId => $composableBuilder(
+      column: $table.targetDishId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get createdDishId => $composableBuilder(
+      column: $table.createdDishId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get error => $composableBuilder(
+      column: $table.error, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get undoneAt => $composableBuilder(
+      column: $table.undoneAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$CaptureCorrectionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CaptureCorrectionsTable> {
+  $$CaptureCorrectionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get batchId => $composableBuilder(
+      column: $table.batchId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get actionType => $composableBuilder(
+      column: $table.actionType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get captureIdsJson => $composableBuilder(
+      column: $table.captureIdsJson,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get previousDishIdsJson => $composableBuilder(
+      column: $table.previousDishIdsJson,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get targetDishId => $composableBuilder(
+      column: $table.targetDishId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get createdDishId => $composableBuilder(
+      column: $table.createdDishId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get status => $composableBuilder(
+      column: $table.status, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get error => $composableBuilder(
+      column: $table.error, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get undoneAt => $composableBuilder(
+      column: $table.undoneAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CaptureCorrectionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CaptureCorrectionsTable> {
+  $$CaptureCorrectionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get batchId =>
+      $composableBuilder(column: $table.batchId, builder: (column) => column);
+
+  GeneratedColumn<String> get actionType => $composableBuilder(
+      column: $table.actionType, builder: (column) => column);
+
+  GeneratedColumn<String> get captureIdsJson => $composableBuilder(
+      column: $table.captureIdsJson, builder: (column) => column);
+
+  GeneratedColumn<String> get previousDishIdsJson => $composableBuilder(
+      column: $table.previousDishIdsJson, builder: (column) => column);
+
+  GeneratedColumn<String> get targetDishId => $composableBuilder(
+      column: $table.targetDishId, builder: (column) => column);
+
+  GeneratedColumn<String> get createdDishId => $composableBuilder(
+      column: $table.createdDishId, builder: (column) => column);
+
+  GeneratedColumn<String> get status =>
+      $composableBuilder(column: $table.status, builder: (column) => column);
+
+  GeneratedColumn<String> get error =>
+      $composableBuilder(column: $table.error, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get undoneAt =>
+      $composableBuilder(column: $table.undoneAt, builder: (column) => column);
+}
+
+class $$CaptureCorrectionsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CaptureCorrectionsTable,
+    CaptureCorrectionRow,
+    $$CaptureCorrectionsTableFilterComposer,
+    $$CaptureCorrectionsTableOrderingComposer,
+    $$CaptureCorrectionsTableAnnotationComposer,
+    $$CaptureCorrectionsTableCreateCompanionBuilder,
+    $$CaptureCorrectionsTableUpdateCompanionBuilder,
+    (
+      CaptureCorrectionRow,
+      BaseReferences<_$AppDatabase, $CaptureCorrectionsTable,
+          CaptureCorrectionRow>
+    ),
+    CaptureCorrectionRow,
+    PrefetchHooks Function()> {
+  $$CaptureCorrectionsTableTableManager(
+      _$AppDatabase db, $CaptureCorrectionsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CaptureCorrectionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CaptureCorrectionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CaptureCorrectionsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> batchId = const Value.absent(),
+            Value<String> actionType = const Value.absent(),
+            Value<String> captureIdsJson = const Value.absent(),
+            Value<String> previousDishIdsJson = const Value.absent(),
+            Value<String> targetDishId = const Value.absent(),
+            Value<String?> createdDishId = const Value.absent(),
+            Value<String> status = const Value.absent(),
+            Value<String?> error = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<DateTime?> undoneAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CaptureCorrectionsCompanion(
+            id: id,
+            batchId: batchId,
+            actionType: actionType,
+            captureIdsJson: captureIdsJson,
+            previousDishIdsJson: previousDishIdsJson,
+            targetDishId: targetDishId,
+            createdDishId: createdDishId,
+            status: status,
+            error: error,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            undoneAt: undoneAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String batchId,
+            required String actionType,
+            required String captureIdsJson,
+            required String previousDishIdsJson,
+            required String targetDishId,
+            Value<String?> createdDishId = const Value.absent(),
+            required String status,
+            Value<String?> error = const Value.absent(),
+            required DateTime createdAt,
+            required DateTime updatedAt,
+            Value<DateTime?> undoneAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CaptureCorrectionsCompanion.insert(
+            id: id,
+            batchId: batchId,
+            actionType: actionType,
+            captureIdsJson: captureIdsJson,
+            previousDishIdsJson: previousDishIdsJson,
+            targetDishId: targetDishId,
+            createdDishId: createdDishId,
+            status: status,
+            error: error,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            undoneAt: undoneAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CaptureCorrectionsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $CaptureCorrectionsTable,
+    CaptureCorrectionRow,
+    $$CaptureCorrectionsTableFilterComposer,
+    $$CaptureCorrectionsTableOrderingComposer,
+    $$CaptureCorrectionsTableAnnotationComposer,
+    $$CaptureCorrectionsTableCreateCompanionBuilder,
+    $$CaptureCorrectionsTableUpdateCompanionBuilder,
+    (
+      CaptureCorrectionRow,
+      BaseReferences<_$AppDatabase, $CaptureCorrectionsTable,
+          CaptureCorrectionRow>
+    ),
+    CaptureCorrectionRow,
+    PrefetchHooks Function()>;
 typedef $$PlannedMealsTableCreateCompanionBuilder = PlannedMealsCompanion
     Function({
   required String id,
@@ -5962,6 +7145,7 @@ typedef $$PlannedMealsTableProcessedTableManager = ProcessedTableManager<
 typedef $$ReviewItemsTableCreateCompanionBuilder = ReviewItemsCompanion
     Function({
   required String id,
+  Value<String?> captureId,
   required String summary,
   required String suggestedDishIdsJson,
   required String confidenceLabel,
@@ -5971,6 +7155,7 @@ typedef $$ReviewItemsTableCreateCompanionBuilder = ReviewItemsCompanion
 typedef $$ReviewItemsTableUpdateCompanionBuilder = ReviewItemsCompanion
     Function({
   Value<String> id,
+  Value<String?> captureId,
   Value<String> summary,
   Value<String> suggestedDishIdsJson,
   Value<String> confidenceLabel,
@@ -5989,6 +7174,9 @@ class $$ReviewItemsTableFilterComposer
   });
   ColumnFilters<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get captureId => $composableBuilder(
+      column: $table.captureId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get summary => $composableBuilder(
       column: $table.summary, builder: (column) => ColumnFilters(column));
@@ -6017,6 +7205,9 @@ class $$ReviewItemsTableOrderingComposer
   ColumnOrderings<String> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get captureId => $composableBuilder(
+      column: $table.captureId, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get summary => $composableBuilder(
       column: $table.summary, builder: (column) => ColumnOrderings(column));
 
@@ -6043,6 +7234,9 @@ class $$ReviewItemsTableAnnotationComposer
   });
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get captureId =>
+      $composableBuilder(column: $table.captureId, builder: (column) => column);
 
   GeneratedColumn<String> get summary =>
       $composableBuilder(column: $table.summary, builder: (column) => column);
@@ -6084,6 +7278,7 @@ class $$ReviewItemsTableTableManager extends RootTableManager<
               $$ReviewItemsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<String> id = const Value.absent(),
+            Value<String?> captureId = const Value.absent(),
             Value<String> summary = const Value.absent(),
             Value<String> suggestedDishIdsJson = const Value.absent(),
             Value<String> confidenceLabel = const Value.absent(),
@@ -6092,6 +7287,7 @@ class $$ReviewItemsTableTableManager extends RootTableManager<
           }) =>
               ReviewItemsCompanion(
             id: id,
+            captureId: captureId,
             summary: summary,
             suggestedDishIdsJson: suggestedDishIdsJson,
             confidenceLabel: confidenceLabel,
@@ -6100,6 +7296,7 @@ class $$ReviewItemsTableTableManager extends RootTableManager<
           ),
           createCompanionCallback: ({
             required String id,
+            Value<String?> captureId = const Value.absent(),
             required String summary,
             required String suggestedDishIdsJson,
             required String confidenceLabel,
@@ -6108,6 +7305,7 @@ class $$ReviewItemsTableTableManager extends RootTableManager<
           }) =>
               ReviewItemsCompanion.insert(
             id: id,
+            captureId: captureId,
             summary: summary,
             suggestedDishIdsJson: suggestedDishIdsJson,
             confidenceLabel: confidenceLabel,
@@ -6896,6 +8094,8 @@ class $AppDatabaseManager {
       $$CaptureBatchesTableTableManager(_db, _db.captureBatches);
   $$CaptureItemsTableTableManager get captureItems =>
       $$CaptureItemsTableTableManager(_db, _db.captureItems);
+  $$CaptureCorrectionsTableTableManager get captureCorrections =>
+      $$CaptureCorrectionsTableTableManager(_db, _db.captureCorrections);
   $$PlannedMealsTableTableManager get plannedMeals =>
       $$PlannedMealsTableTableManager(_db, _db.plannedMeals);
   $$ReviewItemsTableTableManager get reviewItems =>

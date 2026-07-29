@@ -103,6 +103,50 @@ class NetworkGatedMyMenuApiClient extends MyMenuApiClient {
   }
 
   @override
+  Future<void> deleteCapture({required String captureId}) {
+    return _online(() => _delegate.deleteCapture(captureId: captureId));
+  }
+
+  @override
+  Future<void> deleteCaptureBatch({required String batchId}) {
+    return _online(() => _delegate.deleteCaptureBatch(batchId: batchId));
+  }
+
+  @override
+  Future<void> correctCaptureGrouping({
+    required String clientMutationId,
+    required String batchId,
+    required String actionType,
+    required List<String> captureIds,
+    required String targetDishId,
+    String? newDishTitle,
+  }) {
+    return _online(
+      () => _delegate.correctCaptureGrouping(
+        clientMutationId: clientMutationId,
+        batchId: batchId,
+        actionType: actionType,
+        captureIds: captureIds,
+        targetDishId: targetDishId,
+        newDishTitle: newDishTitle,
+      ),
+    );
+  }
+
+  @override
+  Future<void> undoCaptureGrouping({
+    required String clientMutationId,
+    required String actionId,
+  }) {
+    return _online(
+      () => _delegate.undoCaptureGrouping(
+        clientMutationId: clientMutationId,
+        actionId: actionId,
+      ),
+    );
+  }
+
+  @override
   Future<ApiAiJob> scheduleAiJob({
     required String jobId,
     required String jobType,
@@ -181,6 +225,11 @@ class NetworkGatedMyMenuApiClient extends MyMenuApiClient {
   @override
   Future<void> deleteDishNote({required String noteId}) {
     return _online(() => _delegate.deleteDishNote(noteId: noteId));
+  }
+
+  @override
+  Future<void> deleteDishes({required List<String> dishIds}) {
+    return _online(() => _delegate.deleteDishes(dishIds: dishIds));
   }
 
   @override

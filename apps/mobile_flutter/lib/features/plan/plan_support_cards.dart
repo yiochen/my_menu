@@ -21,7 +21,7 @@ class PlanSuggestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Dish dish = state.dishById('dish_linguine');
+    final Dish dish = state.recommendedDish();
     return Container(
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(

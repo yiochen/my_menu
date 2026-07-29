@@ -230,6 +230,25 @@ class CaptureRepository {
     await _enqueueSync(captureId, 'capture_item', 'discard');
   }
 
+  Future<void> deleteCapture(String captureId) async {
+    final DateTime now = DateTime.now();
+    await _database.transaction(() async {
+      await (_database.delete(_database.captureItems)
+            ..where((db.CaptureItems table) => table.id.equals(captureId)))
+          .go();
+      await _database.into(_database.syncOperations).insert(
+            db.SyncOperationsCompanion.insert(
+              id: const Uuid().v4(),
+              entity: 'capture_item',
+              entityId: captureId,
+              operationType: 'delete',
+              payloadJson: '{}',
+              createdAt: now,
+            ),
+          );
+    });
+  }
+
   Future<void> retryBatch(String batchId) async {
     final DateTime now = DateTime.now();
     await _database.transaction(() async {
