@@ -233,6 +233,12 @@ class _CaptureButton extends StatelessWidget {
             height: MyMenuUnits.captureButtonSize,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
+              border: Border.fromBorderSide(
+                BorderSide(
+                  color: MyMenuColors.cream,
+                  width: 6,
+                ),
+              ),
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
