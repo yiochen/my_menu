@@ -8,6 +8,11 @@ Before wrapping up Flutter changes:
 - run `dart run tool/structural_lint.dart`
 - run `flutter test`
 
+After creating a worktree, run `scripts/setup_worktree.sh` from the repository
+root. It runs `flutter pub get`, installs missing Homebrew-provided Supabase
+tooling when possible, and verifies that Docker is running. It does not start
+or reset the local Supabase database.
+
 API mode is selected with `--dart-define=MY_MENU_API_MODE=auto|fake|supabase`.
 Use `fake` for Android integration tests unless the test explicitly starts and
 targets a local Supabase stack. Use `supabase` only with both `SUPABASE_URL` and
@@ -19,3 +24,11 @@ Keep code organized under:
 - `lib/domain` for models and state
 - `lib/features` for feature UI
 - `lib/shared` for reusable UI
+
+# Small UI Fixes
+
+- For a small visual change, first locate the owning widget with `rg`, then compare against the existing mockups or design tokens before changing shared theme values.
+- If a checkout is missing `.dart_tool/package_config.json`, rerun `scripts/setup_worktree.sh` before `dart analyze`; otherwise the analyzer reports cascading missing-package errors.
+- The repository pre-commit hook runs the Flutter and Supabase checks. After a focused verification pass, let the hook provide the final full validation instead of rerunning the expensive backend checks separately.
+- When updating a visual regression, run the targeted test with `--update-goldens`, then inspect `git status` and keep only the intended golden changes; Flutter may rewrite unrelated goldens in the same run.
+- When replacing a standard Flutter surface such as `showModalBottomSheet` with a custom transition, preserve important widget, semantics, and result-returning contracts so existing tests and route callers continue to work.

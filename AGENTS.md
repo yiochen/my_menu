@@ -7,6 +7,8 @@ UX, IA, or feature-scope decisions.
 
 For Flutter work under `apps/mobile_flutter/`:
 
+- after creating a worktree, run `scripts/setup_worktree.sh` once to install
+  Flutter packages and verify the Supabase/Docker toolchain
 - use [docs/flutter-app-design.md](docs/flutter-app-design.md) as the current architecture reference
 - run `dart analyze` before wrapping up changes
 - run `dart run tool/structural_lint.dart` from `apps/mobile_flutter/` to catch oversized files and oversized `build()` methods
