@@ -840,6 +840,7 @@ void main() {
           createdBatch.items.map((CaptureItem item) => item.id),
         ),
       );
+      await state.refreshFromServer();
     });
 
     test('reconnect creates one remote batch and uploads each item once',

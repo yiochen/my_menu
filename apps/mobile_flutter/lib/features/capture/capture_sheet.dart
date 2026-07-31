@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -19,14 +22,24 @@ Future<void> showCaptureSheet(
   MyMenuState state,
   CaptureMediaService mediaService,
 ) async {
-  final CaptureAction? action = await showModalBottomSheet<CaptureAction>(
+  final CaptureAction? action = await showGeneralDialog<CaptureAction>(
     context: context,
-    useSafeArea: true,
-    isScrollControlled: true,
-    builder: (_) => _CaptureActionSheet(
-      hasCaptures:
-          state.captureBatches.isNotEmpty || state.captureItems.isNotEmpty,
+    barrierDismissible: true,
+    barrierLabel: 'Close Capture',
+    barrierColor: const Color(0x52000000),
+    transitionDuration: const Duration(milliseconds: 460),
+    pageBuilder: (_, __, ___) => BottomSheet(
+      onClosing: () {},
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      builder: (_) => _CaptureActionSheet(
+        hasCaptures:
+            state.captureBatches.isNotEmpty || state.captureItems.isNotEmpty,
+      ),
     ),
+    transitionBuilder: (_, Animation<double> animation, __, Widget child) =>
+        _CaptureSheetTransition(animation: animation, child: child),
   );
   if (!context.mounted || action == null) {
     return;
@@ -51,6 +64,102 @@ Future<void> showCaptureSheet(
       }
     case CaptureAction.recentCaptures:
       await showCaptureFeedSheet(context, state);
+  }
+}
+
+class _CaptureSheetTransition extends StatelessWidget {
+  const _CaptureSheetTransition({
+    required this.animation,
+    required this.child,
+  });
+
+  final Animation<double> animation;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final CurvedAnimation progress = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    final double safeBottom = MediaQuery.paddingOf(context).bottom;
+
+    return AnimatedBuilder(
+      animation: progress,
+      builder: (BuildContext context, _) {
+        final double t = progress.value;
+        final Size size = MediaQuery.sizeOf(context);
+        final double sheetHeight = ui.lerpDouble(
+          62,
+          math.min(size.height * 0.88, 650),
+          t,
+        )!;
+        final double sheetWidth = ui.lerpDouble(62, size.width, t)!;
+        final double bottom = ui.lerpDouble(safeBottom + 29, 0, t)!;
+        final double radius = ui.lerpDouble(31, 28, t)!;
+        final double contentOpacity = Curves.easeIn.transform(
+          ((t - 0.24) / 0.76).clamp(0, 1),
+        );
+
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
+            padding: EdgeInsets.only(bottom: bottom),
+            child: Container(
+              width: sheetWidth,
+              height: sheetHeight,
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(radius),
+                color: Color.lerp(
+                  MyMenuColors.orangeAction,
+                  MyMenuColors.cream,
+                  Curves.easeInOut.transform(t),
+                ),
+                border: Border.all(
+                  color: Color.lerp(
+                    MyMenuColors.cream,
+                    Colors.transparent,
+                    Curves.easeIn.transform(t),
+                  )!,
+                  width: ui.lerpDouble(6, 0, t)!,
+                ),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: <Widget>[
+                  OverflowBox(
+                    minWidth: size.width,
+                    maxWidth: size.width,
+                    alignment: Alignment.topCenter,
+                    child: SizedBox(
+                      width: size.width,
+                      height: sheetHeight,
+                      child: Opacity(
+                        opacity: contentOpacity,
+                        child: IgnorePointer(
+                          ignoring: contentOpacity < 1,
+                          child: child,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Opacity(
+                    opacity: 1 - Curves.easeIn.transform(t),
+                    child: const Icon(
+                      Icons.add,
+                      size: 28,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 

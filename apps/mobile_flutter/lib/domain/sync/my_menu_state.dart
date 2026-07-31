@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter/widgets.dart';
-
 import 'package:mymenu/core/network/network_status_monitor.dart';
 import 'package:mymenu/domain/ai/ai_job.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
@@ -86,6 +85,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
   final Map<String, _PendingCaptureBatchDeletion>
       _pendingCaptureBatchDeletions = <String, _PendingCaptureBatchDeletion>{};
   StreamSubscription<void>? _networkStatusSubscription;
+  Future<void>? _activeCaptureRefresh;
   bool _isSyncingCaptures = false;
   Timer? _captureSyncTimer;
   DateTime? _captureSyncPollingDeadline;

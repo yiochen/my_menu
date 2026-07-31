@@ -10,10 +10,29 @@ extension MyMenuStateSync on MyMenuState {
   }
 
   Future<void> refreshFromServer() async {
-    final AppRepositories? repositories = _repositories;
-    if (repositories == null || _isSyncingCaptures) {
+    final Future<void>? activeRefresh = _activeCaptureRefresh;
+    if (activeRefresh != null) {
+      await activeRefresh;
       return;
     }
+
+    final AppRepositories? repositories = _repositories;
+    if (repositories == null) {
+      return;
+    }
+
+    final Future<void> refresh = _refreshFromServer();
+    _activeCaptureRefresh = refresh;
+    try {
+      await refresh;
+    } finally {
+      if (identical(_activeCaptureRefresh, refresh)) {
+        _activeCaptureRefresh = null;
+      }
+    }
+  }
+
+  Future<void> _refreshFromServer() async {
     if (_hasLocalWorkWaitingForSync()) {
       await _syncCaptures();
       return;
