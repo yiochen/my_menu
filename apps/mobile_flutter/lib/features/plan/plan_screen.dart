@@ -5,17 +5,15 @@ import 'package:mymenu/domain/planning/plan_dates.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/plan/plan_selected_day.dart';
 import 'package:mymenu/features/plan/plan_sheets.dart';
-import 'package:mymenu/features/plan/plan_support_cards.dart';
 import 'package:mymenu/features/plan/plan_week_calendar.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
 class PlanScreen extends StatefulWidget {
-  const PlanScreen({
-    required this.onOpenReview,
-    super.key,
-  });
+  const PlanScreen({required this.onOpenReview, super.key});
 
+  // Review entry now lives on the Menu navigation badge. This callback stays
+  // in the public contract while callers migrate without changing Plan UI.
   final VoidCallback onOpenReview;
 
   @override
@@ -23,167 +21,131 @@ class PlanScreen extends StatefulWidget {
 }
 
 class _PlanScreenState extends State<PlanScreen> {
-  static final DateTime _sampleMonday = DateTime(2026, 7, 20);
-  DateTime _selectedDate = DateTime(2026, 7, 22);
-  int _weekOffset = 0;
+  static final DateTime _sampleToday = DateTime(2026, 7, 22);
+  static final DateTime _pageEpochUtc = DateTime.utc(2021);
+  static const int _pageCount = 7305;
 
-  List<DateTime> get _week {
-    final DateTime first = _sampleMonday.add(Duration(days: _weekOffset * 7));
-    return List<DateTime>.generate(
-      7,
-      (int index) => first.add(Duration(days: index)),
-      growable: false,
-    );
+  late DateTime _selectedDate = _sampleToday;
+  late final PageController _dayController = PageController(
+    initialPage: _pageForDate(_sampleToday),
+  );
+
+  @override
+  void dispose() {
+    _dayController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final MyMenuState state = MyMenuScope.of(context);
-    final String selectedKey = dayKeyForDate(_selectedDate);
     final double horizontal = MyMenuUnits.pageHorizontal(context);
 
     return WarmPage(
       topPadding: 0,
       bottomPadding: 0,
       horizontalPadding: 0,
-      child: ListView(
-        key: const ValueKey<String>('plan_screen'),
-        padding: EdgeInsets.fromLTRB(
-          horizontal,
-          MediaQuery.paddingOf(context).top + MyMenuUnits.pageTop,
-          horizontal,
-          0,
-        ),
+      child: Column(
         children: <Widget>[
-          _PlanHeader(reviewCount: state.reviewItems.length),
-          const SizedBox(height: 16),
-          PlanWeekCalendar(
-            dates: _week,
-            selectedDate: _selectedDate,
-            plan: state.plan,
-            weekOffset: _weekOffset,
-            onPrevious: _previousWeek,
-            onNext: _nextWeek,
-            onSelect: (DateTime date) => setState(() => _selectedDate = date),
-          ),
-          const SizedBox(height: 16),
-          PlanSelectedDay(
-            date: _selectedDate,
-            meals: state.plannedMealsForDay(selectedKey),
-            state: state,
-            onAdd: () => showPlanPickerSheet(
-              context,
-              state,
-              date: _selectedDate,
+          Material(
+            color: MyMenuColors.cream,
+            elevation: 5,
+            shadowColor: const Color(0x1A302318),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                horizontal,
+                MediaQuery.paddingOf(context).top + 12,
+                horizontal,
+                12,
+              ),
+              child: PlanWeekCalendar(
+                selectedDate: _selectedDate,
+                plan: state.plan,
+                onPickDate: _pickDate,
+                onToday: () => _selectDate(_sampleToday),
+                onSelect: _selectDate,
+              ),
             ),
-            onChanged: () => setState(() {}),
           ),
-          const SizedBox(height: 16),
-          if (_weekOffset == 0) ...<Widget>[
-            if (state.dishes.isNotEmpty) ...<Widget>[
-              PlanSuggestionCard(
-                state: state,
-                date: _selectedDate,
-                onAdded: () => setState(() {}),
-              ),
-              const SizedBox(height: 16),
-            ],
-            if (state.reviewItems.isNotEmpty)
-              PlanReviewCard(
-                key: const ValueKey<String>('plan_review_card'),
-                count: state.reviewItems.length,
-                onTap: widget.onOpenReview,
-              ),
-          ] else
-            const _WeekNavigationHint(),
-          const SizedBox(
-            key: ValueKey<String>('plan_bottom_scroll_clearance'),
-            height: MyMenuUnits.pageBottom,
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _previousWeek() {
-    setState(() {
-      _weekOffset -= 1;
-      _selectedDate = _week.first;
-    });
-  }
-
-  void _nextWeek() {
-    setState(() {
-      _weekOffset += 1;
-      _selectedDate = _weekOffset == 1 ? DateTime(2026, 8) : _week.first;
-    });
-  }
-}
-
-class _PlanHeader extends StatelessWidget {
-  const _PlanHeader({required this.reviewCount});
-
-  final int reviewCount;
-
-  @override
-  Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 48),
-      child: Row(
-        children: <Widget>[
           Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  'What are we cooking?',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                Text('Plan', style: Theme.of(context).textTheme.displaySmall),
-              ],
-            ),
-          ),
-          const MyMenuAvatar(),
-          const SizedBox(width: 8),
-          Stack(
-            clipBehavior: Clip.none,
-            children: <Widget>[
-              CircleIconButton(
-                icon: Icons.notifications_none_rounded,
-                semanticLabel: 'Notifications',
-                onPressed: () {},
-              ),
-              if (reviewCount > 0)
-                Positioned(
-                  right: 8,
-                  top: 7,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: MyMenuColors.orange,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
+            child: PageView.builder(
+              key: const ValueKey<String>('plan_screen'),
+              controller: _dayController,
+              onPageChanged: (int page) {
+                final DateTime date = _dateForPage(page);
+                if (!_sameDay(date, _selectedDate)) {
+                  setState(() => _selectedDate = date);
+                }
+              },
+              itemCount: _pageCount,
+              itemBuilder: (BuildContext context, int page) {
+                final DateTime date = _dateForPage(page);
+                final String dayKey = dayKeyForDate(date);
+                return ListView(
+                  key: ValueKey<String>('plan_day_page_$dayKey'),
+                  padding: EdgeInsets.fromLTRB(
+                    horizontal,
+                    16,
+                    horizontal,
+                    MyMenuUnits.pageBottom,
                   ),
-                ),
-            ],
+                  children: <Widget>[
+                    PlanSelectedDay(
+                      date: date,
+                      meals: state.plannedMealsForDay(dayKey),
+                      state: state,
+                      onAdd: () => showPlanPickerSheet(
+                        context,
+                        state,
+                        date: date,
+                      ),
+                      onChanged: () => setState(() {}),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ],
       ),
     );
   }
-}
 
-class _WeekNavigationHint extends StatelessWidget {
-  const _WeekNavigationHint();
+  Future<void> _pickDate() async {
+    final DateTime? date = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2021),
+      lastDate: DateTime(2040, 12, 31),
+      helpText: 'Choose a day to plan',
+    );
+    if (date != null && mounted) {
+      _selectDate(date);
+    }
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return const StatusStrip(
-      icon: Icons.swap_horiz_rounded,
-      text: 'Swipe the calendar or use arrows to move by week.',
+  void _selectDate(DateTime date) {
+    final DateTime normalized = DateTime(date.year, date.month, date.day);
+    setState(() => _selectedDate = normalized);
+    _dayController.animateToPage(
+      _pageForDate(normalized),
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
     );
   }
+
+  static int _pageForDate(DateTime date) =>
+      DateTime.utc(date.year, date.month, date.day)
+          .difference(_pageEpochUtc)
+          .inDays;
+
+  static DateTime _dateForPage(int page) {
+    final DateTime utc = _pageEpochUtc.add(Duration(days: page));
+    return DateTime(utc.year, utc.month, utc.day);
+  }
 }
+
+bool _sameDay(DateTime left, DateTime right) =>
+    left.year == right.year &&
+    left.month == right.month &&
+    left.day == right.day;

@@ -53,8 +53,11 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   MenuCollectionFilter _filter = MenuCollectionFilter.all;
   String? _category;
+  bool _newestFirst = true;
+  bool _hasScrolled = false;
   final Set<String> _selectedDishIds = <String>{};
   final Set<String> _selectedBatchIds = <String>{};
   final Set<String> _removingDishIds = <String>{};
@@ -69,6 +72,12 @@ class _MenuScreenState extends State<MenuScreen> {
   bool get _isSelecting => _selectedCount > 0;
 
   void _updateSelection(VoidCallback update) => setState(update);
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_handleScroll);
+  }
 
   @override
   void didUpdateWidget(covariant MenuScreen oldWidget) {
@@ -87,7 +96,18 @@ class _MenuScreenState extends State<MenuScreen> {
       timer.cancel();
     }
     _searchController.dispose();
+    _scrollController
+      ..removeListener(_handleScroll)
+      ..dispose();
     super.dispose();
+  }
+
+  void _handleScroll() {
+    final bool hasScrolled =
+        _scrollController.hasClients && _scrollController.position.pixels > 0;
+    if (hasScrolled != _hasScrolled) {
+      setState(() => _hasScrolled = hasScrolled);
+    }
   }
 
   @override
@@ -117,16 +137,13 @@ class _MenuScreenState extends State<MenuScreen> {
       horizontalPadding: 0,
       child: Stack(
         children: <Widget>[
-          RefreshIndicator(
-            onRefresh: state.refreshFromServer,
-            child: _scrollView(
-              context,
-              state: state,
-              dishes: dishes,
-              processingBatches: processingBatches,
-              hasMenuContent: hasMenuContent,
-              horizontal: horizontal,
-            ),
+          _scrollView(
+            context,
+            state: state,
+            dishes: dishes,
+            processingBatches: processingBatches,
+            hasMenuContent: hasMenuContent,
+            horizontal: horizontal,
           ),
           if (_isSelecting)
             Positioned(
@@ -153,65 +170,92 @@ class _MenuScreenState extends State<MenuScreen> {
     required bool hasMenuContent,
     required double horizontal,
   }) {
-    return CustomScrollView(
-      key: const ValueKey<String>('menu_screen'),
-      physics: const AlwaysScrollableScrollPhysics(),
-      slivers: <Widget>[
-        SliverAppBar(
-          key: const ValueKey<String>('menu_sticky_app_bar'),
-          pinned: true,
-          automaticallyImplyLeading: false,
-          toolbarHeight: 62,
-          titleSpacing: horizontal,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          backgroundColor: MyMenuColors.cream,
-          surfaceTintColor: Colors.transparent,
-          title: MenuStickyHeader(
-            controller: _searchController,
-            query: widget.query,
-            onQueryChanged: widget.onQueryChanged,
-            onClearQuery: _clearSearch,
-            selectedCount: _selectedCount,
-            allSelected: (dishes.isNotEmpty || processingBatches.isNotEmpty) &&
-                dishes.every(
-                  (Dish dish) => _selectedDishIds.contains(dish.id),
-                ) &&
-                processingBatches.every(
-                  (CaptureBatch batch) => _selectedBatchIds.contains(batch.id),
-                ),
-            onCloseSelection: _clearSelection,
-            onSelectAll: () => _toggleSelectAll(dishes, processingBatches),
+    return Column(
+      children: <Widget>[
+        AnimatedContainer(
+          key: const ValueKey<String>('menu_fixed_chrome'),
+          duration: const Duration(milliseconds: 160),
+          padding: EdgeInsets.fromLTRB(
+            horizontal,
+            MediaQuery.paddingOf(context).top + 8,
+            horizontal,
+            10,
+          ),
+          decoration: BoxDecoration(
+            color: MyMenuColors.cream,
+            boxShadow: _hasScrolled
+                ? const <BoxShadow>[
+                    BoxShadow(
+                      color: Color(0x17302318),
+                      blurRadius: 24,
+                      offset: Offset(0, 10),
+                    ),
+                  ]
+                : const <BoxShadow>[],
+          ),
+          child: Column(
+            children: <Widget>[
+              MenuStickyHeader(
+                controller: _searchController,
+                query: widget.query,
+                onQueryChanged: widget.onQueryChanged,
+                onClearQuery: _clearSearch,
+                selectedCount: _selectedCount,
+                allSelected:
+                    (dishes.isNotEmpty || processingBatches.isNotEmpty) &&
+                        dishes.every(
+                          (Dish dish) => _selectedDishIds.contains(dish.id),
+                        ) &&
+                        processingBatches.every(
+                          (CaptureBatch batch) =>
+                              _selectedBatchIds.contains(batch.id),
+                        ),
+                onCloseSelection: _clearSelection,
+                onSelectAll: () => _toggleSelectAll(dishes, processingBatches),
+              ),
+              if (state.dishes.isNotEmpty && !_isSelecting) ...<Widget>[
+                const SizedBox(height: 7),
+                _filters(),
+              ],
+            ],
           ),
         ),
-        SliverPadding(
-          padding: EdgeInsets.symmetric(horizontal: horizontal),
-          sliver: SliverMainAxisGroup(
-            slivers: <Widget>[
-              const SliverToBoxAdapter(child: SizedBox(height: 12)),
-              if (state.dishes.isNotEmpty) ...<Widget>[
-                SliverToBoxAdapter(child: _filters()),
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-              ],
-              if (!hasMenuContent)
-                const SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: MenuEmpty(),
-                )
-              else if (dishes.isEmpty && processingBatches.isEmpty)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: MenuSearchEmpty(onClear: _clearSearch),
-                )
-              else
-                ..._menuGridSlivers(
-                  context,
-                  state: state,
-                  dishes: dishes,
-                  processingBatches: processingBatches,
-                  totalDishCount: state.dishes.length,
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: state.refreshFromServer,
+            child: CustomScrollView(
+              key: const ValueKey<String>('menu_screen'),
+              controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: <Widget>[
+                SliverPadding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontal),
+                  sliver: SliverMainAxisGroup(
+                    slivers: <Widget>[
+                      const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                      if (!hasMenuContent)
+                        const SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: MenuEmpty(),
+                        )
+                      else if (dishes.isEmpty && processingBatches.isEmpty)
+                        SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: MenuSearchEmpty(onClear: _clearSearch),
+                        )
+                      else
+                        ..._menuGridSlivers(
+                          context,
+                          state: state,
+                          dishes: dishes,
+                          processingBatches: processingBatches,
+                          totalDishCount: state.dishes.length,
+                        ),
+                    ],
+                  ),
                 ),
-            ],
+              ],
+            ),
           ),
         ),
       ],

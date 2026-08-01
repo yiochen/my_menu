@@ -17,6 +17,7 @@
       "menu-search-empty.iphone-14",
       "dish-detail.iphone-14",
       "dish-memory.iphone-14",
+      "dish-recipe.iphone-14",
       "cook-again.iphone-14",
       "capture.iphone-14",
       "menu-processing.iphone-14",
@@ -54,19 +55,19 @@
     {
       "id": "stable-two-tab-shell",
       "kind": "screen-family",
-      "description": "Plan and Menu keep the stable floating Plan–capture–Menu shell; Menu uses one compact sticky search utility bar that is replaced in place during transient selection, with no permanent Capture or Review tab and no competing empty-state capture button.",
+      "description": "Plan and Menu keep the stable floating Plan–capture–Menu shell; Menu carries a compact circular contextual count badge for captures needing attention, with no permanent Capture or Review tab and no competing empty-state capture button.",
       "screens": ["plan.iphone-14", "plan-next-week.iphone-14", "menu.iphone-14", "menu-scrolled.iphone-14", "menu-empty.iphone-14", "menu-search-empty.iphone-14"]
     },
     {
       "id": "single-day-multi-dish-planning",
       "kind": "flow",
-      "description": "Plan uses a selected-day view where one date can contain multiple dishes, one clear add action targets that date, a visually separate recommendation is explicitly not planned, and an empty non-today date has the same add path.",
+      "description": "Plan uses a horizontally pageable selected-day card where one date can contain multiple dishes, one clear add action targets that date, and an empty non-today date has the same add path without suggestion or review support cards.",
       "screens": ["plan.iphone-14", "plan-add.iphone-14", "plan-next-week.iphone-14"]
     },
     {
       "id": "calendar-date-reachability",
       "kind": "flow",
-      "description": "The calendar shows all seven days, visually distinguishes today from the selected date, exposes previous/next week controls, and demonstrates reaching a date outside the current week.",
+      "description": "The fixed calendar shows seven days per horizontal page, visually distinguishes today from the selected date, uses a clickable month/year caret to open date selection, provides one Today jump instead of week arrows, and demonstrates reaching a date outside the current week.",
       "screens": ["plan.iphone-14", "plan-next-week.iphone-14"]
     },
     {
@@ -78,7 +79,7 @@
     {
       "id": "automatic-capture-happy-path",
       "kind": "flow",
-      "description": "Take Photo and Import Photos capture without a destination decision; starting upload closes Capture automatically, returns to Menu with one temporary organizing dish card for the batch, and preserves automatic existing-dish and new-dish outcomes.",
+      "description": "Take Photo and Import Photos capture without a destination decision; starting upload closes Capture automatically, returns to Menu with one temporary organizing dish card for the batch, and preserves automatic existing-dish and new-dish outcomes, with the created-dish result presented as a full screen rather than a popup.",
       "screens": ["capture.iphone-14", "menu-processing.iphone-14", "capture-matched.iphone-14", "capture-created.iphone-14"]
     },
     {
@@ -114,8 +115,8 @@
     {
       "id": "contextual-ai-review-and-search-recovery",
       "kind": "flow",
-      "description": "Review remains contextual, uses unambiguous progress wording, supports existing-dish and new-dish outcomes, and demonstrates an empty alternate-dish search with clear query correction.",
-      "screens": ["plan.iphone-14", "review.iphone-14", "review-search-empty.iphone-14"]
+      "description": "Review remains contextual behind the Menu navigation count pill, uses unambiguous progress wording, supports existing-dish and new-dish outcomes, and demonstrates an empty alternate-dish search with clear query correction.",
+      "screens": ["menu.iphone-14", "review.iphone-14", "review-search-empty.iphone-14"]
     },
     {
       "id": "contextual-unsorted-photos",
@@ -150,19 +151,19 @@
     {
       "id": "trustworthy-cooking-event-history",
       "kind": "flow",
-      "description": "Cook Again explains whether the user is cooking now or planning for later; made count represents cooking occasions, source-photo count is distinct, and multiple photos can appear inside one dated cooking occasion.",
-      "screens": ["dish-detail.iphone-14", "cook-again.iphone-14", "dish-memory.iphone-14"]
+      "description": "Cook Again explains whether the user is cooking now or planning for later; the primary leftmost Journal combines photo occasions and standalone notes into one newest-first bulletin board where photos are visually primary, with icon-only add-photo and add-note actions. Journal and Recipe are adjacent horizontal pages, and their white selector slides continuously with tab taps or page swipes.",
+      "screens": ["dish-detail.iphone-14", "cook-again.iphone-14", "dish-memory.iphone-14", "dish-recipe.iphone-14"]
     },
     {
       "id": "memory-forward-discovery",
       "kind": "screen-family",
-      "description": "The single filterable Menu grid and the first Dish Detail viewport surface cooking-history, source, favorite, or latest-note cues so the product reads as a living cooking memory rather than a generic recipe library.",
+      "description": "The single filterable Menu grid and first Dish Detail viewport read as a living cooking memory: new dishes have a styled top-left white New label that briefly wobbles as the card appears, every card keeps an always-visible top-right heart that changes from white to red when favorited, and Dish Detail opens on the photo-forward Journal.",
       "screens": ["menu.iphone-14", "dish-detail.iphone-14", "dish-memory.iphone-14"]
     },
     {
       "id": "clear-menu-count-and-controls",
       "kind": "screen-family",
-      "description": "Menu labels the normal collection as 24 and the two-dish deletion result as 22 beside the All dishes heading rather than in persistent header chrome, uses All, Favorites, Recently added, and Filters to control one unified dish grid without duplicate sections, and covers a search-empty state with concise query-clearing guidance.",
+      "description": "Menu labels the normal collection as 24 and the two-dish deletion result as 22 beside the All dishes heading, keeps an icon-only filter trigger fixed left of a separator and compact horizontally scrolling All, Favorites, and Recently added controls, uses icon-only newest/oldest sorting, and covers a search-empty state.",
       "screens": ["menu.iphone-14", "menu-dishes-deleted.iphone-14", "menu-search-empty.iphone-14"]
     },
     {
@@ -174,7 +175,7 @@
     {
       "id": "compact-sticky-menu-header",
       "kind": "screen-family",
-      "description": "Every Menu collection state removes the tagline, oversized My Menu title, decorative avatar, header count badge, and persistent Select label in favor of one compact sticky search utility bar; filters and dish counts stay with collection content, and selection replaces the bar in the same position without shifting the grid's interaction model.",
+      "description": "Every Menu collection state removes the tagline, oversized My Menu title, decorative avatar, header count badge, and persistent Select label in favor of compact fixed search-and-filter chrome; its shadow appears only when scroll position is greater than zero, filters never leave the fixed region, and selection replaces search in place.",
       "screens": ["menu.iphone-14", "menu-scrolled.iphone-14", "menu-processing.iphone-14", "menu-delete-select.iphone-14", "menu-delete-confirm.iphone-14", "menu-dishes-deleted.iphone-14", "menu-empty.iphone-14", "menu-search-empty.iphone-14"]
     },
     {

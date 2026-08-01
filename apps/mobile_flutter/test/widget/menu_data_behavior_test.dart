@@ -176,9 +176,8 @@ void main() {
         tester.element(find.byType(DishHistoryContent));
     final MaterialLocalizations localizations =
         MaterialLocalizations.of(historyContext);
-    expect(find.text('2 times made'), findsOneWidget);
-    expect(find.text('3 source photos across 2 cooking occasions'),
-        findsOneWidget);
+    expect(find.byKey(const ValueKey('journal_add_photo')), findsOneWidget);
+    expect(find.byKey(const ValueKey('journal_add_note')), findsOneWidget);
     expect(
       find.text(localizations.formatMediumDate(DateTime.utc(2026, 7, 27, 12))),
       findsOneWidget,
@@ -187,8 +186,8 @@ void main() {
       find.text(localizations.formatMediumDate(DateTime.utc(2026, 7, 20, 18))),
       findsOneWidget,
     );
-    expect(find.text('Cook #2'), findsOneWidget);
-    expect(find.text('Cook #1'), findsOneWidget);
+    expect(find.textContaining('times made'), findsNothing);
+    expect(find.textContaining('source photos across'), findsNothing);
     expect(find.text('Use less salt next time.'), findsOneWidget);
     expect(find.text('July 18, 2026'), findsNothing);
   });
@@ -198,6 +197,7 @@ void main() {
   ) async {
     final Dish idea = seededDishes.first.copyWith(
       madeCount: 0,
+      notes: const <DishNote>[],
       sourcePhotos: const <SourcePhoto>[],
     );
 
@@ -208,7 +208,7 @@ void main() {
       ),
     );
 
-    expect(find.text('No cooking history yet'), findsOneWidget);
+    expect(find.text('No journal entries yet'), findsOneWidget);
     expect(find.textContaining('Ideas can live in your Menu'), findsOneWidget);
   });
 

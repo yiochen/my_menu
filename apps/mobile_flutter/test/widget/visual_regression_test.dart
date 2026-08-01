@@ -253,10 +253,23 @@ void main() {
         );
         expect(tester.getTopLeft(detailScroll), Offset.zero);
         expect(tester.getBottomRight(detailScroll), const Offset(390, 844));
-        final ListView detailList = tester.widget(detailScroll);
-        final EdgeInsets detailPadding =
-            detailList.padding!.resolve(TextDirection.ltr);
-        expect(detailPadding, const EdgeInsets.fromLTRB(18, 61, 18, 62));
+        expect(tester.widget(detailScroll), isA<NestedScrollView>());
+        final SliverPadding headerPadding = tester.widget<SliverPadding>(
+          find
+              .descendant(
+                of: detailScroll,
+                matching: find.byType(SliverPadding),
+              )
+              .first,
+        );
+        expect(
+          headerPadding.padding.resolve(TextDirection.ltr),
+          const EdgeInsets.fromLTRB(18, 61, 18, 0),
+        );
+        expect(
+          find.byKey(const ValueKey<String>('dish_detail_page_view')),
+          findsOneWidget,
+        );
         await _expectFullAppGolden(tester, 'ui_dish_detail');
       });
     });
@@ -294,20 +307,11 @@ void main() {
     testWidgets('review sheet', (WidgetTester tester) async {
       await runWithMockNetworkImages(() async {
         await _pumpGoldenApp(tester, appState);
-        final Finder reviewCard = find.byKey(
-          const ValueKey<String>('plan_review_card'),
+        final Finder reviewBadge = find.byKey(
+          const ValueKey<String>('menu_review_badge'),
         );
-        await tester.scrollUntilVisible(
-          reviewCard,
-          180,
-          scrollable: find.byType(Scrollable).first,
-        );
-        await tester.drag(
-          find.byKey(const ValueKey<String>('plan_screen')),
-          const Offset(0, -140),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(reviewCard);
+        expect(reviewBadge, findsOneWidget);
+        await tester.tap(reviewBadge);
         await tester.pumpAndSettle();
 
         expect(find.text('Where should this go?'), findsOneWidget);
@@ -355,7 +359,10 @@ MyMenuState _buildGoldenState() {
   // Keep every variable fixture independent of the wall clock. If a future
   // golden exposes a date, it should continue to render July 22, 2026.
   return MyMenuState.forTesting(
-    dishes: seededDishes,
+    dishes: <Dish>[
+      seededDishes.first.copyWith(createdAt: DateTime(2026, 7, 22)),
+      ...seededDishes.skip(1),
+    ],
     plan: buildSeededPlan(_goldenPlanDate),
     reviewItems: seededReviewItems,
   );

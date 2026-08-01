@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 
@@ -109,60 +111,10 @@ class _MenuCardBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Expanded(
-          child: Stack(
-            fit: StackFit.expand,
-            children: <Widget>[
-              DishArtwork(dish: dish),
-              if (selectionMode)
-                Positioned.fill(
-                  child: ColoredBox(
-                    color: selected
-                        ? MyMenuColors.orangeAction.withValues(alpha: 0.12)
-                        : Colors.transparent,
-                  ),
-                ),
-              if (selectionMode)
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: _SelectionIndicator(selected: selected),
-                ),
-              if (dish.isFavorite)
-                Positioned(
-                  left: 10,
-                  bottom: 10,
-                  child: GestureDetector(
-                    onTap: selectionMode
-                        ? null
-                        : () =>
-                            MyMenuScope.read(context).toggleFavorite(dish.id),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xEFFFFFFF),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Icon(Icons.favorite, size: 10),
-                          SizedBox(width: 3),
-                          Text(
-                            'Favorite',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-            ],
+          child: _MenuCardArtwork(
+            dish: dish,
+            selected: selected,
+            selectionMode: selectionMode,
           ),
         ),
         Padding(
@@ -192,6 +144,181 @@ class _MenuCardBody extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _MenuCardArtwork extends StatelessWidget {
+  const _MenuCardArtwork({
+    required this.dish,
+    required this.selected,
+    required this.selectionMode,
+  });
+
+  final Dish dish;
+  final bool selected;
+  final bool selectionMode;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: <Widget>[
+        DishArtwork(dish: dish),
+        if (selectionMode)
+          Positioned.fill(
+            child: ColoredBox(
+              color: selected
+                  ? MyMenuColors.orangeAction.withValues(alpha: 0.12)
+                  : Colors.transparent,
+            ),
+          ),
+        if (selectionMode)
+          Positioned(
+            top: 10,
+            left: 10,
+            child: _SelectionIndicator(selected: selected),
+          ),
+        if (!selectionMode && dish.createdAt != null)
+          Positioned(
+            top: 5,
+            left: 7,
+            child: _NewDishLabel(dishId: dish.id),
+          ),
+        if (!selectionMode)
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Semantics(
+              button: true,
+              label: dish.isFavorite
+                  ? 'Remove from favorites'
+                  : 'Add to favorites',
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => MyMenuScope.read(context).toggleFavorite(dish.id),
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: dish.isFavorite
+                        ? const Color(0xF2FFFFFF)
+                        : const Color(0x57302018),
+                  ),
+                  child: Icon(
+                    dish.isFavorite
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    size: 19,
+                    color: dish.isFavorite
+                        ? const Color(0xFFEF4D4D)
+                        : Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _NewDishLabel extends StatefulWidget {
+  const _NewDishLabel({required this.dishId});
+
+  final String dishId;
+
+  @override
+  State<_NewDishLabel> createState() => _NewDishLabelState();
+}
+
+class _NewDishLabelState extends State<_NewDishLabel>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    duration: const Duration(milliseconds: 900),
+    vsync: this,
+  );
+  late final Animation<double> _rotation = TweenSequence<double>(
+    <TweenSequenceItem<double>>[
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 0, end: -0.12),
+        weight: 18,
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: -0.12, end: 0.09),
+        weight: 25,
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 0.09, end: -0.06),
+        weight: 22,
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: -0.06, end: 0.035),
+        weight: 20,
+      ),
+      TweenSequenceItem<double>(
+        tween: Tween<double>(begin: 0.035, end: 0),
+        weight: 15,
+      ),
+    ],
+  ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller.value = 1;
+    } else if (_controller.value == 0 && !_controller.isAnimating) {
+      _controller.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'New dish',
+      child: ExcludeSemantics(
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (BuildContext context, Widget? child) {
+            final double lift = math.sin(_controller.value * math.pi * 5) *
+                1.2 *
+                (1 - _controller.value);
+            return Transform.translate(
+              offset: Offset(0, lift),
+              child: Transform.rotate(
+                  angle: -0.14 + _rotation.value, child: child),
+            );
+          },
+          child: Text(
+            key: ValueKey<String>('menu_new_label_${widget.dishId}'),
+            'New',
+            style: const TextStyle(
+              color: Colors.white,
+              fontFamily: '.SF Pro Rounded',
+              fontSize: 20,
+              fontStyle: FontStyle.italic,
+              fontWeight: FontWeight.w900,
+              height: 1,
+              letterSpacing: -1.2,
+              shadows: <Shadow>[
+                Shadow(
+                  color: Color(0x75302018),
+                  blurRadius: 8,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

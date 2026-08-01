@@ -2,36 +2,63 @@ part of 'menu_screen.dart';
 
 extension _MenuScreenSections on _MenuScreenState {
   Widget _filters() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: <Widget>[
-          WarmPill(
-            label: 'All',
-            selected: _filter == MenuCollectionFilter.all,
-            onPressed: () => _setFilter(MenuCollectionFilter.all),
-          ),
-          const SizedBox(width: 8),
-          WarmPill(
-            label: 'Favorites',
-            selected: _filter == MenuCollectionFilter.favorites,
-            onPressed: () => _setFilter(MenuCollectionFilter.favorites),
-          ),
-          const SizedBox(width: 8),
-          WarmPill(
-            label: 'Recently added',
-            selected: _filter == MenuCollectionFilter.recent,
-            onPressed: () => _setFilter(MenuCollectionFilter.recent),
-          ),
-          const SizedBox(width: 8),
-          WarmPill(
-            label: _category ?? 'Filters',
-            icon: Icons.tune,
-            orange: _category != null,
+    return Row(
+      children: <Widget>[
+        SizedBox(
+          width: 32,
+          height: 32,
+          child: IconButton(
+            key: const ValueKey<String>('menu_filter_button'),
+            tooltip: _category ?? 'Filters',
+            padding: EdgeInsets.zero,
+            style: IconButton.styleFrom(
+              backgroundColor: _category == null
+                  ? MyMenuColors.oat
+                  : MyMenuColors.orangeSoft,
+              foregroundColor: _category == null
+                  ? MyMenuColors.ink
+                  : MyMenuColors.orangeDark,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(11),
+              ),
+            ),
             onPressed: _showCategoryFilters,
+            icon: const Icon(Icons.tune_rounded, size: 17),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 8),
+        Container(width: 1, height: 22, color: const Color(0x1F362D25)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: <Widget>[
+                WarmPill(
+                  label: 'All',
+                  compact: true,
+                  selected: _filter == MenuCollectionFilter.all,
+                  onPressed: () => _setFilter(MenuCollectionFilter.all),
+                ),
+                const SizedBox(width: 6),
+                WarmPill(
+                  label: 'Favorites',
+                  compact: true,
+                  selected: _filter == MenuCollectionFilter.favorites,
+                  onPressed: () => _setFilter(MenuCollectionFilter.favorites),
+                ),
+                const SizedBox(width: 6),
+                WarmPill(
+                  label: 'Recently added',
+                  compact: true,
+                  selected: _filter == MenuCollectionFilter.recent,
+                  onPressed: () => _setFilter(MenuCollectionFilter.recent),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -76,13 +103,27 @@ extension _MenuScreenSections on _MenuScreenState {
           ),
         ),
         const SizedBox(width: 8),
-        const Icon(
-          Icons.arrow_downward_rounded,
-          size: 14,
-          color: MyMenuColors.muted,
+        IconButton(
+          key: const ValueKey<String>('menu_sort_button'),
+          tooltip: _newestFirst ? 'Newest first' : 'Oldest first',
+          onPressed: () => _updateSelection(() => _newestFirst = !_newestFirst),
+          style: IconButton.styleFrom(
+            backgroundColor: MyMenuColors.oat,
+            foregroundColor: MyMenuColors.muted,
+            fixedSize: const Size(32, 32),
+            minimumSize: const Size(32, 32),
+            padding: EdgeInsets.zero,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(11),
+            ),
+          ),
+          icon: Icon(
+            _newestFirst
+                ? Icons.arrow_downward_rounded
+                : Icons.arrow_upward_rounded,
+            size: 17,
+          ),
         ),
-        const SizedBox(width: 4),
-        Text('Newest first', style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }
@@ -94,7 +135,7 @@ extension _MenuScreenSections on _MenuScreenState {
     ];
     final List<Dish> newestFirst = dishes.toList(growable: false)
       ..sort(_compareNewestDish);
-    dishes = newestFirst;
+    dishes = _newestFirst ? newestFirst : newestFirst.reversed;
     if (_filter == MenuCollectionFilter.favorites) {
       dishes = dishes.where((Dish dish) => dish.isFavorite);
     } else if (_filter == MenuCollectionFilter.recent) {
