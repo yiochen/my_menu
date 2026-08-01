@@ -70,6 +70,7 @@ class _HomeShellState extends State<HomeShell> {
                 if (!_menuSelectionActive)
                   _FloatingBottomShell(
                     selectedIndex: _selectedIndex,
+                    reviewCount: state.reviewItems.length,
                     onSelect: (int value) {
                       setState(() {
                         _selectedIndex = value;
@@ -83,6 +84,7 @@ class _HomeShellState extends State<HomeShell> {
                       state,
                       _captureMediaService,
                     ),
+                    onOpenReview: () => showReviewSheet(context, state),
                   ),
               ],
             );
@@ -96,13 +98,17 @@ class _HomeShellState extends State<HomeShell> {
 class _FloatingBottomShell extends StatelessWidget {
   const _FloatingBottomShell({
     required this.selectedIndex,
+    required this.reviewCount,
     required this.onSelect,
     required this.onCapture,
+    required this.onOpenReview,
   });
 
   final int selectedIndex;
+  final int reviewCount;
   final ValueChanged<int> onSelect;
   final VoidCallback onCapture;
+  final VoidCallback onOpenReview;
 
   @override
   Widget build(BuildContext context) {
@@ -124,7 +130,9 @@ class _FloatingBottomShell extends StatelessWidget {
                 height: MyMenuUnits.bottomBarHeight,
                 child: _BottomBar(
                   selectedIndex: selectedIndex,
+                  reviewCount: reviewCount,
                   onSelect: onSelect,
+                  onOpenReview: onOpenReview,
                 ),
               ),
               Positioned(
@@ -146,11 +154,15 @@ class _FloatingBottomShell extends StatelessWidget {
 class _BottomBar extends StatelessWidget {
   const _BottomBar({
     required this.selectedIndex,
+    required this.reviewCount,
     required this.onSelect,
+    required this.onOpenReview,
   });
 
   final int selectedIndex;
+  final int reviewCount;
   final ValueChanged<int> onSelect;
+  final VoidCallback onOpenReview;
 
   @override
   Widget build(BuildContext context) {
@@ -186,6 +198,8 @@ class _BottomBar extends StatelessWidget {
                     label: 'Menu',
                     icon: Icons.menu_book_outlined,
                     selected: selectedIndex == 1,
+                    badgeCount: reviewCount,
+                    onBadgeTap: onOpenReview,
                     onTap: () => onSelect(1),
                   ),
                 ),
@@ -280,38 +294,86 @@ class _BottomDestination extends StatelessWidget {
     required this.icon,
     required this.selected,
     required this.onTap,
+    this.badgeCount = 0,
+    this.onBadgeTap,
   });
 
   final String label;
   final IconData icon;
   final bool selected;
   final VoidCallback onTap;
+  final int badgeCount;
+  final VoidCallback? onBadgeTap;
 
   @override
   Widget build(BuildContext context) {
     final Color color = selected ? MyMenuColors.orangeDark : MyMenuColors.muted;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(27),
-      child: Semantics(
-        selected: selected,
-        button: true,
-        label: label,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Icon(icon, size: 22, color: color),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: color,
-                    fontWeight: FontWeight.w800,
+    return Stack(
+      clipBehavior: Clip.none,
+      children: <Widget>[
+        Positioned.fill(
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(27),
+            child: Semantics(
+              selected: selected,
+              button: true,
+              label: label,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Icon(icon, size: 22, color: color),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: color,
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
-      ),
+        if (badgeCount > 0)
+          Positioned(
+            top: 2,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Transform.translate(
+                offset: const Offset(13, 0),
+                child: Semantics(
+                  button: true,
+                  label: '$badgeCount captures need review',
+                  child: GestureDetector(
+                    onTap: onBadgeTap,
+                    child: Container(
+                      key: const ValueKey<String>('menu_review_badge'),
+                      width: 20,
+                      height: 20,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: MyMenuColors.orangeAction,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: Text(
+                        '$badgeCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

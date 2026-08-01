@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:mymenu/domain/dishes/dish.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_screen.dart';
 import 'package:mymenu/features/dish_detail/dish_history_content.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
@@ -10,27 +9,26 @@ import 'package:mymenu/shared/widgets/warm_components.dart';
 class DishDetailContent extends StatelessWidget {
   const DishDetailContent({
     required this.dish,
-    required this.state,
     required this.tab,
-    required this.onChanged,
+    required this.onAddPhoto,
+    required this.onAddNote,
     super.key,
   });
 
   final Dish dish;
-  final MyMenuState state;
   final DishDetailTab tab;
-  final VoidCallback onChanged;
+  final VoidCallback onAddPhoto;
+  final VoidCallback onAddNote;
 
   @override
   Widget build(BuildContext context) {
     return switch (tab) {
-      DishDetailTab.recipe => _RecipeContent(dish: dish),
-      DishDetailTab.notes => _NotesContent(
+      DishDetailTab.journal => DishHistoryContent(
           dish: dish,
-          state: state,
-          onChanged: onChanged,
+          onAddPhoto: onAddPhoto,
+          onAddNote: onAddNote,
         ),
-      DishDetailTab.history => DishHistoryContent(dish: dish),
+      DishDetailTab.recipe => _RecipeContent(dish: dish),
     };
   }
 }
@@ -181,95 +179,6 @@ class _IngredientRow extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _NotesContent extends StatelessWidget {
-  const _NotesContent({
-    required this.dish,
-    required this.state,
-    required this.onChanged,
-  });
-
-  final Dish dish;
-  final MyMenuState state;
-  final VoidCallback onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _SectionHeadingWithButton(
-          title: 'Notes',
-          label: 'Add Note',
-          onPressed: () async {
-            final String? note = await showAddNoteSheet(context);
-            if (note != null && context.mounted) {
-              state.addDishNote(dish.id, note);
-              onChanged();
-            }
-          },
-        ),
-        const SizedBox(height: 10),
-        for (int index = 0; index < dish.notes.length; index += 1) ...<Widget>[
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(15),
-            decoration: BoxDecoration(
-              color: MyMenuColors.note,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0x148F6B10)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  index == 0 ? 'JUL 18' : 'MAY 9',
-                  style: const TextStyle(
-                    color: Color(0xFF8B7547),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  dish.notes[index].body,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: MyMenuColors.ink,
-                      ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-        ],
-      ],
-    );
-  }
-}
-
-class _SectionHeadingWithButton extends StatelessWidget {
-  const _SectionHeadingWithButton({
-    required this.title,
-    required this.label,
-    required this.onPressed,
-  });
-
-  final String title;
-  final String label;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: Text(title, style: Theme.of(context).textTheme.headlineSmall),
-        ),
-        TextButton(onPressed: onPressed, child: Text(label)),
-      ],
     );
   }
 }

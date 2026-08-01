@@ -11,7 +11,7 @@ void main() {
       IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
 
-  testWidgets('renders detail, notes, and cooking history', (
+  testWidgets('renders detail journal and recipe', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -34,19 +34,21 @@ void main() {
     await _pumpUntilFound(tester, find.text('Cook again'));
 
     expect(find.text('Improve cover'), findsOneWidget);
-    expect(find.text('Recipe'), findsOneWidget);
-    expect(find.text('Ingredients'), findsOneWidget);
+    expect(find.text('Journal'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    await tester.tap(find.text('Notes · 3'));
+    await tester.drag(find.byType(ListView).first, const Offset(0, -520));
     await tester.pumpAndSettle();
-    expect(find.text('Add Note'), findsOneWidget);
+    expect(find.byKey(const ValueKey('journal_add_note')), findsOneWidget);
+    expect(find.text('July 18, 2026'), findsAtLeastNWidgets(1));
+    expect(find.textContaining('crispy edges'), findsAtLeastNWidgets(1));
 
-    await tester.tap(find.text('History · 8'));
+    await tester.drag(
+      find.byKey(const ValueKey<String>('dish_detail_page_view')),
+      const Offset(-320, 0),
+    );
     await tester.pumpAndSettle();
-    expect(find.text('8 times made'), findsOneWidget);
-    expect(find.textContaining('12 source photos'), findsOneWidget);
-    expect(find.text('July 18, 2026'), findsOneWidget);
+    expect(find.text('Ingredients'), findsOneWidget);
 
     await binding.convertFlutterSurfaceToImage();
     await tester.pumpAndSettle();

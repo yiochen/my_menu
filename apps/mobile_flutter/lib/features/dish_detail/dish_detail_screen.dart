@@ -3,13 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/features/capture/capture_media_service.dart';
+import 'package:mymenu/features/capture/capture_sheet.dart';
 import 'package:mymenu/features/dish_detail/cook_again_sheet.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_content.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_hero.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
-enum DishDetailTab { recipe, notes, history }
+enum DishDetailTab { journal, recipe }
 
 class DishDetailScreen extends StatefulWidget {
   const DishDetailScreen({required this.dishId, super.key});
@@ -20,8 +22,18 @@ class DishDetailScreen extends StatefulWidget {
   State<DishDetailScreen> createState() => _DishDetailScreenState();
 }
 
-class _DishDetailScreenState extends State<DishDetailScreen> {
-  DishDetailTab _tab = DishDetailTab.recipe;
+class _DishDetailScreenState extends State<DishDetailScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController = TabController(
+    length: DishDetailTab.values.length,
+    vsync: this,
+  );
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,44 +48,100 @@ class _DishDetailScreenState extends State<DishDetailScreen> {
         topPadding: 0,
         bottomPadding: 0,
         horizontalPadding: 0,
-        child: ListView(
+        child: NestedScrollView(
           key: const ValueKey<String>('dish_detail_scroll_view'),
-          padding: EdgeInsets.fromLTRB(
-            horizontal,
-            mediaQuery.padding.top + 14,
-            horizontal,
-            mediaQuery.padding.bottom + 28,
+          headerSliverBuilder: (BuildContext context, bool innerScrolled) {
+            return <Widget>[
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(
+                  horizontal,
+                  mediaQuery.padding.top + 14,
+                  horizontal,
+                  0,
+                ),
+                sliver: SliverList.list(
+                  children: <Widget>[
+                    DishDetailHero(dish: dish),
+                    const SizedBox(height: 16),
+                    PrimaryPillButton(
+                      key: const ValueKey<String>('cook_again_button'),
+                      label: 'Cook again',
+                      icon: Icons.play_arrow_rounded,
+                      onPressed: () => showCookAgainSheet(
+                        context,
+                        state,
+                        dish,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _Metrics(dish: dish),
+                    const SizedBox(height: 12),
+                    _DetailTabs(controller: _tabController),
+                  ],
+                ),
+              ),
+            ];
+          },
+          body: TabBarView(
+            key: const ValueKey<String>('dish_detail_page_view'),
+            controller: _tabController,
+            children: DishDetailTab.values.map((DishDetailTab tab) {
+              return _DetailPage(
+                key: ValueKey<String>('dish_detail_${tab.name}_page'),
+                pageName: tab.name,
+                horizontal: horizontal,
+                bottom: mediaQuery.padding.bottom + 28,
+                child: DishDetailContent(
+                  dish: dish,
+                  tab: tab,
+                  onAddPhoto: () => showCaptureSheet(
+                    context,
+                    state,
+                    ImagePickerCaptureMediaService(),
+                  ),
+                  onAddNote: () => _addNote(context, state, dish),
+                ),
+              );
+            }).toList(growable: false),
           ),
-          children: <Widget>[
-            DishDetailHero(dish: dish),
-            const SizedBox(height: 16),
-            PrimaryPillButton(
-              key: const ValueKey<String>('cook_again_button'),
-              label: 'Cook again',
-              icon: Icons.play_arrow_rounded,
-              onPressed: () => showCookAgainSheet(context, state, dish),
-            ),
-            const SizedBox(height: 12),
-            _Metrics(dish: dish),
-            const SizedBox(height: 12),
-            _LatestNote(dish: dish),
-            const SizedBox(height: 14),
-            _DetailTabs(
-              selected: _tab,
-              notesCount: dish.notes.length,
-              historyCount: dish.madeCount,
-              onSelect: (DishDetailTab tab) => setState(() => _tab = tab),
-            ),
-            const SizedBox(height: 16),
-            DishDetailContent(
-              dish: dish,
-              state: state,
-              tab: _tab,
-              onChanged: () => setState(() {}),
-            ),
-          ],
         ),
       ),
+    );
+  }
+
+  Future<void> _addNote(
+    BuildContext context,
+    MyMenuState state,
+    Dish dish,
+  ) async {
+    final String? note = await showAddNoteSheet(context);
+    if (note != null && context.mounted) {
+      state.addDishNote(dish.id, note);
+      setState(() {});
+    }
+  }
+}
+
+class _DetailPage extends StatelessWidget {
+  const _DetailPage({
+    required this.pageName,
+    required this.horizontal,
+    required this.bottom,
+    required this.child,
+    super.key,
+  });
+
+  final String pageName;
+  final double horizontal;
+  final double bottom;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      key: PageStorageKey<String>('dish_detail_${pageName}_scroll_view'),
+      padding: EdgeInsets.fromLTRB(horizontal, 16, horizontal, bottom),
+      children: <Widget>[child],
     );
   }
 }
@@ -134,60 +202,10 @@ class _Metric extends StatelessWidget {
   }
 }
 
-class _LatestNote extends StatelessWidget {
-  const _LatestNote({required this.dish});
-
-  final Dish dish;
-
-  @override
-  Widget build(BuildContext context) {
-    if (dish.notes.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-      decoration: BoxDecoration(
-        color: MyMenuColors.note,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          const Icon(Icons.edit_outlined, size: 16),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                const Eyebrow('Latest note'),
-                const SizedBox(height: 3),
-                Text(
-                  dish.notes.first.body,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: MyMenuColors.ink,
-                      ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _DetailTabs extends StatelessWidget {
-  const _DetailTabs({
-    required this.selected,
-    required this.notesCount,
-    required this.historyCount,
-    required this.onSelect,
-  });
+  const _DetailTabs({required this.controller});
 
-  final DishDetailTab selected;
-  final int notesCount;
-  final int historyCount;
-  final ValueChanged<DishDetailTab> onSelect;
+  final TabController controller;
 
   @override
   Widget build(BuildContext context) {
@@ -197,61 +215,33 @@ class _DetailTabs extends StatelessWidget {
         color: MyMenuColors.oat,
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Row(
-        children: <Widget>[
-          _TabButton(
-            label: 'Recipe',
-            selected: selected == DishDetailTab.recipe,
-            onTap: () => onSelect(DishDetailTab.recipe),
-          ),
-          _TabButton(
-            label: 'Notes · $notesCount',
-            selected: selected == DishDetailTab.notes,
-            onTap: () => onSelect(DishDetailTab.notes),
-          ),
-          _TabButton(
-            label: 'History · $historyCount',
-            selected: selected == DishDetailTab.history,
-            onTap: () => onSelect(DishDetailTab.history),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TabButton extends StatelessWidget {
-  const _TabButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Material(
-        color: selected ? Colors.white : Colors.transparent,
-        borderRadius: BorderRadius.circular(999),
-        child: InkWell(
-          onTap: onTap,
+      child: TabBar(
+        key: const ValueKey<String>('dish_detail_tab_bar'),
+        controller: controller,
+        dividerColor: Colors.transparent,
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicator: BoxDecoration(
+          color: Colors.white,
           borderRadius: BorderRadius.circular(999),
-          child: SizedBox(
-            height: 36,
-            child: Center(
-              child: Text(
-                label,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontSize: 11,
-                    ),
-              ),
+          boxShadow: const <BoxShadow>[
+            BoxShadow(
+              color: Color(0x12302318),
+              blurRadius: 10,
+              offset: Offset(0, 3),
             ),
-          ),
+          ],
         ),
+        labelColor: MyMenuColors.ink,
+        unselectedLabelColor: MyMenuColors.ink,
+        labelStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+              fontSize: 11,
+            ),
+        overlayColor: const WidgetStatePropertyAll<Color>(Colors.transparent),
+        splashBorderRadius: BorderRadius.circular(999),
+        tabs: const <Widget>[
+          SizedBox(height: 36, child: Center(child: Text('Journal'))),
+          SizedBox(height: 36, child: Center(child: Text('Recipe'))),
+        ],
       ),
     );
   }

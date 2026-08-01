@@ -9,7 +9,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/core/database/app_database.dart';
 import 'package:mymenu/core/network/network_status_monitor.dart';
+import 'package:mymenu/domain/dishes/dish.dart';
+import 'package:mymenu/domain/dishes/seeded_dishes.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/features/menu/menu_grid_card.dart';
 import 'package:mymenu/features/plan/plan_screen.dart';
 import 'package:mymenu/shared/theme/app_theme.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
@@ -133,26 +136,12 @@ void main() {
           const ValueKey<String>('plan_screen'),
         );
         expect(plan, findsOneWidget);
-        expect(tester.getTopLeft(plan).dx, 0);
+        expect(find.byKey(const ValueKey('plan_month_picker')), findsOneWidget);
         expect(
-          tester.getBottomRight(plan).dy,
-          tester.view.physicalSize.height / tester.view.devicePixelRatio,
+          find.byKey(const ValueKey('plan_week_page_view')),
+          findsOneWidget,
         );
-        expect(
-          tester.getBottomRight(plan).dx,
-          tester.view.physicalSize.width / tester.view.devicePixelRatio,
-        );
-        final ListView planScrollView = tester.widget(plan);
-        final EdgeInsets planPadding =
-            planScrollView.padding!.resolve(TextDirection.ltr);
-        expect(planPadding.left, MyMenuUnits.pageGutter);
-        expect(planPadding.right, MyMenuUnits.pageGutter);
-        final SliverChildListDelegate planChildren =
-            planScrollView.childrenDelegate as SliverChildListDelegate;
-        expect(
-          (planChildren.children.last as SizedBox).height,
-          MyMenuUnits.pageBottom,
-        );
+        expect(find.byKey(const ValueKey('plan_today_button')), findsOneWidget);
         expect(
           tester.getSize(
             find.byKey(
@@ -163,13 +152,16 @@ void main() {
         );
         expect(find.text('Wednesday, July 22'), findsOneWidget);
         expect(find.text('2 dishes planned'), findsOneWidget);
-        await tester.scrollUntilVisible(
-          find.text('2 captures need a quick look'),
-          200,
-          scrollable: find.byType(Scrollable).first,
-        );
-        expect(find.text('2 captures need a quick look'), findsOneWidget);
+        expect(find.text('What are we cooking?'), findsNothing);
+        expect(find.text('Suggestion · not planned'), findsNothing);
+        expect(find.text('2 captures need a quick look'), findsNothing);
         expect(find.byKey(const ValueKey('capture_fab')), findsOneWidget);
+        final Finder reviewBadge = find.byKey(
+          const ValueKey<String>('menu_review_badge'),
+        );
+        expect(tester.getSize(reviewBadge), const Size.square(20));
+        final Container badge = tester.widget<Container>(reviewBadge);
+        expect((badge.decoration! as BoxDecoration).shape, BoxShape.circle);
         expect(tester.takeException(), isNull);
       });
     });
@@ -235,6 +227,103 @@ void main() {
 
         expect(find.text('Add an idea'), findsNothing);
         expect(find.byKey(const ValueKey('capture_fab')), findsOneWidget);
+        await tester.tap(find.text('Menu'));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        expect(tester.takeException(), isNull);
+      });
+    });
+
+    testWidgets('new dishes use a finite wobbling text label', (
+      WidgetTester tester,
+    ) async {
+      final dish = seededDishes.first.copyWith(createdAt: DateTime(2026, 8));
+      final MyMenuState state = MyMenuState.forTesting(dishes: <Dish>[dish]);
+      addTearDown(state.dispose);
+
+      await runWithMockNetworkImages(() async {
+        await tester.pumpWidget(
+          MyMenuScope(
+            notifier: state,
+            child: MaterialApp(
+              theme: AppTheme.data,
+              home: Scaffold(
+                body: SizedBox(
+                  width: 180,
+                  height: 300,
+                  child: MenuGridCard(dish: dish),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        expect(
+          find.byKey(
+            const ValueKey<String>('menu_new_label_dish_salmon'),
+          ),
+          findsOneWidget,
+        );
+        expect(find.text('New'), findsOneWidget);
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+      });
+    });
+
+    testWidgets('dish detail pages swipe and the selector tracks tab taps', (
+      WidgetTester tester,
+    ) async {
+      await runWithMockNetworkImages(() async {
+        await tester.pumpWidget(_testApp());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Menu'));
+        await tester.pumpAndSettle();
+        final Finder salmonCard = find.byKey(
+          const ValueKey<String>('menu_dish_dish_salmon'),
+        );
+        await tester.scrollUntilVisible(
+          salmonCard,
+          220,
+          scrollable: find
+              .descendant(
+                of: find.byKey(const ValueKey<String>('menu_screen')),
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        );
+        await tester.ensureVisible(salmonCard);
+        await tester.pumpAndSettle();
+        await tester.tap(salmonCard);
+        await tester.pumpAndSettle();
+
+        final Finder tabBarFinder = find.byKey(
+          const ValueKey<String>('dish_detail_tab_bar'),
+        );
+        expect(
+          find.byKey(const ValueKey<String>('dish_detail_page_view')),
+          findsOneWidget,
+        );
+        final TabBar tabBar = tester.widget<TabBar>(tabBarFinder);
+        await tester.tap(find.text('Recipe'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(tabBar.controller!.animation!.value, greaterThan(0));
+        expect(tabBar.controller!.animation!.value, lessThan(1));
+        await tester.pumpAndSettle();
+        expect(find.text('Ingredients'), findsOneWidget);
+
+        await tester.fling(
+          find.byKey(const ValueKey<String>('dish_detail_page_view')),
+          const Offset(500, 0),
+          1000,
+        );
+        await tester.pumpAndSettle();
+        expect(tabBar.controller!.index, 0);
+        expect(
+          find.byKey(const ValueKey<String>('journal_add_note')),
+          findsOneWidget,
+        );
         expect(tester.takeException(), isNull);
       });
     });
@@ -254,7 +343,12 @@ void main() {
         await tester.scrollUntilVisible(
           linguineCard,
           220,
-          scrollable: find.byType(Scrollable).first,
+          scrollable: find
+              .descendant(
+                of: find.byKey(const ValueKey<String>('menu_screen')),
+                matching: find.byType(Scrollable),
+              )
+              .first,
         );
         await tester.ensureVisible(linguineCard);
         await tester.pumpAndSettle();
@@ -262,13 +356,21 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Cook again'), findsOneWidget);
-        await tester.drag(find.byType(ListView).first, const Offset(0, -360));
-        await tester.pumpAndSettle();
-        final Finder notesTab = find.textContaining('Notes ·');
-        expect(notesTab, findsOneWidget);
-        await tester.tap(notesTab);
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Add Note'));
+        expect(find.text('Journal'), findsOneWidget);
+        await tester.scrollUntilVisible(
+          find.byKey(const ValueKey<String>('journal_add_note')),
+          220,
+          scrollable: find
+              .descendant(
+                of: find.byKey(
+                  const ValueKey<String>('dish_detail_scroll_view'),
+                ),
+                matching: find.byType(Scrollable),
+              )
+              .first,
+        );
+        await tester
+            .tap(find.byKey(const ValueKey<String>('journal_add_note')));
         await tester.pumpAndSettle();
         await tester.enterText(
           find.byKey(const ValueKey<String>('dish_note_input')),
@@ -303,14 +405,14 @@ void main() {
         final Finder menu = find.byKey(
           const ValueKey<String>('menu_screen'),
         );
-        expect(tester.getTopLeft(menu).dy, 0);
+        final Finder fixedChrome = find.byKey(
+          const ValueKey<String>('menu_fixed_chrome'),
+        );
+        expect(tester.getTopLeft(fixedChrome).dy, 0);
         expect(tester.getBottomRight(menu).dy, 844);
         final CustomScrollView menuScrollView = tester.widget(menu);
-        final SliverAppBar stickyHeader =
-            menuScrollView.slivers.first as SliverAppBar;
-        expect(stickyHeader.pinned, isTrue);
         final SliverPadding menuContent =
-            menuScrollView.slivers[1] as SliverPadding;
+            menuScrollView.slivers.first as SliverPadding;
         final EdgeInsets menuPadding =
             menuContent.padding.resolve(TextDirection.ltr);
         expect(menuPadding.left, MyMenuUnits.pageGutter);
@@ -368,7 +470,12 @@ void main() {
         await tester.scrollUntilVisible(
           salmonCard,
           180,
-          scrollable: find.byType(Scrollable).first,
+          scrollable: find
+              .descendant(
+                of: find.byKey(const ValueKey<String>('menu_screen')),
+                matching: find.byType(Scrollable),
+              )
+              .first,
         );
         await tester.ensureVisible(salmonCard);
         await tester.pumpAndSettle();

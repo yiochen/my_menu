@@ -19,6 +19,23 @@ Future<void> showCaptureOutcomeSheet(
   required int photoCount,
   String? batchId,
 }) {
+  if (initialStep == CaptureOutcomeStep.created) {
+    return Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => Scaffold(
+          body: CaptureOutcomeSheet(
+            state: state,
+            initialStep: initialStep,
+            organizedStep: organizedStep,
+            photoCount: photoCount,
+            batchId: batchId,
+            fullScreen: true,
+          ),
+        ),
+      ),
+    );
+  }
   return showModalBottomSheet<void>(
     context: context,
     useSafeArea: true,
@@ -40,6 +57,7 @@ class CaptureOutcomeSheet extends StatefulWidget {
     required this.organizedStep,
     required this.photoCount,
     this.batchId,
+    this.fullScreen = false,
     super.key,
   });
 
@@ -48,6 +66,7 @@ class CaptureOutcomeSheet extends StatefulWidget {
   final CaptureOutcomeStep organizedStep;
   final int photoCount;
   final String? batchId;
+  final bool fullScreen;
 
   @override
   State<CaptureOutcomeSheet> createState() => _CaptureOutcomeSheetState();
@@ -68,33 +87,33 @@ class _CaptureOutcomeSheetState extends State<CaptureOutcomeSheet> {
       animation: widget.state,
       builder: (BuildContext context, _) {
         final CaptureOutcomeStep displayStep = _displayStep();
-        return FractionallySizedBox(
-          heightFactor: 0.9,
-          child: switch (displayStep) {
-            CaptureOutcomeStep.saved => CaptureSavedView(
-                onClose: _close,
-                photoCount: widget.photoCount,
-              ),
-            CaptureOutcomeStep.matched => CaptureMatchedView(
-                dish: widget.state.dishById('dish_salmon'),
-                onClose: _close,
-              ),
-            CaptureOutcomeStep.created => _createdView(),
-            CaptureOutcomeStep.failed => CaptureFailedView(
-                failureReason: _batch()?.failureReason,
-                onRetry: _retry,
-                onClose: _close,
-              ),
-            CaptureOutcomeStep.offline => CaptureOfflineView(
-                onClose: _close,
-                photoCount: widget.photoCount,
-              ),
-            CaptureOutcomeStep.permission => CapturePermissionView(
-                state: widget.state,
-                onClose: _close,
-              ),
-          },
-        );
+        final Widget content = switch (displayStep) {
+          CaptureOutcomeStep.saved => CaptureSavedView(
+              onClose: _close,
+              photoCount: widget.photoCount,
+            ),
+          CaptureOutcomeStep.matched => CaptureMatchedView(
+              dish: widget.state.dishById('dish_salmon'),
+              onClose: _close,
+            ),
+          CaptureOutcomeStep.created => _createdView(),
+          CaptureOutcomeStep.failed => CaptureFailedView(
+              failureReason: _batch()?.failureReason,
+              onRetry: _retry,
+              onClose: _close,
+            ),
+          CaptureOutcomeStep.offline => CaptureOfflineView(
+              onClose: _close,
+              photoCount: widget.photoCount,
+            ),
+          CaptureOutcomeStep.permission => CapturePermissionView(
+              state: widget.state,
+              onClose: _close,
+            ),
+        };
+        return widget.fullScreen
+            ? SafeArea(bottom: false, child: content)
+            : FractionallySizedBox(heightFactor: 0.9, child: content);
       },
     );
   }
