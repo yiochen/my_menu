@@ -30,6 +30,7 @@ part 'repositories_dish_deletion.dart';
 part 'repositories_ai.dart';
 part 'repositories_planning.dart';
 part 'repositories_capture.dart';
+part 'repositories_capture_fallback.dart';
 part 'repositories_capture_deletion.dart';
 part 'repositories_capture_corrections.dart';
 part 'repositories_capture_correction_support.dart';

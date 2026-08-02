@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/core/database/app_database.dart';
 import 'package:mymenu/core/network/my_menu_api_client.dart';
 import 'package:mymenu/domain/ai/ai_job.dart';
+import 'package:mymenu/domain/capture/capture_batch.dart';
+import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
 import 'package:mymenu/domain/processing/processing_outbox.dart';
 import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
@@ -147,6 +149,105 @@ void main() {
       ProcessingDeliveryState.waitingForConsent,
     );
     expect(request.privacyNoticeVersion, isNull);
+  });
+
+  test('declined AI creates one local untitled dish per photo', () async {
+    final AppDatabase database =
+        AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final AppRepositories repositories = AppRepositories(
+      database: database,
+      apiClient: FakeMyMenuApiClient(),
+    );
+    await repositories.processingConsentRepository.declineCurrentNotice();
+
+    final batch = await repositories.captureRepository.createPhotoBatch(
+      <CapturedMedia>[
+        CapturedMedia(
+          path: '/tmp/no-ai-one.jpg',
+          capturedAt: DateTime.utc(2026, 8, 1, 14),
+          capturedLocalDate: '2026-08-01',
+          dateSource: CaptureDateSource.camera,
+        ),
+        CapturedMedia(
+          path: '/tmp/no-ai-two.jpg',
+          capturedAt: DateTime.utc(2026, 8, 1, 15),
+          capturedLocalDate: '2026-08-01',
+          dateSource: CaptureDateSource.camera,
+        ),
+      ],
+    );
+
+    expect(batch, isNotNull);
+    expect(batch!.status, CaptureBatchStatus.applied);
+    expect(
+      batch.items.map((CaptureItem item) => item.status),
+      everyElement(CaptureItemStatus.applied),
+    );
+    final dishes = await repositories.dishRepository.listDishes();
+    expect(dishes, hasLength(2));
+    expect(
+      dishes.map((dish) => dish.title),
+      everyElement('Untitled dish'),
+    );
+    expect(
+      dishes.map((dish) => dish.heroImageUrl).toSet(),
+      <String>{'/tmp/no-ai-one.jpg', '/tmp/no-ai-two.jpg'},
+    );
+    expect(
+      dishes
+          .expand((dish) => dish.sourcePhotos)
+          .map((photo) => photo.url)
+          .toSet(),
+      <String>{'/tmp/no-ai-one.jpg', '/tmp/no-ai-two.jpg'},
+    );
+    expect(
+      batch.items.map((CaptureItem item) => item.appliedDishId).toSet(),
+      dishes.map((dish) => dish.id).toSet(),
+    );
+    expect(
+      await repositories.processingOutboxRepository.listRequests(),
+      isEmpty,
+    );
+    expect(await database.select(database.aiJobs).get(), isEmpty);
+    expect(await database.select(database.syncOperations).get(), isEmpty);
+  });
+
+  test('declining repairs an existing held photo as a local dish', () async {
+    final AppDatabase database =
+        AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final AppRepositories repositories = AppRepositories(
+      database: database,
+      apiClient: FakeMyMenuApiClient(),
+    );
+    await repositories.captureRepository.createPhotoBatch(
+      <CapturedMedia>[
+        CapturedMedia(
+          path: '/tmp/already-waiting.jpg',
+          capturedAt: DateTime.utc(2026, 8, 1, 16),
+          capturedLocalDate: '2026-08-01',
+          dateSource: CaptureDateSource.camera,
+        ),
+      ],
+    );
+
+    await repositories.processingConsentRepository.declineCurrentNotice();
+    await repositories.captureRepository.adoptDeclinedPhotoCapturesLocally();
+
+    final dishes = await repositories.dishRepository.listDishes();
+    final repairedBatch =
+        (await repositories.captureRepository.listBatches()).single;
+    final ProcessingOutboxRequest request =
+        (await repositories.processingOutboxRepository.listRequests()).single;
+    expect(dishes.single.title, 'Untitled dish');
+    expect(dishes.single.heroImageUrl, '/tmp/already-waiting.jpg');
+    expect(repairedBatch.status, CaptureBatchStatus.applied);
+    expect(repairedBatch.items.single.status, CaptureItemStatus.applied);
+    expect(repairedBatch.items.single.appliedDishId, dishes.single.id);
+    expect(request.deliveryState, ProcessingDeliveryState.canceled);
+    expect(await database.select(database.aiJobs).get(), isEmpty);
+    expect(await database.select(database.syncOperations).get(), isEmpty);
   });
 
   test('canceling pending processing keeps the local capture', () async {

@@ -178,14 +178,18 @@ Future<void> _captureMedia(
       return;
     }
     if (batch != null) {
+      final bool createdLocally = batch.status == CaptureBatchStatus.applied;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            capturedMedia.length == 1
-                ? 'Photo is uploading. A dish placeholder shows its progress.'
-                : '${capturedMedia.length} photos are uploading. A dish '
-                    'placeholder shows their progress.',
-          ),
+          content: Text(createdLocally
+              ? capturedMedia.length == 1
+                  ? 'Photo added as an Untitled dish.'
+                  : '${capturedMedia.length} photos added as separate '
+                      'Untitled dishes.'
+              : capturedMedia.length == 1
+                  ? 'Photo is uploading. A dish placeholder shows its progress.'
+                  : '${capturedMedia.length} photos are uploading. A dish '
+                      'placeholder shows their progress.'),
         ),
       );
     }

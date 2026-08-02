@@ -85,6 +85,7 @@ extension MyMenuStateCapturePersistence on MyMenuState {
   Future<void> _bootstrapRepositories() async {
     final AppRepositories repositories = _repositories!;
     await repositories.seedIfNeeded();
+    await repositories.captureRepository.adoptDeclinedPhotoCapturesLocally();
     await _reloadFromRepositories();
     _updateCaptureSyncPolling();
     unawaited(refreshFromServer());

@@ -39,6 +39,8 @@ extension MyMenuStateProcessing on MyMenuState {
         await repositories.processingConsentRepository.acceptCurrentNotice();
       } else {
         await repositories.processingConsentRepository.declineCurrentNotice();
+        await repositories.captureRepository
+            .adoptDeclinedPhotoCapturesLocally();
       }
     }
 
@@ -62,6 +64,7 @@ extension MyMenuStateProcessing on MyMenuState {
     final AppRepositories? repositories = _repositories;
     if (repositories != null) {
       await repositories.processingConsentRepository.disableAiProcessing();
+      await repositories.captureRepository.adoptDeclinedPhotoCapturesLocally();
     }
     _processingConsentDecision = ProcessingConsentDecision.declined;
     _notifyChanged();
