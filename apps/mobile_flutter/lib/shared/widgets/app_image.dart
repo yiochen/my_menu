@@ -18,6 +18,9 @@ class AppImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (imageRef.trim().isEmpty) {
+      return _ImageFallback(width: width, height: height);
+    }
     final ImageProvider provider = AppImageResolver.providerFor(imageRef);
     return Image(
       image: provider,
@@ -36,9 +39,6 @@ class AppImageResolver {
 
   static ImageProvider providerFor(String imageRef) {
     final Uri? uri = Uri.tryParse(imageRef);
-    if (uri != null && uri.scheme == 'asset') {
-      return AssetImage(_assetPath(uri));
-    }
     if (uri != null && uri.scheme == 'file') {
       return FileImage(File.fromUri(uri));
     }
@@ -49,17 +49,6 @@ class AppImageResolver {
     }
 
     return NetworkImage(imageRef);
-  }
-
-  static String _assetPath(Uri uri) {
-    final List<String> segments = <String>[
-      if (uri.host.isNotEmpty) uri.host,
-      ...uri.pathSegments,
-    ];
-    if (segments.length == 1) {
-      return 'assets/dish_art/${segments.single}.png';
-    }
-    return segments.join('/');
   }
 
   static bool isNetworkRef(String imageRef) {

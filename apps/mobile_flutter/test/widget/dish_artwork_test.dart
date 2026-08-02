@@ -33,12 +33,31 @@ void main() {
         tester.widget<AppImage>(find.byType(AppImage)).imageRef, capturedPhoto);
   });
 
-  test('explicit asset references resolve to bundled artwork', () {
-    final ImageProvider provider = AppImageResolver.providerFor(
-      'asset://assets/dish_art/linguine.png',
+  testWidgets('ideas without a cover render an explicit placeholder', (
+    WidgetTester tester,
+  ) async {
+    final Dish dish = Dish(
+      id: 'idea',
+      title: 'Soup idea',
+      description: '',
+      heroImageUrl: '',
+      category: 'Ideas',
+      prepMinutes: 0,
+      difficulty: 'Draft',
+      madeCount: 0,
+      lastMadeLabel: 'Not cooked yet',
+      ingredients: const <String>[],
+      recipeSteps: const <String>[],
+      notes: const <DishNote>[],
+      sourcePhotos: const <SourcePhoto>[],
     );
 
-    expect(provider, isA<AssetImage>());
-    expect((provider as AssetImage).assetName, 'assets/dish_art/linguine.png');
+    await tester.pumpWidget(MaterialApp(home: DishArtwork(dish: dish)));
+
+    expect(
+      find.byKey(const ValueKey<String>('dish_artwork_placeholder')),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.restaurant_menu_rounded), findsOneWidget);
   });
 }

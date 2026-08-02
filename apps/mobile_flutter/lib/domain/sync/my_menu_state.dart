@@ -35,13 +35,17 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
   MyMenuState({
     AppRepositories? repositories,
     NetworkStatusMonitor? networkStatusMonitor,
-  })  : _dishes = List<Dish>.of(seededDishes),
-        _plan = buildSeededPlan(),
+  })  : _dishes =
+            repositories == null ? List<Dish>.of(seededDishes) : const <Dish>[],
+        _plan =
+            repositories == null ? buildSeededPlan() : const <PlannedMeal>[],
         _captureBatches = const <CaptureBatch>[],
         _captureItems = const <CaptureItem>[],
         _captureCorrections = const <CaptureCorrection>[],
         _aiJobs = const <AiJob>[],
-        _reviewItems = List<ReviewItem>.of(seededReviewItems),
+        _reviewItems = repositories == null
+            ? List<ReviewItem>.of(seededReviewItems)
+            : const <ReviewItem>[],
         _processingConsentDecision = ProcessingConsentDecision.notDecided,
         _extraPlanDays = 0,
         _repositories = repositories,
@@ -234,11 +238,6 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
         return dish;
       }
 
-      if (dish.id == 'dish_salmon') {
-        return dish.copyWith(
-          heroImageUrl: 'asset://assets/dish_art/miso-salmon-improved.png',
-        );
-      }
       final int index =
           prompt.trim().isEmpty ? 0 : prompt.length % dish.sourcePhotos.length;
       return dish.copyWith(heroImageUrl: dish.sourcePhotos[index].url);
@@ -272,30 +271,22 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
 
-    final Dish template = _templateFor(summary);
     final Dish nextDish = Dish(
       id: 'dish_capture_${_dishes.length}',
-      title: 'Captured ${template.title}',
+      title: 'Captured Dish',
       description: 'Created from a mocked photo capture.',
-      heroImageUrl: template.heroImageUrl,
-      category: template.category,
-      prepMinutes: template.prepMinutes,
-      difficulty: template.difficulty,
+      heroImageUrl: '',
+      category: 'Captured',
+      prepMinutes: 0,
+      difficulty: 'Draft',
       madeCount: 1,
       lastMadeLabel: 'Today',
-      ingredients: template.ingredients,
-      recipeSteps: template.recipeSteps,
+      ingredients: const <String>[],
+      recipeSteps: const <String>[],
       notes: _notesFor('dish_capture_${_dishes.length}', <String>[
         'Created from capture: $summary',
       ]),
-      sourcePhotos: <SourcePhoto>[
-        SourcePhoto(
-          url: template.heroImageUrl,
-          capturedLabel: 'Today',
-          note: summary,
-          confidenceLabel: '73%',
-        ),
-      ],
+      sourcePhotos: const <SourcePhoto>[],
       createdAt: DateTime.now(),
     );
 

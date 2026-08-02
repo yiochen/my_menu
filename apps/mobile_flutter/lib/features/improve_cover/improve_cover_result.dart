@@ -170,10 +170,9 @@ class _CoverOption extends StatelessWidget {
             child: SizedBox(
               height: MediaQuery.sizeOf(context).width <= 400 ? 170 : 185,
               child: DishArtwork(
-                dish: improved && dish.id == 'dish_salmon'
+                dish: improved && dish.sourcePhotos.isNotEmpty
                     ? dish.copyWith(
-                        heroImageUrl:
-                            'asset://assets/dish_art/miso-salmon-improved.png',
+                        heroImageUrl: dish.sourcePhotos.last.url,
                       )
                     : dish,
               ),

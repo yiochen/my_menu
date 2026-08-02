@@ -41,6 +41,7 @@ class MyMenuApp extends StatelessWidget {
     this.debugControlsBootstrap,
     this.networkStatusMonitor,
     this.showDebugPanel,
+    this.seedSampleData = false,
     super.key,
   });
 
@@ -48,6 +49,8 @@ class MyMenuApp extends StatelessWidget {
   final DebugControlsBootstrap? debugControlsBootstrap;
   final NetworkStatusMonitor? networkStatusMonitor;
   final bool? showDebugPanel;
+  @visibleForTesting
+  final bool seedSampleData;
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +68,7 @@ class MyMenuApp extends StatelessWidget {
           physicalNetworkStatusMonitorProvider.overrideWithValue(
             networkStatusMonitor!,
           ),
+        seedSampleDataProvider.overrideWithValue(seedSampleData),
       ],
       child: _MyMenuAppView(debugPanelEnabled: debugPanelEnabled),
     );

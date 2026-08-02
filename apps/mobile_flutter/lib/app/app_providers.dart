@@ -20,6 +20,8 @@ final appDatabaseProvider = Provider<AppDatabase>((Ref ref) {
   return _sharedAppDatabase;
 });
 
+final seedSampleDataProvider = Provider<bool>((Ref ref) => false);
+
 final debugControlsProvider =
     ChangeNotifierProvider<DebugControlsController>((Ref ref) {
   final DebugControlsBootstrap? bootstrap = ref.watch(
@@ -78,6 +80,7 @@ final appRepositoriesProvider = Provider<AppRepositories>((Ref ref) {
   return AppRepositories(
     database: ref.watch(appDatabaseProvider),
     apiClient: ref.watch(myMenuApiClientProvider),
+    seedSampleDataOnPrepare: ref.watch(seedSampleDataProvider),
   );
 });
 

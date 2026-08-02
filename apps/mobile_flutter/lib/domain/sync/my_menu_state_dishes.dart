@@ -28,7 +28,6 @@ extension MyMenuDishEdits on MyMenuState {
             _repositories == null
                 ? 'dish_capture_${_dishes.length}'
                 : const Uuid().v4(),
-            _templateFor(item.summary),
           );
     final AppRepositories? repositories = _repositories;
     if (repositories != null) {
@@ -51,7 +50,6 @@ extension MyMenuDishEdits on MyMenuState {
   }
 
   Dish _buildIdeaDish(String text, {String? note}) {
-    final Dish template = _templateFor(text);
     final String idBase =
         text.toLowerCase().replaceAll(RegExp('[^a-z0-9]+'), '_');
     final String dishId = _repositories == null
@@ -63,14 +61,14 @@ extension MyMenuDishEdits on MyMenuState {
       title: _titleCase(text),
       description:
           'A saved dish idea for ${text.toLowerCase()}, ready to refine the next time you cook it.',
-      heroImageUrl: template.heroImageUrl,
-      category: template.category,
-      prepMinutes: template.prepMinutes,
-      difficulty: template.difficulty,
+      heroImageUrl: '',
+      category: 'Ideas',
+      prepMinutes: 0,
+      difficulty: 'Draft',
       madeCount: 0,
       lastMadeLabel: 'Not cooked yet',
-      ingredients: template.ingredients,
-      recipeSteps: template.recipeSteps,
+      ingredients: const <String>[],
+      recipeSteps: const <String>[],
       notes: _notesFor(
         dishId,
         trimmedNote.isEmpty ? const <String>[] : <String>[trimmedNote],

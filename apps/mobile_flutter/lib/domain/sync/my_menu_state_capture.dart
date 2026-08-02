@@ -1,24 +1,5 @@
 part of 'my_menu_state.dart';
 
-extension _MyMenuStateCaptureTemplates on MyMenuState {
-  Dish _templateFor(String text) {
-    final String normalized = text.toLowerCase();
-    late final String templateId;
-    if (normalized.contains('pho') || normalized.contains('noodle')) {
-      templateId = 'dish_pho';
-    } else if (normalized.contains('salmon') || normalized.contains('bowl')) {
-      templateId = 'dish_salmon';
-    } else if (normalized.contains('katsu') || normalized.contains('curry')) {
-      templateId = 'dish_katsu';
-    } else {
-      templateId = 'dish_linguine';
-    }
-    return <Dish>[..._dishes, ...seededDishes].firstWhere(
-      (Dish dish) => dish.id == templateId,
-    );
-  }
-}
-
 String _titleCase(String input) {
   return input
       .split(' ')
@@ -52,19 +33,19 @@ List<ReviewItem> _reviewItemsWithPhotoCaptures(
   ];
 }
 
-Dish _dishFromPhotoReview(ReviewItem item, String dishId, Dish template) {
+Dish _dishFromPhotoReview(ReviewItem item, String dishId) {
   return Dish(
     id: dishId,
     title: 'Captured Dish',
     description: 'Created from a photo capture.',
     heroImageUrl: item.imageRef!,
-    category: template.category,
-    prepMinutes: template.prepMinutes,
-    difficulty: template.difficulty,
+    category: 'Captured',
+    prepMinutes: 0,
+    difficulty: 'Draft',
     madeCount: 1,
     lastMadeLabel: 'Today',
-    ingredients: template.ingredients,
-    recipeSteps: template.recipeSteps,
+    ingredients: const <String>[],
+    recipeSteps: const <String>[],
     notes: _notesFor(dishId, const <String>[
       'Created from capture.',
     ]),

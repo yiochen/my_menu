@@ -65,6 +65,70 @@ void main() {
       expect(plannedMeals.length, buildSeededPlan().length);
     });
 
+    test('production preparation replaces mock covers with real sources',
+        () async {
+      final Dish userDish = Dish(
+        id: 'user_dish',
+        title: 'Saved Idea',
+        description: '',
+        heroImageUrl: 'asset://assets/dish_art/linguine.png',
+        category: 'Ideas',
+        prepMinutes: 0,
+        difficulty: 'Draft',
+        madeCount: 0,
+        lastMadeLabel: 'Not cooked yet',
+        ingredients: const <String>[],
+        recipeSteps: const <String>[],
+        notes: const <DishNote>[],
+        sourcePhotos: const <SourcePhoto>[
+          SourcePhoto(
+            url: '/captures/saved-idea.jpg',
+            capturedLabel: 'Today',
+          ),
+        ],
+      );
+      await repositories.dishRepository.createDish(
+        seededDishes.first.copyWith(
+          heroImageUrl: 'asset://assets/dish_art/miso-salmon.png',
+        ),
+      );
+      await repositories.dishRepository.createDish(userDish);
+      await repositories.dishRepository.createDish(
+        userDish.copyWith(
+          id: 'idea_without_source',
+          heroImageUrl: 'asset://assets/dish_art/katsu.png',
+          sourcePhotos: const <SourcePhoto>[],
+        ),
+      );
+
+      await repositories.prepareLocalData();
+
+      final List<Dish> dishes = await repositories.dishRepository.listDishes();
+      expect(
+        dishes
+            .singleWhere((Dish dish) => dish.id == 'dish_salmon')
+            .heroImageUrl,
+        seededDishes.first.sourcePhotos.first.url,
+      );
+      expect(
+        dishes.singleWhere((Dish dish) => dish.id == userDish.id).heroImageUrl,
+        '/captures/saved-idea.jpg',
+      );
+      expect(
+        dishes
+            .singleWhere((Dish dish) => dish.id == 'idea_without_source')
+            .heroImageUrl,
+        isEmpty,
+      );
+    });
+
+    test('production preparation does not seed an empty menu', () async {
+      await repositories.prepareLocalData();
+
+      expect(await repositories.dishRepository.listDishes(), isEmpty);
+      expect(await database.select(database.plannedMeals).get(), isEmpty);
+    });
+
     test('empty local menu and plan stay empty after bootstrap restart',
         () async {
       final Directory temp =
@@ -253,9 +317,7 @@ void main() {
       );
       expect(
         cachedDishes.every(
-          (DishRow dish) =>
-              dish.heroImageUrl.startsWith('asset://') ||
-              File(dish.heroImageUrl).existsSync(),
+          (DishRow dish) => File(dish.heroImageUrl).existsSync(),
         ),
         isTrue,
       );
@@ -286,7 +348,7 @@ void main() {
         id: 'dish_local_idea',
         title: 'Gochujang Noodles',
         description: 'An idea saved on this device.',
-        heroImageUrl: 'asset://assets/dish_art/linguine.png',
+        heroImageUrl: '',
         category: 'Ideas',
         prepMinutes: 0,
         difficulty: 'Not set',
@@ -353,6 +415,11 @@ void main() {
       final Dish saved = state.dishes.singleWhere(
         (Dish dish) => dish.title == 'Offline Gnocchi',
       );
+      expect(saved.heroImageUrl, isEmpty);
+      expect(saved.category, 'Ideas');
+      expect(saved.prepMinutes, 0);
+      expect(saved.ingredients, isEmpty);
+      expect(saved.recipeSteps, isEmpty);
       expect(saved.notes.single.body, 'Use the preserved lemons.');
       expect(
         (await repositories.dishRepository.listDishes())
@@ -405,7 +472,7 @@ void main() {
         id: 'restart_dish',
         title: 'Offline Udon',
         description: 'Saved without a server.',
-        heroImageUrl: 'asset://assets/dish_art/linguine.png',
+        heroImageUrl: '/captures/offline-udon.jpg',
         category: 'Ideas',
         prepMinutes: 20,
         difficulty: 'Easy',

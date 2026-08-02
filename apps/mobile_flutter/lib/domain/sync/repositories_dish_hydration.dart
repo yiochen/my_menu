@@ -86,7 +86,7 @@ extension SyncRepositoryDishHydration on SyncRepository {
         .firstOrNull;
     final String cachedCover = coverSource?.url ??
         await _cachedCoverMediaRef(apiDish.coverImage) ??
-        await _fallbackMediaRef(apiDish.id);
+        '';
     final Dish dish = _dishFromApi(
       apiDish,
       sourcePhotos: sourcePhotos,
@@ -163,22 +163,13 @@ extension SyncRepositoryDishHydration on SyncRepository {
     );
   }
 
-  Future<String> _fallbackMediaRef(String dishId) {
-    return _dishImageCache.resolve(
-      cacheKey: '${dishId}_fallback',
-      remoteRef: seededDishes.first.heroImageUrl,
-    );
-  }
-
   Dish _dishFromApi(
     ApiDish dish, {
     required List<SourcePhoto> sourcePhotos,
     String? heroImageUrl,
   }) {
-    final String resolvedHeroImageUrl = heroImageUrl ??
-        (sourcePhotos.isEmpty
-            ? seededDishes.first.heroImageUrl
-            : sourcePhotos.first.url);
+    final String resolvedHeroImageUrl =
+        heroImageUrl ?? (sourcePhotos.isEmpty ? '' : sourcePhotos.first.url);
     final String category = dish.labels.isEmpty ? 'capture' : dish.labels.first;
     return Dish(
       id: dish.id,
