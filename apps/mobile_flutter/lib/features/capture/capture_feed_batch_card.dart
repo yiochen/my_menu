@@ -220,12 +220,7 @@ class _CapturePreview extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(12),
           child: imageRef == null
-              ? Container(
-                  width: 82,
-                  height: 82,
-                  color: MyMenuColors.oat,
-                  child: const Icon(Icons.edit_outlined),
-                )
+              ? const FoodCoverPlaceholder(width: 82, height: 82)
               : AppImage(
                   imageRef: imageRef,
                   width: 82,

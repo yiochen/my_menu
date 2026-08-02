@@ -99,7 +99,7 @@ class _OutcomeCapturePhoto extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: imageRef == null
-          ? const Icon(Icons.photo_outlined)
+          ? const FoodCoverPlaceholder(width: 72, height: 72)
           : AppImage(
               imageRef: imageRef,
               width: 72,
@@ -167,10 +167,7 @@ class _DraggableCapturePhoto extends StatelessWidget {
               ),
               clipBehavior: Clip.antiAlias,
               child: imageRef == null
-                  ? const ColoredBox(
-                      color: MyMenuColors.oat,
-                      child: Icon(Icons.photo_outlined),
-                    )
+                  ? const FoodCoverPlaceholder(width: 72, height: 72)
                   : AppImage(
                       imageRef: imageRef,
                       width: 72,

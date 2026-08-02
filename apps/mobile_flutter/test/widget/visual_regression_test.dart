@@ -342,7 +342,6 @@ Future<void> _pumpGoldenApp(
       ),
     ),
   );
-  await _precacheDishArtwork(tester);
   await tester.pumpAndSettle();
 }
 
@@ -395,7 +394,6 @@ Future<void> _pumpGoldenMenu(
       ),
     ),
   );
-  await _precacheDishArtwork(tester);
   await tester.pumpAndSettle();
 }
 
@@ -427,32 +425,6 @@ Future<void> _expectFullAppGolden(
 Future<void> _settleGoldenFrame(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 100));
   await tester.pumpAndSettle();
-}
-
-Future<void> _precacheDishArtwork(WidgetTester tester) async {
-  final BuildContext context = tester.element(
-    find.byKey(_fullAppGoldenKey),
-  );
-  await tester.runAsync(() async {
-    await Future.wait(<Future<void>>[
-      precacheImage(
-        const AssetImage('assets/dish_art/miso-salmon.png'),
-        context,
-      ),
-      precacheImage(
-        const AssetImage('assets/dish_art/linguine.png'),
-        context,
-      ),
-      precacheImage(
-        const AssetImage('assets/dish_art/katsu.png'),
-        context,
-      ),
-      precacheImage(
-        const AssetImage('assets/dish_art/pho.png'),
-        context,
-      ),
-    ]);
-  });
 }
 
 Future<void> _loadGoldenFonts() async {

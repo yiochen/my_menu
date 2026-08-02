@@ -13,6 +13,7 @@ import 'package:mymenu/features/capture/capture_feed_sheet.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
 import 'package:mymenu/features/capture/capture_outcome_sheet.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
+import 'package:mymenu/shared/widgets/local_write_feedback.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
 enum CaptureAction { takePhoto, importPhotos, addIdea, recentCaptures }
@@ -59,8 +60,11 @@ Future<void> showCaptureSheet(
       );
     case CaptureAction.addIdea:
       final AddIdeaIntent? intent = await showAddIdeaSheet(context);
-      if (intent != null) {
-        state.addIdea(intent.title);
+      if (intent != null && context.mounted) {
+        await runLocalWriteWithFeedback(
+          context,
+          () => state.addIdea(intent.title, note: intent.note),
+        );
       }
     case CaptureAction.recentCaptures:
       await showCaptureFeedSheet(context, state);

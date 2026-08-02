@@ -147,7 +147,7 @@ class _UnclassifiedPhotoRow extends StatelessWidget {
           ),
           clipBehavior: Clip.antiAlias,
           child: imageRef == null
-              ? const Icon(Icons.photo_outlined)
+              ? const FoodCoverPlaceholder(width: 82, height: 82)
               : AppImage(
                   imageRef: imageRef,
                   width: 82,

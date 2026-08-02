@@ -12,6 +12,24 @@ class CaptureRepository {
   final Uuid _uuid = const Uuid();
   static const int maxBatchItems = 9;
 
+  Future<List<ReviewItem>> listReviewItems() async {
+    final List<db.ReviewItemRow> rows =
+        await _database.select(_database.reviewItems).get();
+    return rows.map((db.ReviewItemRow row) {
+      final Object? suggested = jsonDecode(row.suggestedDishIdsJson);
+      return ReviewItem(
+        id: row.id,
+        captureId: row.captureId,
+        summary: row.summary,
+        suggestedDishIds: suggested is List<dynamic>
+            ? suggested.whereType<String>().toList(growable: false)
+            : const <String>[],
+        confidenceLabel: row.confidenceLabel,
+        imageRef: row.imageRef,
+      );
+    }).toList(growable: false);
+  }
+
   Future<List<capture_domain.CaptureItem>> listFeedItems() async {
     final List<db.CaptureItemRow> rows =
         await (_database.select(_database.captureItems)

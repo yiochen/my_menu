@@ -1,14 +1,91 @@
 part of 'my_menu_state.dart';
 
 extension MyMenuDishEdits on MyMenuState {
-  void addDishNote(String dishId, String body) {
+  Future<void> addIdea(String text, {String? note}) async {
+    final String trimmed = text.trim();
+    if (trimmed.isEmpty) {
+      return;
+    }
+    final Dish nextDish = _buildIdeaDish(trimmed, note: note);
+
+    final AppRepositories? repositories = _repositories;
+    if (repositories != null) {
+      await repositories.dishRepository.createDish(nextDish);
+      await _reloadFromRepositories();
+      return;
+    }
+    _dishes = <Dish>[nextDish, ..._dishes];
+    _notifyChanged();
+  }
+
+  Future<void> createDishFromReview(String reviewId) async {
+    final ReviewItem item =
+        _reviewItems.firstWhere((ReviewItem review) => review.id == reviewId);
+    final Dish nextDish = item.imageRef == null
+        ? _buildIdeaDish(item.summary)
+        : _dishFromPhotoReview(
+            item,
+            _repositories == null
+                ? 'dish_capture_${_dishes.length}'
+                : const Uuid().v4(),
+          );
+    final AppRepositories? repositories = _repositories;
+    if (repositories != null) {
+      await repositories.dishRepository.createDish(
+        nextDish,
+        consumedReviewId: reviewId,
+      );
+      await _reloadFromRepositories();
+      _reviewItems = _reviewItems
+          .where((ReviewItem review) => review.id != reviewId)
+          .toList(growable: false);
+      _notifyChanged();
+      return;
+    }
+    _reviewItems = _reviewItems
+        .where((ReviewItem review) => review.id != reviewId)
+        .toList(growable: false);
+    _dishes = <Dish>[nextDish, ..._dishes];
+    _notifyChanged();
+  }
+
+  Dish _buildIdeaDish(String text, {String? note}) {
+    final String idBase =
+        text.toLowerCase().replaceAll(RegExp('[^a-z0-9]+'), '_');
+    final String dishId = _repositories == null
+        ? 'dish_$idBase${_dishes.length}'
+        : const Uuid().v4();
+    final String trimmedNote = note?.trim() ?? '';
+    return Dish(
+      id: dishId,
+      title: _titleCase(text),
+      description:
+          'A saved dish idea for ${text.toLowerCase()}, ready to refine the next time you cook it.',
+      heroImageUrl: '',
+      category: 'Ideas',
+      prepMinutes: 0,
+      difficulty: 'Draft',
+      madeCount: 0,
+      lastMadeLabel: 'Not cooked yet',
+      ingredients: const <String>[],
+      recipeSteps: const <String>[],
+      notes: _notesFor(
+        dishId,
+        trimmedNote.isEmpty ? const <String>[] : <String>[trimmedNote],
+      ),
+      sourcePhotos: const <SourcePhoto>[],
+      createdAt: DateTime.now(),
+    );
+  }
+
+  Future<void> addDishNote(String dishId, String body) async {
     final String trimmed = body.trim();
     if (trimmed.isEmpty) {
       return;
     }
     final AppRepositories? repositories = _repositories;
     if (repositories != null) {
-      unawaited(_addRepositoryNote(dishId, trimmed));
+      await _addRepositoryNote(dishId, trimmed);
       return;
     }
 
@@ -27,14 +104,14 @@ extension MyMenuDishEdits on MyMenuState {
     _notifyChanged();
   }
 
-  void updateDishNote(String noteId, String body) {
+  Future<void> updateDishNote(String noteId, String body) async {
     final String trimmed = body.trim();
     if (trimmed.isEmpty) {
       return;
     }
     final AppRepositories? repositories = _repositories;
     if (repositories != null) {
-      unawaited(_updateRepositoryNote(noteId, trimmed));
+      await _updateRepositoryNote(noteId, trimmed);
       return;
     }
 
@@ -48,10 +125,10 @@ extension MyMenuDishEdits on MyMenuState {
     _notifyChanged();
   }
 
-  void deleteDishNote(String noteId) {
+  Future<void> deleteDishNote(String noteId) async {
     final AppRepositories? repositories = _repositories;
     if (repositories != null) {
-      unawaited(_deleteRepositoryNote(noteId));
+      await _deleteRepositoryNote(noteId);
       return;
     }
 
@@ -65,19 +142,17 @@ extension MyMenuDishEdits on MyMenuState {
     _notifyChanged();
   }
 
-  void updateDishSections(
+  Future<void> updateDishSections(
     String dishId, {
     List<String>? ingredients,
     List<String>? recipeSteps,
-  }) {
+  }) async {
     final AppRepositories? repositories = _repositories;
     if (repositories != null) {
-      unawaited(
-        _updateRepositorySections(
-          dishId,
-          ingredients: ingredients,
-          recipeSteps: recipeSteps,
-        ),
+      await _updateRepositorySections(
+        dishId,
+        ingredients: ingredients,
+        recipeSteps: recipeSteps,
       );
       return;
     }
@@ -97,21 +172,18 @@ extension MyMenuDishEdits on MyMenuState {
     final AppRepositories repositories = _repositories!;
     await repositories.dishRepository.createNote(dishId, body);
     await _reloadFromRepositories();
-    await repositories.syncRepository.processPendingOperations();
   }
 
   Future<void> _updateRepositoryNote(String noteId, String body) async {
     final AppRepositories repositories = _repositories!;
     await repositories.dishRepository.updateNote(noteId, body);
     await _reloadFromRepositories();
-    await repositories.syncRepository.processPendingOperations();
   }
 
   Future<void> _deleteRepositoryNote(String noteId) async {
     final AppRepositories repositories = _repositories!;
     await repositories.dishRepository.deleteNote(noteId);
     await _reloadFromRepositories();
-    await repositories.syncRepository.processPendingOperations();
   }
 
   Future<void> _updateRepositorySections(
@@ -126,7 +198,6 @@ extension MyMenuDishEdits on MyMenuState {
       recipeSteps: recipeSteps,
     );
     await _reloadFromRepositories();
-    await repositories.syncRepository.processPendingOperations();
   }
 }
 

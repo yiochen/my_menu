@@ -8,33 +8,46 @@ extension MyMenuStatePlanning on MyMenuState {
     );
   }
 
-  void addPlannedMeal(String dayKey, String dishId, {String? label}) {
-    _plan = <PlannedMeal>[
+  Future<void> addPlannedMeal(
+    String dayKey,
+    String dishId, {
+    String? label,
+  }) async {
+    final List<PlannedMeal> nextPlan = <PlannedMeal>[
       ..._plan,
       PlannedMeal(
-        id: 'plan_${_plan.length + 1}',
+        id: const Uuid().v4(),
         dayKey: dayKey,
         dishId: dishId,
         label: label,
       ),
     ];
-    _notifyChanged();
+    await _replacePlan(nextPlan);
   }
 
-  void updatePlannedMeal(String planId, String dishId, {String? label}) {
-    _plan = _plan.map((PlannedMeal meal) {
+  Future<void> savePlannedMeal({
+    required String dayKey,
+    required String dishId,
+    String? planId,
+    String? label,
+  }) async {
+    if (planId == null) {
+      await addPlannedMeal(dayKey, dishId, label: label);
+      return;
+    }
+    final List<PlannedMeal> nextPlan = _plan.map((PlannedMeal meal) {
       return meal.id == planId
-          ? meal.copyWith(dishId: dishId, label: label)
+          ? meal.copyWith(dayKey: dayKey, dishId: dishId, label: label)
           : meal;
     }).toList(growable: false);
-    _notifyChanged();
+    await _replacePlan(nextPlan);
   }
 
-  void removePlannedMeal(String planId) {
-    _plan = _plan
+  Future<void> removePlannedMeal(String planId) async {
+    final List<PlannedMeal> nextPlan = _plan
         .where((PlannedMeal meal) => meal.id != planId)
         .toList(growable: false);
-    _notifyChanged();
+    await _replacePlan(nextPlan);
   }
 
   void addNextPlanDay() {
@@ -66,11 +79,11 @@ extension MyMenuStatePlanning on MyMenuState {
     _notifyChanged();
   }
 
-  void movePlannedMeal(
+  Future<void> movePlannedMeal(
     String planId, {
     required String targetDayKey,
     required int targetIndex,
-  }) {
+  }) async {
     final int sourceIndex =
         _plan.indexWhere((PlannedMeal meal) => meal.id == planId);
     if (sourceIndex == -1) {
@@ -97,6 +110,16 @@ extension MyMenuStatePlanning on MyMenuState {
     }
 
     nextPlan.insert(insertAt, updatedMeal);
+    await _replacePlan(nextPlan);
+  }
+
+  Future<void> _replacePlan(List<PlannedMeal> nextPlan) async {
+    final AppRepositories? repositories = _repositories;
+    if (repositories != null) {
+      await repositories.planRepository.replaceMeals(nextPlan);
+      await _reloadFromRepositories();
+      return;
+    }
     _plan = nextPlan;
     _notifyChanged();
   }

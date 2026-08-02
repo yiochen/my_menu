@@ -2,8 +2,10 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:mymenu/core/database/app_database_local.dart';
 import 'package:mymenu/core/database/app_database_processing.dart';
 
+export 'package:mymenu/core/database/app_database_local.dart';
 export 'package:mymenu/core/database/app_database_processing.dart';
 
 part 'app_database.g.dart';
@@ -111,17 +113,6 @@ class CaptureCorrections extends Table {
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
 }
 
-@DataClassName('PlannedMealRow')
-class PlannedMeals extends Table {
-  TextColumn get id => text()();
-  TextColumn get dayKey => text()();
-  TextColumn get dishId => text()();
-  TextColumn get label => text().nullable()();
-
-  @override
-  Set<Column<Object>> get primaryKey => <Column<Object>>{id};
-}
-
 @DataClassName('ReviewItemRow')
 class ReviewItems extends Table {
   TextColumn get id => text()();
@@ -147,15 +138,6 @@ class SyncOperations extends Table {
 
   @override
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
-}
-
-@DataClassName('SyncMetadataRow')
-class SyncMetadata extends Table {
-  TextColumn get key => text()();
-  TextColumn get value => text()();
-
-  @override
-  Set<Column<Object>> get primaryKey => <Column<Object>>{key};
 }
 
 @DataClassName('AiJobRow')
@@ -204,18 +186,19 @@ class AiJobs extends Table {
     ReviewItems,
     SyncOperations,
     SyncMetadata,
+    LocalSettings,
     AiJobs,
     ProcessingOutbox,
     ProcessingConsents,
   ],
 )
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+  AppDatabase() : super(driftDatabase(name: 'mymenu'));
 
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration {
@@ -351,6 +334,36 @@ class AppDatabase extends _$AppDatabase {
         if (from < 10) {
           await migrator.createTable(processingConsents);
         }
+        if (from < 11) {
+          final List<QueryRow> columns =
+              await customSelect('PRAGMA table_info(planned_meals)').get();
+          final bool needsPosition = columns.isNotEmpty &&
+              !columns.any(
+                (QueryRow row) => row.read<String>('name') == 'position',
+              );
+          if (needsPosition) {
+            await migrator.addColumn(plannedMeals, plannedMeals.position);
+            await customStatement(
+              'UPDATE planned_meals SET position = rowid',
+            );
+          }
+        }
+        if (from < 12) {
+          final Set<String> existingTables = (await customSelect(
+            "SELECT name FROM sqlite_master WHERE type = 'table'",
+          ).get())
+              .map((QueryRow row) => row.read<String>('name'))
+              .toSet();
+          if (!existingTables.contains('local_settings')) {
+            await migrator.createTable(localSettings);
+          }
+          await into(localSettings).insertOnConflictUpdate(
+            LocalSettingsCompanion.insert(
+              key: localSeedDataInitializedKey,
+              value: 'true',
+            ),
+          );
+        }
       },
     );
   }
@@ -381,8 +394,4 @@ class AppDatabase extends _$AppDatabase {
       }
     }
   }
-}
-
-QueryExecutor _openConnection() {
-  return driftDatabase(name: 'mymenu');
 }

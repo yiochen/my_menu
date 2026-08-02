@@ -8,37 +8,32 @@ import 'package:mymenu/features/dish_detail/dish_detail_screen.dart';
 import 'package:mymenu/features/plan/plan_sheet_action_row.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/dish_artwork.dart';
+import 'package:mymenu/shared/widgets/local_write_feedback.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
+
+part 'plan_actions_sheet.dart';
 
 Future<void> showPlanPickerSheet(
   BuildContext context,
   MyMenuState state, {
   required DateTime date,
-}) {
-  return showModalBottomSheet<void>(
+}) async {
+  final String? dishId = await showModalBottomSheet<String>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
     builder: (_) => _PlanPickerSheet(state: state, date: date),
   );
-}
-
-Future<void> showPlanActionsSheet(
-  BuildContext context,
-  MyMenuState state, {
-  required PlannedMeal meal,
-  required DateTime currentDate,
-}) {
-  return showModalBottomSheet<void>(
-    context: context,
-    useSafeArea: true,
-    isScrollControlled: true,
-    builder: (_) => _PlanActionsSheet(
-      state: state,
-      meal: meal,
-      currentDate: currentDate,
-    ),
-  );
+  if (dishId != null && context.mounted) {
+    await runLocalWriteWithFeedback(
+      context,
+      () => state.addPlannedMeal(
+        dayKeyForDate(date),
+        dishId,
+        label: 'Dinner',
+      ),
+    );
+  }
 }
 
 class _PlanPickerSheet extends StatefulWidget {
@@ -142,12 +137,7 @@ class _PlanPickerSheetState extends State<_PlanPickerSheet> {
   }
 
   void _save() {
-    widget.state.addPlannedMeal(
-      dayKeyForDate(widget.date),
-      _selectedDishId!,
-      label: 'Dinner',
-    );
-    Navigator.pop(context);
+    Navigator.pop(context, _selectedDishId);
   }
 }
 
@@ -206,156 +196,6 @@ class _DishChoice extends StatelessWidget {
                 color: selected ? MyMenuColors.orange : MyMenuColors.softInk,
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PlanActionsSheet extends StatelessWidget {
-  const _PlanActionsSheet({
-    required this.state,
-    required this.meal,
-    required this.currentDate,
-  });
-
-  final MyMenuState state;
-  final PlannedMeal meal;
-  final DateTime currentDate;
-
-  @override
-  Widget build(BuildContext context) {
-    final Dish dish = state.dishById(meal.dishId);
-    return FractionallySizedBox(
-      heightFactor: 0.8,
-      child: WarmPage(
-        includeBottomChromeSpace: false,
-        topPadding: 10,
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            SheetTopBar(
-              title: 'Planned dish',
-              onClose: () => Navigator.pop(context),
-            ),
-            const SizedBox(height: 12),
-            WarmCard(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: <Widget>[
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(17),
-                    child: SizedBox(
-                      width: 54,
-                      height: 54,
-                      child: DishArtwork(dish: dish),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(dish.title,
-                            style: Theme.of(context).textTheme.titleMedium),
-                        Text(
-                          '${_weekdays[currentDate.weekday - 1]}, '
-                          '${_months[currentDate.month - 1]} ${currentDate.day} '
-                          '· ${meal.label ?? 'Dinner'}',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            WarmCard(
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                children: <Widget>[
-                  PlanSheetActionRow(
-                    icon: Icons.redo_rounded,
-                    title: 'Move to another day',
-                    subtitle: 'Keep it planned, change the date',
-                    onTap: () => _move(context),
-                  ),
-                  PlanSheetActionRow(
-                    icon: Icons.open_in_new_rounded,
-                    title: 'Open dish',
-                    subtitle: 'Recipe, notes, and history',
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => DishDetailScreen(dishId: dish.id),
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  PlanSheetActionRow(
-                    icon: Icons.remove_circle_outline,
-                    title: 'Remove from plan',
-                    subtitle: 'The dish stays in your menu',
-                    destructive: true,
-                    showChevron: false,
-                    onTap: () => _remove(context, dish),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            const StatusStrip(
-              icon: Icons.info_outline,
-              text: 'Removing a plan never deletes the dish or its history.',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _move(BuildContext context) async {
-    final DateTime? target = await showDatePicker(
-      context: context,
-      initialDate: currentDate.add(const Duration(days: 1)),
-      firstDate: DateTime(2026, 7, 20),
-      lastDate: DateTime(2026, 8, 31),
-    );
-    if (target == null || !context.mounted) {
-      return;
-    }
-    state.movePlannedMeal(
-      meal.id,
-      targetDayKey: dayKeyForDate(target),
-      targetIndex: 0,
-    );
-    Navigator.pop(context);
-  }
-
-  void _remove(BuildContext context, Dish dish) {
-    final String previousDayKey = meal.dayKey;
-    state.removePlannedMeal(meal.id);
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(18, 0, 18, 98),
-        backgroundColor: Colors.white,
-        content: Text(
-          '${dish.title} removed',
-          style: const TextStyle(color: MyMenuColors.ink),
-        ),
-        action: SnackBarAction(
-          label: 'Undo',
-          textColor: MyMenuColors.orangeDark,
-          onPressed: () => state.addPlannedMeal(
-            previousDayKey,
-            meal.dishId,
-            label: meal.label,
           ),
         ),
       ),

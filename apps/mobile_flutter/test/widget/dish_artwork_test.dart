@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/shared/widgets/app_image.dart';
 import 'package:mymenu/shared/widgets/dish_artwork.dart';
+import 'package:mymenu/shared/widgets/food_cover_placeholder.dart';
 
 void main() {
   testWidgets('dish titles never override their stored cover', (
@@ -33,12 +34,36 @@ void main() {
         tester.widget<AppImage>(find.byType(AppImage)).imageRef, capturedPhoto);
   });
 
-  test('explicit asset references resolve to bundled artwork', () {
-    final ImageProvider provider = AppImageResolver.providerFor(
-      'asset://assets/dish_art/linguine.png',
+  testWidgets('ideas without a cover render an explicit placeholder', (
+    WidgetTester tester,
+  ) async {
+    final Dish dish = Dish(
+      id: 'idea',
+      title: 'Soup idea',
+      description: '',
+      heroImageUrl: '',
+      category: 'Ideas',
+      prepMinutes: 0,
+      difficulty: 'Draft',
+      madeCount: 0,
+      lastMadeLabel: 'Not cooked yet',
+      ingredients: const <String>[],
+      recipeSteps: const <String>[],
+      notes: const <DishNote>[],
+      sourcePhotos: const <SourcePhoto>[],
     );
 
-    expect(provider, isA<AssetImage>());
-    expect((provider as AssetImage).assetName, 'assets/dish_art/linguine.png');
+    await tester.pumpWidget(MaterialApp(home: DishArtwork(dish: dish)));
+
+    expect(
+      find.byKey(const ValueKey<String>('dish_artwork_placeholder')),
+      findsOneWidget,
+    );
+    expect(find.byType(FoodCoverPlaceholder), findsOneWidget);
+    final Image placeholder = tester.widget<Image>(find.byType(Image));
+    expect(
+      (placeholder.image as AssetImage).assetName,
+      FoodCoverPlaceholder.assetPath,
+    );
   });
 }

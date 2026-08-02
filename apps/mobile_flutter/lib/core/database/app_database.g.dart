@@ -3244,8 +3244,16 @@ class $PlannedMealsTable extends PlannedMeals
   late final GeneratedColumn<String> label = GeneratedColumn<String>(
       'label', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _positionMeta =
+      const VerificationMeta('position');
   @override
-  List<GeneratedColumn> get $columns => [id, dayKey, dishId, label];
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+      'position', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  @override
+  List<GeneratedColumn> get $columns => [id, dayKey, dishId, label, position];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -3277,6 +3285,10 @@ class $PlannedMealsTable extends PlannedMeals
       context.handle(
           _labelMeta, label.isAcceptableOrUnknown(data['label']!, _labelMeta));
     }
+    if (data.containsKey('position')) {
+      context.handle(_positionMeta,
+          position.isAcceptableOrUnknown(data['position']!, _positionMeta));
+    }
     return context;
   }
 
@@ -3294,6 +3306,8 @@ class $PlannedMealsTable extends PlannedMeals
           .read(DriftSqlType.string, data['${effectivePrefix}dish_id'])!,
       label: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}label']),
+      position: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}position'])!,
     );
   }
 
@@ -3308,11 +3322,13 @@ class PlannedMealRow extends DataClass implements Insertable<PlannedMealRow> {
   final String dayKey;
   final String dishId;
   final String? label;
+  final int position;
   const PlannedMealRow(
       {required this.id,
       required this.dayKey,
       required this.dishId,
-      this.label});
+      this.label,
+      required this.position});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -3322,6 +3338,7 @@ class PlannedMealRow extends DataClass implements Insertable<PlannedMealRow> {
     if (!nullToAbsent || label != null) {
       map['label'] = Variable<String>(label);
     }
+    map['position'] = Variable<int>(position);
     return map;
   }
 
@@ -3332,6 +3349,7 @@ class PlannedMealRow extends DataClass implements Insertable<PlannedMealRow> {
       dishId: Value(dishId),
       label:
           label == null && nullToAbsent ? const Value.absent() : Value(label),
+      position: Value(position),
     );
   }
 
@@ -3343,6 +3361,7 @@ class PlannedMealRow extends DataClass implements Insertable<PlannedMealRow> {
       dayKey: serializer.fromJson<String>(json['dayKey']),
       dishId: serializer.fromJson<String>(json['dishId']),
       label: serializer.fromJson<String?>(json['label']),
+      position: serializer.fromJson<int>(json['position']),
     );
   }
   @override
@@ -3353,6 +3372,7 @@ class PlannedMealRow extends DataClass implements Insertable<PlannedMealRow> {
       'dayKey': serializer.toJson<String>(dayKey),
       'dishId': serializer.toJson<String>(dishId),
       'label': serializer.toJson<String?>(label),
+      'position': serializer.toJson<int>(position),
     };
   }
 
@@ -3360,12 +3380,14 @@ class PlannedMealRow extends DataClass implements Insertable<PlannedMealRow> {
           {String? id,
           String? dayKey,
           String? dishId,
-          Value<String?> label = const Value.absent()}) =>
+          Value<String?> label = const Value.absent(),
+          int? position}) =>
       PlannedMealRow(
         id: id ?? this.id,
         dayKey: dayKey ?? this.dayKey,
         dishId: dishId ?? this.dishId,
         label: label.present ? label.value : this.label,
+        position: position ?? this.position,
       );
   PlannedMealRow copyWithCompanion(PlannedMealsCompanion data) {
     return PlannedMealRow(
@@ -3373,6 +3395,7 @@ class PlannedMealRow extends DataClass implements Insertable<PlannedMealRow> {
       dayKey: data.dayKey.present ? data.dayKey.value : this.dayKey,
       dishId: data.dishId.present ? data.dishId.value : this.dishId,
       label: data.label.present ? data.label.value : this.label,
+      position: data.position.present ? data.position.value : this.position,
     );
   }
 
@@ -3382,13 +3405,14 @@ class PlannedMealRow extends DataClass implements Insertable<PlannedMealRow> {
           ..write('id: $id, ')
           ..write('dayKey: $dayKey, ')
           ..write('dishId: $dishId, ')
-          ..write('label: $label')
+          ..write('label: $label, ')
+          ..write('position: $position')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, dayKey, dishId, label);
+  int get hashCode => Object.hash(id, dayKey, dishId, label, position);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3396,7 +3420,8 @@ class PlannedMealRow extends DataClass implements Insertable<PlannedMealRow> {
           other.id == this.id &&
           other.dayKey == this.dayKey &&
           other.dishId == this.dishId &&
-          other.label == this.label);
+          other.label == this.label &&
+          other.position == this.position);
 }
 
 class PlannedMealsCompanion extends UpdateCompanion<PlannedMealRow> {
@@ -3404,12 +3429,14 @@ class PlannedMealsCompanion extends UpdateCompanion<PlannedMealRow> {
   final Value<String> dayKey;
   final Value<String> dishId;
   final Value<String?> label;
+  final Value<int> position;
   final Value<int> rowid;
   const PlannedMealsCompanion({
     this.id = const Value.absent(),
     this.dayKey = const Value.absent(),
     this.dishId = const Value.absent(),
     this.label = const Value.absent(),
+    this.position = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PlannedMealsCompanion.insert({
@@ -3417,6 +3444,7 @@ class PlannedMealsCompanion extends UpdateCompanion<PlannedMealRow> {
     required String dayKey,
     required String dishId,
     this.label = const Value.absent(),
+    this.position = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         dayKey = Value(dayKey),
@@ -3426,6 +3454,7 @@ class PlannedMealsCompanion extends UpdateCompanion<PlannedMealRow> {
     Expression<String>? dayKey,
     Expression<String>? dishId,
     Expression<String>? label,
+    Expression<int>? position,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -3433,6 +3462,7 @@ class PlannedMealsCompanion extends UpdateCompanion<PlannedMealRow> {
       if (dayKey != null) 'day_key': dayKey,
       if (dishId != null) 'dish_id': dishId,
       if (label != null) 'label': label,
+      if (position != null) 'position': position,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3442,12 +3472,14 @@ class PlannedMealsCompanion extends UpdateCompanion<PlannedMealRow> {
       Value<String>? dayKey,
       Value<String>? dishId,
       Value<String?>? label,
+      Value<int>? position,
       Value<int>? rowid}) {
     return PlannedMealsCompanion(
       id: id ?? this.id,
       dayKey: dayKey ?? this.dayKey,
       dishId: dishId ?? this.dishId,
       label: label ?? this.label,
+      position: position ?? this.position,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3467,6 +3499,9 @@ class PlannedMealsCompanion extends UpdateCompanion<PlannedMealRow> {
     if (label.present) {
       map['label'] = Variable<String>(label.value);
     }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3480,6 +3515,7 @@ class PlannedMealsCompanion extends UpdateCompanion<PlannedMealRow> {
           ..write('dayKey: $dayKey, ')
           ..write('dishId: $dishId, ')
           ..write('label: $label, ')
+          ..write('position: $position, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -4431,6 +4467,196 @@ class SyncMetadataCompanion extends UpdateCompanion<SyncMetadataRow> {
   @override
   String toString() {
     return (StringBuffer('SyncMetadataCompanion(')
+          ..write('key: $key, ')
+          ..write('value: $value, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $LocalSettingsTable extends LocalSettings
+    with TableInfo<$LocalSettingsTable, LocalSettingRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocalSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _keyMeta = const VerificationMeta('key');
+  @override
+  late final GeneratedColumn<String> key = GeneratedColumn<String>(
+      'key', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _valueMeta = const VerificationMeta('value');
+  @override
+  late final GeneratedColumn<String> value = GeneratedColumn<String>(
+      'value', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [key, value];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'local_settings';
+  @override
+  VerificationContext validateIntegrity(Insertable<LocalSettingRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('key')) {
+      context.handle(
+          _keyMeta, key.isAcceptableOrUnknown(data['key']!, _keyMeta));
+    } else if (isInserting) {
+      context.missing(_keyMeta);
+    }
+    if (data.containsKey('value')) {
+      context.handle(
+          _valueMeta, value.isAcceptableOrUnknown(data['value']!, _valueMeta));
+    } else if (isInserting) {
+      context.missing(_valueMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {key};
+  @override
+  LocalSettingRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LocalSettingRow(
+      key: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}key'])!,
+      value: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}value'])!,
+    );
+  }
+
+  @override
+  $LocalSettingsTable createAlias(String alias) {
+    return $LocalSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class LocalSettingRow extends DataClass implements Insertable<LocalSettingRow> {
+  final String key;
+  final String value;
+  const LocalSettingRow({required this.key, required this.value});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['key'] = Variable<String>(key);
+    map['value'] = Variable<String>(value);
+    return map;
+  }
+
+  LocalSettingsCompanion toCompanion(bool nullToAbsent) {
+    return LocalSettingsCompanion(
+      key: Value(key),
+      value: Value(value),
+    );
+  }
+
+  factory LocalSettingRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LocalSettingRow(
+      key: serializer.fromJson<String>(json['key']),
+      value: serializer.fromJson<String>(json['value']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'key': serializer.toJson<String>(key),
+      'value': serializer.toJson<String>(value),
+    };
+  }
+
+  LocalSettingRow copyWith({String? key, String? value}) => LocalSettingRow(
+        key: key ?? this.key,
+        value: value ?? this.value,
+      );
+  LocalSettingRow copyWithCompanion(LocalSettingsCompanion data) {
+    return LocalSettingRow(
+      key: data.key.present ? data.key.value : this.key,
+      value: data.value.present ? data.value.value : this.value,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalSettingRow(')
+          ..write('key: $key, ')
+          ..write('value: $value')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(key, value);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LocalSettingRow &&
+          other.key == this.key &&
+          other.value == this.value);
+}
+
+class LocalSettingsCompanion extends UpdateCompanion<LocalSettingRow> {
+  final Value<String> key;
+  final Value<String> value;
+  final Value<int> rowid;
+  const LocalSettingsCompanion({
+    this.key = const Value.absent(),
+    this.value = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LocalSettingsCompanion.insert({
+    required String key,
+    required String value,
+    this.rowid = const Value.absent(),
+  })  : key = Value(key),
+        value = Value(value);
+  static Insertable<LocalSettingRow> custom({
+    Expression<String>? key,
+    Expression<String>? value,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (key != null) 'key': key,
+      if (value != null) 'value': value,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LocalSettingsCompanion copyWith(
+      {Value<String>? key, Value<String>? value, Value<int>? rowid}) {
+    return LocalSettingsCompanion(
+      key: key ?? this.key,
+      value: value ?? this.value,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (key.present) {
+      map['key'] = Variable<String>(key.value);
+    }
+    if (value.present) {
+      map['value'] = Variable<String>(value.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalSettingsCompanion(')
           ..write('key: $key, ')
           ..write('value: $value, ')
           ..write('rowid: $rowid')
@@ -6184,6 +6410,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ReviewItemsTable reviewItems = $ReviewItemsTable(this);
   late final $SyncOperationsTable syncOperations = $SyncOperationsTable(this);
   late final $SyncMetadataTable syncMetadata = $SyncMetadataTable(this);
+  late final $LocalSettingsTable localSettings = $LocalSettingsTable(this);
   late final $AiJobsTable aiJobs = $AiJobsTable(this);
   late final $ProcessingOutboxTable processingOutbox =
       $ProcessingOutboxTable(this);
@@ -6204,6 +6431,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         reviewItems,
         syncOperations,
         syncMetadata,
+        localSettings,
         aiJobs,
         processingOutbox,
         processingConsents
@@ -7735,6 +7963,7 @@ typedef $$PlannedMealsTableCreateCompanionBuilder = PlannedMealsCompanion
   required String dayKey,
   required String dishId,
   Value<String?> label,
+  Value<int> position,
   Value<int> rowid,
 });
 typedef $$PlannedMealsTableUpdateCompanionBuilder = PlannedMealsCompanion
@@ -7743,6 +7972,7 @@ typedef $$PlannedMealsTableUpdateCompanionBuilder = PlannedMealsCompanion
   Value<String> dayKey,
   Value<String> dishId,
   Value<String?> label,
+  Value<int> position,
   Value<int> rowid,
 });
 
@@ -7766,6 +7996,9 @@ class $$PlannedMealsTableFilterComposer
 
   ColumnFilters<String> get label => $composableBuilder(
       column: $table.label, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get position => $composableBuilder(
+      column: $table.position, builder: (column) => ColumnFilters(column));
 }
 
 class $$PlannedMealsTableOrderingComposer
@@ -7788,6 +8021,9 @@ class $$PlannedMealsTableOrderingComposer
 
   ColumnOrderings<String> get label => $composableBuilder(
       column: $table.label, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get position => $composableBuilder(
+      column: $table.position, builder: (column) => ColumnOrderings(column));
 }
 
 class $$PlannedMealsTableAnnotationComposer
@@ -7810,6 +8046,9 @@ class $$PlannedMealsTableAnnotationComposer
 
   GeneratedColumn<String> get label =>
       $composableBuilder(column: $table.label, builder: (column) => column);
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
 }
 
 class $$PlannedMealsTableTableManager extends RootTableManager<
@@ -7842,6 +8081,7 @@ class $$PlannedMealsTableTableManager extends RootTableManager<
             Value<String> dayKey = const Value.absent(),
             Value<String> dishId = const Value.absent(),
             Value<String?> label = const Value.absent(),
+            Value<int> position = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               PlannedMealsCompanion(
@@ -7849,6 +8089,7 @@ class $$PlannedMealsTableTableManager extends RootTableManager<
             dayKey: dayKey,
             dishId: dishId,
             label: label,
+            position: position,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -7856,6 +8097,7 @@ class $$PlannedMealsTableTableManager extends RootTableManager<
             required String dayKey,
             required String dishId,
             Value<String?> label = const Value.absent(),
+            Value<int> position = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               PlannedMealsCompanion.insert(
@@ -7863,6 +8105,7 @@ class $$PlannedMealsTableTableManager extends RootTableManager<
             dayKey: dayKey,
             dishId: dishId,
             label: label,
+            position: position,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
@@ -8411,6 +8654,134 @@ typedef $$SyncMetadataTableProcessedTableManager = ProcessedTableManager<
       BaseReferences<_$AppDatabase, $SyncMetadataTable, SyncMetadataRow>
     ),
     SyncMetadataRow,
+    PrefetchHooks Function()>;
+typedef $$LocalSettingsTableCreateCompanionBuilder = LocalSettingsCompanion
+    Function({
+  required String key,
+  required String value,
+  Value<int> rowid,
+});
+typedef $$LocalSettingsTableUpdateCompanionBuilder = LocalSettingsCompanion
+    Function({
+  Value<String> key,
+  Value<String> value,
+  Value<int> rowid,
+});
+
+class $$LocalSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $LocalSettingsTable> {
+  $$LocalSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get key => $composableBuilder(
+      column: $table.key, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get value => $composableBuilder(
+      column: $table.value, builder: (column) => ColumnFilters(column));
+}
+
+class $$LocalSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $LocalSettingsTable> {
+  $$LocalSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get key => $composableBuilder(
+      column: $table.key, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get value => $composableBuilder(
+      column: $table.value, builder: (column) => ColumnOrderings(column));
+}
+
+class $$LocalSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LocalSettingsTable> {
+  $$LocalSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get key =>
+      $composableBuilder(column: $table.key, builder: (column) => column);
+
+  GeneratedColumn<String> get value =>
+      $composableBuilder(column: $table.value, builder: (column) => column);
+}
+
+class $$LocalSettingsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $LocalSettingsTable,
+    LocalSettingRow,
+    $$LocalSettingsTableFilterComposer,
+    $$LocalSettingsTableOrderingComposer,
+    $$LocalSettingsTableAnnotationComposer,
+    $$LocalSettingsTableCreateCompanionBuilder,
+    $$LocalSettingsTableUpdateCompanionBuilder,
+    (
+      LocalSettingRow,
+      BaseReferences<_$AppDatabase, $LocalSettingsTable, LocalSettingRow>
+    ),
+    LocalSettingRow,
+    PrefetchHooks Function()> {
+  $$LocalSettingsTableTableManager(_$AppDatabase db, $LocalSettingsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LocalSettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LocalSettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LocalSettingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> key = const Value.absent(),
+            Value<String> value = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              LocalSettingsCompanion(
+            key: key,
+            value: value,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String key,
+            required String value,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              LocalSettingsCompanion.insert(
+            key: key,
+            value: value,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$LocalSettingsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $LocalSettingsTable,
+    LocalSettingRow,
+    $$LocalSettingsTableFilterComposer,
+    $$LocalSettingsTableOrderingComposer,
+    $$LocalSettingsTableAnnotationComposer,
+    $$LocalSettingsTableCreateCompanionBuilder,
+    $$LocalSettingsTableUpdateCompanionBuilder,
+    (
+      LocalSettingRow,
+      BaseReferences<_$AppDatabase, $LocalSettingsTable, LocalSettingRow>
+    ),
+    LocalSettingRow,
     PrefetchHooks Function()>;
 typedef $$AiJobsTableCreateCompanionBuilder = AiJobsCompanion Function({
   required String id,
@@ -9235,6 +9606,8 @@ class $AppDatabaseManager {
       $$SyncOperationsTableTableManager(_db, _db.syncOperations);
   $$SyncMetadataTableTableManager get syncMetadata =>
       $$SyncMetadataTableTableManager(_db, _db.syncMetadata);
+  $$LocalSettingsTableTableManager get localSettings =>
+      $$LocalSettingsTableTableManager(_db, _db.localSettings);
   $$AiJobsTableTableManager get aiJobs =>
       $$AiJobsTableTableManager(_db, _db.aiJobs);
   $$ProcessingOutboxTableTableManager get processingOutbox =>

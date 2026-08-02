@@ -64,11 +64,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/dish_art/
-    - assets/dish_detail_notes/note_cheese_pin.png
-    - assets/dish_detail_notes/note_kid_clip.png
-    - assets/dish_detail_notes/note_lemon_pin.png
-    - assets/dish_detail_notes/note_shrimp_tape.png
+    - assets/placeholders/food-cover.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

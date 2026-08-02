@@ -245,9 +245,7 @@ void main() {
         final Finder reviewBadge = find.byKey(
           const ValueKey<String>('menu_review_badge'),
         );
-        expect(tester.getSize(reviewBadge), const Size.square(20));
-        final Container badge = tester.widget<Container>(reviewBadge);
-        expect((badge.decoration! as BoxDecoration).shape, BoxShape.circle);
+        expect(reviewBadge, findsNothing);
         expect(tester.takeException(), isNull);
       });
     });
@@ -686,6 +684,7 @@ Widget _testApp() {
     database: AppDatabase.forTesting(NativeDatabase.memory()),
     networkStatusMonitor: const InertNetworkStatusMonitor(),
     showDebugPanel: false,
+    seedSampleData: true,
   );
 }
 
@@ -694,6 +693,7 @@ Widget _debugTestApp() {
     database: AppDatabase.forTesting(NativeDatabase.memory()),
     networkStatusMonitor: const InertNetworkStatusMonitor(),
     showDebugPanel: true,
+    seedSampleData: true,
   );
 }
 

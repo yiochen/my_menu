@@ -84,7 +84,7 @@ extension MyMenuStateCapturePersistence on MyMenuState {
 
   Future<void> _bootstrapRepositories() async {
     final AppRepositories repositories = _repositories!;
-    await repositories.seedIfNeeded();
+    await repositories.prepareLocalData();
     await repositories.captureRepository.adoptDeclinedPhotoCapturesLocally();
     await _reloadFromRepositories();
     _updateCaptureSyncPolling();
@@ -121,17 +121,6 @@ extension MyMenuStateCapturePersistence on MyMenuState {
     await _reloadFromRepositories();
     unawaited(_syncCaptures());
     return batch;
-  }
-
-  Future<void> _createIdeaCapture(String text) async {
-    final AppRepositories? repositories = _repositories;
-    if (repositories == null) {
-      return;
-    }
-    await repositories.captureRepository.createIdeaCapture(text);
-    _startCaptureSyncPollingWindow();
-    await _reloadFromRepositories();
-    await _syncCaptures();
   }
 
   Future<void> _reloadFromRepositories() async {
@@ -178,6 +167,18 @@ extension MyMenuStateCapturePersistence on MyMenuState {
           ),
         )
         .where((CaptureBatch batch) => batch.items.isNotEmpty)
+        .toList(growable: false);
+    _reviewItems = (await repositories.captureRepository.listReviewItems())
+        .where(
+          (ReviewItem item) => !pendingCaptureIds.contains(item.captureId),
+        )
+        .map(
+          (ReviewItem item) => item.copyWith(
+            suggestedDishIds: item.suggestedDishIds
+                .where(repositoryDishIds.contains)
+                .toList(growable: false),
+          ),
+        )
         .toList(growable: false);
     _captureCorrections =
         (await repositories.captureCorrectionRepository.listCorrections())

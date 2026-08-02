@@ -14,6 +14,7 @@ import 'package:mymenu/domain/capture/capture_correction.dart';
 import 'package:mymenu/domain/capture/capture_item.dart' as capture_domain;
 import 'package:mymenu/domain/capture/capture_mappers.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
+import 'package:mymenu/domain/capture/review_item.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/dishes/dish_mappers.dart';
 import 'package:mymenu/domain/dishes/seeded_dishes.dart';
@@ -39,11 +40,20 @@ part 'repositories_dish_hydration.dart';
 part 'repositories_support.dart';
 part 'repositories_sync.dart';
 
+const Set<String> _bundledMockImageRefs = <String>{
+  'asset://assets/dish_art/miso-salmon.png',
+  'asset://assets/dish_art/miso-salmon-improved.png',
+  'asset://assets/dish_art/linguine.png',
+  'asset://assets/dish_art/katsu.png',
+  'asset://assets/dish_art/pho.png',
+};
+
 class AppRepositories {
   AppRepositories({
     required this.database,
     required this.apiClient,
     this.captureControlRequestTimeout = const Duration(seconds: 5),
+    this.seedSampleDataOnPrepare = false,
     DishImageCache? dishImageCache,
   }) {
     final DishImageCache resolvedImageCache =
@@ -69,6 +79,8 @@ class AppRepositories {
   final db.AppDatabase database;
   final MyMenuApiClient apiClient;
   final Duration captureControlRequestTimeout;
+  @visibleForTesting
+  final bool seedSampleDataOnPrepare;
   late final DishRepository dishRepository;
   late final PlanRepository planRepository;
   late final CaptureRepository captureRepository;
@@ -78,9 +90,72 @@ class AppRepositories {
   late final AiJobRepository aiJobRepository;
   late final SyncRepository syncRepository;
 
+  @visibleForTesting
   Future<void> seedIfNeeded() async {
-    await dishRepository.seedIfNeeded();
-    await planRepository.seedIfNeeded();
+    await database.transaction(() async {
+      final db.LocalSettingRow? marker =
+          await (database.select(database.localSettings)
+                ..where(
+                  (db.LocalSettings table) => table.key.equals(
+                    db.localSeedDataInitializedKey,
+                  ),
+                ))
+              .getSingleOrNull();
+      if (marker != null) {
+        return;
+      }
+      await dishRepository._seedIfEmpty();
+      await planRepository._seedIfEmpty();
+      await database.into(database.localSettings).insert(
+            db.LocalSettingsCompanion.insert(
+              key: db.localSeedDataInitializedKey,
+              value: 'true',
+            ),
+          );
+    });
+  }
+
+  Future<void> prepareLocalData() async {
+    if (seedSampleDataOnPrepare) {
+      await seedIfNeeded();
+    }
+    await _removeBundledMockImageRefs();
+    await database.into(database.localSettings).insertOnConflictUpdate(
+          db.LocalSettingsCompanion.insert(
+            key: db.localSeedDataInitializedKey,
+            value: 'true',
+          ),
+        );
+  }
+
+  Future<void> _removeBundledMockImageRefs() async {
+    final List<db.DishRow> affectedDishes = await (database.select(
+      database.dishes,
+    )..where(
+            (db.Dishes table) => table.heroImageUrl.isIn(_bundledMockImageRefs),
+          ))
+        .get();
+    await (database.delete(database.sourcePhotos)
+          ..where(
+            (db.SourcePhotos table) => table.url.isIn(_bundledMockImageRefs),
+          ))
+        .go();
+
+    for (final db.DishRow dish in affectedDishes) {
+      final db.SourcePhotoRow? replacement = await (database.select(
+        database.sourcePhotos,
+      )
+            ..where((db.SourcePhotos table) => table.dishId.equals(dish.id))
+            ..limit(1))
+          .getSingleOrNull();
+      await (database.update(database.dishes)
+            ..where((db.Dishes table) => table.id.equals(dish.id)))
+          .write(
+        db.DishesCompanion(
+          heroImageUrl: Value<String>(replacement?.url ?? ''),
+        ),
+      );
+    }
   }
 }
 

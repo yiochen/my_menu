@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:mymenu/shared/widgets/food_cover_placeholder.dart';
 
 class AppImage extends StatelessWidget {
   const AppImage({
@@ -18,6 +19,13 @@ class AppImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (imageRef.trim().isEmpty) {
+      return FoodCoverPlaceholder(
+        width: width,
+        height: height,
+        fit: fit ?? BoxFit.cover,
+      );
+    }
     final ImageProvider provider = AppImageResolver.providerFor(imageRef);
     return Image(
       image: provider,
@@ -25,7 +33,11 @@ class AppImage extends StatelessWidget {
       width: width,
       height: height,
       errorBuilder: (_, __, ___) {
-        return _ImageFallback(width: width, height: height);
+        return FoodCoverPlaceholder(
+          width: width,
+          height: height,
+          fit: fit ?? BoxFit.cover,
+        );
       },
     );
   }
@@ -36,9 +48,6 @@ class AppImageResolver {
 
   static ImageProvider providerFor(String imageRef) {
     final Uri? uri = Uri.tryParse(imageRef);
-    if (uri != null && uri.scheme == 'asset') {
-      return AssetImage(_assetPath(uri));
-    }
     if (uri != null && uri.scheme == 'file') {
       return FileImage(File.fromUri(uri));
     }
@@ -51,43 +60,8 @@ class AppImageResolver {
     return NetworkImage(imageRef);
   }
 
-  static String _assetPath(Uri uri) {
-    final List<String> segments = <String>[
-      if (uri.host.isNotEmpty) uri.host,
-      ...uri.pathSegments,
-    ];
-    if (segments.length == 1) {
-      return 'assets/dish_art/${segments.single}.png';
-    }
-    return segments.join('/');
-  }
-
   static bool isNetworkRef(String imageRef) {
     final Uri? uri = Uri.tryParse(imageRef);
     return uri != null && (uri.scheme == 'http' || uri.scheme == 'https');
-  }
-}
-
-class _ImageFallback extends StatelessWidget {
-  const _ImageFallback({
-    required this.width,
-    required this.height,
-  });
-
-  final double? width;
-  final double? height;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      color: const Color(0xFFE8DFD2),
-      alignment: Alignment.center,
-      child: const Icon(
-        Icons.image_not_supported_outlined,
-        color: Color(0xFF727272),
-      ),
-    );
   }
 }

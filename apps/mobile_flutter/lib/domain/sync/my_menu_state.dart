@@ -18,6 +18,7 @@ import 'package:mymenu/domain/planning/seeded_plan.dart';
 import 'package:mymenu/domain/processing/processing_consent_prompt.dart';
 import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
 import 'package:mymenu/domain/sync/repositories.dart';
+import 'package:uuid/uuid.dart';
 
 part 'my_menu_state_capture.dart';
 part 'my_menu_state_capture_persistence.dart';
@@ -34,13 +35,17 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
   MyMenuState({
     AppRepositories? repositories,
     NetworkStatusMonitor? networkStatusMonitor,
-  })  : _dishes = List<Dish>.of(seededDishes),
-        _plan = buildSeededPlan(),
+  })  : _dishes =
+            repositories == null ? List<Dish>.of(seededDishes) : const <Dish>[],
+        _plan =
+            repositories == null ? buildSeededPlan() : const <PlannedMeal>[],
         _captureBatches = const <CaptureBatch>[],
         _captureItems = const <CaptureItem>[],
         _captureCorrections = const <CaptureCorrection>[],
         _aiJobs = const <AiJob>[],
-        _reviewItems = List<ReviewItem>.of(seededReviewItems),
+        _reviewItems = repositories == null
+            ? List<ReviewItem>.of(seededReviewItems)
+            : const <ReviewItem>[],
         _processingConsentDecision = ProcessingConsentDecision.notDecided,
         _extraPlanDays = 0,
         _repositories = repositories,
@@ -136,6 +141,9 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
       _processingConsentDecision;
   ProcessingConsentRequest? get pendingProcessingConsentRequest =>
       _pendingProcessingConsentRequest;
+  @visibleForTesting
+  Future<void> get initialized => _repositoryBootstrap ?? Future<void>.value();
+
   @override
   void dispose() {
     if (_repositories != null) {
@@ -205,12 +213,22 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
     return sorted.first;
   }
 
-  void toggleFavorite(String dishId) {
-    _dishes = _dishes.map((Dish dish) {
-      return dish.id == dishId
-          ? dish.copyWith(isFavorite: !dish.isFavorite)
-          : dish;
+  Future<void> toggleFavorite(String dishId) async {
+    final Dish current = dishById(dishId);
+    final bool isFavorite = !current.isFavorite;
+    final List<Dish> nextDishes = _dishes.map((Dish dish) {
+      return dish.id == dishId ? dish.copyWith(isFavorite: isFavorite) : dish;
     }).toList(growable: false);
+    final AppRepositories? repositories = _repositories;
+    if (repositories != null) {
+      await repositories.dishRepository.setFavorite(
+        dishId,
+        isFavorite: isFavorite,
+      );
+      await _reloadFromRepositories();
+      return;
+    }
+    _dishes = nextDishes;
     notifyListeners();
   }
 
@@ -220,53 +238,10 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
         return dish;
       }
 
-      if (dish.id == 'dish_salmon') {
-        return dish.copyWith(
-          heroImageUrl: 'asset://assets/dish_art/miso-salmon-improved.png',
-        );
-      }
       final int index =
           prompt.trim().isEmpty ? 0 : prompt.length % dish.sourcePhotos.length;
       return dish.copyWith(heroImageUrl: dish.sourcePhotos[index].url);
     }).toList(growable: false);
-    notifyListeners();
-  }
-
-  void addIdea(String text) {
-    final String trimmed = text.trim();
-    if (trimmed.isEmpty) {
-      return;
-    }
-    if (_repositories != null) {
-      unawaited(_createIdeaCapture(trimmed));
-      return;
-    }
-
-    final Dish template = _templateFor(trimmed);
-    final String idBase =
-        trimmed.toLowerCase().replaceAll(RegExp('[^a-z0-9]+'), '_');
-    final Dish nextDish = Dish(
-      id: 'dish_$idBase${_dishes.length}',
-      title: _titleCase(trimmed),
-      description:
-          'A saved dish idea for ${trimmed.toLowerCase()}, ready to refine the next time you cook it.',
-      heroImageUrl: template.heroImageUrl,
-      category: template.category,
-      prepMinutes: template.prepMinutes,
-      difficulty: template.difficulty,
-      madeCount: 0,
-      lastMadeLabel: 'Not cooked yet',
-      ingredients: template.ingredients,
-      recipeSteps: template.recipeSteps,
-      notes: _notesFor('dish_$idBase${_dishes.length}', const <String>[
-        'Captured as an idea.',
-        'Add real source photos after the next cook.',
-      ]),
-      sourcePhotos: const <SourcePhoto>[],
-      createdAt: DateTime.now(),
-    );
-
-    _dishes = <Dish>[nextDish, ..._dishes];
     notifyListeners();
   }
 
@@ -296,30 +271,22 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
 
-    final Dish template = _templateFor(summary);
     final Dish nextDish = Dish(
       id: 'dish_capture_${_dishes.length}',
-      title: 'Captured ${template.title}',
+      title: 'Captured Dish',
       description: 'Created from a mocked photo capture.',
-      heroImageUrl: template.heroImageUrl,
-      category: template.category,
-      prepMinutes: template.prepMinutes,
-      difficulty: template.difficulty,
+      heroImageUrl: '',
+      category: 'Captured',
+      prepMinutes: 0,
+      difficulty: 'Draft',
       madeCount: 1,
       lastMadeLabel: 'Today',
-      ingredients: template.ingredients,
-      recipeSteps: template.recipeSteps,
+      ingredients: const <String>[],
+      recipeSteps: const <String>[],
       notes: _notesFor('dish_capture_${_dishes.length}', <String>[
         'Created from capture: $summary',
       ]),
-      sourcePhotos: <SourcePhoto>[
-        SourcePhoto(
-          url: template.heroImageUrl,
-          capturedLabel: 'Today',
-          note: summary,
-          confidenceLabel: '73%',
-        ),
-      ],
+      sourcePhotos: const <SourcePhoto>[],
       createdAt: DateTime.now(),
     );
 
@@ -340,27 +307,6 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
       notify: false,
     );
     notifyListeners();
-  }
-
-  void createDishFromReview(String reviewId) {
-    final ReviewItem item =
-        _reviewItems.firstWhere((ReviewItem review) => review.id == reviewId);
-    _reviewItems = _reviewItems
-        .where((ReviewItem review) => review.id != reviewId)
-        .toList(growable: false);
-    if (item.imageRef != null) {
-      _dishes = <Dish>[
-        _dishFromPhotoReview(
-          item,
-          _dishes.length,
-          _templateFor(item.summary),
-        ),
-        ..._dishes,
-      ];
-      notifyListeners();
-      return;
-    }
-    addIdea(item.summary);
   }
 
   void _attachCook(

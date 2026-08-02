@@ -12,6 +12,7 @@ import 'package:mymenu/features/menu/menu_exit_transition.dart';
 import 'package:mymenu/features/menu/menu_grid_card.dart';
 import 'package:mymenu/features/menu/menu_screen.dart';
 import 'package:mymenu/shared/theme/app_theme.dart';
+import 'package:mymenu/shared/widgets/food_cover_placeholder.dart';
 
 void main() {
   testWidgets('exit snapshot survives until a dilated animation completes', (
@@ -100,6 +101,7 @@ void main() {
       kind: CaptureItemKind.photo,
       status: CaptureItemStatus.uploading,
       createdAt: now,
+      localMediaRef: '/captures/source-without-thumbnail.jpg',
     );
     final MyMenuState state = MyMenuState.forTesting(
       dishes: <Dish>[seededDishes.first],
@@ -121,6 +123,13 @@ void main() {
     final Finder placeholder =
         find.byKey(const ValueKey<String>('processing_dish_batch_1'));
     expect(placeholder, findsOneWidget);
+    expect(
+      find.descendant(
+        of: placeholder,
+        matching: find.byType(FoodCoverPlaceholder),
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Organizing photo'), findsOneWidget);
     expect(find.text('Tap for processing status'), findsOneWidget);
 
@@ -507,7 +516,7 @@ void main() {
     expect(find.text('2 selected'), findsOneWidget);
 
     await state.deleteCaptureBatch('batch_finishing');
-    state.addIdea('newly organized dish');
+    await state.addIdea('newly organized dish');
     await tester.pumpAndSettle();
 
     expect(find.text('1 selected'), findsOneWidget);

@@ -8,7 +8,9 @@ import 'package:mymenu/features/capture/capture_sheet.dart';
 import 'package:mymenu/features/dish_detail/cook_again_sheet.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_content.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_hero.dart';
+import 'package:mymenu/features/dish_detail/recipe_section_editor.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
+import 'package:mymenu/shared/widgets/local_write_feedback.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
 enum DishDetailTab { journal, recipe }
@@ -100,6 +102,18 @@ class _DishDetailScreenState extends State<DishDetailScreen>
                     ImagePickerCaptureMediaService(),
                   ),
                   onAddNote: () => _addNote(context, state, dish),
+                  onEditIngredients: () => _editRecipeSection(
+                    context,
+                    state,
+                    dish,
+                    ingredients: true,
+                  ),
+                  onEditSteps: () => _editRecipeSection(
+                    context,
+                    state,
+                    dish,
+                    ingredients: false,
+                  ),
                 ),
               );
             }).toList(growable: false),
@@ -116,9 +130,35 @@ class _DishDetailScreenState extends State<DishDetailScreen>
   ) async {
     final String? note = await showAddNoteSheet(context);
     if (note != null && context.mounted) {
-      state.addDishNote(dish.id, note);
-      setState(() {});
+      await runLocalWriteWithFeedback(
+        context,
+        () => state.addDishNote(dish.id, note),
+      );
     }
+  }
+
+  Future<void> _editRecipeSection(
+    BuildContext context,
+    MyMenuState state,
+    Dish dish, {
+    required bool ingredients,
+  }) async {
+    final List<String>? values = await showRecipeSectionEditor(
+      context,
+      title: ingredients ? 'Ingredients' : 'Steps',
+      values: ingredients ? dish.ingredients : dish.recipeSteps,
+    );
+    if (values == null || !context.mounted) {
+      return;
+    }
+    await runLocalWriteWithFeedback(
+      context,
+      () => state.updateDishSections(
+        dish.id,
+        ingredients: ingredients ? values : null,
+        recipeSteps: ingredients ? null : values,
+      ),
+    );
   }
 }
 

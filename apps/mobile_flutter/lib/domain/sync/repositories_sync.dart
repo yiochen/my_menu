@@ -267,10 +267,7 @@ extension SyncRepositoryPull on SyncRepository {
     required Set<String> reviewItemIds,
     required Set<String> aiJobIds,
   }) async {
-    await DishRepository(_database, _dishImageCache).deleteLocalDishes(
-      dishIds,
-      enqueueRemote: false,
-    );
+    await DishRepository(_database, _dishImageCache).deleteLocalDishes(dishIds);
     final List<db.CaptureItemRow> captureRows = captureIds.isEmpty
         ? const <db.CaptureItemRow>[]
         : await (_database.select(_database.captureItems)

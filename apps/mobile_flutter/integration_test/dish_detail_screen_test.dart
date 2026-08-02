@@ -15,7 +15,10 @@ void main() {
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
-      MyMenuApp(database: AppDatabase.forTesting(NativeDatabase.memory())),
+      MyMenuApp(
+        database: AppDatabase.forTesting(NativeDatabase.memory()),
+        seedSampleData: true,
+      ),
     );
     await _pumpUntilFound(tester, find.text('Menu'));
 
