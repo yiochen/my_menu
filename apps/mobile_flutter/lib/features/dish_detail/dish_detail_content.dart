@@ -12,6 +12,8 @@ class DishDetailContent extends StatelessWidget {
     required this.tab,
     required this.onAddPhoto,
     required this.onAddNote,
+    required this.onEditIngredients,
+    required this.onEditSteps,
     super.key,
   });
 
@@ -19,6 +21,8 @@ class DishDetailContent extends StatelessWidget {
   final DishDetailTab tab;
   final VoidCallback onAddPhoto;
   final VoidCallback onAddNote;
+  final VoidCallback onEditIngredients;
+  final VoidCallback onEditSteps;
 
   @override
   Widget build(BuildContext context) {
@@ -28,22 +32,36 @@ class DishDetailContent extends StatelessWidget {
           onAddPhoto: onAddPhoto,
           onAddNote: onAddNote,
         ),
-      DishDetailTab.recipe => _RecipeContent(dish: dish),
+      DishDetailTab.recipe => _RecipeContent(
+          dish: dish,
+          onEditIngredients: onEditIngredients,
+          onEditSteps: onEditSteps,
+        ),
     };
   }
 }
 
 class _RecipeContent extends StatelessWidget {
-  const _RecipeContent({required this.dish});
+  const _RecipeContent({
+    required this.dish,
+    required this.onEditIngredients,
+    required this.onEditSteps,
+  });
 
   final Dish dish;
+  final VoidCallback onEditIngredients;
+  final VoidCallback onEditSteps;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        const _SectionHeading(title: 'Ingredients', action: 'Edit'),
+        _SectionHeading(
+          title: 'Ingredients',
+          action: 'Edit',
+          onPressed: onEditIngredients,
+        ),
         const SizedBox(height: 10),
         for (final String ingredient in dish.ingredients) ...<Widget>[
           _IngredientRow(value: ingredient),
@@ -69,7 +87,11 @@ class _RecipeContent extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 18),
-        const _SectionHeading(title: 'Steps', action: 'Edit'),
+        _SectionHeading(
+          title: 'Steps',
+          action: 'Edit',
+          onPressed: onEditSteps,
+        ),
         const SizedBox(height: 10),
         for (int index = 0; index < dish.recipeSteps.length; index += 1)
           Padding(
@@ -106,10 +128,15 @@ class _RecipeContent extends StatelessWidget {
 }
 
 class _SectionHeading extends StatelessWidget {
-  const _SectionHeading({required this.title, required this.action});
+  const _SectionHeading({
+    required this.title,
+    required this.action,
+    required this.onPressed,
+  });
 
   final String title;
   final String action;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +146,7 @@ class _SectionHeading extends StatelessWidget {
           child: Text(title, style: Theme.of(context).textTheme.headlineSmall),
         ),
         TextButton(
-          onPressed: () {},
+          onPressed: onPressed,
           child: Text(
             action,
             style: const TextStyle(color: MyMenuColors.orangeDark),

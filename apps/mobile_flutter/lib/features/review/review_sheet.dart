@@ -6,6 +6,7 @@ import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/review/review_alternate_search.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/dish_artwork.dart';
+import 'package:mymenu/shared/widgets/local_write_feedback.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
 Future<void> showReviewSheet(BuildContext context, MyMenuState state) {
@@ -54,9 +55,14 @@ class _ReviewFlowState extends State<ReviewFlow> {
                   _searching = false;
                 });
               },
-              onMakeNew: () {
-                widget.state.createDishFromReview(item.id);
-                setState(() => _searching = false);
+              onMakeNew: () async {
+                final bool saved = await runLocalWriteWithFeedback(
+                  context,
+                  () => widget.state.createDishFromReview(item.id),
+                );
+                if (saved && mounted) {
+                  setState(() => _searching = false);
+                }
               },
             )
           : _ReviewDecision(
@@ -68,13 +74,21 @@ class _ReviewFlowState extends State<ReviewFlow> {
               onChooseMatch: () => setState(() => _makeNew = false),
               onChooseNew: () => setState(() => _makeNew = true),
               onChooseDifferent: () => setState(() => _searching = true),
-              onConfirm: () {
+              onConfirm: () async {
                 if (_makeNew) {
-                  widget.state.createDishFromReview(item.id);
+                  final bool saved = await runLocalWriteWithFeedback(
+                    context,
+                    () => widget.state.createDishFromReview(item.id),
+                  );
+                  if (!saved) {
+                    return;
+                  }
                 } else {
                   widget.state.resolveReviewToDish(item.id, suggested.id);
                 }
-                setState(() {});
+                if (mounted) {
+                  setState(() {});
+                }
               },
             ),
     );

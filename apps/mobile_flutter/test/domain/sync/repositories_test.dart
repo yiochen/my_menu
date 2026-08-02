@@ -13,8 +13,10 @@ import 'package:mymenu/domain/ai/ai_job.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
+import 'package:mymenu/domain/capture/review_item.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/dishes/seeded_dishes.dart';
+import 'package:mymenu/domain/planning/planned_meal.dart';
 import 'package:mymenu/domain/planning/seeded_plan.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/domain/sync/repositories.dart';
@@ -63,6 +65,46 @@ void main() {
       expect(plannedMeals.length, buildSeededPlan().length);
     });
 
+    test('empty local menu and plan stay empty after bootstrap restart',
+        () async {
+      final Directory temp =
+          await Directory.systemTemp.createTemp('mymenu_empty_restart_');
+      addTearDown(() => temp.delete(recursive: true));
+      final File databaseFile = File('${temp.path}/mymenu.sqlite');
+      final AppDatabase firstDatabase =
+          AppDatabase.forTesting(NativeDatabase(databaseFile));
+      final AppRepositories firstRepositories = AppRepositories(
+        database: firstDatabase,
+        apiClient: _OfflineApiClient(),
+      );
+      await firstRepositories.seedIfNeeded();
+      final List<String> dishIds =
+          (await firstDatabase.select(firstDatabase.dishes).get())
+              .map((DishRow dish) => dish.id)
+              .toList(growable: false);
+      await firstRepositories.dishRepository.deleteDishes(dishIds);
+      await firstRepositories.planRepository.replaceMeals(
+        const <PlannedMeal>[],
+      );
+      await firstDatabase.close();
+
+      final AppDatabase restartedDatabase =
+          AppDatabase.forTesting(NativeDatabase(databaseFile));
+      addTearDown(restartedDatabase.close);
+      final AppRepositories restartedRepositories = AppRepositories(
+        database: restartedDatabase,
+        apiClient: _OfflineApiClient(),
+      );
+      await restartedRepositories.seedIfNeeded();
+
+      expect(await restartedDatabase.select(restartedDatabase.dishes).get(),
+          isEmpty);
+      expect(
+        await restartedDatabase.select(restartedDatabase.plannedMeals).get(),
+        isEmpty,
+      );
+    });
+
     test('loading plans removes references to missing dishes', () async {
       await repositories.seedIfNeeded();
       await database.into(database.plannedMeals).insert(
@@ -93,6 +135,77 @@ void main() {
             .get(),
         isEmpty,
       );
+    });
+
+    test('plan repository replaces and reloads the local plan in order',
+        () async {
+      await repositories.seedIfNeeded();
+      const List<PlannedMeal> expected = <PlannedMeal>[
+        PlannedMeal(
+          id: 'plan_local_second',
+          dayKey: '2026-08-03',
+          dishId: 'dish_linguine',
+          label: 'Dinner',
+        ),
+        PlannedMeal(
+          id: 'plan_local_first',
+          dayKey: '2026-08-03',
+          dishId: 'dish_salmon',
+          label: 'Lunch',
+        ),
+      ];
+
+      await repositories.planRepository.replaceMeals(expected);
+      final List<PlannedMeal> saved =
+          await repositories.planRepository.listMeals(
+        validDishIds: const <String>{'dish_linguine', 'dish_salmon'},
+      );
+
+      expect(saved.map((PlannedMeal meal) => meal.id),
+          <String>['plan_local_second', 'plan_local_first']);
+      expect(saved.map((PlannedMeal meal) => meal.label),
+          <String>['Dinner', 'Lunch']);
+      expect(await database.select(database.syncOperations).get(), isEmpty);
+    });
+
+    test('schema 10 plan rows migrate without losing their order', () async {
+      final Directory temp =
+          await Directory.systemTemp.createTemp('mymenu_plan_migration_');
+      addTearDown(() => temp.delete(recursive: true));
+      final File databaseFile = File('${temp.path}/mymenu.sqlite');
+      final AppDatabase currentDatabase =
+          AppDatabase.forTesting(NativeDatabase(databaseFile));
+      final AppRepositories currentRepositories = AppRepositories(
+        database: currentDatabase,
+        apiClient: FakeMyMenuApiClient(),
+      );
+      await currentRepositories.seedIfNeeded();
+      final List<String> expectedIds =
+          (await currentDatabase.select(currentDatabase.plannedMeals).get())
+              .map((PlannedMealRow meal) => meal.id)
+              .toList(growable: false);
+      await currentDatabase.close();
+      sqlite.sqlite3.open(databaseFile.path)
+        ..execute('ALTER TABLE planned_meals DROP COLUMN position')
+        ..execute('PRAGMA user_version = 10')
+        ..close();
+
+      final AppDatabase migratedDatabase =
+          AppDatabase.forTesting(NativeDatabase(databaseFile));
+      addTearDown(migratedDatabase.close);
+      final AppRepositories migratedRepositories = AppRepositories(
+        database: migratedDatabase,
+        apiClient: FakeMyMenuApiClient(),
+      );
+      final List<String> migratedIds =
+          (await migratedRepositories.planRepository.listMeals(
+        validDishIds: seededDishes.map((Dish dish) => dish.id).toSet(),
+      ))
+              .map((PlannedMeal meal) => meal.id)
+              .toList(growable: false);
+
+      expect(migratedIds, expectedIds);
+      expect(migratedDatabase.schemaVersion, 12);
     });
 
     test('sync caches local dish web images once', () async {
@@ -139,12 +252,11 @@ void main() {
         isTrue,
       );
       expect(
-        cachedDishes
-            .every(
-              (DishRow dish) =>
-                  dish.heroImageUrl.startsWith('asset://') ||
-                  File(dish.heroImageUrl).existsSync(),
-            ),
+        cachedDishes.every(
+          (DishRow dish) =>
+              dish.heroImageUrl.startsWith('asset://') ||
+              File(dish.heroImageUrl).existsSync(),
+        ),
         isTrue,
       );
     });
@@ -168,6 +280,214 @@ void main() {
       expect(saved.sourcePhotos.length, original.sourcePhotos.length);
     });
 
+    test('dish repository creates and edits local dish knowledge without sync',
+        () async {
+      final Dish dish = Dish(
+        id: 'dish_local_idea',
+        title: 'Gochujang Noodles',
+        description: 'An idea saved on this device.',
+        heroImageUrl: 'asset://assets/dish_art/linguine.png',
+        category: 'Ideas',
+        prepMinutes: 0,
+        difficulty: 'Not set',
+        madeCount: 0,
+        lastMadeLabel: 'Not cooked yet',
+        ingredients: const <String>[],
+        recipeSteps: const <String>[],
+        notes: const <DishNote>[
+          DishNote(
+            id: 'dish_local_idea_note_0',
+            dishId: 'dish_local_idea',
+            body: 'Try sesame and scallions.',
+            position: 0,
+          ),
+        ],
+        sourcePhotos: const <SourcePhoto>[],
+        createdAt: DateTime.utc(2026, 8),
+      );
+
+      await repositories.dishRepository.createDish(dish);
+      await repositories.dishRepository.setFavorite(dish.id, isFavorite: true);
+      await repositories.dishRepository.updateSections(
+        dish.id,
+        ingredients: const <String>['Noodles|8 oz', 'Gochujang|2 tbsp'],
+        recipeSteps: const <String>['Boil noodles.', 'Toss with sauce.'],
+      );
+
+      final Dish saved = (await repositories.dishRepository.listDishes())
+          .singleWhere((Dish item) => item.id == dish.id);
+      expect(saved.title, 'Gochujang Noodles');
+      expect(saved.notes.single.body, 'Try sesame and scallions.');
+      expect(saved.isFavorite, isTrue);
+      expect(saved.ingredients, <String>['Noodles|8 oz', 'Gochujang|2 tbsp']);
+      expect(saved.recipeSteps, <String>['Boil noodles.', 'Toss with sauce.']);
+      expect(await database.select(database.syncOperations).get(), isEmpty);
+    });
+
+    test('creating a dish from review consumes the review locally', () async {
+      await repositories.seedIfNeeded();
+      await database.into(database.reviewItems).insert(
+            ReviewItemsCompanion.insert(
+              id: 'review_1',
+              summary: 'Captured salmon bowl from tonight.',
+              suggestedDishIdsJson: '["dish_salmon"]',
+              confidenceLabel: 'Needs review',
+            ),
+          );
+      final MyMenuState state = MyMenuState(
+        repositories: repositories,
+        networkStatusMonitor: const InertNetworkStatusMonitor(),
+      );
+      addTearDown(state.dispose);
+      await state.initialized;
+      final int dishCount = state.dishes.length;
+
+      await state.createDishFromReview('review_1');
+
+      expect(await repositories.dishRepository.listDishes(),
+          hasLength(dishCount + 1));
+      expect(state.reviewItems.map((ReviewItem item) => item.id),
+          isNot(contains('review_1')));
+      expect(await database.select(database.reviewItems).get(), isEmpty);
+      expect(await database.select(database.syncOperations).get(), isEmpty);
+    });
+
+    test('local dish knowledge and plan survive database restart', () async {
+      final Directory temp =
+          await Directory.systemTemp.createTemp('mymenu_local_menu_restart_');
+      addTearDown(() => temp.delete(recursive: true));
+      final File databaseFile = File('${temp.path}/mymenu.sqlite');
+      final AppDatabase firstDatabase =
+          AppDatabase.forTesting(NativeDatabase(databaseFile));
+      final AppRepositories firstRepositories = AppRepositories(
+        database: firstDatabase,
+        apiClient: _OfflineApiClient(),
+      );
+      final Dish dish = Dish(
+        id: 'restart_dish',
+        title: 'Offline Udon',
+        description: 'Saved without a server.',
+        heroImageUrl: 'asset://assets/dish_art/linguine.png',
+        category: 'Ideas',
+        prepMinutes: 20,
+        difficulty: 'Easy',
+        madeCount: 0,
+        lastMadeLabel: 'Not cooked yet',
+        ingredients: const <String>[],
+        recipeSteps: const <String>[],
+        notes: const <DishNote>[],
+        sourcePhotos: const <SourcePhoto>[],
+        createdAt: DateTime.utc(2026, 8),
+      );
+      await firstRepositories.dishRepository.createDish(dish);
+      final DishNote note = await firstRepositories.dishRepository.createNote(
+        dish.id,
+        'Use frozen udon.',
+      );
+      await firstRepositories.dishRepository.updateNote(
+        note.id,
+        'Use two packs of frozen udon.',
+      );
+      await firstRepositories.dishRepository.setFavorite(
+        dish.id,
+        isFavorite: true,
+      );
+      await firstRepositories.dishRepository.updateSections(
+        dish.id,
+        ingredients: const <String>['Frozen udon|2 packs'],
+        recipeSteps: const <String>['Boil.', 'Toss.'],
+      );
+      await firstRepositories.planRepository.replaceMeals(
+        const <PlannedMeal>[
+          PlannedMeal(
+            id: 'restart_plan',
+            dayKey: '2026-08-04',
+            dishId: 'restart_dish',
+            label: 'Dinner',
+          ),
+        ],
+      );
+      await firstDatabase.close();
+
+      final AppDatabase restartedDatabase =
+          AppDatabase.forTesting(NativeDatabase(databaseFile));
+      addTearDown(restartedDatabase.close);
+      final AppRepositories restartedRepositories = AppRepositories(
+        database: restartedDatabase,
+        apiClient: _OfflineApiClient(),
+      );
+      final Dish saved =
+          (await restartedRepositories.dishRepository.listDishes()).single;
+      final List<PlannedMeal> savedPlan =
+          await restartedRepositories.planRepository.listMeals(
+        validDishIds: <String>{saved.id},
+      );
+
+      expect(saved.title, 'Offline Udon');
+      expect(saved.notes.single.body, 'Use two packs of frozen udon.');
+      expect(saved.isFavorite, isTrue);
+      expect(saved.ingredients, <String>['Frozen udon|2 packs']);
+      expect(saved.recipeSteps, <String>['Boil.', 'Toss.']);
+      expect(savedPlan.single.id, 'restart_plan');
+      expect(savedPlan.single.label, 'Dinner');
+      expect(
+        await restartedDatabase.select(restartedDatabase.syncOperations).get(),
+        isEmpty,
+      );
+    });
+
+    test('failed local writes do not publish favorite or plan state', () async {
+      final AppDatabase failingDatabase =
+          AppDatabase.forTesting(NativeDatabase.memory());
+      final AppRepositories failingRepositories = AppRepositories(
+        database: failingDatabase,
+        apiClient: _OfflineApiClient(),
+      );
+      await failingRepositories.seedIfNeeded();
+      await failingDatabase.into(failingDatabase.reviewItems).insert(
+            ReviewItemsCompanion.insert(
+              id: 'review_1',
+              summary: 'Captured salmon bowl from tonight.',
+              suggestedDishIdsJson: '["dish_salmon"]',
+              confidenceLabel: 'Needs review',
+            ),
+          );
+      final MyMenuState state = MyMenuState(
+        repositories: failingRepositories,
+        networkStatusMonitor: const InertNetworkStatusMonitor(),
+      );
+      addTearDown(state.dispose);
+      await state.initialized;
+      await state.refreshFromServer();
+      final Dish beforeDish = state.dishById('dish_salmon');
+      final List<PlannedMeal> beforePlan = state.plan;
+      await failingDatabase.close();
+
+      await expectLater(
+        state.toggleFavorite(beforeDish.id),
+        throwsA(isA<Object>()),
+      );
+      await expectLater(
+        state.addPlannedMeal(
+          beforePlan.first.dayKey,
+          beforeDish.id,
+          label: 'Snack',
+        ),
+        throwsA(isA<Object>()),
+      );
+      await expectLater(
+        state.createDishFromReview('review_1'),
+        throwsA(isA<Object>()),
+      );
+
+      expect(state.dishById(beforeDish.id).isFavorite, beforeDish.isFavorite);
+      expect(state.plan, beforePlan);
+      expect(
+        state.reviewItems.map((ReviewItem item) => item.id),
+        contains('review_1'),
+      );
+    });
+
     test('dish repository hydrates notes from separate rows', () async {
       await repositories.seedIfNeeded();
 
@@ -180,7 +500,8 @@ void main() {
       expect(linguine.notes.first.body, 'Use more lemon next time.');
     });
 
-    test('dish repository creates, updates, and deletes note rows', () async {
+    test('dish repository creates, updates, and deletes notes locally',
+        () async {
       await repositories.seedIfNeeded();
       final Dish dish = (await repositories.dishRepository.listDishes()).first;
 
@@ -197,11 +518,7 @@ void main() {
       saved = dishes.firstWhere((Dish item) => item.id == dish.id);
 
       expect(saved.notes.any((DishNote item) => item.id == note.id), isFalse);
-      expect(
-        (await database.select(database.syncOperations).get())
-            .where((row) => row.entity == 'dish_note'),
-        hasLength(3),
-      );
+      expect(await database.select(database.syncOperations).get(), isEmpty);
     });
 
     test(
@@ -369,28 +686,8 @@ void main() {
         isTrue,
       );
 
-      await repositories.syncRepository.processPendingOperations();
-
-      expect(apiClient.deletedDishIds, <String>[dishId]);
-    });
-
-    test('sync repository sends pending note operations', () async {
-      final _RecordingApiClient apiClient = _RecordingApiClient();
-      repositories = AppRepositories(
-        database: database,
-        apiClient: apiClient,
-      );
-      await repositories.seedIfNeeded();
-      final Dish dish = (await repositories.dishRepository.listDishes()).first;
-
-      final DishNote note =
-          await repositories.dishRepository.createNote(dish.id, 'Use chives');
-      await repositories.syncRepository.processPendingOperations();
-      final List<SyncOperationRow> operations =
-          await database.select(database.syncOperations).get();
-
-      expect(apiClient.createdNoteIds, <String>[note.id]);
-      expect(operations.where((row) => row.completedAt != null), hasLength(1));
+      expect(await database.select(database.syncOperations).get(), isEmpty);
+      expect(apiClient.deletedDishIds, isEmpty);
     });
 
     test('photo capture sync queues its batch for AI after upload', () async {

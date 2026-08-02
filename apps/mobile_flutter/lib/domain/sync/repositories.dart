@@ -79,8 +79,27 @@ class AppRepositories {
   late final SyncRepository syncRepository;
 
   Future<void> seedIfNeeded() async {
-    await dishRepository.seedIfNeeded();
-    await planRepository.seedIfNeeded();
+    await database.transaction(() async {
+      final db.LocalSettingRow? marker =
+          await (database.select(database.localSettings)
+                ..where(
+                  (db.LocalSettings table) => table.key.equals(
+                    db.localSeedDataInitializedKey,
+                  ),
+                ))
+              .getSingleOrNull();
+      if (marker != null) {
+        return;
+      }
+      await dishRepository._seedIfEmpty();
+      await planRepository._seedIfEmpty();
+      await database.into(database.localSettings).insert(
+            db.LocalSettingsCompanion.insert(
+              key: db.localSeedDataInitializedKey,
+              value: 'true',
+            ),
+          );
+    });
   }
 }
 

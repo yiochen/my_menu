@@ -49,9 +49,9 @@ List<ReviewItem> _reviewItemsWithPhotoCaptures(
   ];
 }
 
-Dish _dishFromPhotoReview(ReviewItem item, int dishCount, Dish template) {
+Dish _dishFromPhotoReview(ReviewItem item, String dishId, Dish template) {
   return Dish(
-    id: 'dish_capture_$dishCount',
+    id: dishId,
     title: 'Captured Dish',
     description: 'Created from a photo capture.',
     heroImageUrl: item.imageRef!,
@@ -62,7 +62,7 @@ Dish _dishFromPhotoReview(ReviewItem item, int dishCount, Dish template) {
     lastMadeLabel: 'Today',
     ingredients: template.ingredients,
     recipeSteps: template.recipeSteps,
-    notes: _notesFor('dish_capture_$dishCount', const <String>[
+    notes: _notesFor(dishId, const <String>[
       'Created from capture.',
     ]),
     sourcePhotos: <SourcePhoto>[

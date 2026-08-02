@@ -507,7 +507,7 @@ void main() {
     expect(find.text('2 selected'), findsOneWidget);
 
     await state.deleteCaptureBatch('batch_finishing');
-    state.addIdea('newly organized dish');
+    await state.addIdea('newly organized dish');
     await tester.pumpAndSettle();
 
     expect(find.text('1 selected'), findsOneWidget);

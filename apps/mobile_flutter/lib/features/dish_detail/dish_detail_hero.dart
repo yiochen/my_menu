@@ -4,6 +4,7 @@ import 'package:mymenu/app/app.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/features/improve_cover/improve_cover_dialog.dart';
 import 'package:mymenu/shared/widgets/dish_artwork.dart';
+import 'package:mymenu/shared/widgets/local_write_feedback.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
 class DishDetailHero extends StatelessWidget {
@@ -88,7 +89,10 @@ class _HeroActions extends StatelessWidget {
           size: 40,
           radius: 14,
           semanticLabel: 'Favorite',
-          onPressed: () => MyMenuScope.read(context).toggleFavorite(dish.id),
+          onPressed: () => runLocalWriteWithFeedback(
+            context,
+            () => MyMenuScope.read(context).toggleFavorite(dish.id),
+          ),
         ),
         const SizedBox(width: 8),
         CircleIconButton(

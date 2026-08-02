@@ -5,6 +5,7 @@ import 'package:mymenu/domain/planning/plan_dates.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/dish_artwork.dart';
+import 'package:mymenu/shared/widgets/local_write_feedback.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
 class PlanSuggestionCard extends StatelessWidget {
@@ -60,13 +61,18 @@ class PlanSuggestionCard extends StatelessWidget {
             label: 'Add',
             orange: true,
             compact: true,
-            onPressed: () {
-              state.addPlannedMeal(
-                dayKeyForDate(date),
-                dish.id,
-                label: 'Dinner',
+            onPressed: () async {
+              final bool saved = await runLocalWriteWithFeedback(
+                context,
+                () => state.addPlannedMeal(
+                  dayKeyForDate(date),
+                  dish.id,
+                  label: 'Dinner',
+                ),
               );
-              onAdded();
+              if (saved) {
+                onAdded();
+              }
             },
           ),
         ],

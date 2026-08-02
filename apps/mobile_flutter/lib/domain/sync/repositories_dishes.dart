@@ -6,7 +6,7 @@ class DishRepository {
   final db.AppDatabase _database;
   final DishImageCache _dishImageCache;
 
-  Future<void> seedIfNeeded() async {
+  Future<void> _seedIfEmpty() async {
     final int existingCount =
         await _database.select(_database.dishes).get().then(
               (List<db.DishRow> rows) => rows.length,
@@ -45,14 +45,42 @@ class DishRepository {
         .insertOnConflictUpdate(dish.toCompanion());
   }
 
-  Future<void> deleteDishes(Iterable<String> dishIds) {
-    return deleteLocalDishes(dishIds, enqueueRemote: true);
+  Future<void> createDish(
+    Dish dish, {
+    String? consumedReviewId,
+  }) async {
+    await _database.transaction(() async {
+      await _database.batch((Batch batch) {
+        batch.insert(_database.dishes, dish.toCompanion());
+        _insertNotes(batch, dish);
+        _insertSourcePhotos(batch, dish);
+      });
+      if (consumedReviewId != null) {
+        await (_database.delete(_database.reviewItems)
+              ..where(
+                (db.ReviewItems table) => table.id.equals(consumedReviewId),
+              ))
+            .go();
+      }
+    });
   }
 
-  Future<void> deleteLocalDishes(
-    Iterable<String> dishIds, {
-    required bool enqueueRemote,
+  Future<void> setFavorite(
+    String dishId, {
+    required bool isFavorite,
   }) async {
+    await (_database.update(_database.dishes)
+          ..where((db.Dishes table) => table.id.equals(dishId)))
+        .write(
+      db.DishesCompanion(isFavorite: Value<bool>(isFavorite)),
+    );
+  }
+
+  Future<void> deleteDishes(Iterable<String> dishIds) {
+    return deleteLocalDishes(dishIds);
+  }
+
+  Future<void> deleteLocalDishes(Iterable<String> dishIds) async {
     final List<String> ids = dishIds
         .map((String id) => id.trim())
         .where((String id) => id.isNotEmpty)
@@ -154,24 +182,6 @@ class DishRepository {
               ))
             .go();
       }
-
-      if (enqueueRemote && dishRows.isNotEmpty) {
-        final String operationId = const Uuid().v4();
-        await _database.into(_database.syncOperations).insert(
-              db.SyncOperationsCompanion.insert(
-                id: operationId,
-                entity: 'dish_collection',
-                entityId: operationId,
-                operationType: 'delete',
-                payloadJson: jsonEncode(<String, Object?>{
-                  'dishIds': dishRows
-                      .map((db.DishRow row) => row.id)
-                      .toList(growable: false),
-                }),
-                createdAt: DateTime.now(),
-              ),
-            );
-      }
     });
 
     await _dishImageCache.remove(
@@ -207,28 +217,16 @@ class DishRepository {
       body: trimmed,
       position: existingNotes.length,
     );
-    await _database.transaction(() async {
-      await _database.into(_database.dishNotes).insert(
-            db.DishNotesCompanion.insert(
-              id: note.id,
-              dishId: note.dishId,
-              body: note.body,
-              position: note.position,
-              createdAt: now,
-              updatedAt: now,
-            ),
-          );
-      await _enqueueSync(
-        note.id,
-        'dish_note',
-        'create',
-        <String, Object?>{
-          'dishId': dishId,
-          'body': trimmed,
-          'position': note.position,
-        },
-      );
-    });
+    await _database.into(_database.dishNotes).insert(
+          db.DishNotesCompanion.insert(
+            id: note.id,
+            dishId: note.dishId,
+            body: note.body,
+            position: note.position,
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
     return note;
   }
 
@@ -237,41 +235,20 @@ class DishRepository {
     if (trimmed.isEmpty) {
       throw ArgumentError.value(body, 'body', 'Note body cannot be blank.');
     }
-    await _database.transaction(() async {
-      await (_database.update(_database.dishNotes)
-            ..where((db.DishNotes table) => table.id.equals(noteId)))
-          .write(
-        db.DishNotesCompanion(
-          body: Value<String>(trimmed),
-          updatedAt: Value<DateTime>(DateTime.now()),
-        ),
-      );
-      await _enqueueSync(
-        noteId,
-        'dish_note',
-        'update',
-        <String, Object?>{'body': trimmed},
-      );
-    });
+    await (_database.update(_database.dishNotes)
+          ..where((db.DishNotes table) => table.id.equals(noteId)))
+        .write(
+      db.DishNotesCompanion(
+        body: Value<String>(trimmed),
+        updatedAt: Value<DateTime>(DateTime.now()),
+      ),
+    );
   }
 
   Future<void> deleteNote(String noteId) async {
-    await _database.transaction(() async {
-      await (_database.update(_database.dishNotes)
-            ..where((db.DishNotes table) => table.id.equals(noteId)))
-          .write(
-        db.DishNotesCompanion(
-          deletedAt: Value<DateTime?>(DateTime.now()),
-          updatedAt: Value<DateTime>(DateTime.now()),
-        ),
-      );
-      await _enqueueSync(
-        noteId,
-        'dish_note',
-        'delete',
-        const <String, Object?>{},
-      );
-    });
+    await (_database.delete(_database.dishNotes)
+          ..where((db.DishNotes table) => table.id.equals(noteId)))
+        .go();
   }
 
   Future<void> updateSections(
@@ -287,20 +264,9 @@ class DishRepository {
           ? const Value<String>.absent()
           : Value<String>(jsonEncode(recipeSteps)),
     );
-    await _database.transaction(() async {
-      await (_database.update(_database.dishes)
-            ..where((db.Dishes table) => table.id.equals(dishId)))
-          .write(patch);
-      await _enqueueSync(
-        dishId,
-        'dish',
-        'update',
-        <String, Object?>{
-          if (ingredients != null) 'ingredients': ingredients,
-          if (recipeSteps != null) 'steps': recipeSteps,
-        },
-      );
-    });
+    await (_database.update(_database.dishes)
+          ..where((db.Dishes table) => table.id.equals(dishId)))
+        .write(patch);
   }
 
   void _insertNotes(Batch batch, Dish dish) {
@@ -361,23 +327,5 @@ class DishRepository {
               ]))
             .get();
     return rows.map((db.DishNoteRow row) => row.toDomain()).toList();
-  }
-
-  Future<void> _enqueueSync(
-    String entityId,
-    String entity,
-    String operationType,
-    Map<String, Object?> payload,
-  ) async {
-    await _database.into(_database.syncOperations).insert(
-          db.SyncOperationsCompanion.insert(
-            id: const Uuid().v4(),
-            entity: entity,
-            entityId: entityId,
-            operationType: operationType,
-            payloadJson: jsonEncode(payload),
-            createdAt: DateTime.now(),
-          ),
-        );
   }
 }

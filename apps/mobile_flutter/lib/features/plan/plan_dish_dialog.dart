@@ -5,6 +5,7 @@ import 'package:mymenu/domain/planning/plan_dates.dart';
 import 'package:mymenu/domain/planning/planned_meal.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/shared/widgets/app_dialog.dart';
+import 'package:mymenu/shared/widgets/local_write_feedback.dart';
 
 const List<String> planLabels = <String>['Lunch', 'Dinner', 'Brunch'];
 
@@ -22,8 +23,8 @@ Future<void> showPlanDishDialog(
   String? initialDishId,
   String? initialLabel,
   PlannedMeal? meal,
-}) {
-  return showDialog<void>(
+}) async {
+  final _PlanDishIntent? intent = await showDialog<_PlanDishIntent>(
     context: context,
     builder: (BuildContext context) {
       return _PlanDishDialog(
@@ -35,6 +36,44 @@ Future<void> showPlanDishDialog(
       );
     },
   );
+  if (intent == null || !context.mounted) {
+    return;
+  }
+  if (intent.remove) {
+    await runLocalWriteWithFeedback(
+      context,
+      () => state.removePlannedMeal(meal!.id),
+    );
+    return;
+  }
+  await runLocalWriteWithFeedback(
+    context,
+    () => state.savePlannedMeal(
+      planId: meal?.id,
+      dayKey: intent.dayKey,
+      dishId: intent.dishId,
+      label: intent.label,
+    ),
+  );
+}
+
+class _PlanDishIntent {
+  const _PlanDishIntent.save({
+    required this.dayKey,
+    required this.dishId,
+    required this.label,
+  }) : remove = false;
+
+  const _PlanDishIntent.remove()
+      : dayKey = '',
+        dishId = '',
+        label = null,
+        remove = true;
+
+  final String dayKey;
+  final String dishId;
+  final String? label;
+  final bool remove;
 }
 
 class _PlanDishDialog extends StatefulWidget {
@@ -124,28 +163,17 @@ class _PlanDishDialogState extends State<_PlanDishDialog> {
   void _selectLabel(String? value) => setState(() => _selectedLabel = value);
 
   void _remove() {
-    widget.state.removePlannedMeal(widget.meal!.id);
-    Navigator.of(context).pop();
+    Navigator.of(context).pop(const _PlanDishIntent.remove());
   }
 
   void _save() {
-    if (_isEditing && widget.meal!.dayKey == _selectedDayKey) {
-      widget.state.updatePlannedMeal(
-        widget.meal!.id,
-        _selectedDishId,
+    Navigator.of(context).pop(
+      _PlanDishIntent.save(
+        dayKey: _selectedDayKey,
+        dishId: _selectedDishId,
         label: _selectedLabel,
-      );
-    } else {
-      if (_isEditing) {
-        widget.state.removePlannedMeal(widget.meal!.id);
-      }
-      widget.state.addPlannedMeal(
-        _selectedDayKey,
-        _selectedDishId,
-        label: _selectedLabel,
-      );
-    }
-    Navigator.of(context).pop();
+      ),
+    );
   }
 }
 

@@ -5,6 +5,7 @@ import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_screen.dart';
 import 'package:mymenu/shared/widgets/app_image.dart';
+import 'package:mymenu/shared/widgets/local_write_feedback.dart';
 
 class DishCard extends StatelessWidget {
   const DishCard({required this.dish, super.key});
@@ -42,7 +43,10 @@ class DishCard extends StatelessWidget {
                   top: 10,
                   right: 10,
                   child: IconButton.filledTonal(
-                    onPressed: () => state.toggleFavorite(dish.id),
+                    onPressed: () => runLocalWriteWithFeedback(
+                      context,
+                      () => state.toggleFavorite(dish.id),
+                    ),
                     icon: Icon(
                       dish.isFavorite ? Icons.favorite : Icons.favorite_border,
                     ),

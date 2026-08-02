@@ -123,17 +123,6 @@ extension MyMenuStateCapturePersistence on MyMenuState {
     return batch;
   }
 
-  Future<void> _createIdeaCapture(String text) async {
-    final AppRepositories? repositories = _repositories;
-    if (repositories == null) {
-      return;
-    }
-    await repositories.captureRepository.createIdeaCapture(text);
-    _startCaptureSyncPollingWindow();
-    await _reloadFromRepositories();
-    await _syncCaptures();
-  }
-
   Future<void> _reloadFromRepositories() async {
     final AppRepositories repositories = _repositories!;
     _processingConsentDecision =

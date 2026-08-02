@@ -5,25 +5,50 @@ import 'package:mymenu/domain/planning/plan_dates.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/dish_artwork.dart';
+import 'package:mymenu/shared/widgets/local_write_feedback.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
 Future<void> showCookAgainSheet(
   BuildContext context,
   MyMenuState state,
   Dish dish,
-) {
-  return showModalBottomSheet<void>(
+) async {
+  final _CookAgainIntent? intent = await showModalBottomSheet<_CookAgainIntent>(
     context: context,
     useSafeArea: true,
     isScrollControlled: true,
-    builder: (_) => _CookAgainSheet(state: state, dish: dish),
+    builder: (_) => _CookAgainSheet(dish: dish),
+  );
+  if (intent == null || !context.mounted) {
+    return;
+  }
+  if (intent.date != null) {
+    await runLocalWriteWithFeedback(
+      context,
+      () => state.addPlannedMeal(
+        dayKeyForDate(intent.date!),
+        dish.id,
+        label: 'Dinner',
+      ),
+    );
+    return;
+  }
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Cooking occasion started.')),
   );
 }
 
-class _CookAgainSheet extends StatelessWidget {
-  const _CookAgainSheet({required this.state, required this.dish});
+class _CookAgainIntent {
+  const _CookAgainIntent.now() : date = null;
 
-  final MyMenuState state;
+  const _CookAgainIntent.plan(this.date);
+
+  final DateTime? date;
+}
+
+class _CookAgainSheet extends StatelessWidget {
+  const _CookAgainSheet({required this.dish});
+
   final Dish dish;
 
   @override
@@ -73,12 +98,10 @@ class _CookAgainSheet extends StatelessWidget {
             title: 'I’m cooking now',
             subtitle: 'Open recipe · group today’s photos',
             primary: true,
-            onTap: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Cooking occasion started.')),
-              );
-            },
+            onTap: () => Navigator.pop(
+              context,
+              const _CookAgainIntent.now(),
+            ),
           ),
           const SizedBox(height: 10),
           _ChoiceRow(
@@ -132,8 +155,7 @@ class _CookAgainSheet extends StatelessWidget {
     if (date == null || !context.mounted) {
       return;
     }
-    state.addPlannedMeal(dayKeyForDate(date), dish.id, label: 'Dinner');
-    Navigator.pop(context);
+    Navigator.pop(context, _CookAgainIntent.plan(date));
   }
 }
 
