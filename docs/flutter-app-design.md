@@ -2,264 +2,127 @@
 
 ## Purpose
 
-This document proposes how to structure MyMenu as a Flutter app inside the current repository, while keeping room for backend code and shared contracts.
+This document is the current Flutter architecture reference for MyMenu. It
+implements the product direction in [product-vision.md](product-vision.md) and
+the server boundary in [supabase-backend-design.md](supabase-backend-design.md).
 
-It is designed around the product vision in [product-vision.md](/Users/yiouchen/dev/my_menu/docs/product-vision.md):
+MyMenu is a device-local personal cooking memory system:
 
-- image-first personal cooking memory
-- offline-first core loop
-- simple navigation
-- local dish knowledge that gets richer over time
-- AI and backend features as enrichment, not prerequisites
+- Drift/SQLite and the app file store own the personal menu
+- every menu read and write is local
+- server AI is optional enrichment, not remote application state
+- a processing outbox coordinates temporary server work
+- account portability never implies menu portability
 
-## Recommendation
+## Core Architecture Rule
 
-If starting fresh, Flutter is a valid choice for MyMenu.
-
-It fits well because:
-
-- cross-platform visual consistency is a priority
-- the app is mostly custom UI, image flows, forms, lists, and detail views
-- offline-first matters
-- the product does not rely on deep platform-native control conventions
-
-I recommend:
-
-- a monorepo layout
-- a dedicated Flutter app folder instead of putting Flutter at repo root
-- local-first architecture with Drift over SQLite
-- Supabase as backend infrastructure, but not as the core client-side data model
-- OpenAPI as the primary app-facing contract format
-- generated Dart types for API DTOs and clients
-- no protobuf as the primary contract layer for Supabase-backed features
-
-## Proposed Repo Structure
-
-Keep the repo multi-project from the start:
-
-```txt
-/
-  apps/
-    mobile_flutter/
-  backend/
-    api/
-    supabase/
-      migrations/
-      functions/
-      seed.sql
-  contracts/
-    openapi/
-      openapi.yaml
-  docs/
-    product-vision.md
-    flutter-app-design.md
-```
-
-### Folder Roles
-
-`apps/mobile_flutter/`
-- The Flutter app
-- UI, navigation, features, local persistence wiring
-
-`backend/api/`
-- Optional custom backend service if product complexity grows beyond direct Supabase usage
-- Likely TypeScript if you want a single backend language for services and functions
-
-`backend/supabase/`
-- migrations
-- SQL functions
-- Edge Functions
-- storage policies
-- auth and RLS setup
-
-`contracts/openapi/openapi.yaml`
-- Source of truth for app-facing HTTP contracts
-- Used to generate strong Dart types and client code
-- Can also generate backend types or stubs for TypeScript and other languages
-
-## Why Not Put Flutter at the Root
-
-I agree with your instinct not to make Flutter the top-level app if the repo will also host backend code.
-
-Benefits:
-
-- cleaner separation between app and backend concerns
-- easier future addition of a web dashboard, admin tool, or scripts
-- simpler CI per project
-- less confusion around toolchains and generated files
-
-Recommended path:
-
-- create the app at `apps/mobile_flutter`
-- reserve root-level `docs/`, `backend/`, and `contracts/` for shared assets and infrastructure
-
-## Architecture Overview
-
-The Flutter app should be local-first.
-
-The most important rule:
-
-- UI reads from local state
-- local database is the source of truth
-- network sync updates the local database
-- background jobs retry failed mutations
-
-That means the app remains usable when offline:
-
-- browsing dishes
-- editing notes
-- planning meals
-- capturing photos
-- queueing AI actions
-
-## App Layers
+The device is the only menu authority.
 
 ```txt
 Flutter UI
-  ->
-Riverpod providers / notifiers
-  ->
-Repositories
-  ->
-Local DB + file store + remote APIs + sync queue
+  -> Riverpod state
+  -> local repositories
+  -> Drift + app-owned files
+
+Optional enrichment:
+
+local processing outbox
+  -> typed processing API
+  -> enrichment proposal
+  -> client validation and local adoption
 ```
 
-### UI Layer
+The UI never waits for a cloud read before showing dishes, notes, plans,
+captures, reviews, or photos. A server response cannot directly mutate those
+objects.
 
-Contains:
+## App Layers
 
-- screens
-- reusable widgets
-- view-specific controllers
-- navigation
+### UI and Feature Layer
 
-Should not:
+Contains screens, widgets, routes, dialogs, and feature controllers.
 
-- call Supabase directly
-- build SQL queries
-- decide sync policy
+Responsibilities:
+
+- render local state
+- collect user intent
+- display processing progress, failures, and review items
+- distinguish local safety from temporary server availability
+
+It must not call Supabase, issue Storage requests, or apply network DTOs
+directly to widgets.
 
 ### Riverpod Layer
 
-Riverpod is for:
+Riverpod provides dependency injection, screen state, async command state, and
+derived views. Providers watch local repositories and local database streams.
 
-- dependency injection
-- screen state
-- async loading state
-- derived state
+Network connectivity is only a hint that processing work may resume. It is not
+a source of truth for whether a request succeeded.
 
-Use:
+### Local Repository Layer
 
-- `Provider` for dependencies and computed state
-- `NotifierProvider` for synchronous feature state
-- `AsyncNotifierProvider` for async feature state
-
-### Repository Layer
-
-Repositories are not a Riverpod concept. They are the domain data boundary.
+Repositories own cooking-domain persistence and invariants.
 
 Examples:
 
 - `DishRepository`
 - `PlanRepository`
 - `CaptureRepository`
-- `SyncRepository`
-- `AiJobRepository`
+- `ReviewRepository`
+- `MediaRepository`
 
-Each repository can combine:
+These repositories depend on Drift and the local file store. They do not
+hydrate from or persist to Supabase.
 
-- Drift
-- file storage
-- Supabase REST/RPC
-- Supabase Storage
-- retry queue
+Local actions such as editing a note, planning a meal, correcting a capture,
+or deleting a dish complete entirely on the device.
 
-### Local Persistence Layer
+### Processing Layer
 
-Use:
+Server assistance is isolated behind processing-specific components:
 
-- `drift`
-- `drift_flutter`
+- `ProcessingOutboxRepository`
+- `ProcessingApiClient`
+- operation-specific contract mappers and validators
+- a retry/foreground polling coordinator
 
-Backed by SQLite.
+This layer may read a snapshot of local data to build a request. It cannot write
+cooking-domain tables except through an explicit, validated adoption
+transaction owned by the relevant local repository.
 
-Store relational domain data locally:
+### Identity and Entitlement Layer
 
-- dishes
-- dish notes
-- ingredients
-- recipe steps
-- source photos
-- planned meals
-- sync jobs
-- AI jobs
+Supabase Auth is separate from the cooking domain.
 
-Store files locally:
+- the app silently creates a guest identity for AI quota
+- optional sign-in restores paid access and allowance
+- signing in or out never replaces, merges, uploads, or deletes the local menu
+- deleting an account returns the installation to guest service
+- erasing the menu is a separate local-only action
 
-- original source photos
-- derived thumbnails
-- generated covers
-
-Use `path_provider` to choose safe app-local directories.
-
-## Recommended Flutter Stack
-
-### Core
-
-- `flutter_riverpod`
-- `go_router`
-- `drift`
-- `drift_flutter`
-- `freezed`
-- `json_serializable`
-- `build_runner`
-
-### Media and File Handling
-
-- `image_picker`
-- `camera` only if you want a custom in-app camera
-- `photo_manager` if you need richer photo-library browsing
-- `path_provider`
-
-### Networking and Backend
-
-- `supabase_flutter`
-- optionally `dio` if you want a separate client for non-Supabase endpoints
-- generated OpenAPI client for app-facing backend APIs if you introduce them
-
-### Background / Sync
-
-- `workmanager`
-- `connectivity_plus` as a hint only, not as truth
-
-### Optional
-
-- `flutter_secure_storage`
-- `cached_network_image`
-- `dio` if your generated OpenAPI client uses it
-
-## Feature-Oriented App Structure
-
-Inside `apps/mobile_flutter/lib`:
+## Recommended Package Structure
 
 ```txt
 lib/
   app/
     app.dart
-    router.dart
     bootstrap.dart
+    router.dart
   core/
     database/
     files/
     network/
     logging/
+    privacy/
     utils/
   domain/
     dishes/
     planning/
     capture/
-    ai/
-    sync/
+    review/
+    processing/
+    account/
   features/
     plan/
     menu/
@@ -267,372 +130,341 @@ lib/
     capture/
     improve_cover/
     review/
+    settings/
   shared/
     widgets/
     theme/
 ```
 
-### Layering Rule
+The existing `domain/sync/` folder is a migration source, not the target name.
+Move reusable local repository behavior to the relevant domain folder and move
+temporary remote work to `domain/processing/`. Do not rename the entire folder
+mechanically; separate cooking logic from replication logic first.
 
-`features/` can depend on:
+Layering rules:
 
-- `domain/`
-- `core/`
-- `shared/`
+- `features/` may depend on `domain/`, `core/`, and `shared/`
+- cooking-domain repositories may depend on Drift and file abstractions
+- `domain/processing/` may depend on the processing API contract
+- `core/` must not depend on feature code
+- no cooking-domain type should depend on a Supabase row type
 
-`domain/` can depend on:
+## Local Persistence
 
-- `core/`
-- shared pure Dart packages
+Use Drift over SQLite for structured state and app-owned directories for media.
 
-`core/` should not depend on feature code.
+### Local Domain Tables
 
-## Offline-First Data Flow
-
-### Read Path
-
-1. UI watches provider
-2. provider watches repository
-3. repository streams rows from Drift
-4. UI updates immediately from local DB
-
-### Write Path
-
-1. UI triggers action
-2. repository writes local change immediately
-3. repository adds sync job if remote write is needed
-4. background sync attempts upload
-5. success marks job complete and updates canonical fields
-6. failure keeps job queued for retry
-
-### AI Path
-
-AI operations should be modeled as jobs, not direct UI dependencies.
-
-Examples:
-
-- group captures into cooking occasions by original local photo date
-- generate dish from idea
-- improve cover image
-
-Flow:
-
-1. user action creates local pending job
-2. UI shows pending state
-3. sync/worker calls Edge Function or API
-4. returned result writes into local DB
-5. UI reacts from local state
-
-This keeps the app responsive even with slow or missing network.
-
-Capture batch grouping uses a durable `batch_grouping` job created in the same
-local transaction as the captures. Imported media keeps the original bytes and
-stores its EXIF original local date when available. Photos with the same local
-date are one cooking occasion; missing-date photos are kept as separate
-occasions. The client finalizes only after every photo upload succeeds, then
-polls sync events until the created dishes are hydrated locally.
-
-## Suggested Drift Schema
-
-Core tables:
+The target local model includes:
 
 - `dishes`
 - `dish_notes`
-- `ingredients`
-- `recipe_steps`
+- `ingredients` or an intentionally embedded ingredient representation
+- `recipe_steps` or an intentionally embedded step representation
 - `source_photos`
 - `planned_meals`
+- `capture_batches`
 - `capture_items`
+- `capture_corrections` when needed for undo/history
 - `review_items`
-- `ai_jobs`
-- `sync_jobs`
+- `processing_outbox`
 
-Suggested extra columns:
+Cooking-domain IDs remain client-generated UUIDs. They are useful as opaque
+references inside one processing request but are never remote canonical IDs.
 
-- `updated_at`
-- `deleted_at` for soft deletes where sync matters
+### Columns to Remove or Reinterpret
+
+Remove fields that exist only for cloud replication:
+
+- sync cursors and server sequence numbers
+- `remote_id`
 - `sync_status`
-- `remote_id` if local and remote identity ever need to diverge
-- `version` or `updated_at` for conflict handling
+- server-hydration flags
+- replication tombstones
+- permanent remote media references
 
-## Sync Strategy with Supabase
+`CaptureItems.remoteMediaRef` should not represent a permanent source. If a
+temporary upload reference is useful during processing, keep it inside the
+processing outbox/asset state and clear it on acknowledgement or expiry.
 
-Use Supabase for:
+`deleted_at` is not required for synchronization. Retain a local deletion or
+undo model only when the UX needs it, with a defined local expiry.
 
-- auth
-- Postgres
-- Storage
-- Realtime where useful
-- Edge Functions for AI orchestration or privileged logic
+### Local Files
 
-Do not use Supabase as a replacement for local app architecture.
+Store original sources, thumbnails, accepted generated covers, and other menu
+media in app-owned local paths. Database rows reference local file IDs or paths,
+not signed URLs.
 
-The mobile app should still own:
+File lifecycle must be transactional in effect:
 
-- local schema
-- sync queue
-- optimistic writes
-- file lifecycle
-- offline behavior
+- stage a captured/downloaded file
+- verify it is readable and complete
+- commit the database reference
+- clean abandoned staging files
+- delete unreferenced media after local domain deletion/undo rules permit it
 
-### Recommended Backend Access Patterns
+Exclude the database and menu media from automatic iCloud and Android cloud
+backup. Use platform sandboxing, device encryption, and strong file protection;
+custom application-level encryption is not part of MVP.
 
-Use three patterns:
+## Local Data Flows
 
-1. direct table access for simple user-owned CRUD
-2. Postgres RPC for structured business operations
-3. Edge Functions for AI or privileged workflows
+### Read Path
 
-Examples:
+1. A widget watches a Riverpod provider.
+2. The provider watches a local repository.
+3. The repository streams Drift rows and local file references.
+4. The UI updates without network access.
 
-- direct table reads for dish lists
-- RPC for "plan this dish on date X" if it needs validation or side effects
-- Edge Function for image analysis or cover generation orchestration
+### Ordinary Write Path
 
-## Shared API Contracts
+1. UI returns a validated user intent.
+2. The local repository applies one Drift/file transaction.
+3. Local providers react.
+4. No network operation is created.
 
-Yes, shared representations are a good idea.
+Examples include note edits, recipe changes, planning, favorites, capture
+corrections, and dish deletion.
 
-But I would separate:
+### Capture Path
 
-- database schema contracts
-- app-facing API contracts
-- internal event/job contracts
+1. Copy/import the original photo into the app file store.
+2. Persist the capture batch/items and original local capture date.
+3. If AI consent is enabled, create a local processing-outbox entry in the same
+   database transaction.
+4. Close the capture UI as soon as the local save succeeds.
+5. If offline, show that the capture is safe locally and organization is
+   waiting.
+6. When connectivity returns, the processing coordinator resumes the outbox.
 
-They should not all be the same thing.
+The local outbox may wait indefinitely before a server job is created. The
+server's 24-hour retention begins only after server job creation.
 
-### Best Fit for MyMenu
+### Processing Submission
 
-For app-facing contracts, prefer:
+For capture grouping, the client builds:
 
-- OpenAPI for the source contract
-- JSON over HTTP
-- generated Dart DTOs and API client
-- generated backend types or server stubs where useful
+- the new capture inputs and original local dates
+- every existing dish's text context: title, description, ingredients, recipe
+  steps, and notes
+- no existing cover or source photos
 
-Recommended location:
+For Improve Cover, it includes only the photos explicitly selected for that
+operation.
+
+The coordinator:
+
+1. ensures a valid guest/account session
+2. creates the typed server job with a random idempotency key
+3. uploads assets to signed targets
+4. submits the temporary text/asset manifest
+5. records the server job ID and expiry locally
+6. polls on foreground/network recovery until terminal state
+
+Retries reuse the same idempotency key. Losing the process between any two
+steps must not create duplicate charges or proposals.
+
+### Result Download and Acknowledgement
+
+1. Validate the response envelope and operation schema.
+2. Download output assets into a staging directory.
+3. Verify file type/hash when supplied.
+4. Persist the enrichment proposal and staged local assets in the outbox.
+5. Acknowledge the server job so remote payloads and assets can be deleted.
+6. Apply or review the proposal entirely from local state.
+
+Acknowledgement does not mean adoption. It means the client has durably
+received everything needed and no longer needs a server copy.
+
+### Proposal Adoption
+
+Adoption is an idempotent local transaction keyed by the processing job/proposal
+ID.
+
+- high-confidence valid matches may automatically attach sources to an existing
+  dish
+- high-confidence new-dish proposals may create the local dish automatically
+- ambiguous results create local review items
+- not-a-dish results remain local capture outcomes
+- generated images become local covers only after the operation's acceptance
+  policy is satisfied
+- every automatic grouping adoption remains locally undoable
+
+If adoption is replayed after a crash, it must detect that the proposal was
+already applied rather than create duplicate dishes or cooking occasions.
+
+## Processing Outbox
+
+The outbox replaces the generic sync queue. Suggested fields:
+
+- `id`
+- `operation_type`
+- `subject_id`
+- `status`
+- `idempotency_key`
+- `input_schema_version`
+- `result_schema_version`
+- `local_input_manifest`
+- `server_job_id`
+- `server_expires_at`
+- `upload_state`
+- `result_payload`
+- `local_output_manifest`
+- `attempt_count`
+- `next_retry_at`
+- `failure_code`
+- `adoption_state`
+- `created_at`
+- `updated_at`
+
+Suggested states:
 
 ```txt
-contracts/
-  openapi/
-    openapi.yaml
+local_pending
+uploading
+submitted
+processing
+downloading
+ready_to_adopt
+needs_review
+adopted
+dismissed
+failed
+expired
+canceled
 ```
 
-Example schema fragment:
+State transitions are local facts about delivery and adoption, not remote menu
+sync status.
 
-```yaml
-components:
-  schemas:
-    ImproveCoverRequest:
-      type: object
-      required: [dishId, sourcePhotoPaths]
-      properties:
-        dishId:
-          type: string
-        sourcePhotoPaths:
-          type: array
-          items:
-            type: string
-        prompt:
-          type: string
-          nullable: true
-```
+## Consent and Privacy UX
 
-This works naturally with:
+Before the first server-assisted AI operation, show one consent screen that:
 
-- a TypeScript backend
-- generated Dart API models
-- generated TypeScript types
-- standard REST
-- local persistence mapping
-- testing
+- explains which new inputs are uploaded
+- explains that capture matching sends existing dish text, including notes and
+  recipes
+- names the AI provider
+- states actual MyMenu and provider retention
+- explains persistent account, entitlement, and content-free quota records
+- makes clear that declining keeps manual/local features available
 
-## Protobuf Evaluation
+Store the consent choice and notice version locally. Include the notice version
+in job requests so the server can reject obsolete contracts without learning
+menu state.
 
-### Short Answer
+Settings must allow the person to disable future AI submission. Disabling it
+does not erase the menu. Pending local jobs should be cancelable before upload;
+active server jobs should be canceled and cleaned up when possible.
 
-I would not use protobuf as the primary contract format between Flutter and Supabase.
+## Offline and Failure Behavior
 
-### Why
+- Local reads and ordinary writes always work without network access.
+- Captures are considered saved only after local file/database persistence.
+- A connectivity signal triggers a retry opportunity but never marks work
+  successful.
+- Server failures leave the local input untouched.
+- Expired server results become retryable local jobs; no menu state is lost.
+- Auth expiration silently renews or creates a guest session without touching
+  the menu.
+- Account sign-out changes entitlement/service access only.
+- Quota exhaustion leaves the proposal request pending or failed with a clear
+  local action; it never rolls back the capture.
 
-Supabase is naturally centered around:
+## Networking and Contracts
 
-- Postgres
-- PostgREST
-- JSON payloads
-- Edge Functions
-- generated TypeScript, Go, and Swift types from schema introspection
+Use JSON over HTTPS with versioned, operation-specific schemas. OpenAPI remains
+a suitable source of truth if code generation materially reduces drift.
 
-That stack is JSON-native, not protobuf-native.
+Keep separate types for:
 
-### What Becomes Awkward with Protobuf
+- local domain entities
+- local processing-outbox rows
+- app-facing processing DTOs
+- internal provider contracts
 
-If you choose protobuf as the main contract layer, you will likely need to add custom translation at the boundaries:
+Do not map server DTOs onto Drift cooking rows automatically. Adoption code is
+the explicit translation boundary.
 
-- Flutter protobuf objects
-- JSON conversion for Edge Functions
-- Postgres row mapping
-- extra codegen and tooling
-- more debugging friction in logs and network inspection
+The client must not:
 
-That is workable, but not elegant.
+- select from Supabase application tables
+- call Postgres RPCs directly
+- hold AI-provider keys
+- treat signed Storage URLs as permanent media references
+- log request bodies, result bodies, filenames, or signed URLs
 
-Also, Supabase's generated types from the CLI currently support TypeScript, Go, and Swift. I did not find first-party Dart generation from the database schema, which means protobuf would not give you a clean official bridge there either.
+## Recommended Flutter Stack
 
-### Where Protobuf Could Still Make Sense
+Keep:
 
-Protobuf is reasonable if one of these becomes true:
+- `flutter_riverpod`
+- `go_router`
+- `drift` and `drift_flutter`
+- `freezed`/`json_serializable` where generated immutable DTOs help
+- `image_picker` and app-owned file management
+- `supabase_flutter` for Auth and Edge Function access
+- `connectivity_plus` only as a retry hint
 
-- you add a separate gRPC backend outside Supabase
-- you have heavy internal event pipelines
-- you need highly structured binary contracts between non-Supabase services
-- you want one schema language for multiple non-JSON consumers
+Use a background-work plugin only after validating real iOS and Android needs.
+Foreground resume plus durable outbox state is the correctness mechanism;
+background execution is an optimization.
 
-For MyMenu, that feels premature.
+## Observability
 
-### Recommendation on Contracts
+Routine logs may contain operation type, local/server job ID, state transition,
+timing, status/error code, schema version, model ID, and token counts. They must
+not contain menu text, prompts, local media paths, filenames, signed URLs,
+provider bodies, or proposal content.
 
-Use:
+An opt-in diagnostic bundle must be generated separately, shown to the person,
+and submitted only after explicit confirmation.
 
-- SQL schema as the source of truth for backend persistence
-- OpenAPI as the source of truth for app-facing HTTP contracts
-- generated Dart API DTOs and clients from OpenAPI
+No product analytics SDK is included in MVP.
 
-Do not make `.proto` the primary contract source unless the backend moves toward gRPC or a separate service mesh.
+## Testing Strategy
 
-## Supabase + Flutter: Recommended Boundary
+Local repository tests:
 
-The cleanest split is:
+- domain writes never enqueue network mutations
+- capture file and database persistence behave atomically
+- deletion cleans local media without server calls
+- proposal adoption is transactional and idempotent
+- ambiguous proposals create local review items
+- automatic adoption supports undo
 
-- Supabase tables and storage hold durable cloud state
-- Flutter Drift schema holds local app state
-- repositories map between the two
-- OpenAPI defines any app-facing custom API surface you add beyond direct Supabase access
+Processing tests:
 
-Important implication:
+- offline work survives restart
+- retries reuse one idempotency key
+- upload/submission/download resume from every intermediate state
+- acknowledgement occurs only after durable local receipt
+- expired remote jobs preserve local inputs and can retry
+- existing photos are excluded from matching payloads
+- menu text is included only after consent
 
-The Drift schema does not need to mirror Supabase 1:1.
+Identity/privacy tests:
 
-It can include app-only tables like:
+- sign-in/sign-out/account deletion never alters local menu rows
+- disabling consent prevents new uploads
+- routine logs redact fixture content and URLs
+- platform backup exclusions cover database and app media
 
-- `pending_uploads`
-- `sync_jobs`
-- `draft_notes`
-- `cover_generation_jobs`
+Structural checks continue to include `dart analyze` and
+`dart run tool/structural_lint.dart` from `apps/mobile_flutter/`.
 
-This is one of the main reasons local DB design should be owned by the app, not by a direct backend client.
+## Delivery Direction
 
-## Example Repository Shape
-
-```dart
-class DishRepository {
-  DishRepository(
-    this.db,
-    this.supabase,
-    this.syncQueue,
-  );
-
-  final AppDatabase db;
-  final SupabaseClient supabase;
-  final SyncQueue syncQueue;
-
-  Stream<List<Dish>> watchDishes() {
-    return db.watchAllDishes();
-  }
-
-  Future<void> addDish(CreateDishInput input) async {
-    final localDish = await db.insertDish(input);
-
-    await syncQueue.enqueue(
-      SyncJob.createDish(localDish.id),
-    );
-  }
-
-  Future<void> refreshFromServer() async {
-    final rows = await supabase.from('dishes').select();
-    await db.upsertRemoteDishes(rows);
-  }
-}
-```
-
-## OpenAPI Code Generation
-
-OpenAPI is a good fit if the backend is TypeScript and the client is Flutter.
-
-Recommended approach:
-
-- author `contracts/openapi/openapi.yaml`
-- generate Dart client/models for Flutter
-- generate TypeScript types or server scaffolding for backend code
-
-For Dart, the most established path is OpenAPI Generator with the `dart-dio` target.
-
-Notes:
-
-- generated Dart network DTOs should usually stay separate from local Drift entities
-- repositories map between generated API types and local app models
-- this separation is especially helpful for offline-first fields like `syncStatus`, `pendingUpload`, or `localPhotoPath`
-
-## Example Riverpod Wiring
-
-```dart
-final dishRepositoryProvider = Provider<DishRepository>((ref) {
-  return DishRepository(
-    ref.watch(appDatabaseProvider),
-    ref.watch(supabaseClientProvider),
-    ref.watch(syncQueueProvider),
-  );
-});
-
-final dishesProvider = StreamProvider<List<Dish>>((ref) {
-  return ref.watch(dishRepositoryProvider).watchDishes();
-});
-```
-
-## Migration / Delivery Plan
-
-If you choose this direction, I would build in this order:
-
-1. Create monorepo folders: `apps/`, `backend/`, `contracts/`
-2. Scaffold Flutter app in `apps/mobile_flutter`
-3. Add `contracts/openapi/openapi.yaml`
-4. Add Riverpod, go_router, Drift, and OpenAPI generation workflow
-5. Implement local schema only
-6. Build MVP UI fully against local DB
-7. Add local file storage for source photos and covers
-8. Add sync jobs table and sync service
-9. Add Supabase auth, storage, and basic CRUD sync
-10. Add TypeScript Edge Functions for AI workflows
-11. Add background retry and conflict handling
+The concrete transition from the current sync-heavy implementation is defined
+in [local-first-transition-plan.md](local-first-transition-plan.md). The key
+rule is to establish local authority and the processing outbox before deleting
+legacy server behavior, even though the server data reset itself is allowed to
+be destructive.
 
 ## Final Recommendation
 
-For MyMenu, the strongest approach is:
-
-- Flutter app in `apps/mobile_flutter`
-- local-first architecture
-- Drift over SQLite for the core app model
-- Supabase for backend infrastructure, not as the app's primary state model
-- OpenAPI in `contracts/openapi/openapi.yaml` for app-facing contracts
-- generated Dart types and API client from OpenAPI
-- no protobuf as the main client/backend contract format
-
-If you want a single sentence summary:
-
-Build Flutter as a local-first client with its own relational model, and let Supabase be the cloud system it syncs with, not the shape the app is forced to think in.
-
-## Sources
-
-- [Flutter offline-first guide](https://docs.flutter.dev/app-architecture/design-patterns/offline-first)
-- [Flutter SQL architecture guide](https://docs.flutter.dev/app-architecture/design-patterns/sql)
-- [Flutter SQLite cookbook](https://docs.flutter.dev/cookbook/persistence/sqlite)
-- [Drift documentation](https://drift.simonbinder.eu/)
-- [drift_flutter package](https://pub.dev/packages/drift_flutter)
-- [protobuf package for Dart](https://pub.dev/packages/protobuf)
-- [protoc_plugin for Dart](https://pub.dev/packages/protoc_plugin)
-- [ProtoJSON format](https://protobuf.dev/programming-guides/json/)
-- [Supabase Flutter quickstart](https://supabase.com/docs/guides/getting-started/quickstarts/flutter)
-- [Supabase Dart/Flutter reference](https://supabase.com/docs/reference/dart/introduction)
-- [Supabase generated types](https://supabase.com/docs/guides/api/rest/generating-types)
-- [Supabase CLI reference](https://supabase.com/docs/reference/cli/introduction)
-- [Supabase Data API](https://supabase.com/docs/guides/api)
+Build MyMenu as a complete local application whose only remote dependency is a
+small, optional processing and service-access API. Drift and the local file
+store contain the product; Supabase supplies temporary computation, identity,
+entitlement, and quota—not a second menu.
