@@ -28,12 +28,13 @@ void main() {
     late AppDatabase database;
     late AppRepositories repositories;
 
-    setUp(() {
+    setUp(() async {
       database = AppDatabase.forTesting(NativeDatabase.memory());
       repositories = AppRepositories(
         database: database,
         apiClient: FakeMyMenuApiClient(),
       );
+      await repositories.processingConsentRepository.acceptCurrentNotice();
     });
 
     tearDown(() async {

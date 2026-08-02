@@ -1,9 +1,14 @@
 part of 'repositories.dart';
 
 class CaptureRepository {
-  CaptureRepository(this._database);
+  CaptureRepository(
+    this._database, [
+    ProcessingOutboxRepository? processingOutboxRepository,
+  ]) : _processingOutboxRepository =
+            processingOutboxRepository ?? ProcessingOutboxRepository(_database);
 
   final db.AppDatabase _database;
+  final ProcessingOutboxRepository _processingOutboxRepository;
   final Uuid _uuid = const Uuid();
   static const int maxBatchItems = 9;
 
@@ -109,6 +114,12 @@ class CaptureRepository {
         captureIds: captureIds,
         now: now,
       );
+      await _processingOutboxRepository.enqueueCaptureGrouping(
+        requestId: jobId,
+        batchId: batchId,
+        captureIds: captureIds,
+        now: now,
+      );
     });
 
     return (await listBatches()).firstWhere(
@@ -159,6 +170,12 @@ class CaptureRepository {
       await _enqueueSync(id, 'capture_batch', 'upsert');
       await _insertGroupingJob(
         jobId: jobId,
+        batchId: id,
+        captureIds: <String>[id],
+        now: now,
+      );
+      await _processingOutboxRepository.enqueueCaptureGrouping(
+        requestId: jobId,
         batchId: id,
         captureIds: <String>[id],
         now: now,
@@ -277,6 +294,10 @@ class CaptureRepository {
           updatedAt: Value<DateTime>(now),
           failureReason: const Value<String?>(null),
         ),
+      );
+      await _processingOutboxRepository.retryCaptureGrouping(
+        batchId: batchId,
+        now: now,
       );
     });
   }

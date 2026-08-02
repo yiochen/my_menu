@@ -19,6 +19,10 @@ import 'package:mymenu/domain/dishes/dish_mappers.dart';
 import 'package:mymenu/domain/dishes/seeded_dishes.dart';
 import 'package:mymenu/domain/planning/planned_meal.dart' as planning_domain;
 import 'package:mymenu/domain/planning/seeded_plan.dart';
+import 'package:mymenu/domain/processing/processing_consent_repository.dart';
+import 'package:mymenu/domain/processing/processing_outbox.dart';
+import 'package:mymenu/domain/processing/processing_outbox_repository.dart';
+import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
 import 'package:uuid/uuid.dart';
 
 part 'repositories_dishes.dart';
@@ -45,7 +49,12 @@ class AppRepositories {
         dishImageCache ?? DishImageCache();
     dishRepository = DishRepository(database, resolvedImageCache);
     planRepository = PlanRepository(database);
-    captureRepository = CaptureRepository(database);
+    processingConsentRepository = ProcessingConsentRepository(database);
+    processingOutboxRepository = ProcessingOutboxRepository(database);
+    captureRepository = CaptureRepository(
+      database,
+      processingOutboxRepository,
+    );
     captureCorrectionRepository = CaptureCorrectionRepository(database);
     aiJobRepository = AiJobRepository(database);
     syncRepository = SyncRepository(
@@ -62,6 +71,8 @@ class AppRepositories {
   late final DishRepository dishRepository;
   late final PlanRepository planRepository;
   late final CaptureRepository captureRepository;
+  late final ProcessingOutboxRepository processingOutboxRepository;
+  late final ProcessingConsentRepository processingConsentRepository;
   late final CaptureCorrectionRepository captureCorrectionRepository;
   late final AiJobRepository aiJobRepository;
   late final SyncRepository syncRepository;

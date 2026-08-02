@@ -112,6 +112,10 @@ extension MyMenuStateSync on MyMenuState {
     if (_repositories == null) {
       return;
     }
+    if (_processingConsentDecision != ProcessingConsentDecision.accepted) {
+      _stopCaptureSyncPolling();
+      return;
+    }
     final bool hasUnresolvedWork = _hasUnresolvedCaptures() ||
         _aiJobs.any((AiJob job) => job.status.isActive);
     if (!hasUnresolvedWork) {
@@ -164,6 +168,9 @@ extension MyMenuStateSync on MyMenuState {
   }
 
   bool _hasLocalWorkWaitingForSync() {
+    if (_processingConsentDecision != ProcessingConsentDecision.accepted) {
+      return false;
+    }
     return _hasLocalCapturesWaitingForUpload() ||
         _aiJobs.any((AiJob job) => job.pendingAction != null);
   }

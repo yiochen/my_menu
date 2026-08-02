@@ -244,6 +244,12 @@ extension SyncRepositoryPull on SyncRepository {
             updatedAt: now,
           ),
         );
+    if (batch.status == 'applied') {
+      await ProcessingOutboxRepository(_database).markAdoptedForSubject(
+        kind: ProcessingRequestKind.captureGrouping,
+        subjectId: batch.id,
+      );
+    }
   }
 
   Future<bool> _captureExists(String captureId) async {
@@ -335,6 +341,13 @@ extension SyncRepositoryPull on SyncRepository {
             failureReason: Value<String?>(capture.failureReason),
           ),
         );
+    final String? batchId = existing?.batchId ?? capture.batchId;
+    if (batchId != null && capture.status == 'needs_review') {
+      await ProcessingOutboxRepository(_database).markProposalReadyForSubject(
+        kind: ProcessingRequestKind.captureGrouping,
+        subjectId: batchId,
+      );
+    }
   }
 
   Future<void> _upsertReviewItem(ApiReviewItem item) async {

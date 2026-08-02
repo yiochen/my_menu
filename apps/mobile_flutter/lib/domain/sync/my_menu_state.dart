@@ -15,6 +15,8 @@ import 'package:mymenu/domain/dishes/seeded_dishes.dart';
 import 'package:mymenu/domain/planning/plan_dates.dart';
 import 'package:mymenu/domain/planning/planned_meal.dart';
 import 'package:mymenu/domain/planning/seeded_plan.dart';
+import 'package:mymenu/domain/processing/processing_consent_prompt.dart';
+import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
 import 'package:mymenu/domain/sync/repositories.dart';
 
 part 'my_menu_state_capture.dart';
@@ -26,6 +28,7 @@ part 'my_menu_state_dishes.dart';
 part 'my_menu_state_dish_deletion.dart';
 part 'my_menu_state_planning.dart';
 part 'my_menu_state_sync.dart';
+part 'my_menu_state_processing.dart';
 
 class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
   MyMenuState({
@@ -38,6 +41,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
         _captureCorrections = const <CaptureCorrection>[],
         _aiJobs = const <AiJob>[],
         _reviewItems = List<ReviewItem>.of(seededReviewItems),
+        _processingConsentDecision = ProcessingConsentDecision.notDecided,
         _extraPlanDays = 0,
         _repositories = repositories,
         _networkStatusMonitor = networkStatusMonitor {
@@ -46,7 +50,8 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
       _networkStatusSubscription = _networkStatusMonitor?.changes.listen((_) {
         _handleNetworkStatusChange();
       });
-      unawaited(_bootstrapRepositories());
+      _repositoryBootstrap = _bootstrapRepositories();
+      unawaited(_repositoryBootstrap);
     }
   }
 
@@ -59,6 +64,8 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
     List<CaptureCorrection> captureCorrections = const <CaptureCorrection>[],
     List<AiJob> aiJobs = const <AiJob>[],
     List<ReviewItem> reviewItems = const <ReviewItem>[],
+    ProcessingConsentDecision processingConsentDecision =
+        ProcessingConsentDecision.notDecided,
   })  : _dishes = List<Dish>.of(dishes),
         _plan = List<PlannedMeal>.of(plan),
         _captureBatches = List<CaptureBatch>.of(captureBatches),
@@ -66,6 +73,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
         _captureCorrections = List<CaptureCorrection>.of(captureCorrections),
         _aiJobs = List<AiJob>.of(aiJobs),
         _reviewItems = List<ReviewItem>.of(reviewItems),
+        _processingConsentDecision = processingConsentDecision,
         _extraPlanDays = 0,
         _repositories = null,
         _networkStatusMonitor = null;
@@ -89,6 +97,11 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
   bool _isSyncingCaptures = false;
   Timer? _captureSyncTimer;
   DateTime? _captureSyncPollingDeadline;
+  Future<void>? _repositoryBootstrap;
+  ProcessingConsentDecision _processingConsentDecision;
+  ProcessingConsentRequest? _pendingProcessingConsentRequest;
+  Completer<ProcessingConsentDecision>? _processingConsentCompleter;
+  int _nextProcessingConsentRequestId = 1;
   static const Duration _captureSyncPollInterval = Duration(seconds: 5);
   static const Duration _captureSyncPollWindow = Duration(minutes: 2);
   List<Dish> get dishes => List<Dish>.unmodifiable(
@@ -119,6 +132,10 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
           (ReviewItem item) => !_pendingCaptureIds.contains(item.captureId),
         ),
       );
+  ProcessingConsentDecision get processingConsentDecision =>
+      _processingConsentDecision;
+  ProcessingConsentRequest? get pendingProcessingConsentRequest =>
+      _pendingProcessingConsentRequest;
   @override
   void dispose() {
     if (_repositories != null) {
@@ -333,27 +350,17 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
         .toList(growable: false);
     if (item.imageRef != null) {
       _dishes = <Dish>[
-        _dishFromPhotoReview(item, _dishes.length, _templateFor(item.summary)),
+        _dishFromPhotoReview(
+          item,
+          _dishes.length,
+          _templateFor(item.summary),
+        ),
         ..._dishes,
       ];
       notifyListeners();
       return;
     }
     addIdea(item.summary);
-  }
-
-  Dish _templateFor(String text) {
-    final String normalized = text.toLowerCase();
-    if (normalized.contains('pho') || normalized.contains('noodle')) {
-      return dishById('dish_pho');
-    }
-    if (normalized.contains('salmon') || normalized.contains('bowl')) {
-      return dishById('dish_salmon');
-    }
-    if (normalized.contains('katsu') || normalized.contains('curry')) {
-      return dishById('dish_katsu');
-    }
-    return dishById('dish_linguine');
   }
 
   void _attachCook(
@@ -388,13 +395,5 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
     if (notify) {
       notifyListeners();
     }
-  }
-
-  String _titleCase(String input) {
-    return input
-        .split(' ')
-        .where((String part) => part.trim().isNotEmpty)
-        .map((String part) => '${part[0].toUpperCase()}${part.substring(1)}')
-        .join(' ');
   }
 }

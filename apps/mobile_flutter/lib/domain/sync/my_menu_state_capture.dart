@@ -1,5 +1,29 @@
 part of 'my_menu_state.dart';
 
+extension _MyMenuStateCaptureTemplates on MyMenuState {
+  Dish _templateFor(String text) {
+    final String normalized = text.toLowerCase();
+    if (normalized.contains('pho') || normalized.contains('noodle')) {
+      return dishById('dish_pho');
+    }
+    if (normalized.contains('salmon') || normalized.contains('bowl')) {
+      return dishById('dish_salmon');
+    }
+    if (normalized.contains('katsu') || normalized.contains('curry')) {
+      return dishById('dish_katsu');
+    }
+    return dishById('dish_linguine');
+  }
+}
+
+String _titleCase(String input) {
+  return input
+      .split(' ')
+      .where((String part) => part.trim().isNotEmpty)
+      .map((String part) => '${part[0].toUpperCase()}${part.substring(1)}')
+      .join(' ');
+}
+
 List<ReviewItem> _reviewItemsWithPhotoCaptures(
   List<String> imageRefs,
   List<ReviewItem> currentItems,

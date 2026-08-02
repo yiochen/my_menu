@@ -135,6 +135,8 @@ extension MyMenuStateCapturePersistence on MyMenuState {
 
   Future<void> _reloadFromRepositories() async {
     final AppRepositories repositories = _repositories!;
+    _processingConsentDecision =
+        await repositories.processingConsentRepository.currentDecision();
     final Set<String> pendingDishIds = _pendingDishDeletionIds;
     final Set<String> pendingCaptureIds = _pendingDishCaptureIds;
     final Set<String> pendingBatchIds = _pendingDishBatchIds;

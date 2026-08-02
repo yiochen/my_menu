@@ -20,6 +20,8 @@ void main() {
 
       await tester.tap(find.byKey(const ValueKey('capture_fab')));
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Not now'));
+      await tester.pumpAndSettle();
       await tester.scrollUntilVisible(
         find.text('Add Idea'),
         120,

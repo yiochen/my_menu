@@ -161,6 +161,11 @@ Map<String, Object?>? _decodeOptionalObject(String? value) {
 
 extension SyncRepositoryAiJobs on SyncRepository {
   Future<void> processPendingAiJobs() async {
+    final ProcessingConsentDecision consent =
+        await ProcessingConsentRepository(_database).currentDecision();
+    if (consent != ProcessingConsentDecision.accepted) {
+      return;
+    }
     final List<db.AiJobRow> rows = await (_database.select(_database.aiJobs)
           ..where((db.AiJobs table) => table.pendingAction.isNotNull())
           ..where(
