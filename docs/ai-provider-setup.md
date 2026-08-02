@@ -1,9 +1,15 @@
 # AI provider setup
 
+> **Transition status:** This file describes the current pre-transition worker
+> and deployment names. The target processing and retention architecture is in
+> [Supabase Service Backend Design](supabase-backend-design.md). Do not treat a
+> provider/model as production-approved until its no-training and retention
+> configuration has been verified against that design.
+
 MyMenu calls model vendors directly. It does not use OpenRouter or the Vercel
 AI Gateway.
 
-The first production configuration is Google Gemini:
+The current implementation is configured for Google Gemini:
 
 - provider: `google`
 - model:
@@ -68,10 +74,11 @@ flutter run \
   --dart-define=SUPABASE_ANON_KEY='<project-anon-key>'
 ```
 
-Take or import one to nine food photos. The app uploads the originals, queues a
-durable grouping job, and can be closed while Gemini works. Recent Captures
-shows queued/running/retrying/failed state; a completed batch appears as one or
-more new dishes with the source photos attached.
+Take or import one to nine food photos. The current app uploads the originals,
+queues a grouping job, and can be closed while Gemini works. Recent Captures
+shows queued/running/retrying/failed state. This server-applied result flow is
+legacy behavior that the local-first transition replaces with a proposal the
+client downloads and adopts locally.
 
 If processing fails, use **Retry organization**. The original captures stay
 unchanged until the grouping result is validated and atomically applied.

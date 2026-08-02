@@ -292,7 +292,7 @@ AI should help with:
 
 - Classifying captures
 - Deciding whether a capture belongs to an existing dish
-- Creating new dish records
+- Proposing new dish drafts for the app to adopt locally
 - Generating dish names and descriptions
 - Drafting ingredients and recipe steps
 - Improving cover images
@@ -324,16 +324,16 @@ The app should work offline for:
 - Weekly planned meals
 - Review queue
 
-Network is required only for cloud features such as:
+Network is required only for server-assisted features such as:
 
 - AI dish classification
 - AI recipe generation
 - AI cover generation
-- Backup/sync
-- Public sharing
-- Multi-device support
+- Account entitlement and AI quota status
 
-Local SQLite should be the source of truth. Remote storage should sync with it.
+Local SQLite and the app file store are the only source of truth for the
+personal menu. MyMenu does not provide automatic cloud backup, menu sync, or
+multi-device menu recovery.
 
 ## Backend Direction
 
@@ -342,23 +342,26 @@ The intended V1 backend direction is:
 ```txt
 Local SQLite
 ↓
-Sync queue
+Processing outbox
 ↓
-Supabase
+Ephemeral Supabase processing job
 ↓
-AI Edge Functions
+AI provider
+↓
+Enrichment proposal returned to the device
 ```
 
-Supabase should eventually handle:
+Supabase should handle:
 
-- Auth
-- Postgres storage
-- Row Level Security
-- Source photo storage
-- Dish cover storage
-- Remote sync
-- Public menu sharing
+- Guest and optional signed-in identity
+- Paid entitlement and AI quota
+- Content-free usage records
+- Expiring processing-job metadata and media
 - AI service calls through Edge Functions
+
+Supabase should not store or mutate dishes, recipes, notes, plans, captures,
+reviews, source libraries, or permanent covers. The server returns proposals;
+the client validates and adopts them locally.
 
 API keys should never live in the mobile app.
 
@@ -453,25 +456,26 @@ The core is:
 ### V1
 
 - Offline-first SQLite
-- Supabase backend
-- Auth
-- Remote sync
-- Source photo upload
+- Device-local media storage
+- Guest processing without required sign-in
+- Optional account identity for paid access and quota portability
+- Ephemeral Supabase processing jobs
 - Real AI classification
 - Real AI cover improvement
-- Public menu sharing
+- Versioned AI consent and retention disclosure
 - Basic usage metering
-- Privacy/export/delete flows
+- Separate account deletion and local-menu erasure flows
 
 ### Later
 
 - Recipe web search enrichment
-- Cookbook export
+- Encrypted cookbook export/import
 - Subscriptions or AI credits
 - Custom themes
 - Advanced planning
 - Family cookbook mode
 - Printed cookbook product
+- Explicit public publishing, designed separately from menu sync
 
 ## Core UX Principles
 
