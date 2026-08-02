@@ -8,6 +8,7 @@ import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_correction.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
+import 'package:mymenu/domain/capture/captured_photo.dart';
 import 'package:mymenu/domain/capture/review_item.dart';
 import 'package:mymenu/domain/capture/seeded_review_items.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
@@ -16,6 +17,7 @@ import 'package:mymenu/domain/planning/plan_dates.dart';
 import 'package:mymenu/domain/planning/planned_meal.dart';
 import 'package:mymenu/domain/planning/seeded_plan.dart';
 import 'package:mymenu/domain/processing/processing_consent_prompt.dart';
+import 'package:mymenu/domain/processing/processing_outbox.dart';
 import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
 import 'package:mymenu/domain/sync/repositories.dart';
 import 'package:uuid/uuid.dart';
@@ -30,6 +32,7 @@ part 'my_menu_state_dish_deletion.dart';
 part 'my_menu_state_planning.dart';
 part 'my_menu_state_sync.dart';
 part 'my_menu_state_processing.dart';
+part 'my_menu_state_photos.dart';
 
 class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
   MyMenuState({
@@ -43,6 +46,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
         _captureItems = const <CaptureItem>[],
         _captureCorrections = const <CaptureCorrection>[],
         _aiJobs = const <AiJob>[],
+        _processingRequests = const <ProcessingOutboxRequest>[],
         _reviewItems = repositories == null
             ? List<ReviewItem>.of(seededReviewItems)
             : const <ReviewItem>[],
@@ -68,6 +72,8 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
     List<CaptureItem> captureItems = const <CaptureItem>[],
     List<CaptureCorrection> captureCorrections = const <CaptureCorrection>[],
     List<AiJob> aiJobs = const <AiJob>[],
+    List<ProcessingOutboxRequest> processingRequests =
+        const <ProcessingOutboxRequest>[],
     List<ReviewItem> reviewItems = const <ReviewItem>[],
     ProcessingConsentDecision processingConsentDecision =
         ProcessingConsentDecision.notDecided,
@@ -77,6 +83,9 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
         _captureItems = List<CaptureItem>.of(captureItems),
         _captureCorrections = List<CaptureCorrection>.of(captureCorrections),
         _aiJobs = List<AiJob>.of(aiJobs),
+        _processingRequests = List<ProcessingOutboxRequest>.of(
+          processingRequests,
+        ),
         _reviewItems = List<ReviewItem>.of(reviewItems),
         _processingConsentDecision = processingConsentDecision,
         _extraPlanDays = 0,
@@ -89,6 +98,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
   List<CaptureItem> _captureItems;
   List<CaptureCorrection> _captureCorrections;
   List<AiJob> _aiJobs;
+  List<ProcessingOutboxRequest> _processingRequests;
   List<ReviewItem> _reviewItems;
   int? _extraPlanDays;
   final AppRepositories? _repositories;
@@ -136,6 +146,23 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
         _reviewItems.where(
           (ReviewItem item) => !_pendingCaptureIds.contains(item.captureId),
         ),
+      );
+  List<ProcessingOutboxRequest> get processingRequests =>
+      List<ProcessingOutboxRequest>.unmodifiable(_processingRequests);
+  List<CapturedPhoto> get photos => List<CapturedPhoto>.unmodifiable(
+        buildCapturedPhotos(
+          items: captureItems,
+          dishes: dishes,
+          reviewItems: reviewItems,
+          processingRequests: processingRequests,
+        ),
+      );
+  int get unorganizedPhotoCount =>
+      photos.where((CapturedPhoto photo) => !photo.isOrganized).length;
+  int get organizedPhotoCount =>
+      photos.where((CapturedPhoto photo) => photo.isOrganized).length;
+  bool get isOrganizingPhotos => photos.any(
+        (CapturedPhoto photo) => photo.state == CapturedPhotoState.organizing,
       );
   ProcessingConsentDecision get processingConsentDecision =>
       _processingConsentDecision;

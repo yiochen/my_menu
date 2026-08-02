@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "goal": "Help a home cook capture first, keep browsing while photos organize, inspect and durably correct grouping, recover uncertain or non-dish photos without a permanent inbox, manage and bulk-delete dishes safely from Menu, build trustworthy cooking-event history, improve a dish cover safely, and plan one or more dishes for any selected day.",
+  "goal": "Help a home cook capture first, browse every local photo immediately, understand organization quietly, manually assign or correct any photo, manage dishes safely from Menu, build trustworthy cooking-event history, improve a dish cover safely, and plan one or more dishes for any selected day.",
   "delivery": {
     "screens": [
       "plan.iphone-14",
@@ -10,25 +10,31 @@
       "plan-removed.iphone-14",
       "menu.iphone-14",
       "menu-scrolled.iphone-14",
+      "menu-processing.iphone-14",
       "menu-delete-select.iphone-14",
       "menu-delete-confirm.iphone-14",
       "menu-dishes-deleted.iphone-14",
       "menu-empty.iphone-14",
       "menu-search-empty.iphone-14",
+      "photos.iphone-14",
+      "photos-unorganized.iphone-14",
+      "photos-organized.iphone-14",
+      "photos-dense.iphone-14",
+      "photos-empty.iphone-14",
+      "photo-detail-unorganized.iphone-14",
+      "photo-detail-organizing.iphone-14",
+      "photo-detail-review.iphone-14",
+      "photo-detail-organized.iphone-14",
+      "photo-detail-actions.iphone-14",
+      "photo-assign.iphone-14",
+      "photo-assigned.iphone-14",
+      "photo-delete-confirm.iphone-14",
+      "photo-deleted.iphone-14",
       "dish-detail.iphone-14",
       "dish-memory.iphone-14",
       "dish-recipe.iphone-14",
       "cook-again.iphone-14",
       "capture.iphone-14",
-      "menu-processing.iphone-14",
-      "processing-status.iphone-14",
-      "batch-outcome.iphone-14",
-      "batch-correct.iphone-14",
-      "batch-move.iphone-14",
-      "batch-split.iphone-14",
-      "batch-corrected.iphone-14",
-      "batch-sync-error.iphone-14",
-      "batch-undone.iphone-14",
       "capture-matched.iphone-14",
       "capture-created.iphone-14",
       "capture-offline.iphone-14",
@@ -37,12 +43,6 @@
       "add-idea-validation.iphone-14",
       "review.iphone-14",
       "review-search-empty.iphone-14",
-      "unsorted-photos.iphone-14",
-      "unsorted-photo-actions.iphone-14",
-      "unsorted-assign.iphone-14",
-      "unsorted-assigned.iphone-14",
-      "unsorted-delete.iphone-14",
-      "unsorted-deleted.iphone-14",
       "improve-cover.iphone-14",
       "improve-cover-generating.iphone-14",
       "improve-cover-result.iphone-14",
@@ -55,8 +55,8 @@
     {
       "id": "stable-two-tab-shell",
       "kind": "screen-family",
-      "description": "Plan and Menu keep the stable floating Plan–capture–Menu shell; Menu carries a compact circular contextual count badge for captures needing attention, with no permanent Capture or Review tab and no competing empty-state capture button.",
-      "screens": ["plan.iphone-14", "plan-next-week.iphone-14", "menu.iphone-14", "menu-scrolled.iphone-14", "menu-empty.iphone-14", "menu-search-empty.iphone-14"]
+      "description": "Plan and Menu keep the stable floating Plan–capture–Menu shell; Dishes remains the default Menu surface and a compact Photos button opens the dedicated gallery, with no permanent Capture, Inbox, Review, or Photos tab and no competing empty-state capture button.",
+      "screens": ["plan.iphone-14", "plan-next-week.iphone-14", "menu.iphone-14", "menu-scrolled.iphone-14", "menu-processing.iphone-14", "menu-empty.iphone-14", "menu-search-empty.iphone-14", "photos.iphone-14", "photos-unorganized.iphone-14", "photos-empty.iphone-14"]
     },
     {
       "id": "single-day-multi-dish-planning",
@@ -79,26 +79,26 @@
     {
       "id": "automatic-capture-happy-path",
       "kind": "flow",
-      "description": "Take Photo and Import Photos capture without a destination decision; starting upload closes Capture automatically, returns to Menu with one temporary organizing dish card for the batch, and preserves automatic existing-dish and new-dish outcomes, with the created-dish result presented as a full screen rather than a popup.",
-      "screens": ["capture.iphone-14", "menu-processing.iphone-14", "capture-matched.iphone-14", "capture-created.iphone-14"]
+      "description": "Take Photo and Import Photos capture without a destination decision; the local save closes Capture and places the real photo immediately in Photos with a quiet Organizing overlay while automatic existing-dish and new-dish outcomes remain reversible.",
+      "screens": ["capture.iphone-14", "photos-unorganized.iphone-14", "photo-detail-organizing.iphone-14", "capture-matched.iphone-14", "capture-created.iphone-14"]
     },
     {
       "id": "visible-background-processing",
       "kind": "flow",
-      "description": "The temporary organizing dish card occupies the expected newest-dish position, has a reduced-motion-safe loading treatment, opens detailed locally-saved, upload, organization, and review status, and can be dismissed without cancelling work.",
-      "screens": ["menu-processing.iphone-14", "processing-status.iphone-14", "batch-outcome.iphone-14"]
+      "description": "A newly saved photo remains fully viewable and manually organizable while background work is represented by a reduced-motion-safe animated Photos entry and one quiet Organizing overlay; either path opens usable photos rather than a technical job-status screen, and leaving detail does not cancel work.",
+      "screens": ["menu-processing.iphone-14", "photos-unorganized.iphone-14", "photo-detail-organizing.iphone-14", "photo-detail-unorganized.iphone-14"]
     },
     {
-      "id": "correctable-batch-outcome",
+      "id": "photo-tile-detail-behavior",
       "kind": "flow",
-      "description": "A completed capture visibly reconciles 4 photos into 3 dish groups and shows every source thumbnail exactly once; correction teaches users to select one or more photos and drag them together onto another visible dish, or onto two dedicated drop zones for searching the full Menu or creating one new dish, with tappable alternatives to every drag action and no technical batch language.",
-      "screens": ["batch-outcome.iphone-14", "batch-correct.iphone-14", "batch-move.iphone-14", "batch-split.iphone-14"]
+      "description": "Tapping any gallery tile opens an image-dominant photo detail state: unorganized photos expose Add to dish and Create new dish, organizing photos stay usable with Organize now, review photos present a clear local confirmation decision, and organized photos expose their dish plus View dish and Change dish paths.",
+      "screens": ["photos.iphone-14", "photo-detail-unorganized.iphone-14", "photo-detail-organizing.iphone-14", "photo-detail-review.iphone-14", "photo-detail-organized.iphone-14"]
     },
     {
-      "id": "durable-correction-and-undo",
+      "id": "durable-photo-organization-and-undo",
       "kind": "flow",
-      "description": "A move applies locally first, updates both visible group counts, is visibly marked as user-authored, remains safe across offline/restart and AI retry, supports atomic Undo of the latest eligible change, and shows authoritative rollback plus recovery when sync rejects stale state.",
-      "screens": ["batch-corrected.iphone-14", "batch-undone.iphone-14", "batch-sync-error.iphone-14"]
+      "description": "A manual assignment applies locally first, moves the photo from Unorganized to Organized, identifies the chosen dish, offers atomic Undo, and is documented as authoritative over late AI proposals and safe across offline restart or retry.",
+      "screens": ["photo-assign.iphone-14", "photo-assigned.iphone-14", "photo-detail-organized.iphone-14"]
     },
     {
       "id": "capture-offline-and-permission-recovery",
@@ -115,26 +115,26 @@
     {
       "id": "contextual-ai-review-and-search-recovery",
       "kind": "flow",
-      "description": "Review remains contextual behind the Menu navigation count pill, uses unambiguous progress wording, supports existing-dish and new-dish outcomes, and demonstrates an empty alternate-dish search with clear query correction.",
-      "screens": ["menu.iphone-14", "review.iphone-14", "review-search-empty.iphone-14"]
+      "description": "AI uncertainty appears contextually as a restrained Review overlay and Unorganized filter count; opening that photo supports confirming the suggested dish, choosing another dish, or creating a new one, while alternate-dish search demonstrates clear query recovery.",
+      "screens": ["photos-unorganized.iphone-14", "photo-detail-review.iphone-14", "review-search-empty.iphone-14"]
     },
     {
-      "id": "contextual-unsorted-photos",
+      "id": "photo-gallery-filters-and-status",
       "kind": "screen-family",
-      "description": "Uncertain and non-dish captures never become dish cards automatically; when present, a contextual Menu card opens a recoverable Unsorted Photos collection that labels why each photo was held and disappears when empty, without creating a permanent tab or inbox.",
-      "screens": ["menu-processing.iphone-14", "unsorted-photos.iphone-14"]
+      "description": "Photos is a first-class image-dominant gallery inside Menu with All 18, Unorganized 5, and Organized 13 filters derived from local dish assignment; one subtle overlay per tile prioritizes Review, Couldn't organize, Organizing, Unorganized, then the assigned dish name without exposing upload or outbox vocabulary.",
+      "screens": ["photos.iphone-14", "photos-unorganized.iphone-14", "photos-organized.iphone-14"]
     },
     {
-      "id": "manual-unsorted-assignment",
+      "id": "manual-photo-assignment",
       "kind": "flow",
-      "description": "An unsorted photo exposes one primary Assign to dish action, supports search and suggested existing dishes, creates one source in the captured-date cooking occasion, removes the item from Unsorted, and marks the association as durable user intent.",
-      "screens": ["unsorted-photo-actions.iphone-14", "unsorted-assign.iphone-14", "unsorted-assigned.iphone-14"]
+      "description": "An unorganized photo exposes one primary Add to dish action, supports search and suggested existing dishes, creates one source in the captured-date cooking occasion, changes the reconciled counts from 5/13 to 4/14, and marks the association as durable user intent with Undo.",
+      "screens": ["photo-detail-unorganized.iphone-14", "photo-assign.iphone-14", "photo-assigned.iphone-14"]
     },
     {
-      "id": "recoverable-unsorted-deletion",
+      "id": "recoverable-photo-deletion",
       "kind": "flow",
-      "description": "Delete remains subordinate until a single destructive confirmation, clearly scopes removal to MyMenu local and synced storage, returns to the collection with a decremented count, and offers a short Undo path before permanent removal.",
-      "screens": ["unsorted-photo-actions.iphone-14", "unsorted-delete.iphone-14", "unsorted-deleted.iphone-14"]
+      "description": "Delete remains subordinate in an overflow until a single destructive confirmation, clearly scopes removal to MyMenu while preserving the phone-library original and dish, returns to Unorganized with counts changed from 18/5/13 to 17/4/13, and offers a short Undo path before permanent removal.",
+      "screens": ["photo-detail-actions.iphone-14", "photo-delete-confirm.iphone-14", "photo-deleted.iphone-14"]
     },
     {
       "id": "successful-cover-improvement",
@@ -163,26 +163,50 @@
     {
       "id": "clear-menu-count-and-controls",
       "kind": "screen-family",
-      "description": "Menu labels the normal collection as 24 and the two-dish deletion result as 22 beside the All dishes heading, keeps an icon-only filter trigger fixed left of a separator and compact horizontally scrolling All, Favorites, and Recently added controls, uses icon-only newest/oldest sorting, and covers a search-empty state.",
+      "description": "Dishes labels the normal collection as 24 and the two-dish deletion result as 22 beside the All dishes heading, keeps an icon-only filter trigger fixed left of compact All, Favorites, and Recently added controls, uses icon-only newest/oldest sorting, and preserves the compact Photos entry in its search-empty state.",
       "screens": ["menu.iphone-14", "menu-dishes-deleted.iphone-14", "menu-search-empty.iphone-14"]
+    },
+    {
+      "id": "menu-photo-entry-status",
+      "kind": "flow",
+      "description": "The shortened Dishes search leaves a stable trailing Photos button: neutral means no background work or unorganized photos, a stationary orange count means manual organization is available, and a subtle orbit plus sparkle means AI organization is active. The animation respects reduced motion, never shows a job count, and tapping opens the dedicated Photos gallery—on Unorganized when attention is needed—with a clear back path to Dishes.",
+      "screens": ["menu.iphone-14", "menu-scrolled.iphone-14", "menu-processing.iphone-14", "menu-empty.iphone-14", "menu-search-empty.iphone-14", "photos.iphone-14", "photos-unorganized.iphone-14", "photos-empty.iphone-14"]
+    },
+    {
+      "id": "photo-gallery-state-coverage",
+      "kind": "screen-family",
+      "description": "The Photos collection covers empty, typical, dense/long-scroll, missing-thumbnail, background-processing, review, organization failure, unorganized, and organized states while keeping image tiles dominant, date groups stable, selection discoverable, and fixed navigation clear on every configured phone.",
+      "screens": ["photos.iphone-14", "photos-unorganized.iphone-14", "photos-organized.iphone-14", "photos-dense.iphone-14", "photos-empty.iphone-14"]
     },
     {
       "id": "bulk-menu-dish-deletion",
       "kind": "flow",
-      "description": "Long-pressing a finished Menu card gives haptic feedback, selects it, and replaces the sticky search utility bar with a close–count–Select all header; assistive technologies expose a semantic Select dish action without requiring the gesture. Multi-select works across current filtered results without opening dishes, allows ideas and dishes with no history, excludes temporary processing placeholders, keeps destructive emphasis subordinate until one confirmation names the selected dishes and scopes dependent MyMenu removal while preserving phone-library originals, then applies locally, updates 24 to 22, and offers one atomic Undo.",
-      "screens": ["menu.iphone-14", "menu-processing.iphone-14", "menu-delete-select.iphone-14", "menu-delete-confirm.iphone-14", "menu-dishes-deleted.iphone-14"]
+      "description": "Long-pressing a finished dish gives haptic feedback, selects it, and replaces Dishes collection chrome with a close–count–Select all header; assistive technologies expose a semantic Select dish action without requiring the gesture. Multi-select works across current filtered results without opening dishes, allows ideas and dishes with no history, keeps destructive emphasis subordinate until one confirmation names the selected dishes and scopes dependent MyMenu removal while preserving phone-library originals, then applies locally, updates 24 to 22, and offers one atomic Undo.",
+      "screens": ["menu.iphone-14", "menu-delete-select.iphone-14", "menu-delete-confirm.iphone-14", "menu-dishes-deleted.iphone-14"]
     },
     {
       "id": "compact-sticky-menu-header",
       "kind": "screen-family",
-      "description": "Every Menu collection state removes the tagline, oversized My Menu title, decorative avatar, header count badge, and persistent Select label in favor of compact fixed search-and-filter chrome; its shadow appears only when scroll position is greater than zero, filters never leave the fixed region, and selection replaces search in place.",
-      "screens": ["menu.iphone-14", "menu-scrolled.iphone-14", "menu-processing.iphone-14", "menu-delete-select.iphone-14", "menu-delete-confirm.iphone-14", "menu-dishes-deleted.iphone-14", "menu-empty.iphone-14", "menu-search-empty.iphone-14"]
+      "description": "Every normal Menu state uses compact fixed chrome: Dishes pairs shortened search with the trailing Photos status button and quick filters, while Photos uses a back action, title/count, organization filters, and Select. Chrome gains a shadow only after scrolling, and selection replaces collection controls in place.",
+      "screens": ["menu.iphone-14", "menu-scrolled.iphone-14", "menu-processing.iphone-14", "menu-delete-select.iphone-14", "menu-delete-confirm.iphone-14", "menu-dishes-deleted.iphone-14", "menu-empty.iphone-14", "menu-search-empty.iphone-14", "photos.iphone-14", "photos-dense.iphone-14", "photos-empty.iphone-14"]
     },
     {
       "id": "menu-empty-single-capture-action",
       "kind": "screen",
-      "description": "The empty Menu relies on the persistent global capture button as its only dominant action and uses capture-first language rather than manual filing language.",
-      "screens": ["menu-empty.iphone-14"]
+      "description": "Empty Dishes retains the neutral Photos entry and empty Photos retains a clear back path; both rely on the persistent global capture button as the only dominant action and use capture-first language rather than manual filing language.",
+      "screens": ["menu-empty.iphone-14", "photos-empty.iphone-14"]
+    },
+    {
+      "id": "photo-warm-minimal-visual-system",
+      "kind": "screen-family",
+      "description": "The photo family extends the shared warm-minimal system while reducing card chrome: cream collection canvas, edge-dominant imagery, quiet translucent status labels, charcoal controls, orange reserved for the primary contextual action, and progressive destructive emphasis.",
+      "screens": ["photos.iphone-14", "photos-unorganized.iphone-14", "photos-organized.iphone-14", "photos-dense.iphone-14", "photos-empty.iphone-14", "photo-detail-unorganized.iphone-14", "photo-detail-organizing.iphone-14", "photo-detail-review.iphone-14", "photo-detail-organized.iphone-14", "photo-detail-actions.iphone-14", "photo-assign.iphone-14", "photo-assigned.iphone-14", "photo-delete-confirm.iphone-14", "photo-deleted.iphone-14"]
+    },
+    {
+      "id": "photo-compact-device-resilience",
+      "kind": "screen-family",
+      "description": "The shortened Dishes search and Photos status button, dedicated Photos title/back row, three-column gallery, filter counts, long dish overlay, missing-thumbnail tile, detail actions, picker completion, confirmation, and Undo remain readable and reachable on iPhone SE, iPhone 14, and Pixel 7 without clipped or covered controls.",
+      "screens": ["menu.iphone-14", "menu-processing.iphone-14", "photos.iphone-14", "photos-dense.iphone-14", "photos-empty.iphone-14", "photo-detail-unorganized.iphone-14", "photo-detail-review.iphone-14", "photo-detail-organized.iphone-14", "photo-assign.iphone-14", "photo-delete-confirm.iphone-14", "photo-deleted.iphone-14"]
     },
     {
       "id": "warm-minimal-visual-system",

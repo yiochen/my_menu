@@ -100,9 +100,6 @@ class CaptureRepository {
       media.length,
       (_) => _uuid.v4(),
     );
-    final List<String> dishIds = useLocalFallback
-        ? List<String>.generate(media.length, (_) => _uuid.v4())
-        : const <String>[];
     await _database.transaction(() async {
       await _database.into(_database.captureBatches).insert(
             db.CaptureBatchesCompanion.insert(
@@ -124,34 +121,23 @@ class CaptureRepository {
                 ordinal: Value<int>(ordinal),
                 kind: capture_domain.CaptureItemKind.photo.name,
                 status: useLocalFallback
-                    ? capture_domain.CaptureItemStatus.applied.name
+                    ? capture_domain.CaptureItemStatus.localOnly.name
                     : capture_domain.CaptureItemStatus.pendingUpload.name,
                 createdAt: now,
                 localMediaRef: Value<String?>(item.path),
                 capturedAt: Value<DateTime?>(item.capturedAt),
                 capturedLocalDate: Value<String?>(item.capturedLocalDate),
                 captureDateSource: Value<String?>(item.dateSource.apiValue),
-                appliedDishId: Value<String?>(
-                  useLocalFallback ? dishIds[ordinal] : null,
-                ),
+                appliedDishId: const Value<String?>(null),
               ),
             );
         if (useLocalFallback) {
-          await _insertUntitledPhotoDish(
-            dishId: dishIds[ordinal],
-            captureId: id,
-            imageRef: item.path,
-            capturedAt: item.capturedAt,
-            createdAt: now,
-          );
           continue;
         }
-        await _enqueueSync(id, 'capture_item', 'upsert');
       }
       if (useLocalFallback) {
         return;
       }
-      await _enqueueSync(batchId, 'capture_batch', 'upsert');
       await _insertGroupingJob(
         jobId: jobId,
         batchId: batchId,
@@ -280,34 +266,75 @@ class CaptureRepository {
   }
 
   Future<void> discardCapture(String captureId) async {
-    await (_database.update(
-      _database.captureItems,
-    )..where((db.CaptureItems table) => table.id.equals(captureId)))
-        .write(
-      db.CaptureItemsCompanion(
-        status: Value<String>(capture_domain.CaptureItemStatus.discarded.name),
-      ),
-    );
-    await _enqueueSync(captureId, 'capture_item', 'discard');
+    await dismissSuggestion(captureId);
+  }
+
+  Future<void> dismissSuggestion(String captureId) async {
+    final db.CaptureItemRow? item =
+        await (_database.select(_database.captureItems)
+              ..where((db.CaptureItems table) => table.id.equals(captureId)))
+            .getSingleOrNull();
+    if (item == null) {
+      return;
+    }
+    await _database.transaction(() async {
+      await (_database.delete(_database.reviewItems)
+            ..where(
+              (db.ReviewItems table) => table.captureId.equals(captureId),
+            ))
+          .go();
+      await (_database.update(_database.captureItems)
+            ..where((db.CaptureItems table) => table.id.equals(captureId)))
+          .write(
+        db.CaptureItemsCompanion(
+          status:
+              Value<String>(capture_domain.CaptureItemStatus.localOnly.name),
+          failureReason: const Value<String?>(null),
+        ),
+      );
+      if (item.batchId case final String batchId) {
+        await _processingOutboxRepository.supersedeCaptureGrouping(batchId);
+      }
+    });
   }
 
   Future<void> deleteCapture(String captureId) async {
-    final DateTime now = DateTime.now();
+    final db.CaptureItemRow? capture =
+        await (_database.select(_database.captureItems)
+              ..where((db.CaptureItems table) => table.id.equals(captureId)))
+            .getSingleOrNull();
+    if (capture == null) {
+      return;
+    }
     await _database.transaction(() async {
+      if (capture.batchId case final String batchId) {
+        await _processingOutboxRepository.supersedeCaptureGrouping(batchId);
+        await (_database.delete(_database.aiJobs)
+              ..where((db.AiJobs table) => table.subjectId.equals(batchId)))
+            .go();
+      }
+      await (_database.delete(_database.reviewItems)
+            ..where(
+              (db.ReviewItems table) => table.captureId.equals(captureId),
+            ))
+          .go();
+      await (_database.delete(_database.sourcePhotos)
+            ..where(
+              (db.SourcePhotos table) =>
+                  table.captureId.equals(captureId) |
+                  table.id.equals('${captureId}_source'),
+            ))
+          .go();
       await (_database.delete(_database.captureItems)
             ..where((db.CaptureItems table) => table.id.equals(captureId)))
           .go();
-      await _database.into(_database.syncOperations).insert(
-            db.SyncOperationsCompanion.insert(
-              id: const Uuid().v4(),
-              entity: 'capture_item',
-              entityId: captureId,
-              operationType: 'delete',
-              payloadJson: '{}',
-              createdAt: now,
-            ),
-          );
+      await (_database.delete(_database.syncOperations)
+            ..where(
+              (db.SyncOperations table) => table.entityId.equals(captureId),
+            ))
+          .go();
     });
+    await _deleteLocalCaptureCopies(<String?>[capture.localMediaRef]);
   }
 
   Future<void> retryBatch(String batchId) async {

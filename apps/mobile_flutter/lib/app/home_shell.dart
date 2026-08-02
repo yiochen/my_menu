@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:mymenu/app/app.dart';
+import 'package:mymenu/app/home_capture_button.dart';
 import 'package:mymenu/domain/processing/processing_consent_prompt.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
 import 'package:mymenu/features/capture/capture_sheet.dart';
 import 'package:mymenu/features/menu/menu_screen.dart';
+import 'package:mymenu/features/photos/photos_screen.dart';
 import 'package:mymenu/features/plan/plan_screen.dart';
 import 'package:mymenu/features/review/review_sheet.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
@@ -29,6 +31,7 @@ class _HomeShellState extends State<HomeShell> {
   int _selectedIndex = 0;
   String _query = '';
   bool _menuSelectionActive = false;
+  bool _showPhotos = false;
 
   @override
   Widget build(BuildContext context) {
@@ -55,18 +58,36 @@ class _HomeShellState extends State<HomeShell> {
                       key: const ValueKey<String>('plan_destination'),
                       onOpenReview: () => showReviewSheet(context, state),
                     ),
-                  _ => MenuScreen(
-                      key: const ValueKey<String>('menu_destination'),
-                      query: _query,
-                      onQueryChanged: (String value) {
-                        setState(() => _query = value);
-                      },
-                      onSelectionModeChanged: (bool active) {
-                        if (_menuSelectionActive != active) {
-                          setState(() => _menuSelectionActive = active);
-                        }
-                      },
-                    ),
+                  _ => _showPhotos
+                      ? PhotosScreen(
+                          key: const ValueKey<String>('photos_destination'),
+                          initialFilter: state.unorganizedPhotoCount > 0
+                              ? PhotoFilter.unorganized
+                              : PhotoFilter.all,
+                          onSelectionModeChanged: (bool active) {
+                            if (_menuSelectionActive != active) {
+                              setState(() => _menuSelectionActive = active);
+                            }
+                          },
+                          onBack: () => setState(() {
+                            _menuSelectionActive = false;
+                            _showPhotos = false;
+                          }),
+                        )
+                      : MenuScreen(
+                          key: const ValueKey<String>('menu_destination'),
+                          query: _query,
+                          onQueryChanged: (String value) {
+                            setState(() => _query = value);
+                          },
+                          onSelectionModeChanged: (bool active) {
+                            if (_menuSelectionActive != active) {
+                              setState(() => _menuSelectionActive = active);
+                            }
+                          },
+                          onOpenPhotos: () =>
+                              setState(() => _showPhotos = true),
+                        ),
                 },
                 if (!_menuSelectionActive)
                   _FloatingBottomShell(
@@ -77,6 +98,7 @@ class _HomeShellState extends State<HomeShell> {
                         _selectedIndex = value;
                         if (value != 1) {
                           _menuSelectionActive = false;
+                          _showPhotos = false;
                         }
                       });
                     },
@@ -147,7 +169,7 @@ class _FloatingBottomShell extends StatelessWidget {
                 right: 0,
                 top: 8,
                 child: Center(
-                  child: _CaptureButton(onPressed: onCapture),
+                  child: HomeCaptureButton(onPressed: onCapture),
                 ),
               ),
             ],
@@ -211,82 +233,6 @@ class _BottomBar extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CaptureButton extends StatelessWidget {
-  const _CaptureButton({required this.onPressed});
-
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Capture',
-      child: Container(
-        key: const ValueKey<String>('capture_glow'),
-        width: 94,
-        height: 94,
-        alignment: Alignment.center,
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: <Color>[
-              Color(0x70FF710A),
-              Color(0x36FF9A3D),
-              Color(0x00FFB166),
-            ],
-            stops: <double>[0, 0.58, 1],
-          ),
-        ),
-        child: Material(
-          color: Colors.transparent,
-          shape: const CircleBorder(),
-          clipBehavior: Clip.antiAlias,
-          child: Ink(
-            width: MyMenuUnits.captureButtonSize,
-            height: MyMenuUnits.captureButtonSize,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.fromBorderSide(
-                BorderSide(
-                  color: MyMenuColors.cream,
-                  width: 6,
-                ),
-              ),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: <Color>[
-                  Color(0xFFFF8A24),
-                  MyMenuColors.orangeAction,
-                ],
-                stops: <double>[0, 0.78],
-              ),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: Color(0x33FFFFFF),
-                  blurRadius: 2,
-                  spreadRadius: 1,
-                  offset: Offset(-1, -1),
-                ),
-              ],
-            ),
-            child: InkWell(
-              key: const ValueKey<String>('capture_fab'),
-              onTap: onPressed,
-              customBorder: const CircleBorder(),
-              child: const Icon(
-                Icons.add,
-                size: 28,
-                color: Colors.white,
-              ),
             ),
           ),
         ),

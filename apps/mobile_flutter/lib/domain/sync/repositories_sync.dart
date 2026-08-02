@@ -314,58 +314,6 @@ extension SyncRepositoryPull on SyncRepository {
     }
   }
 
-  Future<void> _upsertCapture(ApiCapture capture) async {
-    final db.CaptureItemRow? existing =
-        await (_database.select(_database.captureItems)
-              ..where((db.CaptureItems table) => table.id.equals(capture.id)))
-            .getSingleOrNull();
-
-    await _database.into(_database.captureItems).insertOnConflictUpdate(
-          db.CaptureItemsCompanion.insert(
-            id: capture.id,
-            batchId: Value<String?>(existing?.batchId ?? capture.batchId),
-            ordinal: Value<int>(capture.ordinal ?? existing?.ordinal ?? 0),
-            kind: capture.kind,
-            status: _localCaptureStatus(capture.status),
-            createdAt: capture.capturedAt,
-            localMediaRef: Value<String?>(existing?.localMediaRef),
-            remoteMediaRef: Value<String?>(capture.image?.mediaRef),
-            ideaText: Value<String?>(capture.ideaText),
-            capturedAt: Value<DateTime?>(capture.capturedAt),
-            capturedLocalDate: Value<String?>(capture.capturedLocalDate),
-            captureDateSource: Value<String?>(capture.captureDateSource),
-            appliedDishId: Value<String?>(capture.appliedDishId),
-            failureReason: Value<String?>(capture.failureReason),
-          ),
-        );
-    final String? batchId = existing?.batchId ?? capture.batchId;
-    if (batchId != null && capture.status == 'needs_review') {
-      await ProcessingOutboxRepository(_database).markProposalReadyForSubject(
-        kind: ProcessingRequestKind.captureGrouping,
-        subjectId: batchId,
-      );
-    }
-  }
-
-  Future<void> _upsertReviewItem(ApiReviewItem item) async {
-    await _database.into(_database.reviewItems).insertOnConflictUpdate(
-          db.ReviewItemsCompanion.insert(
-            id: item.id,
-            captureId: Value<String?>(item.captureId),
-            summary: item.summary,
-            suggestedDishIdsJson: jsonEncode(item.suggestedDishIds),
-            confidenceLabel: item.confidenceLabel ?? item.status,
-          ),
-        );
-  }
-
-  String _localCaptureStatus(String status) {
-    return switch (status) {
-      'needs_review' => capture_domain.CaptureItemStatus.needsReview.name,
-      _ => status,
-    };
-  }
-
   String _localBatchStatus(String status) {
     return switch (status) {
       'pending_upload' => CaptureBatchStatus.pendingUpload.name,

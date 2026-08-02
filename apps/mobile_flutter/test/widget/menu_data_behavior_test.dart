@@ -12,7 +12,6 @@ import 'package:mymenu/features/menu/menu_exit_transition.dart';
 import 'package:mymenu/features/menu/menu_grid_card.dart';
 import 'package:mymenu/features/menu/menu_screen.dart';
 import 'package:mymenu/shared/theme/app_theme.dart';
-import 'package:mymenu/shared/widgets/food_cover_placeholder.dart';
 
 void main() {
   testWidgets('exit snapshot survives until a dilated animation completes', (
@@ -91,7 +90,7 @@ void main() {
     ]);
   });
 
-  testWidgets('active capture appears as a tappable processing dish', (
+  testWidgets('active capture stays out of the dish grid', (
     WidgetTester tester,
   ) async {
     final DateTime now = DateTime.utc(2026, 7, 27, 12);
@@ -120,25 +119,21 @@ void main() {
 
     await _pumpMenu(tester, state);
 
-    final Finder placeholder =
-        find.byKey(const ValueKey<String>('processing_dish_batch_1'));
-    expect(placeholder, findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('processing_dish_batch_1')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('menu_photos_button')),
+      findsOneWidget,
+    );
     expect(
       find.descendant(
-        of: placeholder,
-        matching: find.byType(FoodCoverPlaceholder),
+        of: find.byKey(const ValueKey<String>('menu_photos_button')),
+        matching: find.text('1'),
       ),
       findsOneWidget,
     );
-    expect(find.text('Organizing photo'), findsOneWidget);
-    expect(find.text('Tap for processing status'), findsOneWidget);
-
-    await tester.tap(placeholder);
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 350));
-
-    expect(find.text('Recent Captures'), findsOneWidget);
-    expect(find.text('Uploading'), findsOneWidget);
   });
 
   testWidgets('history renders real occasion dates, photos, and grouping', (
@@ -267,7 +262,7 @@ void main() {
     );
   });
 
-  testWidgets('Select all includes processing placeholders', (
+  testWidgets('Select all is limited to dishes', (
     WidgetTester tester,
   ) async {
     final DateTime now = DateTime.utc(2026, 7, 28);
@@ -301,233 +296,13 @@ void main() {
     await tester.tap(find.byKey(const ValueKey<String>('menu_select_all')));
     await tester.pump(const Duration(milliseconds: 250));
 
-    expect(find.text('3 selected'), findsOneWidget);
+    expect(find.text('2 selected'), findsOneWidget);
     expect(
       find.byKey(
         const ValueKey<String>('processing_dish_batch_processing'),
       ),
-      findsOneWidget,
+      findsNothing,
     );
-  });
-
-  testWidgets('long press selects and removes a processing placeholder', (
-    WidgetTester tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(390, 844));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    final DateTime now = DateTime.utc(2026, 7, 28);
-    final CaptureItem capture = CaptureItem(
-      id: 'capture_to_remove',
-      batchId: 'batch_to_remove',
-      kind: CaptureItemKind.photo,
-      status: CaptureItemStatus.uploading,
-      createdAt: now,
-    );
-    final MyMenuState state = MyMenuState.forTesting(
-      captureBatches: <CaptureBatch>[
-        CaptureBatch(
-          id: 'batch_to_remove',
-          status: CaptureBatchStatus.uploading,
-          createdAt: now,
-          updatedAt: now,
-          items: <CaptureItem>[capture],
-        ),
-      ],
-      captureItems: <CaptureItem>[capture],
-    );
-    addTearDown(state.dispose);
-    await _pumpMenu(tester, state);
-
-    await tester.longPress(
-      find.byKey(const ValueKey<String>('processing_dish_batch_to_remove')),
-    );
-    await tester.pump(const Duration(milliseconds: 250));
-
-    expect(find.text('1 selected'), findsOneWidget);
-    await tester.tap(
-      find.byKey(const ValueKey<String>('menu_delete_selected')),
-    );
-    await tester.pump(const Duration(milliseconds: 250));
-    expect(find.text('Remove this pending upload?'), findsOneWidget);
-
-    final Finder confirm =
-        find.byKey(const ValueKey<String>('menu_confirm_delete'));
-    tester.widget<FilledButton>(confirm).onPressed!();
-    await tester.pump(const Duration(milliseconds: 100));
-
-    expect(state.captureBatches, isEmpty);
-    expect(state.pendingCaptureBatchDeletionCount, 1);
-
-    // The card stays unchanged while the confirmation sheet closes.
-    expect(
-      find.byKey(const ValueKey<String>('processing_dish_batch_to_remove')),
-      findsOneWidget,
-    );
-    expect(
-      tester
-          .widget<FadeTransition>(
-            find
-                .descendant(
-                  of: find
-                      .ancestor(
-                        of: find.byKey(
-                          const ValueKey<String>(
-                            'processing_dish_batch_to_remove',
-                          ),
-                        ),
-                        matching: find.byType(MenuExitTransition),
-                      )
-                      .first,
-                  matching: find.byType(FadeTransition),
-                )
-                .first,
-          )
-          .opacity
-          .value,
-      1,
-    );
-
-    await tester.pump(const Duration(milliseconds: 180));
-    await tester.pump();
-
-    await tester.pump(const Duration(milliseconds: 210));
-    final FadeTransition paintedFade = tester.widget<FadeTransition>(
-      find
-          .descendant(
-            of: find
-                .ancestor(
-                  of: find.byKey(
-                    const ValueKey<String>(
-                      'processing_dish_batch_to_remove',
-                    ),
-                  ),
-                  matching: find.byType(MenuExitTransition),
-                )
-                .first,
-            matching: find.byType(FadeTransition),
-          )
-          .first,
-    );
-    expect(paintedFade.opacity.value, inExclusiveRange(0, 1));
-
-    await tester.pump(const Duration(milliseconds: 210));
-
-    expect(state.captureBatches, isEmpty);
-    expect(find.text('Pending upload removed'), findsOneWidget);
-    expect(state.pendingCaptureBatchDeletionCount, 1);
-
-    await tester.pump(const Duration(seconds: 5));
-    await tester.pumpAndSettle();
-    expect(find.byType(SnackBar), findsNothing);
-    expect(state.pendingCaptureBatchDeletionCount, 0);
-  });
-
-  testWidgets('dismissing Undo commits a pending upload deletion', (
-    WidgetTester tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(390, 844));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    final DateTime now = DateTime.utc(2026, 7, 28);
-    final CaptureItem capture = CaptureItem(
-      id: 'capture_dismiss',
-      batchId: 'batch_dismiss',
-      kind: CaptureItemKind.photo,
-      status: CaptureItemStatus.uploading,
-      createdAt: now,
-    );
-    final MyMenuState state = MyMenuState.forTesting(
-      captureBatches: <CaptureBatch>[
-        CaptureBatch(
-          id: 'batch_dismiss',
-          status: CaptureBatchStatus.uploading,
-          createdAt: now,
-          updatedAt: now,
-          items: <CaptureItem>[capture],
-        ),
-      ],
-      captureItems: <CaptureItem>[capture],
-    );
-    addTearDown(state.dispose);
-    await _pumpMenu(tester, state);
-
-    await tester.longPress(
-      find.byKey(const ValueKey<String>('processing_dish_batch_dismiss')),
-    );
-    await tester.pump(const Duration(milliseconds: 250));
-    await tester.tap(
-      find.byKey(const ValueKey<String>('menu_delete_selected')),
-    );
-    await tester.pump(const Duration(milliseconds: 250));
-    tester
-        .widget<FilledButton>(
-          find.byKey(const ValueKey<String>('menu_confirm_delete')),
-        )
-        .onPressed!();
-    await tester.pump(const Duration(milliseconds: 700));
-    await tester.pump();
-    expect(state.pendingCaptureBatchDeletionCount, 1);
-
-    final BuildContext menuContext = tester.element(find.byType(MenuScreen));
-    ScaffoldMessenger.of(menuContext).hideCurrentSnackBar();
-    await tester.pumpAndSettle();
-
-    expect(find.byType(SnackBar), findsNothing);
-    expect(state.pendingCaptureBatchDeletionCount, 0);
-  });
-
-  testWidgets('completed processing cards do not select their new dishes', (
-    WidgetTester tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(390, 844));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-    final DateTime now = DateTime.utc(2026, 7, 28);
-    final Dish existing = seededDishes.first;
-    final CaptureItem capture = CaptureItem(
-      id: 'capture_finishing',
-      batchId: 'batch_finishing',
-      kind: CaptureItemKind.photo,
-      status: CaptureItemStatus.classifying,
-      createdAt: now,
-    );
-    final MyMenuState state = MyMenuState.forTesting(
-      dishes: seededDishes,
-      captureBatches: <CaptureBatch>[
-        CaptureBatch(
-          id: 'batch_finishing',
-          status: CaptureBatchStatus.processing,
-          createdAt: now,
-          updatedAt: now,
-          items: <CaptureItem>[capture],
-        ),
-      ],
-      captureItems: <CaptureItem>[capture],
-    );
-    addTearDown(state.dispose);
-    await _pumpMenu(tester, state);
-
-    await tester.longPress(
-      find.byKey(ValueKey<String>('menu_dish_${existing.id}')),
-    );
-    await tester.pump(const Duration(milliseconds: 250));
-    await tester.tap(
-      find.byKey(const ValueKey<String>('processing_dish_batch_finishing')),
-    );
-    await tester.pump(const Duration(milliseconds: 250));
-    expect(find.text('2 selected'), findsOneWidget);
-
-    await state.deleteCaptureBatch('batch_finishing');
-    await state.addIdea('newly organized dish');
-    await tester.pumpAndSettle();
-
-    expect(find.text('1 selected'), findsOneWidget);
-    final MenuGridCard newCard = tester.widget<MenuGridCard>(
-      find.ancestor(
-        of: find.text('Newly Organized Dish'),
-        matching: find.byType(MenuGridCard),
-      ),
-    );
-    expect(newCard.selected, isFalse);
-    expect(newCard.selectionMode, isTrue);
   });
 
   testWidgets('regular dish paints an intermediate exit frame', (
@@ -710,7 +485,11 @@ Future<void> _pumpMenu(WidgetTester tester, MyMenuState state) async {
       child: MaterialApp(
         theme: AppTheme.data,
         home: Scaffold(
-          body: MenuScreen(query: '', onQueryChanged: (_) {}),
+          body: MenuScreen(
+            query: '',
+            onQueryChanged: (_) {},
+            onOpenPhotos: () {},
+          ),
         ),
       ),
     ),

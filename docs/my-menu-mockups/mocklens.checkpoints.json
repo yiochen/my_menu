@@ -18,44 +18,46 @@
       ]
     },
     "automatic-capture-happy-path": {
-      "inputHash": "59b4df158be79d5fd6cfddd20db5635fee2b4ce6162dcd3ba364f5798c33de0f",
+      "inputHash": "3a56eed4ec39fd3301dc6cd6db6920a6d5ee51512e269f735887f4cb6d956888",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
         "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
-        "requirement:automatic-capture-happy-path": "6f54edaafd35215a175a9ce944feb82de2cb4422238b13926a3d1a1fa0bf8a8f",
+        "requirement:automatic-capture-happy-path": "d448670d9d9b30b57977514795c2e35731ca8da860aae4a5ee0e5b17ca3339bd",
         "screens/capture-created.iphone-14.html": "01f87dd9b19790b92cf6e24328c6583a8cb7735525e3146ea76d6a258366c9f5",
         "screens/capture-matched.iphone-14.html": "9d3e3140828bd7a1388af7a55bd3a1906a2a1e64d5e41e7444a9267acdce120f",
-        "screens/capture.iphone-14.html": "98c835a2f6fb801853bf3baf9044bc863c1df51561f40ce619970f1844dbf10a",
-        "screens/menu-processing.iphone-14.html": "64d94e8f2c06eae34b309d46dc572fb04a08eff7d756e5efd15b9176607be448",
+        "screens/capture.iphone-14.html": "61373c045bc4f5231b4ce5286d6653f3207977f1c67667e27790bdc72dbdb0d0",
+        "screens/photo-detail-organizing.iphone-14.html": "b8b1665c2ce9beea9941c3e9487a0c72343310082d2315f3cc4be348c8ff2305",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-unorganized.iphone-14.html": "e8375f920042c22e926b4b11615b52f6644696c58885461bbfdd1c953d3517c1",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed the updated screen family and interaction annotations across the configured device set. Verified: Take Photo and Import Photos capture without a destination decision; starting upload closes Capture automatically, returns to Menu with one temporary organizing dish card for the batch, and preserves automatic existing-dish and new-dish outcomes, with the created-dish result presented as a full screen rather than a popup.",
+      "proof": "Reviewed capture, unorganized gallery, organizing detail, matched, and created outcomes on all three devices. A local photo is visible immediately with one quiet organizing label, and the later outcomes retain reversible paths.",
       "screens": [
         "capture.iphone-14",
-        "menu-processing.iphone-14",
+        "photos-unorganized.iphone-14",
+        "photo-detail-organizing.iphone-14",
         "capture-matched.iphone-14",
         "capture-created.iphone-14"
       ]
     },
     "bulk-menu-dish-deletion": {
-      "inputHash": "ae216e335948e94f220bb8d007358762884715b3d404c119b6582b6460254636",
+      "inputHash": "0d173bba8beab6dc5b01dc9673578bd593485b086cc79325b003cb88b47055b9",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
         "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
-        "requirement:bulk-menu-dish-deletion": "7f1281f9443911c2f53d3bf4af74ffa90d4415a70b0cc1473338ed1dc14b8729",
+        "requirement:bulk-menu-dish-deletion": "fffbaec4450ec20c578ea25954ad0b072a0e25197b53be6deab084804c452b24",
         "screens/menu-delete-confirm.iphone-14.html": "243560bff26623fa84c78613c8eeb22df255d52bffe3bcbf58f7bd013ae2da99",
         "screens/menu-delete-select.iphone-14.html": "4d317a7715d55614df6356fa28c3deb15dff90e2dbe275c05850606fd93bfe21",
-        "screens/menu-dishes-deleted.iphone-14.html": "eeedf1a4a9cc99b698bd2d0e0803213dca803ce9abe3959b32c6d32423d56287",
-        "screens/menu-processing.iphone-14.html": "64d94e8f2c06eae34b309d46dc572fb04a08eff7d756e5efd15b9176607be448",
-        "screens/menu.iphone-14.html": "0881be0b3fa94d65f1ef9d1bd5de7f05dd8a4540bbf9de42dbe98ff9222cfa04",
+        "screens/menu-dishes-deleted.iphone-14.html": "ed4b204fdd48b67cc5702f617dbba2da96d85ea64b274f69764ac89738e0d8d9",
+        "screens/menu.iphone-14.html": "6e9bdd8d38d807ba1ceb81ab2eeb29b3c2004075ae60e28daa1758df486d22d4",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed the updated screen family and interaction annotations across the configured device set. Verified: Long-pressing a finished Menu card gives haptic feedback, selects it, and replaces the sticky search utility bar with a close–count–Select all header; assistive technologies expose a semantic Select dish action without requiring the gesture. Multi-select works across current filtered results without opening dishes, allows ideas and dishes with no history, excludes temporary processing placeholders, keeps destructive emphasis subordinate until one confirmation names the selected dishes and scopes dependent MyMenu removal while preserving phone-library originals, then applies locally, updates 24 to 22, and offers one atomic Undo.",
+      "proof": "Reviewed normal Menu, replacement selection header, confirmation, and deletion result on every device. The trailing Photos utility does not compete with long-press selection, confirmation scope, updated 22 count, or Undo.",
       "screens": [
         "menu.iphone-14",
-        "menu-processing.iphone-14",
         "menu-delete-select.iphone-14",
         "menu-delete-confirm.iphone-14",
         "menu-dishes-deleted.iphone-14"
@@ -96,7 +98,7 @@
       ]
     },
     "capture-first-idea-flow": {
-      "inputHash": "f4b1629ffbad901e3cdbb2dc8dc19d5eb7d5f8bbddc423d8182c12a5ab12f5be",
+      "inputHash": "a21814611af95be62d996be2ba9c36724ca08777fc36be75eead234687e94092",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
@@ -104,10 +106,10 @@
         "requirement:capture-first-idea-flow": "001af673c1f63e9c0d6103e06582e55989b9835cd5d7557b876389abb32e71af",
         "screens/add-idea-validation.iphone-14.html": "7338c22d36aebd078b4acd50b19274349a5be1b74eb468d72556252217140bff",
         "screens/add-idea.iphone-14.html": "6b19a8049cabe88e8090dd0b18652815aff8cc4b487e2d2a4a57de28a4a538ab",
-        "screens/capture.iphone-14.html": "98c835a2f6fb801853bf3baf9044bc863c1df51561f40ce619970f1844dbf10a",
+        "screens/capture.iphone-14.html": "61373c045bc4f5231b4ce5286d6653f3207977f1c67667e27790bdc72dbdb0d0",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed the updated screen family and interaction annotations across the configured device set. Verified: Capture offers Take Photo, Import Photos, and Add Idea before any destination decision; Add Idea captures only a dish idea and optional memory note, with no planning controls, and has canonical valid and retained-content validation states.",
+      "proof": "Reviewed Capture and its idea/validation states across iPhone SE, iPhone 14, and Pixel 7. Take Photo, Import Photos, and Add Idea remain distinct destination-free entries, with the capture copy now explaining organization happens afterward.",
       "screens": [
         "capture.iphone-14",
         "add-idea.iphone-14",
@@ -115,7 +117,7 @@
       ]
     },
     "capture-offline-and-permission-recovery": {
-      "inputHash": "0324c8d9fec417dc5a5de7e429df25bd1a9ffd8b65d53dcfda0478c399036ac7",
+      "inputHash": "191f62a6394052d5fe094f4b3c42afa7e0459a80974f52fb81751df7862561b6",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
@@ -123,10 +125,10 @@
         "requirement:capture-offline-and-permission-recovery": "d8ad55e4a08f612833f4d994a92accc999a43bfb0a770740a5d50f5616a6a73a",
         "screens/capture-offline.iphone-14.html": "019c99c65aeb31e579670cacdca71051324e5dd28755dcf4e3bb1ba5c17b5904",
         "screens/capture-permission.iphone-14.html": "12feb5299d365573a1c83767c420c89a92a37540c6df270f2c746438d08ae272",
-        "screens/capture.iphone-14.html": "98c835a2f6fb801853bf3baf9044bc863c1df51561f40ce619970f1844dbf10a",
+        "screens/capture.iphone-14.html": "61373c045bc4f5231b4ce5286d6653f3207977f1c67667e27790bdc72dbdb0d0",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed the updated screen family and interaction annotations across the configured device set. Verified: Offline capture remains locally queued with a clear later-organizing state, while denied camera permission preserves Import Photos and Add Idea alternatives and explains the Settings recovery path.",
+      "proof": "Reviewed Capture, offline, and camera-permission states across all configured phones. Local saving remains explicit, Import and Add Idea remain available when camera access is denied, and recovery controls stay reachable.",
       "screens": [
         "capture.iphone-14",
         "capture-offline.iphone-14",
@@ -134,18 +136,19 @@
       ]
     },
     "clear-menu-count-and-controls": {
-      "inputHash": "d42a6fce6586db456b076cbf12af184d697cb0bc233e6c62493799c31d40de19",
+      "inputHash": "501d3684341aee148feef639e69f4c658aabb8cb83e205697c1c7e9e2fc33510",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
         "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
-        "requirement:clear-menu-count-and-controls": "e393392f7dc18f9116e8391354188a487ecad44841771995a2c71f64a37bdd19",
-        "screens/menu-dishes-deleted.iphone-14.html": "eeedf1a4a9cc99b698bd2d0e0803213dca803ce9abe3959b32c6d32423d56287",
-        "screens/menu-search-empty.iphone-14.html": "0202110079680c9cee3c9c6d18916062bf053bea05948e9e12be55eb61a92c02",
-        "screens/menu.iphone-14.html": "0881be0b3fa94d65f1ef9d1bd5de7f05dd8a4540bbf9de42dbe98ff9222cfa04",
+        "requirement:clear-menu-count-and-controls": "3372403e4e2a43ae6256af51c0e60498ae81b714b2d1427301b8799e3fd432b9",
+        "screens/menu-dishes-deleted.iphone-14.html": "ed4b204fdd48b67cc5702f617dbba2da96d85ea64b274f69764ac89738e0d8d9",
+        "screens/menu-search-empty.iphone-14.html": "c71e62e3c80695c78b53a650a979e72db0c4e86dc14718a2b30356c60edf71db",
+        "screens/menu.iphone-14.html": "6e9bdd8d38d807ba1ceb81ab2eeb29b3c2004075ae60e28daa1758df486d22d4",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed the updated screen family and interaction annotations across the configured device set. Verified: Menu labels the normal collection as 24 and the two-dish deletion result as 22 beside the All dishes heading, keeps an icon-only filter trigger fixed left of a separator and compact horizontally scrolling All, Favorites, and Recently added controls, uses icon-only newest/oldest sorting, and covers a search-empty state.",
+      "proof": "Reviewed normal, deleted, and search-empty Dishes states across all devices. All dishes counts remain 24/22, filter and sort controls stay compact, and the shortened search preserves the Photos entry without crowding.",
       "screens": [
         "menu.iphone-14",
         "menu-dishes-deleted.iphone-14",
@@ -153,7 +156,7 @@
       ]
     },
     "compact-device-resilience": {
-      "inputHash": "a7918bb433a0d5424a9b4d2b3c34bba24b5264a30415984cf605e3538b323c36",
+      "inputHash": "4931488c3334bf5aa34212155008876efb97bbb95995429c7b18727a465566db",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
@@ -170,10 +173,11 @@
         "screens/improve-cover.iphone-14.html": "983921e30fa181e420e9e04e47c14d649a0f77d71edae033b0e4beb8c3d10771",
         "screens/menu-delete-confirm.iphone-14.html": "243560bff26623fa84c78613c8eeb22df255d52bffe3bcbf58f7bd013ae2da99",
         "screens/menu-delete-select.iphone-14.html": "4d317a7715d55614df6356fa28c3deb15dff90e2dbe275c05850606fd93bfe21",
-        "screens/menu-dishes-deleted.iphone-14.html": "eeedf1a4a9cc99b698bd2d0e0803213dca803ce9abe3959b32c6d32423d56287",
-        "screens/menu-processing.iphone-14.html": "64d94e8f2c06eae34b309d46dc572fb04a08eff7d756e5efd15b9176607be448",
-        "screens/menu-scrolled.iphone-14.html": "d8758dbd4685688f0836d8b8ef22a6a0fa03a99748ca5725c2fc87d69b7a9dec",
-        "screens/menu.iphone-14.html": "0881be0b3fa94d65f1ef9d1bd5de7f05dd8a4540bbf9de42dbe98ff9222cfa04",
+        "screens/menu-dishes-deleted.iphone-14.html": "ed4b204fdd48b67cc5702f617dbba2da96d85ea64b274f69764ac89738e0d8d9",
+        "screens/menu-processing.iphone-14.html": "f26c8e7b079d1729a9cdebc4a11613ecb280b4bdb3f2b9fb148334f5f0888822",
+        "screens/menu-scrolled.iphone-14.html": "61de5a4a58120194258caa767743b96c161fd6b979810348bfa3069849794973",
+        "screens/menu.iphone-14.html": "6e9bdd8d38d807ba1ceb81ab2eeb29b3c2004075ae60e28daa1758df486d22d4",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/plan-actions.iphone-14.html": "67485434449e9b6e1faf228ba8dc1c46d8d524f2fde02e8dbd2b04efa591870d",
         "screens/plan-next-week.iphone-14.html": "afffd39b852be16f905bb5d286f2316b4ee3bedcef24d3bc694dad1b45ff62c5",
         "screens/plan-removed.iphone-14.html": "6bdeec3228f198f84a6890813e45e78f25a92de6355528fe2b4855a0881109dc",
@@ -184,7 +188,7 @@
         "screens/unsorted-delete.iphone-14.html": "0cf1879c36e74851731dc965155b0c6dec3dd7c0b1d668a0c32d6b57d65ecec6",
         "screens/unsorted-photos.iphone-14.html": "94c89916c098fcf7202c56e78d1f2c11967bda2e1b92c663f7493af6e3875900"
       },
-      "proof": "Reviewed the updated screen family and interaction annotations across the configured device set. Verified: Seven-day calendars, multiple planned dishes, compact sticky and replacement selection headers, long names, grouped history, comparison states, bottom actions, and recovery copy remain readable and reachable on iPhone SE, iPhone 14, and Pixel 7 without clipped or covered controls.",
+      "proof": "Re-reviewed the delayed organizing entrance on iPhone SE, iPhone 14, and Pixel 7; the compact Photos status remains clear and all Menu controls stay readable and reachable.",
       "screens": [
         "plan.iphone-14",
         "plan-next-week.iphone-14",
@@ -212,23 +216,27 @@
       ]
     },
     "compact-sticky-menu-header": {
-      "inputHash": "33acdb1fd62df70d98f5cfcb9f0f1710401b2b88059b36642503d243abb247f5",
+      "inputHash": "a9d75adf26ccd3cc0bc0e0e2144d977c71aeb83ccfca2ddde40b2bafe97a3755",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
         "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
-        "requirement:compact-sticky-menu-header": "d4fea8d3bbf947316e4a2c7ab9c8110cdedfc86a545d53f58eaed6ea1a9746ff",
+        "requirement:compact-sticky-menu-header": "fd120a0efec277a3f30f3a2ac621ff68473bab3884a100e4857514d414f334d1",
         "screens/menu-delete-confirm.iphone-14.html": "243560bff26623fa84c78613c8eeb22df255d52bffe3bcbf58f7bd013ae2da99",
         "screens/menu-delete-select.iphone-14.html": "4d317a7715d55614df6356fa28c3deb15dff90e2dbe275c05850606fd93bfe21",
-        "screens/menu-dishes-deleted.iphone-14.html": "eeedf1a4a9cc99b698bd2d0e0803213dca803ce9abe3959b32c6d32423d56287",
-        "screens/menu-empty.iphone-14.html": "0173e4d26fb9247317e5e329cd4e8d2030cda53a54a714a77f43109a65c349ab",
-        "screens/menu-processing.iphone-14.html": "64d94e8f2c06eae34b309d46dc572fb04a08eff7d756e5efd15b9176607be448",
-        "screens/menu-scrolled.iphone-14.html": "d8758dbd4685688f0836d8b8ef22a6a0fa03a99748ca5725c2fc87d69b7a9dec",
-        "screens/menu-search-empty.iphone-14.html": "0202110079680c9cee3c9c6d18916062bf053bea05948e9e12be55eb61a92c02",
-        "screens/menu.iphone-14.html": "0881be0b3fa94d65f1ef9d1bd5de7f05dd8a4540bbf9de42dbe98ff9222cfa04",
+        "screens/menu-dishes-deleted.iphone-14.html": "ed4b204fdd48b67cc5702f617dbba2da96d85ea64b274f69764ac89738e0d8d9",
+        "screens/menu-empty.iphone-14.html": "82e51991e9f9be42d29fcd63548cb1c0a8b8251b63fce92d902cee55baf87f2b",
+        "screens/menu-processing.iphone-14.html": "f26c8e7b079d1729a9cdebc4a11613ecb280b4bdb3f2b9fb148334f5f0888822",
+        "screens/menu-scrolled.iphone-14.html": "61de5a4a58120194258caa767743b96c161fd6b979810348bfa3069849794973",
+        "screens/menu-search-empty.iphone-14.html": "c71e62e3c80695c78b53a650a979e72db0c4e86dc14718a2b30356c60edf71db",
+        "screens/menu.iphone-14.html": "6e9bdd8d38d807ba1ceb81ab2eeb29b3c2004075ae60e28daa1758df486d22d4",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-dense.iphone-14.html": "f7814e2b81c9e9bbb81cee9317afc55f59da5324ade058c94f797c4bbcbf70ab",
+        "screens/photos-empty.iphone-14.html": "d95f571f5de406acbdc0635c96472db2ec5ab7bd46ec9f7c2162b3b31cf5481d",
+        "screens/photos.iphone-14.html": "f62cc1f9719f118df1cc4dc627090bdbeacea4e4f08c87525c958b9f919f805e",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed the updated screen family and interaction annotations across the configured device set. Verified: Every Menu collection state removes the tagline, oversized My Menu title, decorative avatar, header count badge, and persistent Select label in favor of compact fixed search-and-filter chrome; its shadow appears only when scroll position is greater than zero, filters never leave the fixed region, and selection replaces search in place.",
+      "proof": "Re-reviewed the organizing Dishes header on every device. Short search, delayed orbit/sparkle Photos status, filters, count, and sort preserve the same compact hierarchy as the stable states.",
       "screens": [
         "menu.iphone-14",
         "menu-scrolled.iphone-14",
@@ -237,25 +245,29 @@
         "menu-delete-confirm.iphone-14",
         "menu-dishes-deleted.iphone-14",
         "menu-empty.iphone-14",
-        "menu-search-empty.iphone-14"
+        "menu-search-empty.iphone-14",
+        "photos.iphone-14",
+        "photos-dense.iphone-14",
+        "photos-empty.iphone-14"
       ]
     },
     "contextual-ai-review-and-search-recovery": {
-      "inputHash": "9d95b144d8defac7f7a57c76bfb067f58ac56a42b69ffcd684e16e4a5312eec8",
+      "inputHash": "c63fb47f07b7874976018cbbacc8bafcdda565a6128cd68a2173a2165a01e215",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
         "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
-        "requirement:contextual-ai-review-and-search-recovery": "eb07a5f698bce39a5d5de64c12871f4b823d55f7df754f0c46deb69e056e290d",
-        "screens/menu.iphone-14.html": "0881be0b3fa94d65f1ef9d1bd5de7f05dd8a4540bbf9de42dbe98ff9222cfa04",
+        "requirement:contextual-ai-review-and-search-recovery": "f7dea01b02052335154d9160b6abe9a7490cecaa65cf9dce7a11dcac1f890f0e",
+        "screens/photo-detail-review.iphone-14.html": "bfae9ddf3a732f276d88434842180cc9188b7549bd1ac121ca27158d4db53561",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-unorganized.iphone-14.html": "e8375f920042c22e926b4b11615b52f6644696c58885461bbfdd1c953d3517c1",
         "screens/review-search-empty.iphone-14.html": "9e887daa5eaea6be33c8c52519e51d1637336479e0e9139b4dd2b05841a78950",
-        "screens/review.iphone-14.html": "f5ffd8ec8f5979895c590fdf61d39fa85449cfba66c613552a99ad0ff547fece",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed the updated screen family and interaction annotations across the configured device set. Verified: Review remains contextual behind the Menu navigation count pill, uses unambiguous progress wording, supports existing-dish and new-dish outcomes, and demonstrates an empty alternate-dish search with clear query correction.",
+      "proof": "Reviewed Unorganized, Review detail, and alternate-dish recovery across every device. Review remains a restrained photo state with confirm, choose-another, create-new, and query recovery paths.",
       "screens": [
-        "menu.iphone-14",
-        "review.iphone-14",
+        "photos-unorganized.iphone-14",
+        "photo-detail-review.iphone-14",
         "review-search-empty.iphone-14"
       ]
     },
@@ -352,6 +364,26 @@
         "batch-sync-error.iphone-14"
       ]
     },
+    "durable-photo-organization-and-undo": {
+      "inputHash": "2abc760aa5d6cb217fe3aed0344dadc9b637e1b11c884c6f4656c00c3de5e38d",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:durable-photo-organization-and-undo": "755cb4f95ec5c9da8ce00f362fa7f55944c2e206be37daeeaa6d62ca9d9eea43",
+        "screens/photo-assign.iphone-14.html": "39d8352fd4f561746ea10fddd8d2d9838646569b0fcc976af344f226bb06e94e",
+        "screens/photo-assigned.iphone-14.html": "8f210a9c9a7ab144a8c02c2162b0e7d9bad3d0b9ae3b3f3ff4ba2a44d9744446",
+        "screens/photo-detail-organized.iphone-14.html": "4c8ed38d95aa6ccbb5488eb006dd2174f55e731b39b0567a9bf4ff11f24e5ded",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed assignment picker, assigned gallery result, and organized detail across all devices. Counts reconcile to 4/14, Sunday Pho is visible as the chosen association, and Undo remains available.",
+      "screens": [
+        "photo-assign.iphone-14",
+        "photo-assigned.iphone-14",
+        "photo-detail-organized.iphone-14"
+      ]
+    },
     "idea-validation-and-correction": {
       "inputHash": "f55fa43ab0a9f715ff3c5fcb18eccc5e7ceb107b0278d4c94bdb64a2ccadb858",
       "inputs": {
@@ -367,6 +399,26 @@
       "screens": [
         "add-idea.iphone-14",
         "add-idea-validation.iphone-14"
+      ]
+    },
+    "manual-photo-assignment": {
+      "inputHash": "5a5ba246a5564de4d5d08aa3141f28a54c94d459871718297fb3058e11dae91b",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:manual-photo-assignment": "8bb59458446952193badea1bd7a6510ec2fb3d64267a5eae0b11040a3028a130",
+        "screens/photo-assign.iphone-14.html": "39d8352fd4f561746ea10fddd8d2d9838646569b0fcc976af344f226bb06e94e",
+        "screens/photo-assigned.iphone-14.html": "8f210a9c9a7ab144a8c02c2162b0e7d9bad3d0b9ae3b3f3ff4ba2a44d9744446",
+        "screens/photo-detail-unorganized.iphone-14.html": "2491aadf802bb30775932990f924f65832cbd8d3dbe7668a55e512d539d83a28",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed unorganized detail, picker, and assigned result on all phones. Add to dish is primary, search and suggestions remain reachable, and completion moves the source to Organized with reconciled counts.",
+      "screens": [
+        "photo-detail-unorganized.iphone-14",
+        "photo-assign.iphone-14",
+        "photo-assigned.iphone-14"
       ]
     },
     "manual-unsorted-assignment": {
@@ -389,7 +441,7 @@
       ]
     },
     "memory-forward-discovery": {
-      "inputHash": "aaacf84fd14ec3e1c4adae77e49cafae266d9cd402f49ea7393fb652ae4ae724",
+      "inputHash": "5f20ea74b3366b86e599cf49f1390953da08c484fdf3a8f6de78841acfaaec12",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
@@ -397,29 +449,61 @@
         "requirement:memory-forward-discovery": "7625e115a579cc7e489ddced587237c0d29c43ca9db1f64a44980230fd916d79",
         "screens/dish-detail.iphone-14.html": "91c0d14d00bf93845644402c51f25d61c7ebd54daa25d92b6c282d28fb1b608f",
         "screens/dish-memory.iphone-14.html": "8cb6755e6f1022c4c6fe380575cf1b489a1927a8a360ed050cb7f530a3249100",
-        "screens/menu.iphone-14.html": "0881be0b3fa94d65f1ef9d1bd5de7f05dd8a4540bbf9de42dbe98ff9222cfa04",
+        "screens/menu.iphone-14.html": "6e9bdd8d38d807ba1ceb81ab2eeb29b3c2004075ae60e28daa1758df486d22d4",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed the updated screen family and interaction annotations across the configured device set. Verified: The single filterable Menu grid and first Dish Detail viewport read as a living cooking memory: new dishes have a styled top-left white New label that briefly wobbles as the card appears, every card keeps an always-visible top-right heart that changes from white to red when favorited, and Dish Detail opens on the photo-forward Journal.",
+      "proof": "Reviewed the revised Menu plus dish detail and Journal states. Dish imagery, New and favorite treatments, memory cues, and Journal-first discovery remain dominant after compressing the header.",
       "screens": [
         "menu.iphone-14",
         "dish-detail.iphone-14",
         "dish-memory.iphone-14"
       ]
     },
-    "menu-empty-single-capture-action": {
-      "inputHash": "c66bbf8bede6b5da4f332a52078c04d34a0b085ebe82069678ed7b050774cc41",
+    "menu-dishes-photos-switch": {
+      "inputHash": "994fcb659853f49b12cd6e386313e0dc513865017f3bc0a3078a7c2aae43ef69",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
         "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
-        "requirement:menu-empty-single-capture-action": "e6b1f6cd8cdb564461864574dfc7359dc5c091626ac35311a73bd4ef2651369e",
-        "screens/menu-empty.iphone-14.html": "0173e4d26fb9247317e5e329cd4e8d2030cda53a54a714a77f43109a65c349ab",
+        "requirement:menu-dishes-photos-switch": "6cfc98d873d6e689b5f4bbe98a691dc4dd0d3191d5491719ddd04a756249db44",
+        "screens/menu-empty.iphone-14.html": "282f8e554fdc8ff6b251d8f890c841a3f62ddee4f1f5914d316627101fbff003",
+        "screens/menu-scrolled.iphone-14.html": "f919a840b1f097184bb4cfdd00229ea186b843aeac5002d314e8a9891d3cf842",
+        "screens/menu-search-empty.iphone-14.html": "deaf764c51473ebc5a76a34fee273284f78e8e560d002cdd108c4caa71788e6e",
+        "screens/menu.iphone-14.html": "d51edbd3573b13cb8ef759b73b4fb8722346d53f21a76d9987217c68d0ab8852",
+        "screens/photo.css": "5fe5d5f6bd5a483649271c23d958f4b1def5d6e49a5468d54e6d97020c6089f2",
+        "screens/photos-empty.iphone-14.html": "70739c8ec9febbf7f286ab6b6248084fd5afd2ba1e40b0556834ff33b7e1603a",
+        "screens/photos-unorganized.iphone-14.html": "7a2ad4a37a5bcbc2109b31a9c1a664147ba98a0f18e90fa2c972de15ff6707ae",
+        "screens/photos.iphone-14.html": "23e4a6a269d9e5f9f9f0244d95a20836843c3b37e14b25b07203d13f842bff2f",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed the updated screen family and interaction annotations across the configured device set. Verified: The empty Menu relies on the persistent global capture button as its only dominant action and uses capture-first language rather than manual filing language.",
+      "proof": "Reviewed Dishes and Photos normal, scrolled, search-empty, and empty states across all phones. The persistent switch identifies the active collection and counts, changes collection only, and leaves the Plan / capture / Menu shell unchanged.",
       "screens": [
-        "menu-empty.iphone-14"
+        "menu.iphone-14",
+        "menu-scrolled.iphone-14",
+        "menu-empty.iphone-14",
+        "menu-search-empty.iphone-14",
+        "photos.iphone-14",
+        "photos-unorganized.iphone-14",
+        "photos-empty.iphone-14"
+      ]
+    },
+    "menu-empty-single-capture-action": {
+      "inputHash": "fcc36b484c2782926f516c7dffea76579ede20c03518ac4b8b491630eff6ab18",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:menu-empty-single-capture-action": "728e40e9a81c363e3bd9d58579fb0e7141ff1438690a9000bf6c6deb15cc6241",
+        "screens/menu-empty.iphone-14.html": "82e51991e9f9be42d29fcd63548cb1c0a8b8251b63fce92d902cee55baf87f2b",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-empty.iphone-14.html": "d95f571f5de406acbdc0635c96472db2ec5ab7bd46ec9f7c2162b3b31cf5481d",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed empty Dishes and Photos on all devices. Each keeps compact navigation back to the other surface while the centered global capture button remains the only dominant capture action.",
+      "screens": [
+        "menu-empty.iphone-14",
+        "photos-empty.iphone-14"
       ]
     },
     "menu-library-coverage": {
@@ -439,6 +523,36 @@
         "menu-empty.iphone-14"
       ]
     },
+    "menu-photo-entry-status": {
+      "inputHash": "8dd5e4c67c8bd0ed1b1724f7f46fc588751ac22c11498b138049989c6fcf720e",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:menu-photo-entry-status": "a83361760f902f2b7aa675f85893afda039a6a8d538a0f512c4816c54506a959",
+        "screens/menu-empty.iphone-14.html": "82e51991e9f9be42d29fcd63548cb1c0a8b8251b63fce92d902cee55baf87f2b",
+        "screens/menu-processing.iphone-14.html": "f26c8e7b079d1729a9cdebc4a11613ecb280b4bdb3f2b9fb148334f5f0888822",
+        "screens/menu-scrolled.iphone-14.html": "61de5a4a58120194258caa767743b96c161fd6b979810348bfa3069849794973",
+        "screens/menu-search-empty.iphone-14.html": "c71e62e3c80695c78b53a650a979e72db0c4e86dc14718a2b30356c60edf71db",
+        "screens/menu.iphone-14.html": "6e9bdd8d38d807ba1ceb81ab2eeb29b3c2004075ae60e28daa1758df486d22d4",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-empty.iphone-14.html": "d95f571f5de406acbdc0635c96472db2ec5ab7bd46ec9f7c2162b3b31cf5481d",
+        "screens/photos-unorganized.iphone-14.html": "e8375f920042c22e926b4b11615b52f6644696c58885461bbfdd1c953d3517c1",
+        "screens/photos.iphone-14.html": "f62cc1f9719f118df1cc4dc627090bdbeacea4e4f08c87525c958b9f919f805e",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Re-reviewed the deterministic entrance state across all phones. Organizing appears immediately as an outlined gallery icon with sparkle, begins its subtle orbit after two seconds, and remains static for reduced-motion users.",
+      "screens": [
+        "menu.iphone-14",
+        "menu-scrolled.iphone-14",
+        "menu-processing.iphone-14",
+        "menu-empty.iphone-14",
+        "menu-search-empty.iphone-14",
+        "photos.iphone-14",
+        "photos-unorganized.iphone-14",
+        "photos-empty.iphone-14"
+      ]
+    },
     "offline-local-first": {
       "inputHash": "15fcec6d76cd96bb4b3d25291208938af554b7aa6d197f7f36dc9636e333b091",
       "inputs": {
@@ -454,6 +568,152 @@
       "screens": [
         "dish-detail.iphone-14",
         "improve-cover-offline.iphone-14"
+      ]
+    },
+    "photo-compact-device-resilience": {
+      "inputHash": "f6792beabbf23d48e85a3a29a41ab1c40fc34d321b4deb07a9cb0a3d32edb5f9",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:photo-compact-device-resilience": "90eaa44ea42bff78687daa5939bd6e39a9bb38ebda5f83521c5ad21c6e2a3410",
+        "screens/menu-processing.iphone-14.html": "f26c8e7b079d1729a9cdebc4a11613ecb280b4bdb3f2b9fb148334f5f0888822",
+        "screens/menu.iphone-14.html": "6e9bdd8d38d807ba1ceb81ab2eeb29b3c2004075ae60e28daa1758df486d22d4",
+        "screens/photo-assign.iphone-14.html": "39d8352fd4f561746ea10fddd8d2d9838646569b0fcc976af344f226bb06e94e",
+        "screens/photo-delete-confirm.iphone-14.html": "ec953c6b9eea471304777c11e3196fd5d676d0d64a369616b8c7ba6def9331a3",
+        "screens/photo-deleted.iphone-14.html": "d9cba1a4403d192077d49d5f208c85f8b34e74fbad90ed4d08c31c4e420be60c",
+        "screens/photo-detail-organized.iphone-14.html": "4c8ed38d95aa6ccbb5488eb006dd2174f55e731b39b0567a9bf4ff11f24e5ded",
+        "screens/photo-detail-review.iphone-14.html": "bfae9ddf3a732f276d88434842180cc9188b7549bd1ac121ca27158d4db53561",
+        "screens/photo-detail-unorganized.iphone-14.html": "2491aadf802bb30775932990f924f65832cbd8d3dbe7668a55e512d539d83a28",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-dense.iphone-14.html": "f7814e2b81c9e9bbb81cee9317afc55f59da5324ade058c94f797c4bbcbf70ab",
+        "screens/photos-empty.iphone-14.html": "d95f571f5de406acbdc0635c96472db2ec5ab7bd46ec9f7c2162b3b31cf5481d",
+        "screens/photos.iphone-14.html": "f62cc1f9719f118df1cc4dc627090bdbeacea4e4f08c87525c958b9f919f805e",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Re-reviewed the organizing Photos entry on all configured phones; its outline and sparkle fit beside search without clipping, while previously reviewed gallery and detail controls remain unchanged.",
+      "screens": [
+        "menu.iphone-14",
+        "menu-processing.iphone-14",
+        "photos.iphone-14",
+        "photos-dense.iphone-14",
+        "photos-empty.iphone-14",
+        "photo-detail-unorganized.iphone-14",
+        "photo-detail-review.iphone-14",
+        "photo-detail-organized.iphone-14",
+        "photo-assign.iphone-14",
+        "photo-delete-confirm.iphone-14",
+        "photo-deleted.iphone-14"
+      ]
+    },
+    "photo-gallery-filters-and-status": {
+      "inputHash": "583df8906184edbf016e6f26c7346d2d28cb567cd579c6d479a61b6378f413a1",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:photo-gallery-filters-and-status": "72c8eb50026fecd0d5d5fa3bd154346d8c70084a3509a9bc1b5dc99ad05a2da6",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-organized.iphone-14.html": "a1be2b5a82c183b623fc704c02dfdc9236e8a202552c2501d811f39ca0d98f57",
+        "screens/photos-unorganized.iphone-14.html": "e8375f920042c22e926b4b11615b52f6644696c58885461bbfdd1c953d3517c1",
+        "screens/photos.iphone-14.html": "f62cc1f9719f118df1cc4dc627090bdbeacea4e4f08c87525c958b9f919f805e",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed All, Unorganized, and Organized galleries on all devices. Images remain primary, counts derive from assignment, and each tile carries only one quiet local status overlay.",
+      "screens": [
+        "photos.iphone-14",
+        "photos-unorganized.iphone-14",
+        "photos-organized.iphone-14"
+      ]
+    },
+    "photo-gallery-state-coverage": {
+      "inputHash": "1f3a1ad2504751cd52ed0bddfd2334b9cae8f1c0eaeecd58865309bff20f440a",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:photo-gallery-state-coverage": "fbf44d72d9bf99e08a73e3a9bc72978df6f4522be78bad6438392a4651197051",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-dense.iphone-14.html": "f7814e2b81c9e9bbb81cee9317afc55f59da5324ade058c94f797c4bbcbf70ab",
+        "screens/photos-empty.iphone-14.html": "d95f571f5de406acbdc0635c96472db2ec5ab7bd46ec9f7c2162b3b31cf5481d",
+        "screens/photos-organized.iphone-14.html": "a1be2b5a82c183b623fc704c02dfdc9236e8a202552c2501d811f39ca0d98f57",
+        "screens/photos-unorganized.iphone-14.html": "e8375f920042c22e926b4b11615b52f6644696c58885461bbfdd1c953d3517c1",
+        "screens/photos.iphone-14.html": "f62cc1f9719f118df1cc4dc627090bdbeacea4e4f08c87525c958b9f919f805e",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed typical, filtered, dense/scrolled, empty, missing-thumbnail, organizing, review, failure, unorganized, and organized gallery examples across all devices. The new compact title/back header leaves the gallery dominant.",
+      "screens": [
+        "photos.iphone-14",
+        "photos-unorganized.iphone-14",
+        "photos-organized.iphone-14",
+        "photos-dense.iphone-14",
+        "photos-empty.iphone-14"
+      ]
+    },
+    "photo-tile-detail-behavior": {
+      "inputHash": "9c1fc80c521aa986e29aa33e0212c47ace4a880602ba69c60bccca5c3ea70b32",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:photo-tile-detail-behavior": "03771a4d447aee5402c13559c061397923896dd34ff95e5b6d57448cccd4d0e0",
+        "screens/photo-detail-organized.iphone-14.html": "4c8ed38d95aa6ccbb5488eb006dd2174f55e731b39b0567a9bf4ff11f24e5ded",
+        "screens/photo-detail-organizing.iphone-14.html": "b8b1665c2ce9beea9941c3e9487a0c72343310082d2315f3cc4be348c8ff2305",
+        "screens/photo-detail-review.iphone-14.html": "bfae9ddf3a732f276d88434842180cc9188b7549bd1ac121ca27158d4db53561",
+        "screens/photo-detail-unorganized.iphone-14.html": "2491aadf802bb30775932990f924f65832cbd8d3dbe7668a55e512d539d83a28",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos.iphone-14.html": "f62cc1f9719f118df1cc4dc627090bdbeacea4e4f08c87525c958b9f919f805e",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed gallery and all four canonical detail states on every device. Taps lead to image-dominant usable photo details with the correct manual, review, view-dish, and change-dish actions.",
+      "screens": [
+        "photos.iphone-14",
+        "photo-detail-unorganized.iphone-14",
+        "photo-detail-organizing.iphone-14",
+        "photo-detail-review.iphone-14",
+        "photo-detail-organized.iphone-14"
+      ]
+    },
+    "photo-warm-minimal-visual-system": {
+      "inputHash": "92e21708c1f721b9bd7b5785fbe452c26fce7b804a5247bc3b25017282949751",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:photo-warm-minimal-visual-system": "bed327d7056db8723fa5d3685f5c46acb582340094ef27e256be8476b2b4bce6",
+        "screens/photo-assign.iphone-14.html": "39d8352fd4f561746ea10fddd8d2d9838646569b0fcc976af344f226bb06e94e",
+        "screens/photo-assigned.iphone-14.html": "8f210a9c9a7ab144a8c02c2162b0e7d9bad3d0b9ae3b3f3ff4ba2a44d9744446",
+        "screens/photo-delete-confirm.iphone-14.html": "ec953c6b9eea471304777c11e3196fd5d676d0d64a369616b8c7ba6def9331a3",
+        "screens/photo-deleted.iphone-14.html": "d9cba1a4403d192077d49d5f208c85f8b34e74fbad90ed4d08c31c4e420be60c",
+        "screens/photo-detail-actions.iphone-14.html": "49d8c826071ce62b427d72857d9e64a4b8681d73d5e6cfcc7b2102c77fd4d005",
+        "screens/photo-detail-organized.iphone-14.html": "4c8ed38d95aa6ccbb5488eb006dd2174f55e731b39b0567a9bf4ff11f24e5ded",
+        "screens/photo-detail-organizing.iphone-14.html": "b8b1665c2ce9beea9941c3e9487a0c72343310082d2315f3cc4be348c8ff2305",
+        "screens/photo-detail-review.iphone-14.html": "bfae9ddf3a732f276d88434842180cc9188b7549bd1ac121ca27158d4db53561",
+        "screens/photo-detail-unorganized.iphone-14.html": "2491aadf802bb30775932990f924f65832cbd8d3dbe7668a55e512d539d83a28",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-dense.iphone-14.html": "f7814e2b81c9e9bbb81cee9317afc55f59da5324ade058c94f797c4bbcbf70ab",
+        "screens/photos-empty.iphone-14.html": "d95f571f5de406acbdc0635c96472db2ec5ab7bd46ec9f7c2162b3b31cf5481d",
+        "screens/photos-organized.iphone-14.html": "a1be2b5a82c183b623fc704c02dfdc9236e8a202552c2501d811f39ca0d98f57",
+        "screens/photos-unorganized.iphone-14.html": "e8375f920042c22e926b4b11615b52f6644696c58885461bbfdd1c953d3517c1",
+        "screens/photos.iphone-14.html": "f62cc1f9719f118df1cc4dc627090bdbeacea4e4f08c87525c958b9f919f805e",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed all Photos collection, detail, picker, confirmation, and outcome screens across the three devices. Cream canvas, image dominance, restrained overlays, charcoal controls, and contextual orange hierarchy stay consistent.",
+      "screens": [
+        "photos.iphone-14",
+        "photos-unorganized.iphone-14",
+        "photos-organized.iphone-14",
+        "photos-dense.iphone-14",
+        "photos-empty.iphone-14",
+        "photo-detail-unorganized.iphone-14",
+        "photo-detail-organizing.iphone-14",
+        "photo-detail-review.iphone-14",
+        "photo-detail-organized.iphone-14",
+        "photo-detail-actions.iphone-14",
+        "photo-assign.iphone-14",
+        "photo-assigned.iphone-14",
+        "photo-delete-confirm.iphone-14",
+        "photo-deleted.iphone-14"
       ]
     },
     "planned-meal-correction": {
@@ -473,6 +733,26 @@
         "plan.iphone-14",
         "plan-actions.iphone-14",
         "plan-removed.iphone-14"
+      ]
+    },
+    "recoverable-photo-deletion": {
+      "inputHash": "f845f1f892b122219965191b05fa79c35539b9faf2a3899b8c91dfc7fc455939",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "requirement:recoverable-photo-deletion": "b49c76050655fabe1808cec5a8af2fed0cf9e868253ea9648c1f76e0f0be70ad",
+        "screens/photo-delete-confirm.iphone-14.html": "ec953c6b9eea471304777c11e3196fd5d676d0d64a369616b8c7ba6def9331a3",
+        "screens/photo-deleted.iphone-14.html": "d9cba1a4403d192077d49d5f208c85f8b34e74fbad90ed4d08c31c4e420be60c",
+        "screens/photo-detail-actions.iphone-14.html": "49d8c826071ce62b427d72857d9e64a4b8681d73d5e6cfcc7b2102c77fd4d005",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed overflow, scoped confirmation, and deleted result on all devices. Destructive emphasis appears only in confirmation, counts reconcile to 17/4/13, phone originals remain safe, and Undo stays reachable.",
+      "screens": [
+        "photo-detail-actions.iphone-14",
+        "photo-delete-confirm.iphone-14",
+        "photo-deleted.iphone-14"
       ]
     },
     "recoverable-unsorted-deletion": {
@@ -514,28 +794,37 @@
       ]
     },
     "stable-two-tab-shell": {
-      "inputHash": "32d41107586b94258474d518ed9947f9ab264f4cb9901f9f759d749a782afa54",
+      "inputHash": "2df3d84de7a764c47ffeda37d3dc6187505609aafa7d80f4174f0cd765825933",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
         "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
-        "requirement:stable-two-tab-shell": "c43d6fed6c7504a9f1c3f00a27726f05be491ad5a040662d5039b174021702df",
-        "screens/menu-empty.iphone-14.html": "0173e4d26fb9247317e5e329cd4e8d2030cda53a54a714a77f43109a65c349ab",
-        "screens/menu-scrolled.iphone-14.html": "d8758dbd4685688f0836d8b8ef22a6a0fa03a99748ca5725c2fc87d69b7a9dec",
-        "screens/menu-search-empty.iphone-14.html": "0202110079680c9cee3c9c6d18916062bf053bea05948e9e12be55eb61a92c02",
-        "screens/menu.iphone-14.html": "0881be0b3fa94d65f1ef9d1bd5de7f05dd8a4540bbf9de42dbe98ff9222cfa04",
+        "requirement:stable-two-tab-shell": "dfe1d58c2b5a96b8ea5ed261a698cccad9760e6bc2d0c1bfaf8af12f228c66ee",
+        "screens/menu-empty.iphone-14.html": "82e51991e9f9be42d29fcd63548cb1c0a8b8251b63fce92d902cee55baf87f2b",
+        "screens/menu-processing.iphone-14.html": "f26c8e7b079d1729a9cdebc4a11613ecb280b4bdb3f2b9fb148334f5f0888822",
+        "screens/menu-scrolled.iphone-14.html": "61de5a4a58120194258caa767743b96c161fd6b979810348bfa3069849794973",
+        "screens/menu-search-empty.iphone-14.html": "c71e62e3c80695c78b53a650a979e72db0c4e86dc14718a2b30356c60edf71db",
+        "screens/menu.iphone-14.html": "6e9bdd8d38d807ba1ceb81ab2eeb29b3c2004075ae60e28daa1758df486d22d4",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-empty.iphone-14.html": "d95f571f5de406acbdc0635c96472db2ec5ab7bd46ec9f7c2162b3b31cf5481d",
+        "screens/photos-unorganized.iphone-14.html": "e8375f920042c22e926b4b11615b52f6644696c58885461bbfdd1c953d3517c1",
+        "screens/photos.iphone-14.html": "f62cc1f9719f118df1cc4dc627090bdbeacea4e4f08c87525c958b9f919f805e",
         "screens/plan-next-week.iphone-14.html": "afffd39b852be16f905bb5d286f2316b4ee3bedcef24d3bc694dad1b45ff62c5",
         "screens/plan.iphone-14.html": "92f47a954bd355e91db98ff43e529ab23981f775d8c662f81a8a1000d1dcaba9",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed the updated screen family and interaction annotations across the configured device set. Verified: Plan and Menu keep the stable floating Plan–capture–Menu shell; Menu carries a compact circular contextual count badge for captures needing attention, with no permanent Capture or Review tab and no competing empty-state capture button.",
+      "proof": "Re-reviewed the organizing Menu state across all phones; delaying only the status motion leaves the Plan/capture/Menu shell and Photos navigation contract unchanged.",
       "screens": [
         "plan.iphone-14",
         "plan-next-week.iphone-14",
         "menu.iphone-14",
         "menu-scrolled.iphone-14",
+        "menu-processing.iphone-14",
         "menu-empty.iphone-14",
-        "menu-search-empty.iphone-14"
+        "menu-search-empty.iphone-14",
+        "photos.iphone-14",
+        "photos-unorganized.iphone-14",
+        "photos-empty.iphone-14"
       ]
     },
     "successful-cover-improvement": {
@@ -581,26 +870,29 @@
       ]
     },
     "visible-background-processing": {
-      "inputHash": "ef95c334421e947e7db0678b6c6735d7940e87a5c581c53d8e244c0d5ddd20e6",
+      "inputHash": "54a69329ef9dc05a9578926aab3169097fa2033bf90d94d2d3aeb00c38ffd297",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
         "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
-        "requirement:visible-background-processing": "3277a491d3afd5f8bd4d742705133739ee62827aebd66951bedd513c0b825f7c",
-        "screens/batch-outcome.iphone-14.html": "949a1b0929f59a3f660b7aadfad7125b59d8fbd5e02fa1ec5d256b25d383051a",
-        "screens/menu-processing.iphone-14.html": "64d94e8f2c06eae34b309d46dc572fb04a08eff7d756e5efd15b9176607be448",
-        "screens/processing-status.iphone-14.html": "92a377b0dee4b56b2c5e69d034e330afedd024f41b6a455cba7050edc54ec24b",
+        "requirement:visible-background-processing": "23cb4367252743c5e4ef397b0afba326a4d20f1eee6aac1cffee50e7a1fce338",
+        "screens/menu-processing.iphone-14.html": "f26c8e7b079d1729a9cdebc4a11613ecb280b4bdb3f2b9fb148334f5f0888822",
+        "screens/photo-detail-organizing.iphone-14.html": "b8b1665c2ce9beea9941c3e9487a0c72343310082d2315f3cc4be348c8ff2305",
+        "screens/photo-detail-unorganized.iphone-14.html": "2491aadf802bb30775932990f924f65832cbd8d3dbe7668a55e512d539d83a28",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-unorganized.iphone-14.html": "e8375f920042c22e926b4b11615b52f6644696c58885461bbfdd1c953d3517c1",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed the updated screen family and interaction annotations across the configured device set. Verified: The temporary organizing dish card occupies the expected newest-dish position, has a reduced-motion-safe loading treatment, opens detailed locally-saved, upload, organization, and review status, and can be dismissed without cancelling work.",
+      "proof": "Re-reviewed the organizing entry after adding the short entrance delay. The state is immediately visible, animates after two seconds, respects reduced motion, and still opens the already usable photo gallery.",
       "screens": [
         "menu-processing.iphone-14",
-        "processing-status.iphone-14",
-        "batch-outcome.iphone-14"
+        "photos-unorganized.iphone-14",
+        "photo-detail-organizing.iphone-14",
+        "photo-detail-unorganized.iphone-14"
       ]
     },
     "warm-minimal-visual-system": {
-      "inputHash": "34f27588fcd0c9c82cfc0c2bb223d0318633fa75a52e4342d5ec57c7c1ad4107",
+      "inputHash": "5106b97b90cd0ef4452048bb0123d47b67114c9961817068568c9951ed4271fd",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
@@ -619,7 +911,7 @@
         "screens/capture-matched.iphone-14.html": "9d3e3140828bd7a1388af7a55bd3a1906a2a1e64d5e41e7444a9267acdce120f",
         "screens/capture-offline.iphone-14.html": "019c99c65aeb31e579670cacdca71051324e5dd28755dcf4e3bb1ba5c17b5904",
         "screens/capture-permission.iphone-14.html": "12feb5299d365573a1c83767c420c89a92a37540c6df270f2c746438d08ae272",
-        "screens/capture.iphone-14.html": "98c835a2f6fb801853bf3baf9044bc863c1df51561f40ce619970f1844dbf10a",
+        "screens/capture.iphone-14.html": "61373c045bc4f5231b4ce5286d6653f3207977f1c67667e27790bdc72dbdb0d0",
         "screens/cook-again.iphone-14.html": "cefd67578804661813c20f69ff82afed5f910d6c571af0a4fc3367da8501cf9e",
         "screens/dish-detail.iphone-14.html": "91c0d14d00bf93845644402c51f25d61c7ebd54daa25d92b6c282d28fb1b608f",
         "screens/dish-memory.iphone-14.html": "8cb6755e6f1022c4c6fe380575cf1b489a1927a8a360ed050cb7f530a3249100",
@@ -630,12 +922,13 @@
         "screens/improve-cover.iphone-14.html": "983921e30fa181e420e9e04e47c14d649a0f77d71edae033b0e4beb8c3d10771",
         "screens/menu-delete-confirm.iphone-14.html": "243560bff26623fa84c78613c8eeb22df255d52bffe3bcbf58f7bd013ae2da99",
         "screens/menu-delete-select.iphone-14.html": "4d317a7715d55614df6356fa28c3deb15dff90e2dbe275c05850606fd93bfe21",
-        "screens/menu-dishes-deleted.iphone-14.html": "eeedf1a4a9cc99b698bd2d0e0803213dca803ce9abe3959b32c6d32423d56287",
-        "screens/menu-empty.iphone-14.html": "0173e4d26fb9247317e5e329cd4e8d2030cda53a54a714a77f43109a65c349ab",
-        "screens/menu-processing.iphone-14.html": "64d94e8f2c06eae34b309d46dc572fb04a08eff7d756e5efd15b9176607be448",
-        "screens/menu-scrolled.iphone-14.html": "d8758dbd4685688f0836d8b8ef22a6a0fa03a99748ca5725c2fc87d69b7a9dec",
-        "screens/menu-search-empty.iphone-14.html": "0202110079680c9cee3c9c6d18916062bf053bea05948e9e12be55eb61a92c02",
-        "screens/menu.iphone-14.html": "0881be0b3fa94d65f1ef9d1bd5de7f05dd8a4540bbf9de42dbe98ff9222cfa04",
+        "screens/menu-dishes-deleted.iphone-14.html": "ed4b204fdd48b67cc5702f617dbba2da96d85ea64b274f69764ac89738e0d8d9",
+        "screens/menu-empty.iphone-14.html": "82e51991e9f9be42d29fcd63548cb1c0a8b8251b63fce92d902cee55baf87f2b",
+        "screens/menu-processing.iphone-14.html": "f26c8e7b079d1729a9cdebc4a11613ecb280b4bdb3f2b9fb148334f5f0888822",
+        "screens/menu-scrolled.iphone-14.html": "61de5a4a58120194258caa767743b96c161fd6b979810348bfa3069849794973",
+        "screens/menu-search-empty.iphone-14.html": "c71e62e3c80695c78b53a650a979e72db0c4e86dc14718a2b30356c60edf71db",
+        "screens/menu.iphone-14.html": "6e9bdd8d38d807ba1ceb81ab2eeb29b3c2004075ae60e28daa1758df486d22d4",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/plan-actions.iphone-14.html": "67485434449e9b6e1faf228ba8dc1c46d8d524f2fde02e8dbd2b04efa591870d",
         "screens/plan-add.iphone-14.html": "2644c9f67a1a1a25a8987784dcf41e6a017101cea00179a942cf725dc9c8ecad",
         "screens/plan-next-week.iphone-14.html": "afffd39b852be16f905bb5d286f2316b4ee3bedcef24d3bc694dad1b45ff62c5",
@@ -652,7 +945,7 @@
         "screens/unsorted-photo-actions.iphone-14.html": "a3f5a40ef92f023368fb72ce2bb991e5602e272956bcdc42969af109fa3f3b42",
         "screens/unsorted-photos.iphone-14.html": "94c89916c098fcf7202c56e78d1f2c11967bda2e1b92c663f7493af6e3875900"
       },
-      "proof": "Reviewed the updated screen family and interaction annotations across the configured device set. Verified: Every delivery screen retains the shared cream, orange, charcoal, soft-surface, high-radius, rounded-type, and ambient-shadow system with one dominant filled action per task region.",
+      "proof": "Re-reviewed the final organizing Menu renders; the orange motion cue remains restrained within the warm cream, charcoal, rounded-surface system and does not create a competing primary action.",
       "screens": [
         "plan.iphone-14",
         "plan-next-week.iphone-14",
@@ -1396,13 +1689,13 @@
     },
     "capture.iphone-14@iphone-14": {
       "device": "iphone-14",
-      "inputHash": "be654bae51ddcc6c5089b6dda736ada1f7e42dd35ff9c53a8edd94e0846d52c6",
+      "inputHash": "a9b83cef4e6b5e57c64257eedc3b195ccf5bd8d33c045d401cf36327ae11c6fb",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
-        "screens/capture.iphone-14.html": "98c835a2f6fb801853bf3baf9044bc863c1df51561f40ce619970f1844dbf10a",
+        "screens/capture.iphone-14.html": "61373c045bc4f5231b4ce5286d6653f3207977f1c67667e27790bdc72dbdb0d0",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the current Capture screenshot: all three capture choices and local-save reassurance are fully visible with clear hierarchy. Device: iphone-14.",
       "screen": "capture.iphone-14",
       "screens": [
         "capture.iphone-14"
@@ -1412,13 +1705,13 @@
     },
     "capture.iphone-14@iphone-se": {
       "device": "iphone-se",
-      "inputHash": "74bb78f20536a6390913cef494b98e8a6cb15b60ab52d04d089156daea681d7c",
+      "inputHash": "050bde346219323872b30723d57159f58272e6ded6b88613e0ac626fc41255c4",
       "inputs": {
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
-        "screens/capture.iphone-14.html": "98c835a2f6fb801853bf3baf9044bc863c1df51561f40ce619970f1844dbf10a",
+        "screens/capture.iphone-14.html": "61373c045bc4f5231b4ce5286d6653f3207977f1c67667e27790bdc72dbdb0d0",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the current Capture screenshot: all three capture choices and local-save reassurance are fully visible with clear hierarchy. Device: iphone-se.",
       "screen": "capture.iphone-14",
       "screens": [
         "capture.iphone-14"
@@ -1428,13 +1721,13 @@
     },
     "capture.iphone-14@pixel-7": {
       "device": "pixel-7",
-      "inputHash": "dbd3305985e558fe3ba05fbc2e60f31f5eece2774b153973f9a3527710ddc294",
+      "inputHash": "a132c059f683fab13e6957fdba9c1c44f55bdaef166b4fb19faef3666a4cd793",
       "inputs": {
         "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
-        "screens/capture.iphone-14.html": "98c835a2f6fb801853bf3baf9044bc863c1df51561f40ce619970f1844dbf10a",
+        "screens/capture.iphone-14.html": "61373c045bc4f5231b4ce5286d6653f3207977f1c67667e27790bdc72dbdb0d0",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the current Capture screenshot: all three capture choices and local-save reassurance are fully visible with clear hierarchy. Device: pixel-7.",
       "screen": "capture.iphone-14",
       "screens": [
         "capture.iphone-14"
@@ -1972,291 +2265,1023 @@
     },
     "menu-dishes-deleted.iphone-14@iphone-14": {
       "device": "iphone-14",
-      "inputHash": "a78955ed146ff915c4f22a809678a4b6566f9fc1cf6d5995c177a0a3ff907c66",
+      "inputHash": "5b566a058243cc826ac705dac7822c5ab4f07fc2e271b8f389d8887fe1e63a5a",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
-        "screens/menu-dishes-deleted.iphone-14.html": "eeedf1a4a9cc99b698bd2d0e0803213dca803ce9abe3959b32c6d32423d56287",
+        "screens/menu-dishes-deleted.iphone-14.html": "ed4b204fdd48b67cc5702f617dbba2da96d85ea64b274f69764ac89738e0d8d9",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the current menu-dishes-deleted.iphone-14 render on iphone-14: the counted Photos entry, 22-dish result, and Undo toast retain clear hierarchy and safe navigation spacing.",
       "screen": "menu-dishes-deleted.iphone-14",
       "screens": [
         "menu-dishes-deleted.iphone-14"
       ],
       "screenshot": ".mocklens/screenshots/iphone-14/menu-dishes-deleted.iphone-14.png",
-      "screenshotSha256": "41e1d3172926ff50d8f7506c158ade745180805d4e5d54db8e33549c298c9bb2"
+      "screenshotSha256": "a22aa18ec614e912ee9598fae0cd7e84010882e1b0ca8862616f7c395a57c217"
     },
     "menu-dishes-deleted.iphone-14@iphone-se": {
       "device": "iphone-se",
-      "inputHash": "0e12620bfbd5809547d5112721cf4cf7e988938265e3c30ba35c73dbefc2e31d",
+      "inputHash": "571514d8235db9713e98bd293d2197654ba94d01a9279a04775f203431827ed3",
       "inputs": {
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
-        "screens/menu-dishes-deleted.iphone-14.html": "eeedf1a4a9cc99b698bd2d0e0803213dca803ce9abe3959b32c6d32423d56287",
+        "screens/menu-dishes-deleted.iphone-14.html": "ed4b204fdd48b67cc5702f617dbba2da96d85ea64b274f69764ac89738e0d8d9",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the current menu-dishes-deleted.iphone-14 render on iphone-se: the counted Photos entry, 22-dish result, and Undo toast retain clear hierarchy and safe navigation spacing.",
       "screen": "menu-dishes-deleted.iphone-14",
       "screens": [
         "menu-dishes-deleted.iphone-14"
       ],
       "screenshot": ".mocklens/screenshots/iphone-se/menu-dishes-deleted.iphone-14.png",
-      "screenshotSha256": "fb13c1226735b2a9ef273b6bc1cd7f8624c8d599b719bd74edcd487f6dd4d8f0"
+      "screenshotSha256": "4f261a96016c34aa9439f7f036785cdfd4f1495e64454f45d2ec52afb27c0b5c"
     },
     "menu-dishes-deleted.iphone-14@pixel-7": {
       "device": "pixel-7",
-      "inputHash": "b4a214158f84b8a5aec48c68769c485ad3f76b3f018cbdfd415470883ab310c6",
+      "inputHash": "086eb1eea014ed5a25a70fc7322b84033eb95bdfe3171f272d965916f089c57e",
       "inputs": {
         "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
-        "screens/menu-dishes-deleted.iphone-14.html": "eeedf1a4a9cc99b698bd2d0e0803213dca803ce9abe3959b32c6d32423d56287",
+        "screens/menu-dishes-deleted.iphone-14.html": "ed4b204fdd48b67cc5702f617dbba2da96d85ea64b274f69764ac89738e0d8d9",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the current menu-dishes-deleted.iphone-14 render on pixel-7: the counted Photos entry, 22-dish result, and Undo toast retain clear hierarchy and safe navigation spacing.",
       "screen": "menu-dishes-deleted.iphone-14",
       "screens": [
         "menu-dishes-deleted.iphone-14"
       ],
       "screenshot": ".mocklens/screenshots/pixel-7/menu-dishes-deleted.iphone-14.png",
-      "screenshotSha256": "1eab47e50d57a560828d6da5215f9cdb6ff8d135fb1b69ee1b2893ccffc9d55c"
+      "screenshotSha256": "04b7df94dbfde79cead8f6d5b1f9dc26f693f022b9af1d8b77f307dc9458a67a"
     },
     "menu-empty.iphone-14@iphone-14": {
       "device": "iphone-14",
-      "inputHash": "81e00cedbc4efa18456342de41ce74ff802ee536b1a50f2bc31802ca02ab59fe",
+      "inputHash": "75ebaac44ccb8d716e3faae9662f2205caace1f7379f9db093e72ce59495aa11",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
-        "screens/menu-empty.iphone-14.html": "0173e4d26fb9247317e5e329cd4e8d2030cda53a54a714a77f43109a65c349ab",
+        "screens/menu-empty.iphone-14.html": "82e51991e9f9be42d29fcd63548cb1c0a8b8251b63fce92d902cee55baf87f2b",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the current menu-empty.iphone-14 render on iphone-14: the neutral Photos entry stays discoverable without competing with the single global capture action.",
       "screen": "menu-empty.iphone-14",
       "screens": [
         "menu-empty.iphone-14"
       ],
       "screenshot": ".mocklens/screenshots/iphone-14/menu-empty.iphone-14.png",
-      "screenshotSha256": "711cadd3cc8d7d6956a9a85f38b25a5d9d8fded7c7905d323c3ef2784f4a365d"
+      "screenshotSha256": "41908ed37060db6be64fe5e57e513e2b4fa3c4b0d6fa22c33e9adb1cfe62aae2"
     },
     "menu-empty.iphone-14@iphone-se": {
       "device": "iphone-se",
-      "inputHash": "fc8330bd1ae1bec1e0949fbdc21cd90271aa9b5c1d26fcfa7d5772b2713f2cc3",
+      "inputHash": "6a877b664f5cc1bc49f65787a07e86b26ba307efdcdf9be937fb5d2d86a02ecc",
       "inputs": {
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
-        "screens/menu-empty.iphone-14.html": "0173e4d26fb9247317e5e329cd4e8d2030cda53a54a714a77f43109a65c349ab",
+        "screens/menu-empty.iphone-14.html": "82e51991e9f9be42d29fcd63548cb1c0a8b8251b63fce92d902cee55baf87f2b",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the current menu-empty.iphone-14 render on iphone-se: the neutral Photos entry stays discoverable without competing with the single global capture action.",
       "screen": "menu-empty.iphone-14",
       "screens": [
         "menu-empty.iphone-14"
       ],
       "screenshot": ".mocklens/screenshots/iphone-se/menu-empty.iphone-14.png",
-      "screenshotSha256": "0588cd0f61eb60c1222e0f55a553fdf64735c84022203a21bb0463156be449a8"
+      "screenshotSha256": "d02dcaff9ae8c05fbe467a44fee29067a0fe49ee0a3863e5d7db5ad83e7a904e"
     },
     "menu-empty.iphone-14@pixel-7": {
       "device": "pixel-7",
-      "inputHash": "9ebc04e12510c0a821c71cd01a3d842684ee6365870ce6c5670b1516db7eb55b",
+      "inputHash": "9c2b1abd5bd8b89f38aeafa67fd2c11b1d8c441d8b9ad7a22bc856414e252705",
       "inputs": {
         "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
-        "screens/menu-empty.iphone-14.html": "0173e4d26fb9247317e5e329cd4e8d2030cda53a54a714a77f43109a65c349ab",
+        "screens/menu-empty.iphone-14.html": "82e51991e9f9be42d29fcd63548cb1c0a8b8251b63fce92d902cee55baf87f2b",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the current menu-empty.iphone-14 render on pixel-7: the neutral Photos entry stays discoverable without competing with the single global capture action.",
       "screen": "menu-empty.iphone-14",
       "screens": [
         "menu-empty.iphone-14"
       ],
       "screenshot": ".mocklens/screenshots/pixel-7/menu-empty.iphone-14.png",
-      "screenshotSha256": "104f40218c58c463bd386b9d0de4b2aefad3902cecc0b55b02f51f5a1900051b"
+      "screenshotSha256": "e9e538b67e32148461fd1d39a497c629b1f1006b8c8ef2145a6d78b527858493"
     },
     "menu-processing.iphone-14@iphone-14": {
       "device": "iphone-14",
-      "inputHash": "e820c9592416d566b78cc370ddf784c5330111d905030ac7d5dc58087459cd39",
+      "inputHash": "e995aeea317526da4aee90a84ed6b413ec460d11606d86f7ec79726c47eee662",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
-        "screens/menu-processing.iphone-14.html": "64d94e8f2c06eae34b309d46dc572fb04a08eff7d756e5efd15b9176607be448",
+        "screens/menu-processing.iphone-14.html": "f26c8e7b079d1729a9cdebc4a11613ecb280b4bdb3f2b9fb148334f5f0888822",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the final deterministic organizing render on iphone-14: the immediate outline and sparkle fit beside shortened search, motion begins after a short delay, and filters, dish grid, and bottom navigation remain unobstructed.",
       "screen": "menu-processing.iphone-14",
       "screens": [
         "menu-processing.iphone-14"
       ],
       "screenshot": ".mocklens/screenshots/iphone-14/menu-processing.iphone-14.png",
-      "screenshotSha256": "9da63a146de0d64bb6b657cf2ac1138bd4ea5963413729bf6ed09014cdccffe8"
+      "screenshotSha256": "a7b2d2cc7b91c54e2f7a90e2fa310a77706850f3a2b03fccc86d595fb6af7042"
     },
     "menu-processing.iphone-14@iphone-se": {
       "device": "iphone-se",
-      "inputHash": "e24bb6fceb6a880c3ff56c3b286b0c98b0e66cacf44be1e4bb96b1d353b2a695",
+      "inputHash": "6f97d3b17d6db0cfc46cb57309e433cfdd533d1e629d0790d17968039be47368",
       "inputs": {
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
-        "screens/menu-processing.iphone-14.html": "64d94e8f2c06eae34b309d46dc572fb04a08eff7d756e5efd15b9176607be448",
+        "screens/menu-processing.iphone-14.html": "f26c8e7b079d1729a9cdebc4a11613ecb280b4bdb3f2b9fb148334f5f0888822",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the final deterministic organizing render on iphone-se: the immediate outline and sparkle fit beside shortened search, motion begins after a short delay, and filters, dish grid, and bottom navigation remain unobstructed.",
       "screen": "menu-processing.iphone-14",
       "screens": [
         "menu-processing.iphone-14"
       ],
       "screenshot": ".mocklens/screenshots/iphone-se/menu-processing.iphone-14.png",
-      "screenshotSha256": "791a0823aa98abede0050ef348e39adc9682df3063f1e5cbe32d2b4b38194ca5"
+      "screenshotSha256": "a542c514f9782797eb9ee85b2dac47417e1c6149e739361f2d31b882d7b85276"
     },
     "menu-processing.iphone-14@pixel-7": {
       "device": "pixel-7",
-      "inputHash": "caf88b729e02c29c2ba5d3af3d5d140a9842fe62838bcbd2eb83a17d5fdaed70",
+      "inputHash": "ca063757759d17f393144e6747960559a21a07a951ca13c5eb0b7a11b6fc66cb",
       "inputs": {
         "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
-        "screens/menu-processing.iphone-14.html": "64d94e8f2c06eae34b309d46dc572fb04a08eff7d756e5efd15b9176607be448",
+        "screens/menu-processing.iphone-14.html": "f26c8e7b079d1729a9cdebc4a11613ecb280b4bdb3f2b9fb148334f5f0888822",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the final deterministic organizing render on pixel-7: the immediate outline and sparkle fit beside shortened search, motion begins after a short delay, and filters, dish grid, and bottom navigation remain unobstructed.",
       "screen": "menu-processing.iphone-14",
       "screens": [
         "menu-processing.iphone-14"
       ],
       "screenshot": ".mocklens/screenshots/pixel-7/menu-processing.iphone-14.png",
-      "screenshotSha256": "16c6bbc0edf5fa725a8c7a079f198a4d66d69d6c18485bb9b75a311b96977253"
+      "screenshotSha256": "4a3502359638a5f7eb96a2f2288a04bd051d3d013bafe5f8f5cc9486b199f9d4"
     },
     "menu-scrolled.iphone-14@iphone-14": {
       "device": "iphone-14",
-      "inputHash": "7dc83ab9f56416f64c872a96ffda72e4876611cddbb2232e94c87146c7b052e2",
+      "inputHash": "3376f54ac141cfcb8edff680f0cc17e7abb2f6627df61979aa070f30193f8117",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
-        "screens/menu-scrolled.iphone-14.html": "d8758dbd4685688f0836d8b8ef22a6a0fa03a99748ca5725c2fc87d69b7a9dec",
+        "screens/menu-scrolled.iphone-14.html": "61de5a4a58120194258caa767743b96c161fd6b979810348bfa3069849794973",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the current menu-scrolled.iphone-14 render on iphone-14: the neutral Photos button fits beside shortened search and the sticky shadow separates controls from the dish grid.",
       "screen": "menu-scrolled.iphone-14",
       "screens": [
         "menu-scrolled.iphone-14"
       ],
       "screenshot": ".mocklens/screenshots/iphone-14/menu-scrolled.iphone-14.png",
-      "screenshotSha256": "77aea61164ed8e45030bbcb586a6f07b458fe0144682310c4b44f72aeec6b8b1"
+      "screenshotSha256": "cb762826f910bf0f19e95104b8c2da41d3756512b8f163317504c7e63ae9e690"
     },
     "menu-scrolled.iphone-14@iphone-se": {
       "device": "iphone-se",
-      "inputHash": "4c76dce155f56084d261a41381ae687e191d0002dbb6944d0e05691c5e8824df",
+      "inputHash": "b5f3eece7c3d633cc80008baa6efeb0e4bb8b51a4a38ccc0b137e4f634a3f8a0",
       "inputs": {
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
-        "screens/menu-scrolled.iphone-14.html": "d8758dbd4685688f0836d8b8ef22a6a0fa03a99748ca5725c2fc87d69b7a9dec",
+        "screens/menu-scrolled.iphone-14.html": "61de5a4a58120194258caa767743b96c161fd6b979810348bfa3069849794973",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the current menu-scrolled.iphone-14 render on iphone-se: the neutral Photos button fits beside shortened search and the sticky shadow separates controls from the dish grid.",
       "screen": "menu-scrolled.iphone-14",
       "screens": [
         "menu-scrolled.iphone-14"
       ],
       "screenshot": ".mocklens/screenshots/iphone-se/menu-scrolled.iphone-14.png",
-      "screenshotSha256": "7389f22836e578f2dcde4cc174c4e5e877b711a0a835b597da72847c7c9a9bd9"
+      "screenshotSha256": "631fdc60cdb0c5b419f22e36709c9f9bdc8904f06c323ef3470fcab56bd80653"
     },
     "menu-scrolled.iphone-14@pixel-7": {
       "device": "pixel-7",
-      "inputHash": "4f828c75da68dc165db4680b3156c51968f566a89bfd08c0cc2352954cdf68c0",
+      "inputHash": "062ca44e4d0c4af879683fba661593241ca8bbad54388b4ae31d9587ffba8976",
       "inputs": {
         "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
-        "screens/menu-scrolled.iphone-14.html": "d8758dbd4685688f0836d8b8ef22a6a0fa03a99748ca5725c2fc87d69b7a9dec",
+        "screens/menu-scrolled.iphone-14.html": "61de5a4a58120194258caa767743b96c161fd6b979810348bfa3069849794973",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the current menu-scrolled.iphone-14 render on pixel-7: the neutral Photos button fits beside shortened search and the sticky shadow separates controls from the dish grid.",
       "screen": "menu-scrolled.iphone-14",
       "screens": [
         "menu-scrolled.iphone-14"
       ],
       "screenshot": ".mocklens/screenshots/pixel-7/menu-scrolled.iphone-14.png",
-      "screenshotSha256": "759cac2743d9713796a42c19940f5f26b4f326bff1b219b0d7c2f3e0a8f818d4"
+      "screenshotSha256": "779d427f36699073a8d3b4f26891688803068c2dee67bf8d6cbd40f5f60bb80b"
     },
     "menu-search-empty.iphone-14@iphone-14": {
       "device": "iphone-14",
-      "inputHash": "bf2e3ade2b17b5977f55a06191411fee003e397e4350cb726cbe494af33e706e",
+      "inputHash": "593b9b99b7f1d4143d79c76171ae7e111a8528131adb420bd23911e9f03909ef",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
-        "screens/menu-search-empty.iphone-14.html": "0202110079680c9cee3c9c6d18916062bf053bea05948e9e12be55eb61a92c02",
+        "screens/menu-search-empty.iphone-14.html": "c71e62e3c80695c78b53a650a979e72db0c4e86dc14718a2b30356c60edf71db",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the current menu-search-empty.iphone-14 render on iphone-14: the unorganized count remains legible beside the active query and all recovery controls fit.",
       "screen": "menu-search-empty.iphone-14",
       "screens": [
         "menu-search-empty.iphone-14"
       ],
       "screenshot": ".mocklens/screenshots/iphone-14/menu-search-empty.iphone-14.png",
-      "screenshotSha256": "2400784e0b72c074eba85668bc0ab4c6ff4486b4beb60072390944bea881296c"
+      "screenshotSha256": "160804022c7df3be1818c5c1010be3ccef4cbf753e8a034aa5a068b111ad83c5"
     },
     "menu-search-empty.iphone-14@iphone-se": {
       "device": "iphone-se",
-      "inputHash": "99f9a5a7a4de1d79a00fb75801a024f8591b9ed7394f493c5a177f46593362d0",
+      "inputHash": "27fd04c5d4ed2351d53448a2f4bcc509bce955e63247605080f59b61e91405ec",
       "inputs": {
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
-        "screens/menu-search-empty.iphone-14.html": "0202110079680c9cee3c9c6d18916062bf053bea05948e9e12be55eb61a92c02",
+        "screens/menu-search-empty.iphone-14.html": "c71e62e3c80695c78b53a650a979e72db0c4e86dc14718a2b30356c60edf71db",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the current menu-search-empty.iphone-14 render on iphone-se: the unorganized count remains legible beside the active query and all recovery controls fit.",
       "screen": "menu-search-empty.iphone-14",
       "screens": [
         "menu-search-empty.iphone-14"
       ],
       "screenshot": ".mocklens/screenshots/iphone-se/menu-search-empty.iphone-14.png",
-      "screenshotSha256": "f9e06c7fb8a437040bdcf80df9a40ca68b3f21a22ba0637d05755958585c9048"
+      "screenshotSha256": "f074dc1be1d3c9efe1ee55f55bb1bd5f9b2c8e1d640685f4f46727a0d4b90051"
     },
     "menu-search-empty.iphone-14@pixel-7": {
       "device": "pixel-7",
-      "inputHash": "e38b8836387f0b6097067ba17e4c8783d2b9ac9e25fda49c73c58ccbf2b4fc9b",
+      "inputHash": "c7a9bafe1c40c7caa98c3cdea94e247cbebe0d64a51d8d5a4e1d834a486d1647",
       "inputs": {
         "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
-        "screens/menu-search-empty.iphone-14.html": "0202110079680c9cee3c9c6d18916062bf053bea05948e9e12be55eb61a92c02",
+        "screens/menu-search-empty.iphone-14.html": "c71e62e3c80695c78b53a650a979e72db0c4e86dc14718a2b30356c60edf71db",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the current menu-search-empty.iphone-14 render on pixel-7: the unorganized count remains legible beside the active query and all recovery controls fit.",
       "screen": "menu-search-empty.iphone-14",
       "screens": [
         "menu-search-empty.iphone-14"
       ],
       "screenshot": ".mocklens/screenshots/pixel-7/menu-search-empty.iphone-14.png",
-      "screenshotSha256": "a896fd785a31927b34bbb6781af19cddb74b3f7c91d296c060f6deae187f3802"
+      "screenshotSha256": "9374e0703cf5bf9aa502ab761b6469fe39f0b171e8f78ef2be8cdbbc4ee1f4f1"
     },
     "menu.iphone-14@iphone-14": {
       "device": "iphone-14",
-      "inputHash": "66850b231640f914d85c7f20ff82609b6dff9e09371979fd8ef17ecd414b7555",
+      "inputHash": "58ba01c98c5e5f75c169ef253859d4614b1d91174b4a8030364225bdf79e2c51",
       "inputs": {
         "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
-        "screens/menu.iphone-14.html": "0881be0b3fa94d65f1ef9d1bd5de7f05dd8a4540bbf9de42dbe98ff9222cfa04",
+        "screens/menu.iphone-14.html": "6e9bdd8d38d807ba1ceb81ab2eeb29b3c2004075ae60e28daa1758df486d22d4",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the current menu.iphone-14 render on iphone-14: the shortened search and stationary 5-photo badge read as one compact utility row while dishes remain primary.",
       "screen": "menu.iphone-14",
       "screens": [
         "menu.iphone-14"
       ],
       "screenshot": ".mocklens/screenshots/iphone-14/menu.iphone-14.png",
-      "screenshotSha256": "fddaaac9a0d63996c1d1dd554e0c9e8664b95e026059930acfc7aa65bed05b7d"
+      "screenshotSha256": "a3efa83f76bab658111213fdd7dd6bb7a4bcb4ea35c6bd62c749217231468aff"
     },
     "menu.iphone-14@iphone-se": {
       "device": "iphone-se",
-      "inputHash": "3814e66c3dd6a7dbccfdd7749e035b34c3faef3617405f54cb3b12d368793c42",
+      "inputHash": "8bb95c8a20ce5640f7e684d739ae86b0bab761dd54bbcdbe4daafe6eea545623",
       "inputs": {
         "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
-        "screens/menu.iphone-14.html": "0881be0b3fa94d65f1ef9d1bd5de7f05dd8a4540bbf9de42dbe98ff9222cfa04",
+        "screens/menu.iphone-14.html": "6e9bdd8d38d807ba1ceb81ab2eeb29b3c2004075ae60e28daa1758df486d22d4",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the current menu.iphone-14 render on iphone-se: the shortened search and stationary 5-photo badge read as one compact utility row while dishes remain primary.",
       "screen": "menu.iphone-14",
       "screens": [
         "menu.iphone-14"
       ],
       "screenshot": ".mocklens/screenshots/iphone-se/menu.iphone-14.png",
-      "screenshotSha256": "82c7d66df3dad2cb10abfc2438cfd84893e73e2bdb33d9f2814e021cbeb5cbed"
+      "screenshotSha256": "298653e76e0e2cddf879092f06a8461ea6d0f89b381868f6a79a7a875cb53091"
     },
     "menu.iphone-14@pixel-7": {
       "device": "pixel-7",
-      "inputHash": "7a29c1faa326fbce43763db9e51a8d0629363f6a270bd44e00ff3c2f67783e9f",
+      "inputHash": "73bfc6878a019e84fdce71238e7361a920d3a664e2ddc680237a56d63dab13c9",
       "inputs": {
         "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
-        "screens/menu.iphone-14.html": "0881be0b3fa94d65f1ef9d1bd5de7f05dd8a4540bbf9de42dbe98ff9222cfa04",
+        "screens/menu.iphone-14.html": "6e9bdd8d38d807ba1ceb81ab2eeb29b3c2004075ae60e28daa1758df486d22d4",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
         "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
       },
-      "proof": "Reviewed every current screenshot changed by the swipe selector, recipe state, new-dish label, and circular Menu review badge across all configured devices. The remaining targets retain identical rendered pixels to their previously reviewed checkpoints. Journal and Recipe selectors are compact and aligned, the New label is readable without hiding the dish, and the Menu badge remains circular in Menu and Plan contexts.",
+      "proof": "Reviewed the current menu.iphone-14 render on pixel-7: the shortened search and stationary 5-photo badge read as one compact utility row while dishes remain primary.",
       "screen": "menu.iphone-14",
       "screens": [
         "menu.iphone-14"
       ],
       "screenshot": ".mocklens/screenshots/pixel-7/menu.iphone-14.png",
-      "screenshotSha256": "3a5614cc06f65f1b96b88e38649e71bade6f53a509ac341c246ec085db431e24"
+      "screenshotSha256": "52c7677d04562b5e912323b5cd654b86dc1f78759a6f45e23ad78ff3df0d4d4e"
+    },
+    "photo-assign.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "0427c9d224f4560dfc59c2a607145b40813a4ea56cd0653cbbaf8a792870e04a",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/photo-assign.iphone-14.html": "39d8352fd4f561746ea10fddd8d2d9838646569b0fcc976af344f226bb06e94e",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-assign.iphone-14 render on iphone-14: the picker title, search, suggestions, create path, and fixed assignment action remain readable and reachable.",
+      "screen": "photo-assign.iphone-14",
+      "screens": [
+        "photo-assign.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/photo-assign.iphone-14.png",
+      "screenshotSha256": "caf58d28fc4af06f75207cf4b622748708ffe634fd0313fa1a23a05c8643e3ff"
+    },
+    "photo-assign.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "8d50fe8cf390ffedd450e514a62659d059aeec0bc19acb40e163c24cab7c2195",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/photo-assign.iphone-14.html": "39d8352fd4f561746ea10fddd8d2d9838646569b0fcc976af344f226bb06e94e",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-assign.iphone-14 render on iphone-se: the picker title, search, suggestions, create path, and fixed assignment action remain readable and reachable.",
+      "screen": "photo-assign.iphone-14",
+      "screens": [
+        "photo-assign.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/photo-assign.iphone-14.png",
+      "screenshotSha256": "fdbcacd3e6a75628bae6eeb5e084198c2afc3e7d11fcc5f6179a765a3bc3a33f"
+    },
+    "photo-assign.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "f2e363486ed98b819e6eda55cdfa78fbc96bbe8e3c808b5cdb5ad9affbce80fe",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/photo-assign.iphone-14.html": "39d8352fd4f561746ea10fddd8d2d9838646569b0fcc976af344f226bb06e94e",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-assign.iphone-14 render on pixel-7: the picker title, search, suggestions, create path, and fixed assignment action remain readable and reachable.",
+      "screen": "photo-assign.iphone-14",
+      "screens": [
+        "photo-assign.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/photo-assign.iphone-14.png",
+      "screenshotSha256": "ead1e2e0be2310ec00ee3fadef0ea236b55c15089d1e3cc92bc7f6cfbec48a11"
+    },
+    "photo-assigned.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "5ce076e5ecd6a51c0b3d3d0cae0789c99f4ff4147aa40d8e12f2344d3f07f31c",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/photo-assigned.iphone-14.html": "8f210a9c9a7ab144a8c02c2162b0e7d9bad3d0b9ae3b3f3ff4ba2a44d9744446",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-assigned.iphone-14 render on iphone-14: the picker title, search, suggestions, create path, and fixed assignment action remain readable and reachable.",
+      "screen": "photo-assigned.iphone-14",
+      "screens": [
+        "photo-assigned.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/photo-assigned.iphone-14.png",
+      "screenshotSha256": "2a26f69c405d1134f095bc58ef0f291aeaa7ab24baa08982d68fedf3ba2819b0"
+    },
+    "photo-assigned.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "b52949e988d6520c7d3e060b2e9bf0788104648888edae7cfe4d080c46f1cb2f",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/photo-assigned.iphone-14.html": "8f210a9c9a7ab144a8c02c2162b0e7d9bad3d0b9ae3b3f3ff4ba2a44d9744446",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-assigned.iphone-14 render on iphone-se: the picker title, search, suggestions, create path, and fixed assignment action remain readable and reachable.",
+      "screen": "photo-assigned.iphone-14",
+      "screens": [
+        "photo-assigned.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/photo-assigned.iphone-14.png",
+      "screenshotSha256": "4acf0ebf9fb27c1de3378f99b2afe44c83d7f18c5a299594912c0134be075358"
+    },
+    "photo-assigned.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "340a23744a5497d770a91ab9e874e037320bfa01666721bbf1304c29f420081d",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/photo-assigned.iphone-14.html": "8f210a9c9a7ab144a8c02c2162b0e7d9bad3d0b9ae3b3f3ff4ba2a44d9744446",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-assigned.iphone-14 render on pixel-7: the picker title, search, suggestions, create path, and fixed assignment action remain readable and reachable.",
+      "screen": "photo-assigned.iphone-14",
+      "screens": [
+        "photo-assigned.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/photo-assigned.iphone-14.png",
+      "screenshotSha256": "f988279a2668d0658edbe060110573aee83ba43e30885639dcc15b05707dbe9a"
+    },
+    "photo-delete-confirm.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "7ccab5ed70ff9dc00fb57d335fec44fcf8805f71471ebfd455361678d90c6ed1",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/photo-delete-confirm.iphone-14.html": "ec953c6b9eea471304777c11e3196fd5d676d0d64a369616b8c7ba6def9331a3",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-delete-confirm.iphone-14 render on iphone-14: the image context, scoped confirmation sheet, destructive action, and keep-photo escape remain visually ordered.",
+      "screen": "photo-delete-confirm.iphone-14",
+      "screens": [
+        "photo-delete-confirm.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/photo-delete-confirm.iphone-14.png",
+      "screenshotSha256": "1abb2b3d3c3bbbfb3904bb6d1626fb8d94c99f5b62aaf757cd1bec5072440a83"
+    },
+    "photo-delete-confirm.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "ed9b5c0fa997d91d01e310136cbae9ef4f41e3fc578aef6f04f5d36bbe22ecc4",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/photo-delete-confirm.iphone-14.html": "ec953c6b9eea471304777c11e3196fd5d676d0d64a369616b8c7ba6def9331a3",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-delete-confirm.iphone-14 render on iphone-se: the image context, scoped confirmation sheet, destructive action, and keep-photo escape remain visually ordered.",
+      "screen": "photo-delete-confirm.iphone-14",
+      "screens": [
+        "photo-delete-confirm.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/photo-delete-confirm.iphone-14.png",
+      "screenshotSha256": "d2cd858bd52c668b45fa033d82c84c03d95bffc25747bd61e46d8d89020927fc"
+    },
+    "photo-delete-confirm.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "2faab838f4490b5d6a20f107f973ac2db34f963b00ba31e86985703b4bf0d577",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/photo-delete-confirm.iphone-14.html": "ec953c6b9eea471304777c11e3196fd5d676d0d64a369616b8c7ba6def9331a3",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-delete-confirm.iphone-14 render on pixel-7: the image context, scoped confirmation sheet, destructive action, and keep-photo escape remain visually ordered.",
+      "screen": "photo-delete-confirm.iphone-14",
+      "screens": [
+        "photo-delete-confirm.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/photo-delete-confirm.iphone-14.png",
+      "screenshotSha256": "b08ab79eb28a50e6e761658714afb6ec1f13113af1274fb3c03b841c44a9d62f"
+    },
+    "photo-deleted.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "51c6cf210e1d9e653bb8165484ff8b638a3abe6015f1044ca7ac0129e00ba712",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/photo-deleted.iphone-14.html": "d9cba1a4403d192077d49d5f208c85f8b34e74fbad90ed4d08c31c4e420be60c",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-deleted.iphone-14 render on iphone-14: the revised Photos header, reconciled counts, remaining gallery, and Undo toast remain clear and unobstructed.",
+      "screen": "photo-deleted.iphone-14",
+      "screens": [
+        "photo-deleted.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/photo-deleted.iphone-14.png",
+      "screenshotSha256": "cd62aa787fa5243eeb1ea629a62eb2e852e380e798013166ee607605a33ae165"
+    },
+    "photo-deleted.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "2b85a317d33b847693322d73a00f218b6235064f3df2621719ed0d31c5d9ce9f",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/photo-deleted.iphone-14.html": "d9cba1a4403d192077d49d5f208c85f8b34e74fbad90ed4d08c31c4e420be60c",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-deleted.iphone-14 render on iphone-se: the revised Photos header, reconciled counts, remaining gallery, and Undo toast remain clear and unobstructed.",
+      "screen": "photo-deleted.iphone-14",
+      "screens": [
+        "photo-deleted.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/photo-deleted.iphone-14.png",
+      "screenshotSha256": "e6d7a957bd7550bf954c8379133ee7eec9e380e0c3fef012d0afaea8ebf06d26"
+    },
+    "photo-deleted.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "f9fce61fdf5c346812f5f028ce7883ebfe9eed772d5a752f75799efba4bcf876",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/photo-deleted.iphone-14.html": "d9cba1a4403d192077d49d5f208c85f8b34e74fbad90ed4d08c31c4e420be60c",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-deleted.iphone-14 render on pixel-7: the revised Photos header, reconciled counts, remaining gallery, and Undo toast remain clear and unobstructed.",
+      "screen": "photo-deleted.iphone-14",
+      "screens": [
+        "photo-deleted.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/photo-deleted.iphone-14.png",
+      "screenshotSha256": "183d3b059b19ab9fd35c4697e3b049c9c8a97d30f72f97459ee90cb73925c1f4"
+    },
+    "photo-detail-actions.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "5a1264a92f80674a10acfefc7ba348ead2f7799680264fa0e0cba14a34a774e6",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/photo-detail-actions.iphone-14.html": "49d8c826071ce62b427d72857d9e64a4b8681d73d5e6cfcc7b2102c77fd4d005",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-detail-actions.iphone-14 render on iphone-14: the image-dominant detail and compact overflow keep Add to dish and Delete photo distinct and reachable.",
+      "screen": "photo-detail-actions.iphone-14",
+      "screens": [
+        "photo-detail-actions.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/photo-detail-actions.iphone-14.png",
+      "screenshotSha256": "03ea4eb75bae4bfea6700aa1245705c07ce703db69e03e53d5e709c89b26cfb2"
+    },
+    "photo-detail-actions.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "182cc35fe127cce65d5560e0f20e1587c0d4db4054f6f7c4142695c2ab1e5444",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/photo-detail-actions.iphone-14.html": "49d8c826071ce62b427d72857d9e64a4b8681d73d5e6cfcc7b2102c77fd4d005",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-detail-actions.iphone-14 render on iphone-se: the image-dominant detail and compact overflow keep Add to dish and Delete photo distinct and reachable.",
+      "screen": "photo-detail-actions.iphone-14",
+      "screens": [
+        "photo-detail-actions.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/photo-detail-actions.iphone-14.png",
+      "screenshotSha256": "9a9f1613bc023e4f26919282d31ead34a0bfb1c92f6453292e56e5ca2a3081ae"
+    },
+    "photo-detail-actions.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "afa3e9a2824e8b1cdbd913bb2fd6582e73f0da76c8200d5563e8e61caecdc1d2",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/photo-detail-actions.iphone-14.html": "49d8c826071ce62b427d72857d9e64a4b8681d73d5e6cfcc7b2102c77fd4d005",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-detail-actions.iphone-14 render on pixel-7: the image-dominant detail and compact overflow keep Add to dish and Delete photo distinct and reachable.",
+      "screen": "photo-detail-actions.iphone-14",
+      "screens": [
+        "photo-detail-actions.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/photo-detail-actions.iphone-14.png",
+      "screenshotSha256": "1b848370a984665bdeb1a7023ff3356821500230cad5cc85b2de93ab650257ac"
+    },
+    "photo-detail-organized.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "b32ed00f2d6ddd0d4cb741f2739e843b58864685cef5c93c7e324e3fe664efe4",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/photo-detail-organized.iphone-14.html": "4c8ed38d95aa6ccbb5488eb006dd2174f55e731b39b0567a9bf4ff11f24e5ded",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-detail-organized.iphone-14 render on iphone-14: the image-dominant detail clearly presents assigned dish, View dish, and Change dish without clipped actions.",
+      "screen": "photo-detail-organized.iphone-14",
+      "screens": [
+        "photo-detail-organized.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/photo-detail-organized.iphone-14.png",
+      "screenshotSha256": "af0b8b645f72e5acad52938c79669b54e9ab58ab3d6f6c8e2bfeef3a0312da13"
+    },
+    "photo-detail-organized.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "ef0f61ac61e988706750f2cc85b853a9c1d397caa2c5c4a31ae889561d2daabe",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/photo-detail-organized.iphone-14.html": "4c8ed38d95aa6ccbb5488eb006dd2174f55e731b39b0567a9bf4ff11f24e5ded",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-detail-organized.iphone-14 render on iphone-se: the image-dominant detail clearly presents assigned dish, View dish, and Change dish without clipped actions.",
+      "screen": "photo-detail-organized.iphone-14",
+      "screens": [
+        "photo-detail-organized.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/photo-detail-organized.iphone-14.png",
+      "screenshotSha256": "427e48b638ed0f3948309d453d0be86b27f21c5d9e70ed15baf8f5ccbf4b60d5"
+    },
+    "photo-detail-organized.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "3090b3ecea4679d4a898c150a9a911438bf681ff993981984761ee73a9185f34",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/photo-detail-organized.iphone-14.html": "4c8ed38d95aa6ccbb5488eb006dd2174f55e731b39b0567a9bf4ff11f24e5ded",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-detail-organized.iphone-14 render on pixel-7: the image-dominant detail clearly presents assigned dish, View dish, and Change dish without clipped actions.",
+      "screen": "photo-detail-organized.iphone-14",
+      "screens": [
+        "photo-detail-organized.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/photo-detail-organized.iphone-14.png",
+      "screenshotSha256": "ee761cbc876abf2302036d66a273d4de50d4563969d081a2aa1269f812cca2f3"
+    },
+    "photo-detail-organizing.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "c02e66fc6b477b51dac3e5c58beef4ee7e1fa25637228cd4101613152223fb5f",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/photo-detail-organizing.iphone-14.html": "b8b1665c2ce9beea9941c3e9487a0c72343310082d2315f3cc4be348c8ff2305",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-detail-organizing.iphone-14 render on iphone-14: the usable source image, subtle Organizing label, manual Organize now action, and explanatory copy fit cleanly.",
+      "screen": "photo-detail-organizing.iphone-14",
+      "screens": [
+        "photo-detail-organizing.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/photo-detail-organizing.iphone-14.png",
+      "screenshotSha256": "3ef6338b50ae385682c36cd5835c7ee7b165a3f010baf5d98cc72d41289e1256"
+    },
+    "photo-detail-organizing.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "a740ae758cbed3576177f36e0fca57c1c752496c18460a81065f99de1340bda8",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/photo-detail-organizing.iphone-14.html": "b8b1665c2ce9beea9941c3e9487a0c72343310082d2315f3cc4be348c8ff2305",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-detail-organizing.iphone-14 render on iphone-se: the usable source image, subtle Organizing label, manual Organize now action, and explanatory copy fit cleanly.",
+      "screen": "photo-detail-organizing.iphone-14",
+      "screens": [
+        "photo-detail-organizing.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/photo-detail-organizing.iphone-14.png",
+      "screenshotSha256": "4eb60ea19dbe3219c2ffb506f58cf5904937a0074f521a9bd93814f93e3bfb49"
+    },
+    "photo-detail-organizing.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "0bb94e127860517402f1dd5291262ba7f4218074c1358ffa5182d1ef6be36f81",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/photo-detail-organizing.iphone-14.html": "b8b1665c2ce9beea9941c3e9487a0c72343310082d2315f3cc4be348c8ff2305",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-detail-organizing.iphone-14 render on pixel-7: the usable source image, subtle Organizing label, manual Organize now action, and explanatory copy fit cleanly.",
+      "screen": "photo-detail-organizing.iphone-14",
+      "screens": [
+        "photo-detail-organizing.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/photo-detail-organizing.iphone-14.png",
+      "screenshotSha256": "1d346f0331600f2999e2a83210e0a38838faa8e8dc3ec0ea558d49fc26b7e641"
+    },
+    "photo-detail-review.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "491cf8cfd8da9936408c200c78a3be7456b2358e67682c626c2388034bce2704",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/photo-detail-review.iphone-14.html": "bfae9ddf3a732f276d88434842180cc9188b7549bd1ac121ca27158d4db53561",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-detail-review.iphone-14 render on iphone-14: the image, suggested match, confirm action, and alternate organization paths retain a clear hierarchy.",
+      "screen": "photo-detail-review.iphone-14",
+      "screens": [
+        "photo-detail-review.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/photo-detail-review.iphone-14.png",
+      "screenshotSha256": "78a5b81916657f1205b0f301f36405d598a7361bab47532d715091692b789b3b"
+    },
+    "photo-detail-review.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "559ab31b96c73eb5da3754926ed9d97569896494c7ef78c8d4083395758bd97a",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/photo-detail-review.iphone-14.html": "bfae9ddf3a732f276d88434842180cc9188b7549bd1ac121ca27158d4db53561",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-detail-review.iphone-14 render on iphone-se: the image, suggested match, confirm action, and alternate organization paths retain a clear hierarchy.",
+      "screen": "photo-detail-review.iphone-14",
+      "screens": [
+        "photo-detail-review.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/photo-detail-review.iphone-14.png",
+      "screenshotSha256": "940537b847374f97289b14346f4ae80d04233be8e1123e5492ba2cfd9db99bf7"
+    },
+    "photo-detail-review.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "f227877002c09dcfb3d6cce9edc5693a8cb70b33c0cc68b7156396efa517d959",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/photo-detail-review.iphone-14.html": "bfae9ddf3a732f276d88434842180cc9188b7549bd1ac121ca27158d4db53561",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-detail-review.iphone-14 render on pixel-7: the image, suggested match, confirm action, and alternate organization paths retain a clear hierarchy.",
+      "screen": "photo-detail-review.iphone-14",
+      "screens": [
+        "photo-detail-review.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/photo-detail-review.iphone-14.png",
+      "screenshotSha256": "519b441673fde006d1e77b8a75c59c35d117254532bd59973bc0f935d6736084"
+    },
+    "photo-detail-unorganized.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "ea048bd19b0178ffef95de544f2660745079911d1b1c0479b47721544c9a13ab",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/photo-detail-unorganized.iphone-14.html": "2491aadf802bb30775932990f924f65832cbd8d3dbe7668a55e512d539d83a28",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-detail-unorganized.iphone-14 render on iphone-14: the image, quiet Unorganized status, Add to dish, Create new dish, and privacy copy remain fully readable.",
+      "screen": "photo-detail-unorganized.iphone-14",
+      "screens": [
+        "photo-detail-unorganized.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/photo-detail-unorganized.iphone-14.png",
+      "screenshotSha256": "63f218e4b35a303ae9dbb5e0d03e647ae92e6ff0641f493ac38493d082722ea9"
+    },
+    "photo-detail-unorganized.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "3324962c4a59c357975d6b6538a29e004ec7001e8edf3634301f764106a1c684",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/photo-detail-unorganized.iphone-14.html": "2491aadf802bb30775932990f924f65832cbd8d3dbe7668a55e512d539d83a28",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-detail-unorganized.iphone-14 render on iphone-se: the image, quiet Unorganized status, Add to dish, Create new dish, and privacy copy remain fully readable.",
+      "screen": "photo-detail-unorganized.iphone-14",
+      "screens": [
+        "photo-detail-unorganized.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/photo-detail-unorganized.iphone-14.png",
+      "screenshotSha256": "2d4a09185ae9885b2222541ff0ae5d8263f1b11cde453e6fd1863f4c1bdb11c3"
+    },
+    "photo-detail-unorganized.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "92e9129eb22d0f881014b6ceb90fac1e17749d4927a150700d62d11ce0301853",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/photo-detail-unorganized.iphone-14.html": "2491aadf802bb30775932990f924f65832cbd8d3dbe7668a55e512d539d83a28",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photo-detail-unorganized.iphone-14 render on pixel-7: the image, quiet Unorganized status, Add to dish, Create new dish, and privacy copy remain fully readable.",
+      "screen": "photo-detail-unorganized.iphone-14",
+      "screens": [
+        "photo-detail-unorganized.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/photo-detail-unorganized.iphone-14.png",
+      "screenshotSha256": "67fe641c5789c9c3381f242a4465363f5e2db3ed3761d1ada91cd497d82d247a"
+    },
+    "photos-dense.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "15982682a392e79f4714e0b10721861fa6e7fa49fd4020458951d448f1fdf6ea",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-dense.iphone-14.html": "f7814e2b81c9e9bbb81cee9317afc55f59da5324ade058c94f797c4bbcbf70ab",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photos-dense.iphone-14 render on iphone-14: the back/title/count/Select header, filters, dense three-column gallery, and missing preview remain compact and legible.",
+      "screen": "photos-dense.iphone-14",
+      "screens": [
+        "photos-dense.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/photos-dense.iphone-14.png",
+      "screenshotSha256": "c786eb90aac67929c3e195b7807daf8d82feef1eeda69ca1e99ec84ca4af247a"
+    },
+    "photos-dense.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "7c3b0b380041d496630e37e868461f16d577a3cce1f5be1c69e73067aabb7ffc",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-dense.iphone-14.html": "f7814e2b81c9e9bbb81cee9317afc55f59da5324ade058c94f797c4bbcbf70ab",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photos-dense.iphone-14 render on iphone-se: the back/title/count/Select header, filters, dense three-column gallery, and missing preview remain compact and legible.",
+      "screen": "photos-dense.iphone-14",
+      "screens": [
+        "photos-dense.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/photos-dense.iphone-14.png",
+      "screenshotSha256": "1593981bb0bd6be0acddfd9316ddfb093824167588ead0d555b0f0814bfbe4dc"
+    },
+    "photos-dense.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "3a4961e9dac0add3c072dbd7a62f41b8dfceb2c78f6c34ae3603583cec02781c",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-dense.iphone-14.html": "f7814e2b81c9e9bbb81cee9317afc55f59da5324ade058c94f797c4bbcbf70ab",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photos-dense.iphone-14 render on pixel-7: the back/title/count/Select header, filters, dense three-column gallery, and missing preview remain compact and legible.",
+      "screen": "photos-dense.iphone-14",
+      "screens": [
+        "photos-dense.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/photos-dense.iphone-14.png",
+      "screenshotSha256": "3e3b01d3d39912ebdfd6c4606a53873acd0424235541f18a97600bd864cfcf76"
+    },
+    "photos-empty.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "b5c16a015476da3a4c03b0709ab2f59896ee38519060c364bb054846fafc21b3",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-empty.iphone-14.html": "d95f571f5de406acbdc0635c96472db2ec5ab7bd46ec9f7c2162b3b31cf5481d",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photos-empty.iphone-14 render on iphone-14: the back/title/count header and zero-count filters leave the capture-first empty message centered and unobstructed.",
+      "screen": "photos-empty.iphone-14",
+      "screens": [
+        "photos-empty.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/photos-empty.iphone-14.png",
+      "screenshotSha256": "21cb083983a43cfffe795191119084bb5a43e8bbf8afda50d1fa8560a8feb66f"
+    },
+    "photos-empty.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "08d359aa307363199a8cd82a52f6fd7d8030b1b4a4c157580f17affd1e6eb9bf",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-empty.iphone-14.html": "d95f571f5de406acbdc0635c96472db2ec5ab7bd46ec9f7c2162b3b31cf5481d",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photos-empty.iphone-14 render on iphone-se: the back/title/count header and zero-count filters leave the capture-first empty message centered and unobstructed.",
+      "screen": "photos-empty.iphone-14",
+      "screens": [
+        "photos-empty.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/photos-empty.iphone-14.png",
+      "screenshotSha256": "dacfff59999f40eb951b29da403c32687a5d3ce29087fb8de4a5a75bbe47c601"
+    },
+    "photos-empty.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "f009e5827c16384c61a7000996ed92e3aee64b82d0e849e9c076a7fb4f27cb72",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-empty.iphone-14.html": "d95f571f5de406acbdc0635c96472db2ec5ab7bd46ec9f7c2162b3b31cf5481d",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photos-empty.iphone-14 render on pixel-7: the back/title/count header and zero-count filters leave the capture-first empty message centered and unobstructed.",
+      "screen": "photos-empty.iphone-14",
+      "screens": [
+        "photos-empty.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/photos-empty.iphone-14.png",
+      "screenshotSha256": "997bca0b0223a5e8419b6f26c584aeb2401abd32b8c5102bc5594427f51a5c9a"
+    },
+    "photos-organized.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "ef3ee320b464e7bdce60fd5a19473e29165291c44170a5a2248adc05a4b1d434",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-organized.iphone-14.html": "a1be2b5a82c183b623fc704c02dfdc9236e8a202552c2501d811f39ca0d98f57",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photos-organized.iphone-14 render on iphone-14: the compact Photos header and Organized filter leave assigned image tiles dominant and labels readable.",
+      "screen": "photos-organized.iphone-14",
+      "screens": [
+        "photos-organized.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/photos-organized.iphone-14.png",
+      "screenshotSha256": "3aeb3d8dee73541db32002b0733f2cc1cbf7669190d2465871faccbb0175946d"
+    },
+    "photos-organized.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "5bd8e156ffaa0503e4d7ae89379f65a44c6de1e9ced10431bdbdb41b0112d623",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-organized.iphone-14.html": "a1be2b5a82c183b623fc704c02dfdc9236e8a202552c2501d811f39ca0d98f57",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photos-organized.iphone-14 render on iphone-se: the compact Photos header and Organized filter leave assigned image tiles dominant and labels readable.",
+      "screen": "photos-organized.iphone-14",
+      "screens": [
+        "photos-organized.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/photos-organized.iphone-14.png",
+      "screenshotSha256": "23e03d966976d9734430f60d9c48e55a58d9b422e0fa007bd48731301fcaa152"
+    },
+    "photos-organized.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "16801bd0538b65866fec7be0c644d1c38de169bb9c1aa737e2dd93d9c512e0e5",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-organized.iphone-14.html": "a1be2b5a82c183b623fc704c02dfdc9236e8a202552c2501d811f39ca0d98f57",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photos-organized.iphone-14 render on pixel-7: the compact Photos header and Organized filter leave assigned image tiles dominant and labels readable.",
+      "screen": "photos-organized.iphone-14",
+      "screens": [
+        "photos-organized.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/photos-organized.iphone-14.png",
+      "screenshotSha256": "3189e8fd389bb9a15b57381cf49cb05ef467d390d81530e38979d632ef1ad6fb"
+    },
+    "photos-unorganized.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "0a96973a2ba548695d49dd56e249b489b8e1a3377f2db92a1254ea3559dec65c",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-unorganized.iphone-14.html": "e8375f920042c22e926b4b11615b52f6644696c58885461bbfdd1c953d3517c1",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photos-unorganized.iphone-14 render on iphone-14: the compact Photos header and Unorganized filter keep review, organizing, failed, and unorganized tile states distinct.",
+      "screen": "photos-unorganized.iphone-14",
+      "screens": [
+        "photos-unorganized.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/photos-unorganized.iphone-14.png",
+      "screenshotSha256": "f15d083813ff0df81e76ecc7286badf34780a3f6a969f1636cbf31842d07145c"
+    },
+    "photos-unorganized.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "ac369105e5a419d48fc0adf2e4f6336e328922f0c1081f99f9504fb1fac973ad",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-unorganized.iphone-14.html": "e8375f920042c22e926b4b11615b52f6644696c58885461bbfdd1c953d3517c1",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photos-unorganized.iphone-14 render on iphone-se: the compact Photos header and Unorganized filter keep review, organizing, failed, and unorganized tile states distinct.",
+      "screen": "photos-unorganized.iphone-14",
+      "screens": [
+        "photos-unorganized.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/photos-unorganized.iphone-14.png",
+      "screenshotSha256": "210e626cead0b000a2289fa0e7a607bcd245d4464a18c9d197e33ce92c61f128"
+    },
+    "photos-unorganized.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "75517bee7144f99189748956b2fe0fd0142b6158fff220217878dfef6c5f09e8",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos-unorganized.iphone-14.html": "e8375f920042c22e926b4b11615b52f6644696c58885461bbfdd1c953d3517c1",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photos-unorganized.iphone-14 render on pixel-7: the compact Photos header and Unorganized filter keep review, organizing, failed, and unorganized tile states distinct.",
+      "screen": "photos-unorganized.iphone-14",
+      "screens": [
+        "photos-unorganized.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/photos-unorganized.iphone-14.png",
+      "screenshotSha256": "b04d1df8df53add6378d1f2323eb67819d4f383145c658787fdd746e669dcbdd"
+    },
+    "photos.iphone-14@iphone-14": {
+      "device": "iphone-14",
+      "inputHash": "69c647ae82cf346cf6be0b135e340d1f6cecf6c55821edef2059cc528cf413e1",
+      "inputs": {
+        "device:iphone-14": "fdb6115a716163bb5774b3005fdc27a8432309c33b39ec1b1d881e4fe5aada17",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos.iphone-14.html": "f62cc1f9719f118df1cc4dc627090bdbeacea4e4f08c87525c958b9f919f805e",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photos.iphone-14 render on iphone-14: the back/title/count/Select header and three filters fit cleanly above the image-dominant gallery.",
+      "screen": "photos.iphone-14",
+      "screens": [
+        "photos.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-14/photos.iphone-14.png",
+      "screenshotSha256": "4e9a93c92722562155e1e596b6ebff08cf42b03a72972493997f36c56152c479"
+    },
+    "photos.iphone-14@iphone-se": {
+      "device": "iphone-se",
+      "inputHash": "f34de76eb6531317e60314c71f117e56823e5156e2d043231773ee63de653145",
+      "inputs": {
+        "device:iphone-se": "6fee5e7176d7be33cf08bcae3b70536696e43d4aeb0effe6447bfa00c96a9402",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos.iphone-14.html": "f62cc1f9719f118df1cc4dc627090bdbeacea4e4f08c87525c958b9f919f805e",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photos.iphone-14 render on iphone-se: the back/title/count/Select header and three filters fit cleanly above the image-dominant gallery.",
+      "screen": "photos.iphone-14",
+      "screens": [
+        "photos.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/iphone-se/photos.iphone-14.png",
+      "screenshotSha256": "8c813d9ce6aad93f96ae67ac2ff422340477d7ff1b92ad206ce8f0668e0598b2"
+    },
+    "photos.iphone-14@pixel-7": {
+      "device": "pixel-7",
+      "inputHash": "5957970be466376ec896e2a15aa055b267edd2ca133e1f5ad5e55b9463402bbe",
+      "inputs": {
+        "device:pixel-7": "65748074fb652709c36aa88c65cf7d6c225da61e9d1008e8b8de43873c73dcf9",
+        "screens/photo.css": "106042fc70f811e77147914feb7b127dfe7f58a00881003cf736b641e3aaf3cf",
+        "screens/photos.iphone-14.html": "f62cc1f9719f118df1cc4dc627090bdbeacea4e4f08c87525c958b9f919f805e",
+        "screens/shared.css": "d0a2065ba1372c37993a4a04d6d4ff465caf93ee5575df8d25e8e597a98550d2"
+      },
+      "proof": "Reviewed the current photos.iphone-14 render on pixel-7: the back/title/count/Select header and three filters fit cleanly above the image-dominant gallery.",
+      "screen": "photos.iphone-14",
+      "screens": [
+        "photos.iphone-14"
+      ],
+      "screenshot": ".mocklens/screenshots/pixel-7/photos.iphone-14.png",
+      "screenshotSha256": "db88d26611d1221550f56b397ce2d661e1bb41394bbf62cd011518ae72a6c481"
     },
     "plan-actions.iphone-14@iphone-14": {
       "device": "iphone-14",

@@ -7,6 +7,8 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
     final Map<String, String> previousDishIds = <String, String>{};
     final Set<String> previouslyUnclassifiedCaptureIds = <String>{};
     final Map<String, String?> previousFailureReasons = <String, String?>{};
+    final Map<String, capture_domain.CaptureItemStatus> previousStatuses =
+        <String, capture_domain.CaptureItemStatus>{};
     if (assignments is Map<String, dynamic>) {
       for (final MapEntry<String, dynamic> entry in assignments.entries) {
         final Object? value = entry.value;
@@ -23,6 +25,11 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
           }
           final Object? reason = value['failureReason'];
           previousFailureReasons[entry.key] = reason is String ? reason : null;
+          final Object? status = value['status'];
+          if (status is String) {
+            previousStatuses[entry.key] =
+                capture_domain.CaptureItemStatus.values.byName(status);
+          }
         }
       }
     }
@@ -36,6 +43,7 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
       previousDishIds: previousDishIds,
       previouslyUnclassifiedCaptureIds: previouslyUnclassifiedCaptureIds,
       previousFailureReasons: previousFailureReasons,
+      previousStatuses: previousStatuses,
       targetDishId: row.targetDishId,
       createdDishId: row.createdDishId,
       status: CaptureCorrectionStatus.values.byName(row.status),
@@ -124,6 +132,8 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
                 dishId: targetDishId,
                 url: photoRef,
                 capturedLabel: 'Today',
+                captureId: Value<String?>(item.id),
+                capturedAt: Value<DateTime?>(item.capturedAt),
                 confidenceLabel: const Value<String?>('User corrected'),
               ),
             );
@@ -144,6 +154,7 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
     required db.CaptureItemRow item,
     required String sourceDishId,
     required String? failureReason,
+    required capture_domain.CaptureItemStatus previousStatus,
   }) async {
     final String? photoRef = _photoRef(item);
     if (photoRef != null) {
@@ -159,7 +170,7 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
           ..where((db.CaptureItems table) => table.id.equals(item.id)))
         .write(
       db.CaptureItemsCompanion(
-        status: Value<String>(capture_domain.CaptureItemStatus.discarded.name),
+        status: Value<String>(previousStatus.name),
         appliedDishId: const Value<String?>(null),
         failureReason: Value<String?>(failureReason),
       ),
@@ -229,5 +240,5 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
   }
 
   String? _photoRef(db.CaptureItemRow item) =>
-      item.remoteMediaRef ?? item.localMediaRef;
+      item.localMediaRef ?? item.remoteMediaRef;
 }

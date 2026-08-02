@@ -9,9 +9,8 @@ extension CaptureRepositoryDeletion on CaptureRepository {
     final List<String> captureIds = captures
         .map((db.CaptureItemRow capture) => capture.id)
         .toList(growable: false);
-    final DateTime now = DateTime.now();
-
     await _database.transaction(() async {
+      await _processingOutboxRepository.supersedeCaptureGrouping(batchId);
       await (_database.delete(_database.syncOperations)
             ..where(
               (db.SyncOperations table) =>
@@ -25,6 +24,17 @@ extension CaptureRepositoryDeletion on CaptureRepository {
         await (_database.delete(_database.reviewItems)
               ..where(
                 (db.ReviewItems table) => table.captureId.isIn(captureIds),
+              ))
+            .go();
+        await (_database.delete(_database.sourcePhotos)
+              ..where(
+                (db.SourcePhotos table) =>
+                    table.captureId.isIn(captureIds) |
+                    table.id.isIn(
+                      captureIds
+                          .map((String id) => '${id}_source')
+                          .toList(growable: false),
+                    ),
               ))
             .go();
       }
@@ -42,16 +52,6 @@ extension CaptureRepositoryDeletion on CaptureRepository {
       await (_database.delete(_database.captureBatches)
             ..where((db.CaptureBatches table) => table.id.equals(batchId)))
           .go();
-      await _database.into(_database.syncOperations).insert(
-            db.SyncOperationsCompanion.insert(
-              id: const Uuid().v4(),
-              entity: 'capture_batch',
-              entityId: batchId,
-              operationType: 'delete',
-              payloadJson: '{}',
-              createdAt: now,
-            ),
-          );
     });
 
     await _deleteLocalCaptureCopies(

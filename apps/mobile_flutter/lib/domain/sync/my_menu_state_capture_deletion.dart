@@ -69,19 +69,8 @@ extension MyMenuCaptureBatchDeletion on MyMenuState {
     if (pending == null) {
       return;
     }
-    final Set<String> resultDishIds = _captureItems
-        .where(
-          (CaptureItem item) =>
-              pending.captureIds.contains(item.id) &&
-              item.appliedDishId != null,
-        )
-        .map((CaptureItem item) => item.appliedDishId!)
-        .toSet();
     final AppRepositories? repositories = _repositories;
     if (repositories == null) {
-      _dishes = _dishes
-          .where((Dish dish) => !resultDishIds.contains(dish.id))
-          .toList(growable: false);
       _captureBatches = _captureBatches
           .where((CaptureBatch batch) => !ticket.batchIds.contains(batch.id))
           .toList(growable: false);
@@ -92,14 +81,10 @@ extension MyMenuCaptureBatchDeletion on MyMenuState {
       return;
     }
     try {
-      if (resultDishIds.isNotEmpty) {
-        await repositories.dishRepository.deleteDishes(resultDishIds);
-      }
       for (final String batchId in ticket.batchIds) {
         await repositories.captureRepository.deleteBatch(batchId);
       }
       await _reloadFromRepositories();
-      await repositories.syncRepository.processPendingOperations();
     } on Object {
       _pendingCaptureBatchDeletions[ticket.id] = pending;
       _notifyChanged();

@@ -14,7 +14,7 @@ extension MyMenuStateCapturePersistence on MyMenuState {
       return CaptureItem(
         id: item.id,
         kind: item.kind,
-        status: CaptureItemStatus.discarded,
+        status: CaptureItemStatus.localOnly,
         createdAt: item.createdAt,
         batchId: item.batchId,
         ordinal: item.ordinal,
@@ -28,8 +28,10 @@ extension MyMenuStateCapturePersistence on MyMenuState {
         failureReason: item.failureReason,
       );
     }).toList(growable: false);
+    _reviewItems = _reviewItems
+        .where((ReviewItem item) => item.captureId != captureId)
+        .toList(growable: false);
     _notifyChanged();
-    _updateCaptureSyncPolling();
     if (repositories != null) {
       unawaited(repositories.captureRepository.discardCapture(captureId));
     }
@@ -46,7 +48,6 @@ extension MyMenuStateCapturePersistence on MyMenuState {
     }
     await repositories.captureRepository.deleteCapture(captureId);
     await _reloadFromRepositories();
-    unawaited(_syncCaptureCorrections());
   }
 
   Future<void> deleteCaptureBatch(String batchId) async {
@@ -79,7 +80,6 @@ extension MyMenuStateCapturePersistence on MyMenuState {
     await repositories.captureRepository.deleteBatch(batchId);
     await _reloadFromRepositories();
     _updateCaptureSyncPolling();
-    unawaited(repositories.syncRepository.processPendingOperations());
   }
 
   Future<void> _bootstrapRepositories() async {
@@ -198,6 +198,8 @@ extension MyMenuStateCapturePersistence on MyMenuState {
               !pendingBatchIds.contains(job.subjectId),
         )
         .toList(growable: false);
+    _processingRequests =
+        await repositories.processingOutboxRepository.listRequests();
     _notifyChanged();
   }
 

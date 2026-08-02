@@ -5,17 +5,14 @@ import 'package:flutter/scheduler.dart' show timeDilation;
 import 'package:flutter/services.dart';
 
 import 'package:mymenu/app/app.dart';
-import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
-import 'package:mymenu/features/capture/capture_feed_sheet.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_screen.dart';
 import 'package:mymenu/features/menu/menu_category_filter_sheet.dart';
 import 'package:mymenu/features/menu/menu_delete_dialog.dart';
 import 'package:mymenu/features/menu/menu_empty_states.dart';
 import 'package:mymenu/features/menu/menu_exit_transition.dart';
 import 'package:mymenu/features/menu/menu_grid_card.dart';
-import 'package:mymenu/features/menu/menu_processing_dish_card.dart';
 import 'package:mymenu/features/menu/menu_sticky_header.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
@@ -29,6 +26,7 @@ class MenuScreen extends StatefulWidget {
   const MenuScreen({
     required this.query,
     required this.onQueryChanged,
+    required this.onOpenPhotos,
     this.onSelectionModeChanged,
     super.key,
   });
@@ -36,6 +34,7 @@ class MenuScreen extends StatefulWidget {
   final String query;
   final ValueChanged<String> onQueryChanged;
   final ValueChanged<bool>? onSelectionModeChanged;
+  final VoidCallback onOpenPhotos;
 
   @override
   State<MenuScreen> createState() => _MenuScreenState();
@@ -59,15 +58,11 @@ class _MenuScreenState extends State<MenuScreen> {
   bool _newestFirst = true;
   bool _hasScrolled = false;
   final Set<String> _selectedDishIds = <String>{};
-  final Set<String> _selectedBatchIds = <String>{};
   final Set<String> _removingDishIds = <String>{};
-  final Set<String> _removingBatchIds = <String>{};
   final Map<String, Dish> _exitingDishes = <String, Dish>{};
-  final Map<String, CaptureBatch> _exitingBatches = <String, CaptureBatch>{};
   final Map<String, Timer> _dishExitFallbacks = <String, Timer>{};
-  final Map<String, Timer> _batchExitFallbacks = <String, Timer>{};
 
-  int get _selectedCount => _selectedDishIds.length + _selectedBatchIds.length;
+  int get _selectedCount => _selectedDishIds.length;
 
   bool get _isSelecting => _selectedCount > 0;
 
@@ -89,10 +84,7 @@ class _MenuScreenState extends State<MenuScreen> {
 
   @override
   void dispose() {
-    for (final Timer timer in <Timer>[
-      ..._dishExitFallbacks.values,
-      ..._batchExitFallbacks.values,
-    ]) {
+    for (final Timer timer in _dishExitFallbacks.values) {
       timer.cancel();
     }
     _searchController.dispose();
@@ -114,22 +106,13 @@ class _MenuScreenState extends State<MenuScreen> {
   Widget build(BuildContext context) {
     final MyMenuState state = MyMenuScope.of(context);
     final List<Dish> dishes = _visibleDishes(state);
-    final List<CaptureBatch> processingBatches =
-        _visibleProcessingBatches(state);
     final Set<String> availableDishIds =
         state.dishes.map((Dish dish) => dish.id).toSet();
     _selectedDishIds.removeWhere(
       (String dishId) => !availableDishIds.contains(dishId),
     );
-    final Set<String> availableBatchIds =
-        processingBatches.map((CaptureBatch batch) => batch.id).toSet();
-    _selectedBatchIds.removeWhere(
-      (String batchId) => !availableBatchIds.contains(batchId),
-    );
-    final bool hasMenuContent = state.dishes.isNotEmpty ||
-        processingBatches.isNotEmpty ||
-        _exitingDishes.isNotEmpty ||
-        _exitingBatches.isNotEmpty;
+    final bool hasMenuContent =
+        state.dishes.isNotEmpty || _exitingDishes.isNotEmpty;
     final double horizontal = MyMenuUnits.pageHorizontal(context);
     return WarmPage(
       topPadding: 0,
@@ -141,7 +124,6 @@ class _MenuScreenState extends State<MenuScreen> {
             context,
             state: state,
             dishes: dishes,
-            processingBatches: processingBatches,
             hasMenuContent: hasMenuContent,
             horizontal: horizontal,
           ),
@@ -166,7 +148,6 @@ class _MenuScreenState extends State<MenuScreen> {
     BuildContext context, {
     required MyMenuState state,
     required List<Dish> dishes,
-    required List<CaptureBatch> processingBatches,
     required bool hasMenuContent,
     required double horizontal,
   }) {
@@ -201,17 +182,15 @@ class _MenuScreenState extends State<MenuScreen> {
                 onQueryChanged: widget.onQueryChanged,
                 onClearQuery: _clearSearch,
                 selectedCount: _selectedCount,
-                allSelected:
-                    (dishes.isNotEmpty || processingBatches.isNotEmpty) &&
-                        dishes.every(
-                          (Dish dish) => _selectedDishIds.contains(dish.id),
-                        ) &&
-                        processingBatches.every(
-                          (CaptureBatch batch) =>
-                              _selectedBatchIds.contains(batch.id),
-                        ),
+                allSelected: dishes.isNotEmpty &&
+                    dishes.every(
+                      (Dish dish) => _selectedDishIds.contains(dish.id),
+                    ),
                 onCloseSelection: _clearSelection,
-                onSelectAll: () => _toggleSelectAll(dishes, processingBatches),
+                onSelectAll: () => _toggleSelectAll(dishes),
+                unorganizedPhotoCount: state.unorganizedPhotoCount,
+                organizingPhotos: state.isOrganizingPhotos,
+                onOpenPhotos: widget.onOpenPhotos,
               ),
               if (state.dishes.isNotEmpty && !_isSelecting) ...<Widget>[
                 const SizedBox(height: 7),
@@ -238,7 +217,7 @@ class _MenuScreenState extends State<MenuScreen> {
                           hasScrollBody: false,
                           child: MenuEmpty(),
                         )
-                      else if (dishes.isEmpty && processingBatches.isEmpty)
+                      else if (dishes.isEmpty)
                         SliverFillRemaining(
                           hasScrollBody: false,
                           child: MenuSearchEmpty(onClear: _clearSearch),
@@ -248,7 +227,6 @@ class _MenuScreenState extends State<MenuScreen> {
                           context,
                           state: state,
                           dishes: dishes,
-                          processingBatches: processingBatches,
                           totalDishCount: state.dishes.length,
                         ),
                     ],
@@ -266,7 +244,6 @@ class _MenuScreenState extends State<MenuScreen> {
     BuildContext context, {
     required MyMenuState state,
     required List<Dish> dishes,
-    required List<CaptureBatch> processingBatches,
     required int totalDishCount,
   }) {
     return <Widget>[
@@ -289,24 +266,7 @@ class _MenuScreenState extends State<MenuScreen> {
         ),
         delegate: SliverChildBuilderDelegate(
           (BuildContext context, int index) {
-            if (index < processingBatches.length) {
-              final CaptureBatch batch = processingBatches[index];
-              return KeyedSubtree(
-                key: ValueKey<String>('menu_entry_batch_${batch.id}'),
-                child: _removalTransition(
-                  removing: _removingBatchIds.contains(batch.id),
-                  onExitCompleted: () => _finishBatchExit(batch.id),
-                  child: MenuProcessingDishCard(
-                    batch: batch,
-                    selected: _selectedBatchIds.contains(batch.id),
-                    selectionMode: _isSelecting,
-                    onTap: () => _handleBatchTap(context, state, batch),
-                    onLongPress: () => _startBatchSelection(batch.id),
-                  ),
-                ),
-              );
-            }
-            final Dish dish = dishes[index - processingBatches.length];
+            final Dish dish = dishes[index];
             return KeyedSubtree(
               key: ValueKey<String>('menu_entry_dish_${dish.id}'),
               child: _removalTransition(
@@ -323,7 +283,7 @@ class _MenuScreenState extends State<MenuScreen> {
               ),
             );
           },
-          childCount: processingBatches.length + dishes.length,
+          childCount: dishes.length,
         ),
       ),
       SliverToBoxAdapter(
@@ -358,17 +318,6 @@ class _MenuScreenState extends State<MenuScreen> {
     setState(() {
       _exitingDishes.remove(dishId);
       _removingDishIds.remove(dishId);
-    });
-  }
-
-  void _finishBatchExit(String batchId) {
-    _batchExitFallbacks.remove(batchId)?.cancel();
-    if (!mounted || !_exitingBatches.containsKey(batchId)) {
-      return;
-    }
-    setState(() {
-      _exitingBatches.remove(batchId);
-      _removingBatchIds.remove(batchId);
     });
   }
 

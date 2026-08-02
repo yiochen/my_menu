@@ -388,6 +388,7 @@ Future<void> _pumpGoldenMenu(
             body: MenuScreen(
               query: query,
               onQueryChanged: (_) {},
+              onOpenPhotos: () {},
             ),
           ),
         ),

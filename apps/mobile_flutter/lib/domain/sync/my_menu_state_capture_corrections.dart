@@ -30,9 +30,6 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
       targetDishId: targetDishId,
     );
     await _reloadFromRepositories();
-    if (correction != null) {
-      unawaited(_syncCaptureCorrections());
-    }
     return correction;
   }
 
@@ -52,9 +49,6 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
       title: title,
     );
     await _reloadFromRepositories();
-    if (correction != null) {
-      unawaited(_syncCaptureCorrections());
-    }
     return correction;
   }
 
@@ -74,9 +68,6 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
       targetDishId: targetDishId,
     );
     await _reloadFromRepositories();
-    if (correction != null) {
-      unawaited(_syncCaptureCorrections());
-    }
     return correction;
   }
 
@@ -96,9 +87,6 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
       title: title,
     );
     await _reloadFromRepositories();
-    if (correction != null) {
-      unawaited(_syncCaptureCorrections());
-    }
     return correction;
   }
 
@@ -112,28 +100,6 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
     final CaptureCorrection? correction =
         await repositories.captureCorrectionRepository.undoLatest(batchId);
     await _reloadFromRepositories();
-    if (correction != null) {
-      unawaited(_syncCaptureCorrections());
-    }
     return correction;
-  }
-
-  Future<void> _syncCaptureCorrections() async {
-    final AppRepositories? repositories = _repositories;
-    if (repositories == null) {
-      return;
-    }
-    await repositories.syncRepository.processPendingOperations();
-    try {
-      await repositories.syncRepository.pullCaptureSync();
-    } on Object catch (error, stackTrace) {
-      developer.log(
-        'Capture correction pull unavailable.',
-        name: 'mymenu.sync',
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }
-    await _reloadFromRepositories();
   }
 }

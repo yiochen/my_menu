@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:mymenu/features/menu/menu_photos_button.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 
 class MenuStickyHeader extends StatelessWidget {
@@ -12,6 +13,9 @@ class MenuStickyHeader extends StatelessWidget {
     required this.allSelected,
     required this.onCloseSelection,
     required this.onSelectAll,
+    required this.unorganizedPhotoCount,
+    required this.organizingPhotos,
+    required this.onOpenPhotos,
     super.key,
   });
 
@@ -23,6 +27,9 @@ class MenuStickyHeader extends StatelessWidget {
   final bool allSelected;
   final VoidCallback onCloseSelection;
   final VoidCallback onSelectAll;
+  final int unorganizedPhotoCount;
+  final bool organizingPhotos;
+  final VoidCallback onOpenPhotos;
 
   bool get _isSelecting => selectedCount > 0;
 
@@ -44,6 +51,9 @@ class MenuStickyHeader extends StatelessWidget {
               query: query,
               onQueryChanged: onQueryChanged,
               onClear: onClearQuery,
+              unorganizedPhotoCount: unorganizedPhotoCount,
+              organizingPhotos: organizingPhotos,
+              onOpenPhotos: onOpenPhotos,
             ),
     );
   }
@@ -55,6 +65,9 @@ class _SearchHeader extends StatelessWidget {
     required this.query,
     required this.onQueryChanged,
     required this.onClear,
+    required this.unorganizedPhotoCount,
+    required this.organizingPhotos,
+    required this.onOpenPhotos,
     super.key,
   });
 
@@ -62,37 +75,52 @@ class _SearchHeader extends StatelessWidget {
   final String query;
   final ValueChanged<String> onQueryChanged;
   final VoidCallback onClear;
+  final int unorganizedPhotoCount;
+  final bool organizingPhotos;
+  final VoidCallback onOpenPhotos;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: MyMenuColors.oat,
-      borderRadius: BorderRadius.circular(23),
-      child: SizedBox(
-        height: 46,
-        child: TextField(
-          key: const ValueKey<String>('menu_search_field'),
-          controller: controller,
-          onChanged: onQueryChanged,
-          textInputAction: TextInputAction.search,
-          decoration: InputDecoration(
-            hintText: 'Search dishes, notes, ingredients',
-            prefixIcon: const Icon(Icons.search_rounded, size: 22),
-            suffixIcon: query.isEmpty
-                ? null
-                : IconButton(
-                    tooltip: 'Clear search',
-                    onPressed: onClear,
-                    icon: const Icon(Icons.close_rounded, size: 20),
-                  ),
-            filled: false,
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: Material(
+            color: MyMenuColors.oat,
+            borderRadius: BorderRadius.circular(23),
+            child: SizedBox(
+              height: 46,
+              child: TextField(
+                key: const ValueKey<String>('menu_search_field'),
+                controller: controller,
+                onChanged: onQueryChanged,
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(
+                  hintText: 'Search dishes, notes, ingredients',
+                  prefixIcon: const Icon(Icons.search_rounded, size: 22),
+                  suffixIcon: query.isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: 'Clear search',
+                          onPressed: onClear,
+                          icon: const Icon(Icons.close_rounded, size: 20),
+                        ),
+                  filled: false,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
           ),
         ),
-      ),
+        const SizedBox(width: 9),
+        MenuPhotosButton(
+          unorganizedCount: unorganizedPhotoCount,
+          organizing: organizingPhotos,
+          onPressed: onOpenPhotos,
+        ),
+      ],
     );
   }
 }

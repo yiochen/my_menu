@@ -104,8 +104,7 @@ class CaptureCorrectionRepository {
     final bool hasExpectedState = isAssignment
         ? items.every(
             (db.CaptureItemRow item) =>
-                item.status ==
-                    capture_domain.CaptureItemStatus.discarded.name &&
+                item.kind == capture_domain.CaptureItemKind.photo.name &&
                 item.appliedDishId == null,
           )
         : items.every(
@@ -166,26 +165,14 @@ class CaptureCorrectionRepository {
                     ? targetDishId
                     : null,
               ),
-              status: CaptureCorrectionStatus.pending.name,
+              status: CaptureCorrectionStatus.synced.name,
               createdAt: now,
               updatedAt: now,
             ),
           );
-      await _database.into(_database.syncOperations).insert(
-            db.SyncOperationsCompanion.insert(
-              id: actionId,
-              entity: 'capture_correction',
-              entityId: actionId,
-              operationType: type.name,
-              payloadJson: jsonEncode(<String, Object?>{
-                'batchId': batchId,
-                'captureIds': selectedIds,
-                'targetDishId': targetDishId,
-                if (newDishTitle != null) 'newDishTitle': newDishTitle,
-              }),
-              createdAt: now,
-            ),
-          );
+      await ProcessingOutboxRepository(_database).supersedeCaptureGrouping(
+        batchId,
+      );
     });
 
     return (await listCorrections())
@@ -221,7 +208,6 @@ class CaptureCorrectionRepository {
                 (db.CaptureItems table) => table.id.isIn(correction.captureIds),
               ))
             .get();
-    final String undoMutationId = _uuid.v4();
     final DateTime now = DateTime.now();
     final Set<String> affectedDishIds = <String>{
       correction.targetDishId,
@@ -239,6 +225,8 @@ class CaptureCorrectionRepository {
             item: item,
             sourceDishId: correction.targetDishId,
             failureReason: correction.previousFailureReasons[item.id],
+            previousStatus: correction.previousStatuses[item.id] ??
+                capture_domain.CaptureItemStatus.localOnly,
           );
         } else {
           final String previousDishId = correction.previousDishIds[item.id]!;
@@ -278,18 +266,9 @@ class CaptureCorrectionRepository {
           error: const Value<String?>(null),
         ),
       );
-      await _database.into(_database.syncOperations).insert(
-            db.SyncOperationsCompanion.insert(
-              id: undoMutationId,
-              entity: 'capture_correction',
-              entityId: correction.id,
-              operationType: 'undo',
-              payloadJson: jsonEncode(<String, Object?>{
-                'actionId': correction.id,
-              }),
-              createdAt: now,
-            ),
-          );
+      await ProcessingOutboxRepository(_database).supersedeCaptureGrouping(
+        correction.batchId,
+      );
     });
     return _correctionFromRow(
       await (_database.select(_database.captureCorrections)
@@ -346,6 +325,8 @@ class CaptureCorrectionRepository {
             item: item,
             sourceDishId: correction.targetDishId,
             failureReason: correction.previousFailureReasons[item.id],
+            previousStatus: correction.previousStatuses[item.id] ??
+                capture_domain.CaptureItemStatus.localOnly,
           );
         } else {
           await _moveOneLocalAssignment(

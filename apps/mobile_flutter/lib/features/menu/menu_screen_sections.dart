@@ -147,28 +147,6 @@ extension _MenuScreenSections on _MenuScreenState {
     return dishes.toList(growable: false);
   }
 
-  List<CaptureBatch> _visibleProcessingBatches(MyMenuState state) {
-    if (widget.query.trim().isNotEmpty ||
-        _filter != MenuCollectionFilter.all ||
-        _category != null) {
-      return const <CaptureBatch>[];
-    }
-    return <CaptureBatch>[
-      ...state.captureBatches,
-      ..._exitingBatches.values,
-    ]
-        .where(
-          (CaptureBatch batch) =>
-              batch.status != CaptureBatchStatus.applied &&
-              batch.status != CaptureBatchStatus.discarded,
-        )
-        .toList(growable: false)
-      ..sort(
-        (CaptureBatch left, CaptureBatch right) =>
-            right.createdAt.compareTo(left.createdAt),
-      );
-  }
-
   int _compareNewestDish(Dish left, Dish right) {
     final DateTime leftDate = left.createdAt ??
         left.sourcePhotos

@@ -39,6 +39,7 @@ part 'repositories_capture_sync.dart';
 part 'repositories_dish_hydration.dart';
 part 'repositories_support.dart';
 part 'repositories_sync.dart';
+part 'repositories_sync_capture_adoption.dart';
 
 const Set<String> _bundledMockImageRefs = <String>{
   'asset://assets/dish_art/miso-salmon.png',

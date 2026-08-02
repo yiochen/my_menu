@@ -100,6 +100,7 @@ class _DishDetailScreenState extends State<DishDetailScreen>
                     context,
                     state,
                     ImagePickerCaptureMediaService(),
+                    targetDishId: dish.id,
                   ),
                   onAddNote: () => _addNote(context, state, dish),
                   onEditIngredients: () => _editRecipeSection(
