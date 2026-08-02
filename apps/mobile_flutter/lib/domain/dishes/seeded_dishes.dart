@@ -12,13 +12,17 @@ const String _katsuImage =
 const String _phoImage =
     'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43'
     '?auto=format&fit=crop&w=1200&q=80';
+const String _salmonArtwork = 'asset://assets/dish_art/miso-salmon.png';
+const String _linguineArtwork = 'asset://assets/dish_art/linguine.png';
+const String _katsuArtwork = 'asset://assets/dish_art/katsu.png';
+const String _phoArtwork = 'asset://assets/dish_art/pho.png';
 
 final List<Dish> seededDishes = <Dish>[
   Dish(
     id: 'dish_salmon',
     title: 'Miso Salmon Bowl',
     description: 'Sweet-savory salmon, rice, and whatever greens are around.',
-    heroImageUrl: _salmonImage,
+    heroImageUrl: _salmonArtwork,
     category: 'Bowls',
     prepMinutes: 25,
     difficulty: 'Easy',
@@ -48,7 +52,7 @@ final List<Dish> seededDishes = <Dish>[
     id: 'dish_linguine',
     title: 'Lemon Garlic Linguine',
     description: 'Bright lemon, silky garlic butter, and a shower of parmesan.',
-    heroImageUrl: _linguineImage,
+    heroImageUrl: _linguineArtwork,
     category: 'Pasta',
     prepMinutes: 30,
     difficulty: 'Easy',
@@ -78,7 +82,7 @@ final List<Dish> seededDishes = <Dish>[
     id: 'dish_katsu',
     title: 'Chicken Katsu Curry',
     description: 'Crispy chicken over rice with silky Japanese curry.',
-    heroImageUrl: _katsuImage,
+    heroImageUrl: _katsuArtwork,
     category: 'Mains',
     prepMinutes: 45,
     difficulty: 'Medium',
@@ -106,7 +110,7 @@ final List<Dish> seededDishes = <Dish>[
     id: 'dish_pho',
     title: 'Sunday Pho',
     description: 'A slow, fragrant broth with noodles and a table of herbs.',
-    heroImageUrl: _phoImage,
+    heroImageUrl: _phoArtwork,
     category: 'Soups',
     prepMinutes: 120,
     difficulty: 'Weekend',
@@ -134,7 +138,7 @@ final List<Dish> seededDishes = <Dish>[
     id: 'dish_garlic_noodles',
     title: 'Garlic Butter Noodles',
     description: 'Glossy noodles with toasted garlic and black pepper.',
-    heroImageUrl: _linguineImage,
+    heroImageUrl: _linguineArtwork,
     category: 'Pasta',
     prepMinutes: 20,
     difficulty: 'Easy',

@@ -169,7 +169,14 @@ class _CoverOption extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             child: SizedBox(
               height: MediaQuery.sizeOf(context).width <= 400 ? 170 : 185,
-              child: DishArtwork(dish: dish, improved: improved),
+              child: DishArtwork(
+                dish: improved && dish.id == 'dish_salmon'
+                    ? dish.copyWith(
+                        heroImageUrl:
+                            'asset://assets/dish_art/miso-salmon-improved.png',
+                      )
+                    : dish,
+              ),
             ),
           ),
           Padding(

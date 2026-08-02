@@ -140,7 +140,11 @@ void main() {
       );
       expect(
         cachedDishes
-            .every((DishRow dish) => File(dish.heroImageUrl).existsSync()),
+            .every(
+              (DishRow dish) =>
+                  dish.heroImageUrl.startsWith('asset://') ||
+                  File(dish.heroImageUrl).existsSync(),
+            ),
         isTrue,
       );
     });

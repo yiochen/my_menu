@@ -222,7 +222,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
 
       if (dish.id == 'dish_salmon') {
         return dish.copyWith(
-          heroImageUrl: 'asset://miso-salmon-improved',
+          heroImageUrl: 'asset://assets/dish_art/miso-salmon-improved.png',
         );
       }
       final int index =
