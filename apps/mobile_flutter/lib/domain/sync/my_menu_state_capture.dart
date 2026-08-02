@@ -3,16 +3,19 @@ part of 'my_menu_state.dart';
 extension _MyMenuStateCaptureTemplates on MyMenuState {
   Dish _templateFor(String text) {
     final String normalized = text.toLowerCase();
+    late final String templateId;
     if (normalized.contains('pho') || normalized.contains('noodle')) {
-      return dishById('dish_pho');
+      templateId = 'dish_pho';
+    } else if (normalized.contains('salmon') || normalized.contains('bowl')) {
+      templateId = 'dish_salmon';
+    } else if (normalized.contains('katsu') || normalized.contains('curry')) {
+      templateId = 'dish_katsu';
+    } else {
+      templateId = 'dish_linguine';
     }
-    if (normalized.contains('salmon') || normalized.contains('bowl')) {
-      return dishById('dish_salmon');
-    }
-    if (normalized.contains('katsu') || normalized.contains('curry')) {
-      return dishById('dish_katsu');
-    }
-    return dishById('dish_linguine');
+    return <Dish>[..._dishes, ...seededDishes].firstWhere(
+      (Dish dish) => dish.id == templateId,
+    );
   }
 }
 

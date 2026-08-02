@@ -324,6 +324,44 @@ void main() {
       expect(await database.select(database.syncOperations).get(), isEmpty);
     });
 
+    test('adding an idea does not depend on seeded dishes being present',
+        () async {
+      await repositories.seedIfNeeded();
+      await repositories.dishRepository.deleteDishes(
+        seededDishes.map((Dish dish) => dish.id),
+      );
+      await repositories.dishRepository.createDish(
+        seededDishes.first.copyWith(
+          id: 'user_dish',
+          title: 'Family Soup',
+          notes: const <DishNote>[],
+          sourcePhotos: const <SourcePhoto>[],
+        ),
+      );
+      final MyMenuState state = MyMenuState(
+        repositories: repositories,
+        networkStatusMonitor: const InertNetworkStatusMonitor(),
+      );
+      addTearDown(state.dispose);
+      await state.initialized;
+
+      await state.addIdea(
+        'offline gnocchi',
+        note: 'Use the preserved lemons.',
+      );
+
+      final Dish saved = state.dishes.singleWhere(
+        (Dish dish) => dish.title == 'Offline Gnocchi',
+      );
+      expect(saved.notes.single.body, 'Use the preserved lemons.');
+      expect(
+        (await repositories.dishRepository.listDishes())
+            .map((Dish dish) => dish.id),
+        contains(saved.id),
+      );
+      expect(await database.select(database.syncOperations).get(), isEmpty);
+    });
+
     test('creating a dish from review consumes the review locally', () async {
       await repositories.seedIfNeeded();
       await database.into(database.reviewItems).insert(
