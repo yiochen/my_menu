@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/shared/widgets/app_image.dart';
 import 'package:mymenu/shared/widgets/dish_artwork.dart';
+import 'package:mymenu/shared/widgets/food_cover_placeholder.dart';
 
 void main() {
   testWidgets('dish titles never override their stored cover', (
@@ -58,6 +59,11 @@ void main() {
       find.byKey(const ValueKey<String>('dish_artwork_placeholder')),
       findsOneWidget,
     );
-    expect(find.byIcon(Icons.restaurant_menu_rounded), findsOneWidget);
+    expect(find.byType(FoodCoverPlaceholder), findsOneWidget);
+    final Image placeholder = tester.widget<Image>(find.byType(Image));
+    expect(
+      (placeholder.image as AssetImage).assetName,
+      FoodCoverPlaceholder.assetPath,
+    );
   });
 }

@@ -8,6 +8,7 @@ import 'package:mymenu/features/capture/capture_batch_removal_dialog.dart';
 import 'package:mymenu/features/capture/capture_outcome_sheet.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/app_image.dart';
+import 'package:mymenu/shared/widgets/food_cover_placeholder.dart';
 
 part 'capture_feed_batch_card.dart';
 

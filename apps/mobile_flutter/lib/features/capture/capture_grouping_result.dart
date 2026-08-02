@@ -11,6 +11,7 @@ import 'package:mymenu/features/capture/capture_grouping_destination_sheets.dart
 import 'package:mymenu/shared/drag_drop/drag_drop_board.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/app_image.dart';
+import 'package:mymenu/shared/widgets/food_cover_placeholder.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
 part 'capture_grouping_result_widgets.dart';

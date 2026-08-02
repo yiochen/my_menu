@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/shared/widgets/app_image.dart';
+import 'package:mymenu/shared/widgets/food_cover_placeholder.dart';
 
 class DishArtwork extends StatelessWidget {
   const DishArtwork({
@@ -32,16 +33,8 @@ class DishArtworkPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ColoredBox(
+    return const FoodCoverPlaceholder(
       key: ValueKey<String>('dish_artwork_placeholder'),
-      color: Color(0xFFD9C5AB),
-      child: Center(
-        child: Icon(
-          Icons.restaurant_menu_rounded,
-          size: 44,
-          color: Color(0xFF6F5540),
-        ),
-      ),
     );
   }
 }

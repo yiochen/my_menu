@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'package:mymenu/domain/capture/capture_batch.dart';
-import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
-import 'package:mymenu/shared/widgets/app_image.dart';
+import 'package:mymenu/shared/widgets/food_cover_placeholder.dart';
 
 class MenuProcessingDishCard extends StatefulWidget {
   const MenuProcessingDishCard({
@@ -40,10 +39,6 @@ class _MenuProcessingDishCardState extends State<MenuProcessingDishCard>
 
   @override
   Widget build(BuildContext context) {
-    final String? imageRef = widget.batch.items
-        .map((CaptureItem item) => item.localMediaRef ?? item.remoteMediaRef)
-        .whereType<String>()
-        .firstOrNull;
     return Container(
       key: ValueKey<String>('processing_dish_${widget.batch.id}'),
       decoration: BoxDecoration(
@@ -77,7 +72,7 @@ class _MenuProcessingDishCardState extends State<MenuProcessingDishCard>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              _artwork(imageRef),
+              _artwork(),
               _details(context),
             ],
           ),
@@ -86,18 +81,12 @@ class _MenuProcessingDishCardState extends State<MenuProcessingDishCard>
     );
   }
 
-  Widget _artwork(String? imageRef) {
+  Widget _artwork() {
     return Expanded(
       child: Stack(
         fit: StackFit.expand,
         children: <Widget>[
-          if (imageRef != null)
-            Opacity(
-              opacity: 0.42,
-              child: AppImage(imageRef: imageRef, fit: BoxFit.cover),
-            )
-          else
-            const ColoredBox(color: MyMenuColors.oat),
+          const FoodCoverPlaceholder(),
           ColoredBox(color: MyMenuColors.orangeSoft.withAlpha(80)),
           Center(
             child: FadeTransition(
