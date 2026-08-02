@@ -66,4 +66,15 @@ extension MyMenuStateProcessing on MyMenuState {
     _processingConsentDecision = ProcessingConsentDecision.declined;
     _notifyChanged();
   }
+
+  Future<void> resetProcessingConsent() async {
+    await _repositoryBootstrap;
+    final AppRepositories? repositories = _repositories;
+    if (repositories != null) {
+      await repositories.processingConsentRepository.resetCurrentNotice();
+    }
+    _processingConsentDecision = ProcessingConsentDecision.notDecided;
+    _stopCaptureSyncPolling();
+    _notifyChanged();
+  }
 }

@@ -79,6 +79,37 @@ void main() {
       });
     });
 
+    testWidgets('debug control resets consent so capture asks again', (
+      WidgetTester tester,
+    ) async {
+      await runWithMockNetworkImages(() async {
+        await tester.pumpWidget(_debugTestApp());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const ValueKey<String>('capture_fab')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Allow AI processing'));
+        await tester.pumpAndSettle();
+        Navigator.of(tester.element(find.text('Capture'))).pop();
+        await tester.pumpAndSettle();
+
+        await tester.tap(
+          find.byKey(const ValueKey<String>('debug_controls_open')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(
+            const ValueKey<String>('debug_reset_processing_consent'),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const ValueKey<String>('capture_fab')));
+        await tester.pumpAndSettle();
+        expect(find.text('Let MyMenu use AI?'), findsOneWidget);
+      });
+    });
+
     testWidgets('debug controls stay above sheets and gate camera access', (
       WidgetTester tester,
     ) async {

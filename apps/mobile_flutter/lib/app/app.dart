@@ -94,6 +94,7 @@ class _MyMenuAppView extends ConsumerWidget {
           return DebugControlsOverlay(
             controller: debugControls,
             enabled: debugPanelEnabled,
+            onResetProcessingConsent: state.resetProcessingConsent,
             child: child ?? const SizedBox.shrink(),
           );
         },

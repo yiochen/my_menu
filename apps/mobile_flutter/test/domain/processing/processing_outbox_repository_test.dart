@@ -123,6 +123,32 @@ void main() {
     );
   });
 
+  test('debug reset clears consent and holds pending uploads', () async {
+    final AppDatabase database =
+        AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final AppRepositories repositories = AppRepositories(
+      database: database,
+      apiClient: FakeMyMenuApiClient(),
+    );
+    await repositories.processingConsentRepository.acceptCurrentNotice();
+    await repositories.captureRepository.createIdeaCapture('reset noodles');
+
+    await repositories.processingConsentRepository.resetCurrentNotice();
+
+    expect(
+      await repositories.processingConsentRepository.currentDecision(),
+      ProcessingConsentDecision.notDecided,
+    );
+    final ProcessingOutboxRequest request =
+        (await repositories.processingOutboxRepository.listRequests()).single;
+    expect(
+      request.deliveryState,
+      ProcessingDeliveryState.waitingForConsent,
+    );
+    expect(request.privacyNoticeVersion, isNull);
+  });
+
   test('canceling pending processing keeps the local capture', () async {
     final AppDatabase database =
         AppDatabase.forTesting(NativeDatabase.memory());

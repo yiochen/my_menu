@@ -7,12 +7,14 @@ class DebugControlsOverlay extends StatefulWidget {
     required this.controller,
     required this.child,
     required this.enabled,
+    required this.onResetProcessingConsent,
     super.key,
   });
 
   final DebugControlsController controller;
   final Widget child;
   final bool enabled;
+  final Future<void> Function() onResetProcessingConsent;
 
   @override
   State<DebugControlsOverlay> createState() => _DebugControlsOverlayState();
@@ -53,7 +55,10 @@ class _DebugControlsOverlayState extends State<DebugControlsOverlay> {
                       edgeInset: _edgeInset,
                       launcherExtent: _launcherExtent,
                     ),
-                    child: _DebugPanel(controller: widget.controller),
+                    child: _DebugPanel(
+                      controller: widget.controller,
+                      onResetProcessingConsent: widget.onResetProcessingConsent,
+                    ),
                   )
                 else
                   Positioned(
@@ -209,9 +214,13 @@ class _DebugPanelLayoutDelegate extends SingleChildLayoutDelegate {
 }
 
 class _DebugPanel extends StatelessWidget {
-  const _DebugPanel({required this.controller});
+  const _DebugPanel({
+    required this.controller,
+    required this.onResetProcessingConsent,
+  });
 
   final DebugControlsController controller;
+  final Future<void> Function() onResetProcessingConsent;
 
   @override
   Widget build(BuildContext context) {
@@ -257,6 +266,19 @@ class _DebugPanel extends StatelessWidget {
               value: controller.cameraAccessEnabled,
               onChanged: (bool value) {
                 controller.setCameraAccessEnabled(enabled: value);
+              },
+            ),
+            ListTile(
+              key: const ValueKey<String>('debug_reset_processing_consent'),
+              leading: const Icon(
+                Icons.restart_alt_rounded,
+                color: MyMenuColors.orangeDark,
+              ),
+              title: const Text('Reset AI consent'),
+              dense: true,
+              onTap: () async {
+                await onResetProcessingConsent();
+                controller.setPanelOpen(open: false);
               },
             ),
           ],

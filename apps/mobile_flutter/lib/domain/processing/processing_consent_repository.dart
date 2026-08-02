@@ -11,12 +11,12 @@ class ProcessingConsentRepository {
   Future<ProcessingConsentDecision> currentDecision() async {
     final db.ProcessingConsentRow? row =
         await (_database.select(_database.processingConsents)
-          ..where(
-            (db.ProcessingConsents table) => table.noticeVersion.equals(
-              ProcessingPrivacyNotice.currentVersion,
-            ),
-          ))
-        .getSingleOrNull();
+              ..where(
+                (db.ProcessingConsents table) => table.noticeVersion.equals(
+                  ProcessingPrivacyNotice.currentVersion,
+                ),
+              ))
+            .getSingleOrNull();
     return row == null
         ? ProcessingConsentDecision.notDecided
         : ProcessingConsentDecision.values.byName(row.decision);
@@ -32,6 +32,20 @@ class ProcessingConsentRepository {
 
   Future<void> disableAiProcessing() {
     return _recordDecision(ProcessingConsentDecision.declined);
+  }
+
+  Future<void> resetCurrentNotice() async {
+    final DateTime now = DateTime.now();
+    await _database.transaction(() async {
+      await (_database.delete(_database.processingConsents)
+            ..where(
+              (db.ProcessingConsents table) => table.noticeVersion.equals(
+                ProcessingPrivacyNotice.currentVersion,
+              ),
+            ))
+          .go();
+      await _holdPendingRequests(now);
+    });
   }
 
   Future<void> _recordDecision(ProcessingConsentDecision decision) async {
@@ -64,21 +78,25 @@ class ProcessingConsentRepository {
         );
         return;
       }
-      await (_database.update(_database.processingOutbox)
-            ..where(
-              (db.ProcessingOutbox table) => table.deliveryState.equals(
-                ProcessingDeliveryState.pendingUpload.name,
-              ),
-            ))
-          .write(
-        db.ProcessingOutboxCompanion(
-          deliveryState: Value<String>(
-            ProcessingDeliveryState.waitingForConsent.name,
-          ),
-          privacyNoticeVersion: const Value<String?>(null),
-          updatedAt: Value<DateTime>(now),
-        ),
-      );
+      await _holdPendingRequests(now);
     });
+  }
+
+  Future<void> _holdPendingRequests(DateTime now) async {
+    await (_database.update(_database.processingOutbox)
+          ..where(
+            (db.ProcessingOutbox table) => table.deliveryState.equals(
+              ProcessingDeliveryState.pendingUpload.name,
+            ),
+          ))
+        .write(
+      db.ProcessingOutboxCompanion(
+        deliveryState: Value<String>(
+          ProcessingDeliveryState.waitingForConsent.name,
+        ),
+        privacyNoticeVersion: const Value<String?>(null),
+        updatedAt: Value<DateTime>(now),
+      ),
+    );
   }
 }
