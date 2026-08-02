@@ -4,6 +4,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/app/home_shell.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/features/processing/processing_consent_prompt.dart';
 import 'package:mymenu/shared/theme/app_theme.dart';
 
 void main() {
@@ -18,7 +19,7 @@ void main() {
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
           theme: AppTheme.data,
-          home: const HomeShell(),
+          home: const ProcessingConsentPromptHost(child: HomeShell()),
         ),
       ),
     );
@@ -28,6 +29,8 @@ void main() {
     );
 
     await tester.tap(find.byKey(const ValueKey('capture_fab')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Not now'));
     await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.text('Add Idea'),

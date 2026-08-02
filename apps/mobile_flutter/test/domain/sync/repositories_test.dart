@@ -28,12 +28,13 @@ void main() {
     late AppDatabase database;
     late AppRepositories repositories;
 
-    setUp(() {
+    setUp(() async {
       database = AppDatabase.forTesting(NativeDatabase.memory());
       repositories = AppRepositories(
         database: database,
         apiClient: FakeMyMenuApiClient(),
       );
+      await repositories.processingConsentRepository.acceptCurrentNotice();
     });
 
     tearDown(() async {
@@ -139,7 +140,11 @@ void main() {
       );
       expect(
         cachedDishes
-            .every((DishRow dish) => File(dish.heroImageUrl).existsSync()),
+            .every(
+              (DishRow dish) =>
+                  dish.heroImageUrl.startsWith('asset://') ||
+                  File(dish.heroImageUrl).existsSync(),
+            ),
         isTrue,
       );
     });

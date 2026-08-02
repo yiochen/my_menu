@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/core/database/app_database.dart';
 import 'package:mymenu/core/network/my_menu_api_client.dart';
 import 'package:mymenu/domain/ai/ai_job.dart';
+import 'package:mymenu/domain/processing/processing_consent_repository.dart';
 import 'package:mymenu/domain/sync/repositories.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite;
 
@@ -16,8 +17,9 @@ void main() {
   group('AI job persistence', () {
     late AppDatabase database;
 
-    setUp(() {
+    setUp(() async {
       database = AppDatabase.forTesting(NativeDatabase.memory());
+      await ProcessingConsentRepository(database).acceptCurrentNotice();
     });
 
     tearDown(() => database.close());
@@ -97,6 +99,7 @@ void main() {
         database: firstDatabase,
         apiClient: api,
       );
+      await firstRepositories.processingConsentRepository.acceptCurrentNotice();
       await firstRepositories.aiJobRepository.schedule(
         type: AiJobType.recipeEnrichment,
         subjectId: '60000000-0000-4000-8000-000000000303',
@@ -199,7 +202,7 @@ void main() {
       addTearDown(migrated.close);
 
       expect(await migrated.select(migrated.aiJobs).get(), isEmpty);
-      expect(migrated.schemaVersion, 8);
+      expect(migrated.schemaVersion, 10);
     });
   });
 }

@@ -11,6 +11,8 @@ import 'package:mymenu/core/database/app_database.dart';
 import 'package:mymenu/core/network/network_status_monitor.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/dishes/seeded_dishes.dart';
+import 'package:mymenu/domain/processing/processing_consent_prompt.dart';
+import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/menu/menu_grid_card.dart';
 import 'package:mymenu/features/plan/plan_screen.dart';
@@ -26,6 +28,88 @@ void main() {
   setUpAll(_loadGoldenFonts);
 
   group('MyMenu app shell', () {
+    testWidgets('processing consent popup responds to application events', (
+      WidgetTester tester,
+    ) async {
+      await runWithMockNetworkImages(() async {
+        await tester.pumpWidget(_testApp());
+        await tester.pumpAndSettle();
+        final BuildContext appContext = tester.element(
+          find.byKey(const ValueKey<String>('plan_screen')),
+        );
+        final MyMenuState state = MyMenuScope.read(appContext);
+
+        final Future<ProcessingConsentDecision> decision =
+            state.requestProcessingConsent(
+          trigger: ProcessingConsentTrigger.improveCover,
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Let MyMenu use AI?'), findsOneWidget);
+        expect(find.text('Capture'), findsNothing);
+        await tester.tap(find.text('Allow AI processing'));
+        await tester.pumpAndSettle();
+
+        expect(await decision, ProcessingConsentDecision.accepted);
+        expect(find.text('Let MyMenu use AI?'), findsNothing);
+      });
+    });
+
+    testWidgets('first capture asks once and either choice opens capture', (
+      WidgetTester tester,
+    ) async {
+      await runWithMockNetworkImages(() async {
+        await tester.pumpWidget(_testApp());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const ValueKey<String>('capture_fab')));
+        await tester.pumpAndSettle();
+        expect(find.text('Let MyMenu use AI?'), findsOneWidget);
+
+        await tester.tap(find.text('Not now'));
+        await tester.pumpAndSettle();
+        expect(find.text('Capture'), findsOneWidget);
+        Navigator.of(tester.element(find.text('Capture'))).pop();
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const ValueKey<String>('capture_fab')));
+        await tester.pumpAndSettle();
+        expect(find.text('Let MyMenu use AI?'), findsNothing);
+        expect(find.text('Capture'), findsOneWidget);
+      });
+    });
+
+    testWidgets('debug control resets consent so capture asks again', (
+      WidgetTester tester,
+    ) async {
+      await runWithMockNetworkImages(() async {
+        await tester.pumpWidget(_debugTestApp());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const ValueKey<String>('capture_fab')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Allow AI processing'));
+        await tester.pumpAndSettle();
+        Navigator.of(tester.element(find.text('Capture'))).pop();
+        await tester.pumpAndSettle();
+
+        await tester.tap(
+          find.byKey(const ValueKey<String>('debug_controls_open')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(
+            const ValueKey<String>('debug_reset_processing_consent'),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const ValueKey<String>('capture_fab')));
+        await tester.pumpAndSettle();
+        expect(find.text('Let MyMenu use AI?'), findsOneWidget);
+      });
+    });
+
     testWidgets('debug controls stay above sheets and gate camera access', (
       WidgetTester tester,
     ) async {
@@ -94,6 +178,8 @@ void main() {
         await tester.pumpAndSettle();
 
         await tester.tap(find.byKey(const ValueKey<String>('capture_fab')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Not now'));
         await tester.pumpAndSettle();
         expect(find.text('Capture'), findsOneWidget);
         expect(
@@ -199,6 +285,8 @@ void main() {
         await tester.pumpAndSettle();
 
         await tester.tap(find.byKey(const ValueKey('capture_fab')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Not now'));
         await tester.pumpAndSettle();
         await tester.scrollUntilVisible(
           find.text('Add Idea'),

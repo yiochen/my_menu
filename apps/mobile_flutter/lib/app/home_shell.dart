@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:mymenu/app/app.dart';
+import 'package:mymenu/domain/processing/processing_consent_prompt.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
 import 'package:mymenu/features/capture/capture_sheet.dart';
@@ -79,11 +80,7 @@ class _HomeShellState extends State<HomeShell> {
                         }
                       });
                     },
-                    onCapture: () => showCaptureSheet(
-                      context,
-                      state,
-                      _captureMediaService,
-                    ),
+                    onCapture: () => _requestCapture(state),
                     onOpenReview: () => showReviewSheet(context, state),
                   ),
               ],
@@ -92,6 +89,16 @@ class _HomeShellState extends State<HomeShell> {
         ),
       ),
     );
+  }
+
+  Future<void> _requestCapture(MyMenuState state) async {
+    await state.requestProcessingConsent(
+      trigger: ProcessingConsentTrigger.capture,
+    );
+    if (!mounted) {
+      return;
+    }
+    await showCaptureSheet(context, state, _captureMediaService);
   }
 }
 

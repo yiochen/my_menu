@@ -1,9 +1,14 @@
 part of 'repositories.dart';
 
 class CaptureRepository {
-  CaptureRepository(this._database);
+  CaptureRepository(
+    this._database, [
+    ProcessingOutboxRepository? processingOutboxRepository,
+  ]) : _processingOutboxRepository =
+            processingOutboxRepository ?? ProcessingOutboxRepository(_database);
 
   final db.AppDatabase _database;
+  final ProcessingOutboxRepository _processingOutboxRepository;
   final Uuid _uuid = const Uuid();
   static const int maxBatchItems = 9;
 
@@ -70,15 +75,23 @@ class CaptureRepository {
     final String batchId = _uuid.v4();
     final String jobId = _uuid.v4();
     final DateTime now = DateTime.now();
+    final ProcessingConsentDecision consent =
+        await ProcessingConsentRepository(_database).currentDecision();
+    final bool useLocalFallback = consent == ProcessingConsentDecision.declined;
     final List<String> captureIds = List<String>.generate(
       media.length,
       (_) => _uuid.v4(),
     );
+    final List<String> dishIds = useLocalFallback
+        ? List<String>.generate(media.length, (_) => _uuid.v4())
+        : const <String>[];
     await _database.transaction(() async {
       await _database.into(_database.captureBatches).insert(
             db.CaptureBatchesCompanion.insert(
               id: batchId,
-              status: CaptureBatchStatus.pendingUpload.name,
+              status: useLocalFallback
+                  ? CaptureBatchStatus.applied.name
+                  : CaptureBatchStatus.pendingUpload.name,
               createdAt: now,
               updatedAt: now,
             ),
@@ -92,19 +105,43 @@ class CaptureRepository {
                 batchId: Value<String?>(batchId),
                 ordinal: Value<int>(ordinal),
                 kind: capture_domain.CaptureItemKind.photo.name,
-                status: capture_domain.CaptureItemStatus.pendingUpload.name,
+                status: useLocalFallback
+                    ? capture_domain.CaptureItemStatus.applied.name
+                    : capture_domain.CaptureItemStatus.pendingUpload.name,
                 createdAt: now,
                 localMediaRef: Value<String?>(item.path),
                 capturedAt: Value<DateTime?>(item.capturedAt),
                 capturedLocalDate: Value<String?>(item.capturedLocalDate),
                 captureDateSource: Value<String?>(item.dateSource.apiValue),
+                appliedDishId: Value<String?>(
+                  useLocalFallback ? dishIds[ordinal] : null,
+                ),
               ),
             );
+        if (useLocalFallback) {
+          await _insertUntitledPhotoDish(
+            dishId: dishIds[ordinal],
+            captureId: id,
+            imageRef: item.path,
+            capturedAt: item.capturedAt,
+            createdAt: now,
+          );
+          continue;
+        }
         await _enqueueSync(id, 'capture_item', 'upsert');
+      }
+      if (useLocalFallback) {
+        return;
       }
       await _enqueueSync(batchId, 'capture_batch', 'upsert');
       await _insertGroupingJob(
         jobId: jobId,
+        batchId: batchId,
+        captureIds: captureIds,
+        now: now,
+      );
+      await _processingOutboxRepository.enqueueCaptureGrouping(
+        requestId: jobId,
         batchId: batchId,
         captureIds: captureIds,
         now: now,
@@ -159,6 +196,12 @@ class CaptureRepository {
       await _enqueueSync(id, 'capture_batch', 'upsert');
       await _insertGroupingJob(
         jobId: jobId,
+        batchId: id,
+        captureIds: <String>[id],
+        now: now,
+      );
+      await _processingOutboxRepository.enqueueCaptureGrouping(
+        requestId: jobId,
         batchId: id,
         captureIds: <String>[id],
         now: now,
@@ -277,6 +320,10 @@ class CaptureRepository {
           updatedAt: Value<DateTime>(now),
           failureReason: const Value<String?>(null),
         ),
+      );
+      await _processingOutboxRepository.retryCaptureGrouping(
+        batchId: batchId,
+        now: now,
       );
     });
   }

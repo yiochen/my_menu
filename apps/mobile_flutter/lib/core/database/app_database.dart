@@ -2,6 +2,9 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:mymenu/core/database/app_database_processing.dart';
+
+export 'package:mymenu/core/database/app_database_processing.dart';
 
 part 'app_database.g.dart';
 
@@ -202,6 +205,8 @@ class AiJobs extends Table {
     SyncOperations,
     SyncMetadata,
     AiJobs,
+    ProcessingOutbox,
+    ProcessingConsents,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -210,7 +215,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration {
@@ -295,6 +300,56 @@ class AppDatabase extends _$AppDatabase {
           if (existingTables.contains('review_items')) {
             await migrator.addColumn(reviewItems, reviewItems.captureId);
           }
+        }
+        if (from < 9) {
+          await migrator.createTable(processingOutbox);
+          final Set<String> existingTables = (await customSelect(
+            "SELECT name FROM sqlite_master WHERE type = 'table'",
+          ).get())
+              .map((QueryRow row) => row.read<String>('name'))
+              .toSet();
+          if (existingTables.contains('ai_jobs') &&
+              existingTables.contains('capture_batches')) {
+            await customStatement('''
+            INSERT OR IGNORE INTO processing_outbox (
+              id,
+              request_kind,
+              subject_id,
+              payload_json,
+              delivery_state,
+              adoption_state,
+              privacy_notice_version,
+              created_at,
+              updated_at
+            )
+            SELECT
+              jobs.id,
+              'capture_grouping',
+              jobs.subject_id,
+              '{"batchId":"' || jobs.subject_id || '","captureIds":[]}',
+              CASE jobs.status
+                WHEN 'pending_offline' THEN 'waitingForConsent'
+                WHEN 'canceled' THEN 'canceled'
+                WHEN 'failed' THEN 'failed'
+                ELSE 'submitted'
+              END,
+              CASE
+                WHEN batches.status = 'applied' THEN 'adopted'
+                WHEN jobs.status = 'succeeded' THEN 'readyForAdoption'
+                ELSE 'awaitingProposal'
+              END,
+              NULL,
+              jobs.created_at,
+              jobs.updated_at
+            FROM ai_jobs AS jobs
+            INNER JOIN capture_batches AS batches
+              ON batches.id = jobs.subject_id
+            WHERE jobs.job_type = 'batch_grouping'
+            ''');
+          }
+        }
+        if (from < 10) {
+          await migrator.createTable(processingConsents);
         }
       },
     );

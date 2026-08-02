@@ -9,6 +9,7 @@ import 'package:mymenu/core/debug/debug_controls.dart';
 import 'package:mymenu/core/network/network_status_monitor.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/debug/debug_controls_overlay.dart';
+import 'package:mymenu/features/processing/processing_consent_prompt.dart';
 import 'package:mymenu/shared/theme/app_theme.dart';
 
 class MyMenuScope extends InheritedNotifier<MyMenuState> {
@@ -86,11 +87,14 @@ class _MyMenuAppView extends ConsumerWidget {
         debugShowCheckedModeBanner: false,
         title: 'MyMenu',
         theme: AppTheme.data,
-        home: HomeShell(captureMediaService: captureMediaService),
+        home: ProcessingConsentPromptHost(
+          child: HomeShell(captureMediaService: captureMediaService),
+        ),
         builder: (BuildContext context, Widget? child) {
           return DebugControlsOverlay(
             controller: debugControls,
             enabled: debugPanelEnabled,
+            onResetProcessingConsent: state.resetProcessingConsent,
             child: child ?? const SizedBox.shrink(),
           );
         },

@@ -5431,6 +5431,745 @@ class AiJobsCompanion extends UpdateCompanion<AiJobRow> {
   }
 }
 
+class $ProcessingOutboxTable extends ProcessingOutbox
+    with TableInfo<$ProcessingOutboxTable, ProcessingOutboxRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ProcessingOutboxTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _requestKindMeta =
+      const VerificationMeta('requestKind');
+  @override
+  late final GeneratedColumn<String> requestKind = GeneratedColumn<String>(
+      'request_kind', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _subjectIdMeta =
+      const VerificationMeta('subjectId');
+  @override
+  late final GeneratedColumn<String> subjectId = GeneratedColumn<String>(
+      'subject_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _payloadJsonMeta =
+      const VerificationMeta('payloadJson');
+  @override
+  late final GeneratedColumn<String> payloadJson = GeneratedColumn<String>(
+      'payload_json', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _deliveryStateMeta =
+      const VerificationMeta('deliveryState');
+  @override
+  late final GeneratedColumn<String> deliveryState = GeneratedColumn<String>(
+      'delivery_state', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _adoptionStateMeta =
+      const VerificationMeta('adoptionState');
+  @override
+  late final GeneratedColumn<String> adoptionState = GeneratedColumn<String>(
+      'adoption_state', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _privacyNoticeVersionMeta =
+      const VerificationMeta('privacyNoticeVersion');
+  @override
+  late final GeneratedColumn<String> privacyNoticeVersion =
+      GeneratedColumn<String>('privacy_notice_version', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        requestKind,
+        subjectId,
+        payloadJson,
+        deliveryState,
+        adoptionState,
+        privacyNoticeVersion,
+        createdAt,
+        updatedAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'processing_outbox';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<ProcessingOutboxRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('request_kind')) {
+      context.handle(
+          _requestKindMeta,
+          requestKind.isAcceptableOrUnknown(
+              data['request_kind']!, _requestKindMeta));
+    } else if (isInserting) {
+      context.missing(_requestKindMeta);
+    }
+    if (data.containsKey('subject_id')) {
+      context.handle(_subjectIdMeta,
+          subjectId.isAcceptableOrUnknown(data['subject_id']!, _subjectIdMeta));
+    } else if (isInserting) {
+      context.missing(_subjectIdMeta);
+    }
+    if (data.containsKey('payload_json')) {
+      context.handle(
+          _payloadJsonMeta,
+          payloadJson.isAcceptableOrUnknown(
+              data['payload_json']!, _payloadJsonMeta));
+    } else if (isInserting) {
+      context.missing(_payloadJsonMeta);
+    }
+    if (data.containsKey('delivery_state')) {
+      context.handle(
+          _deliveryStateMeta,
+          deliveryState.isAcceptableOrUnknown(
+              data['delivery_state']!, _deliveryStateMeta));
+    } else if (isInserting) {
+      context.missing(_deliveryStateMeta);
+    }
+    if (data.containsKey('adoption_state')) {
+      context.handle(
+          _adoptionStateMeta,
+          adoptionState.isAcceptableOrUnknown(
+              data['adoption_state']!, _adoptionStateMeta));
+    } else if (isInserting) {
+      context.missing(_adoptionStateMeta);
+    }
+    if (data.containsKey('privacy_notice_version')) {
+      context.handle(
+          _privacyNoticeVersionMeta,
+          privacyNoticeVersion.isAcceptableOrUnknown(
+              data['privacy_notice_version']!, _privacyNoticeVersionMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+        {requestKind, subjectId},
+      ];
+  @override
+  ProcessingOutboxRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ProcessingOutboxRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      requestKind: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}request_kind'])!,
+      subjectId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}subject_id'])!,
+      payloadJson: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}payload_json'])!,
+      deliveryState: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}delivery_state'])!,
+      adoptionState: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}adoption_state'])!,
+      privacyNoticeVersion: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}privacy_notice_version']),
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $ProcessingOutboxTable createAlias(String alias) {
+    return $ProcessingOutboxTable(attachedDatabase, alias);
+  }
+}
+
+class ProcessingOutboxRow extends DataClass
+    implements Insertable<ProcessingOutboxRow> {
+  final String id;
+  final String requestKind;
+  final String subjectId;
+  final String payloadJson;
+  final String deliveryState;
+  final String adoptionState;
+  final String? privacyNoticeVersion;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const ProcessingOutboxRow(
+      {required this.id,
+      required this.requestKind,
+      required this.subjectId,
+      required this.payloadJson,
+      required this.deliveryState,
+      required this.adoptionState,
+      this.privacyNoticeVersion,
+      required this.createdAt,
+      required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['request_kind'] = Variable<String>(requestKind);
+    map['subject_id'] = Variable<String>(subjectId);
+    map['payload_json'] = Variable<String>(payloadJson);
+    map['delivery_state'] = Variable<String>(deliveryState);
+    map['adoption_state'] = Variable<String>(adoptionState);
+    if (!nullToAbsent || privacyNoticeVersion != null) {
+      map['privacy_notice_version'] = Variable<String>(privacyNoticeVersion);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  ProcessingOutboxCompanion toCompanion(bool nullToAbsent) {
+    return ProcessingOutboxCompanion(
+      id: Value(id),
+      requestKind: Value(requestKind),
+      subjectId: Value(subjectId),
+      payloadJson: Value(payloadJson),
+      deliveryState: Value(deliveryState),
+      adoptionState: Value(adoptionState),
+      privacyNoticeVersion: privacyNoticeVersion == null && nullToAbsent
+          ? const Value.absent()
+          : Value(privacyNoticeVersion),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ProcessingOutboxRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ProcessingOutboxRow(
+      id: serializer.fromJson<String>(json['id']),
+      requestKind: serializer.fromJson<String>(json['requestKind']),
+      subjectId: serializer.fromJson<String>(json['subjectId']),
+      payloadJson: serializer.fromJson<String>(json['payloadJson']),
+      deliveryState: serializer.fromJson<String>(json['deliveryState']),
+      adoptionState: serializer.fromJson<String>(json['adoptionState']),
+      privacyNoticeVersion:
+          serializer.fromJson<String?>(json['privacyNoticeVersion']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'requestKind': serializer.toJson<String>(requestKind),
+      'subjectId': serializer.toJson<String>(subjectId),
+      'payloadJson': serializer.toJson<String>(payloadJson),
+      'deliveryState': serializer.toJson<String>(deliveryState),
+      'adoptionState': serializer.toJson<String>(adoptionState),
+      'privacyNoticeVersion': serializer.toJson<String?>(privacyNoticeVersion),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  ProcessingOutboxRow copyWith(
+          {String? id,
+          String? requestKind,
+          String? subjectId,
+          String? payloadJson,
+          String? deliveryState,
+          String? adoptionState,
+          Value<String?> privacyNoticeVersion = const Value.absent(),
+          DateTime? createdAt,
+          DateTime? updatedAt}) =>
+      ProcessingOutboxRow(
+        id: id ?? this.id,
+        requestKind: requestKind ?? this.requestKind,
+        subjectId: subjectId ?? this.subjectId,
+        payloadJson: payloadJson ?? this.payloadJson,
+        deliveryState: deliveryState ?? this.deliveryState,
+        adoptionState: adoptionState ?? this.adoptionState,
+        privacyNoticeVersion: privacyNoticeVersion.present
+            ? privacyNoticeVersion.value
+            : this.privacyNoticeVersion,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  ProcessingOutboxRow copyWithCompanion(ProcessingOutboxCompanion data) {
+    return ProcessingOutboxRow(
+      id: data.id.present ? data.id.value : this.id,
+      requestKind:
+          data.requestKind.present ? data.requestKind.value : this.requestKind,
+      subjectId: data.subjectId.present ? data.subjectId.value : this.subjectId,
+      payloadJson:
+          data.payloadJson.present ? data.payloadJson.value : this.payloadJson,
+      deliveryState: data.deliveryState.present
+          ? data.deliveryState.value
+          : this.deliveryState,
+      adoptionState: data.adoptionState.present
+          ? data.adoptionState.value
+          : this.adoptionState,
+      privacyNoticeVersion: data.privacyNoticeVersion.present
+          ? data.privacyNoticeVersion.value
+          : this.privacyNoticeVersion,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProcessingOutboxRow(')
+          ..write('id: $id, ')
+          ..write('requestKind: $requestKind, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('payloadJson: $payloadJson, ')
+          ..write('deliveryState: $deliveryState, ')
+          ..write('adoptionState: $adoptionState, ')
+          ..write('privacyNoticeVersion: $privacyNoticeVersion, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, requestKind, subjectId, payloadJson,
+      deliveryState, adoptionState, privacyNoticeVersion, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ProcessingOutboxRow &&
+          other.id == this.id &&
+          other.requestKind == this.requestKind &&
+          other.subjectId == this.subjectId &&
+          other.payloadJson == this.payloadJson &&
+          other.deliveryState == this.deliveryState &&
+          other.adoptionState == this.adoptionState &&
+          other.privacyNoticeVersion == this.privacyNoticeVersion &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ProcessingOutboxCompanion extends UpdateCompanion<ProcessingOutboxRow> {
+  final Value<String> id;
+  final Value<String> requestKind;
+  final Value<String> subjectId;
+  final Value<String> payloadJson;
+  final Value<String> deliveryState;
+  final Value<String> adoptionState;
+  final Value<String?> privacyNoticeVersion;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const ProcessingOutboxCompanion({
+    this.id = const Value.absent(),
+    this.requestKind = const Value.absent(),
+    this.subjectId = const Value.absent(),
+    this.payloadJson = const Value.absent(),
+    this.deliveryState = const Value.absent(),
+    this.adoptionState = const Value.absent(),
+    this.privacyNoticeVersion = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ProcessingOutboxCompanion.insert({
+    required String id,
+    required String requestKind,
+    required String subjectId,
+    required String payloadJson,
+    required String deliveryState,
+    required String adoptionState,
+    this.privacyNoticeVersion = const Value.absent(),
+    required DateTime createdAt,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        requestKind = Value(requestKind),
+        subjectId = Value(subjectId),
+        payloadJson = Value(payloadJson),
+        deliveryState = Value(deliveryState),
+        adoptionState = Value(adoptionState),
+        createdAt = Value(createdAt),
+        updatedAt = Value(updatedAt);
+  static Insertable<ProcessingOutboxRow> custom({
+    Expression<String>? id,
+    Expression<String>? requestKind,
+    Expression<String>? subjectId,
+    Expression<String>? payloadJson,
+    Expression<String>? deliveryState,
+    Expression<String>? adoptionState,
+    Expression<String>? privacyNoticeVersion,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (requestKind != null) 'request_kind': requestKind,
+      if (subjectId != null) 'subject_id': subjectId,
+      if (payloadJson != null) 'payload_json': payloadJson,
+      if (deliveryState != null) 'delivery_state': deliveryState,
+      if (adoptionState != null) 'adoption_state': adoptionState,
+      if (privacyNoticeVersion != null)
+        'privacy_notice_version': privacyNoticeVersion,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ProcessingOutboxCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? requestKind,
+      Value<String>? subjectId,
+      Value<String>? payloadJson,
+      Value<String>? deliveryState,
+      Value<String>? adoptionState,
+      Value<String?>? privacyNoticeVersion,
+      Value<DateTime>? createdAt,
+      Value<DateTime>? updatedAt,
+      Value<int>? rowid}) {
+    return ProcessingOutboxCompanion(
+      id: id ?? this.id,
+      requestKind: requestKind ?? this.requestKind,
+      subjectId: subjectId ?? this.subjectId,
+      payloadJson: payloadJson ?? this.payloadJson,
+      deliveryState: deliveryState ?? this.deliveryState,
+      adoptionState: adoptionState ?? this.adoptionState,
+      privacyNoticeVersion: privacyNoticeVersion ?? this.privacyNoticeVersion,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (requestKind.present) {
+      map['request_kind'] = Variable<String>(requestKind.value);
+    }
+    if (subjectId.present) {
+      map['subject_id'] = Variable<String>(subjectId.value);
+    }
+    if (payloadJson.present) {
+      map['payload_json'] = Variable<String>(payloadJson.value);
+    }
+    if (deliveryState.present) {
+      map['delivery_state'] = Variable<String>(deliveryState.value);
+    }
+    if (adoptionState.present) {
+      map['adoption_state'] = Variable<String>(adoptionState.value);
+    }
+    if (privacyNoticeVersion.present) {
+      map['privacy_notice_version'] =
+          Variable<String>(privacyNoticeVersion.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProcessingOutboxCompanion(')
+          ..write('id: $id, ')
+          ..write('requestKind: $requestKind, ')
+          ..write('subjectId: $subjectId, ')
+          ..write('payloadJson: $payloadJson, ')
+          ..write('deliveryState: $deliveryState, ')
+          ..write('adoptionState: $adoptionState, ')
+          ..write('privacyNoticeVersion: $privacyNoticeVersion, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ProcessingConsentsTable extends ProcessingConsents
+    with TableInfo<$ProcessingConsentsTable, ProcessingConsentRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ProcessingConsentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _noticeVersionMeta =
+      const VerificationMeta('noticeVersion');
+  @override
+  late final GeneratedColumn<String> noticeVersion = GeneratedColumn<String>(
+      'notice_version', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _decisionMeta =
+      const VerificationMeta('decision');
+  @override
+  late final GeneratedColumn<String> decision = GeneratedColumn<String>(
+      'decision', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _decidedAtMeta =
+      const VerificationMeta('decidedAt');
+  @override
+  late final GeneratedColumn<DateTime> decidedAt = GeneratedColumn<DateTime>(
+      'decided_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [noticeVersion, decision, decidedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'processing_consents';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<ProcessingConsentRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('notice_version')) {
+      context.handle(
+          _noticeVersionMeta,
+          noticeVersion.isAcceptableOrUnknown(
+              data['notice_version']!, _noticeVersionMeta));
+    } else if (isInserting) {
+      context.missing(_noticeVersionMeta);
+    }
+    if (data.containsKey('decision')) {
+      context.handle(_decisionMeta,
+          decision.isAcceptableOrUnknown(data['decision']!, _decisionMeta));
+    } else if (isInserting) {
+      context.missing(_decisionMeta);
+    }
+    if (data.containsKey('decided_at')) {
+      context.handle(_decidedAtMeta,
+          decidedAt.isAcceptableOrUnknown(data['decided_at']!, _decidedAtMeta));
+    } else if (isInserting) {
+      context.missing(_decidedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {noticeVersion};
+  @override
+  ProcessingConsentRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ProcessingConsentRow(
+      noticeVersion: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}notice_version'])!,
+      decision: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}decision'])!,
+      decidedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}decided_at'])!,
+    );
+  }
+
+  @override
+  $ProcessingConsentsTable createAlias(String alias) {
+    return $ProcessingConsentsTable(attachedDatabase, alias);
+  }
+}
+
+class ProcessingConsentRow extends DataClass
+    implements Insertable<ProcessingConsentRow> {
+  final String noticeVersion;
+  final String decision;
+  final DateTime decidedAt;
+  const ProcessingConsentRow(
+      {required this.noticeVersion,
+      required this.decision,
+      required this.decidedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['notice_version'] = Variable<String>(noticeVersion);
+    map['decision'] = Variable<String>(decision);
+    map['decided_at'] = Variable<DateTime>(decidedAt);
+    return map;
+  }
+
+  ProcessingConsentsCompanion toCompanion(bool nullToAbsent) {
+    return ProcessingConsentsCompanion(
+      noticeVersion: Value(noticeVersion),
+      decision: Value(decision),
+      decidedAt: Value(decidedAt),
+    );
+  }
+
+  factory ProcessingConsentRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ProcessingConsentRow(
+      noticeVersion: serializer.fromJson<String>(json['noticeVersion']),
+      decision: serializer.fromJson<String>(json['decision']),
+      decidedAt: serializer.fromJson<DateTime>(json['decidedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'noticeVersion': serializer.toJson<String>(noticeVersion),
+      'decision': serializer.toJson<String>(decision),
+      'decidedAt': serializer.toJson<DateTime>(decidedAt),
+    };
+  }
+
+  ProcessingConsentRow copyWith(
+          {String? noticeVersion, String? decision, DateTime? decidedAt}) =>
+      ProcessingConsentRow(
+        noticeVersion: noticeVersion ?? this.noticeVersion,
+        decision: decision ?? this.decision,
+        decidedAt: decidedAt ?? this.decidedAt,
+      );
+  ProcessingConsentRow copyWithCompanion(ProcessingConsentsCompanion data) {
+    return ProcessingConsentRow(
+      noticeVersion: data.noticeVersion.present
+          ? data.noticeVersion.value
+          : this.noticeVersion,
+      decision: data.decision.present ? data.decision.value : this.decision,
+      decidedAt: data.decidedAt.present ? data.decidedAt.value : this.decidedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProcessingConsentRow(')
+          ..write('noticeVersion: $noticeVersion, ')
+          ..write('decision: $decision, ')
+          ..write('decidedAt: $decidedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(noticeVersion, decision, decidedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ProcessingConsentRow &&
+          other.noticeVersion == this.noticeVersion &&
+          other.decision == this.decision &&
+          other.decidedAt == this.decidedAt);
+}
+
+class ProcessingConsentsCompanion
+    extends UpdateCompanion<ProcessingConsentRow> {
+  final Value<String> noticeVersion;
+  final Value<String> decision;
+  final Value<DateTime> decidedAt;
+  final Value<int> rowid;
+  const ProcessingConsentsCompanion({
+    this.noticeVersion = const Value.absent(),
+    this.decision = const Value.absent(),
+    this.decidedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ProcessingConsentsCompanion.insert({
+    required String noticeVersion,
+    required String decision,
+    required DateTime decidedAt,
+    this.rowid = const Value.absent(),
+  })  : noticeVersion = Value(noticeVersion),
+        decision = Value(decision),
+        decidedAt = Value(decidedAt);
+  static Insertable<ProcessingConsentRow> custom({
+    Expression<String>? noticeVersion,
+    Expression<String>? decision,
+    Expression<DateTime>? decidedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (noticeVersion != null) 'notice_version': noticeVersion,
+      if (decision != null) 'decision': decision,
+      if (decidedAt != null) 'decided_at': decidedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ProcessingConsentsCompanion copyWith(
+      {Value<String>? noticeVersion,
+      Value<String>? decision,
+      Value<DateTime>? decidedAt,
+      Value<int>? rowid}) {
+    return ProcessingConsentsCompanion(
+      noticeVersion: noticeVersion ?? this.noticeVersion,
+      decision: decision ?? this.decision,
+      decidedAt: decidedAt ?? this.decidedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (noticeVersion.present) {
+      map['notice_version'] = Variable<String>(noticeVersion.value);
+    }
+    if (decision.present) {
+      map['decision'] = Variable<String>(decision.value);
+    }
+    if (decidedAt.present) {
+      map['decided_at'] = Variable<DateTime>(decidedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProcessingConsentsCompanion(')
+          ..write('noticeVersion: $noticeVersion, ')
+          ..write('decision: $decision, ')
+          ..write('decidedAt: $decidedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5446,6 +6185,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SyncOperationsTable syncOperations = $SyncOperationsTable(this);
   late final $SyncMetadataTable syncMetadata = $SyncMetadataTable(this);
   late final $AiJobsTable aiJobs = $AiJobsTable(this);
+  late final $ProcessingOutboxTable processingOutbox =
+      $ProcessingOutboxTable(this);
+  late final $ProcessingConsentsTable processingConsents =
+      $ProcessingConsentsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5461,7 +6204,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         reviewItems,
         syncOperations,
         syncMetadata,
-        aiJobs
+        aiJobs,
+        processingOutbox,
+        processingConsents
       ];
 }
 
@@ -8080,6 +8825,392 @@ typedef $$AiJobsTableProcessedTableManager = ProcessedTableManager<
     (AiJobRow, BaseReferences<_$AppDatabase, $AiJobsTable, AiJobRow>),
     AiJobRow,
     PrefetchHooks Function()>;
+typedef $$ProcessingOutboxTableCreateCompanionBuilder
+    = ProcessingOutboxCompanion Function({
+  required String id,
+  required String requestKind,
+  required String subjectId,
+  required String payloadJson,
+  required String deliveryState,
+  required String adoptionState,
+  Value<String?> privacyNoticeVersion,
+  required DateTime createdAt,
+  required DateTime updatedAt,
+  Value<int> rowid,
+});
+typedef $$ProcessingOutboxTableUpdateCompanionBuilder
+    = ProcessingOutboxCompanion Function({
+  Value<String> id,
+  Value<String> requestKind,
+  Value<String> subjectId,
+  Value<String> payloadJson,
+  Value<String> deliveryState,
+  Value<String> adoptionState,
+  Value<String?> privacyNoticeVersion,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<int> rowid,
+});
+
+class $$ProcessingOutboxTableFilterComposer
+    extends Composer<_$AppDatabase, $ProcessingOutboxTable> {
+  $$ProcessingOutboxTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get requestKind => $composableBuilder(
+      column: $table.requestKind, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get subjectId => $composableBuilder(
+      column: $table.subjectId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get payloadJson => $composableBuilder(
+      column: $table.payloadJson, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get deliveryState => $composableBuilder(
+      column: $table.deliveryState, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get adoptionState => $composableBuilder(
+      column: $table.adoptionState, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get privacyNoticeVersion => $composableBuilder(
+      column: $table.privacyNoticeVersion,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$ProcessingOutboxTableOrderingComposer
+    extends Composer<_$AppDatabase, $ProcessingOutboxTable> {
+  $$ProcessingOutboxTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get requestKind => $composableBuilder(
+      column: $table.requestKind, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get subjectId => $composableBuilder(
+      column: $table.subjectId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get payloadJson => $composableBuilder(
+      column: $table.payloadJson, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get deliveryState => $composableBuilder(
+      column: $table.deliveryState,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get adoptionState => $composableBuilder(
+      column: $table.adoptionState,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get privacyNoticeVersion => $composableBuilder(
+      column: $table.privacyNoticeVersion,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$ProcessingOutboxTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ProcessingOutboxTable> {
+  $$ProcessingOutboxTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get requestKind => $composableBuilder(
+      column: $table.requestKind, builder: (column) => column);
+
+  GeneratedColumn<String> get subjectId =>
+      $composableBuilder(column: $table.subjectId, builder: (column) => column);
+
+  GeneratedColumn<String> get payloadJson => $composableBuilder(
+      column: $table.payloadJson, builder: (column) => column);
+
+  GeneratedColumn<String> get deliveryState => $composableBuilder(
+      column: $table.deliveryState, builder: (column) => column);
+
+  GeneratedColumn<String> get adoptionState => $composableBuilder(
+      column: $table.adoptionState, builder: (column) => column);
+
+  GeneratedColumn<String> get privacyNoticeVersion => $composableBuilder(
+      column: $table.privacyNoticeVersion, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$ProcessingOutboxTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ProcessingOutboxTable,
+    ProcessingOutboxRow,
+    $$ProcessingOutboxTableFilterComposer,
+    $$ProcessingOutboxTableOrderingComposer,
+    $$ProcessingOutboxTableAnnotationComposer,
+    $$ProcessingOutboxTableCreateCompanionBuilder,
+    $$ProcessingOutboxTableUpdateCompanionBuilder,
+    (
+      ProcessingOutboxRow,
+      BaseReferences<_$AppDatabase, $ProcessingOutboxTable, ProcessingOutboxRow>
+    ),
+    ProcessingOutboxRow,
+    PrefetchHooks Function()> {
+  $$ProcessingOutboxTableTableManager(
+      _$AppDatabase db, $ProcessingOutboxTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ProcessingOutboxTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ProcessingOutboxTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ProcessingOutboxTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> requestKind = const Value.absent(),
+            Value<String> subjectId = const Value.absent(),
+            Value<String> payloadJson = const Value.absent(),
+            Value<String> deliveryState = const Value.absent(),
+            Value<String> adoptionState = const Value.absent(),
+            Value<String?> privacyNoticeVersion = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ProcessingOutboxCompanion(
+            id: id,
+            requestKind: requestKind,
+            subjectId: subjectId,
+            payloadJson: payloadJson,
+            deliveryState: deliveryState,
+            adoptionState: adoptionState,
+            privacyNoticeVersion: privacyNoticeVersion,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String requestKind,
+            required String subjectId,
+            required String payloadJson,
+            required String deliveryState,
+            required String adoptionState,
+            Value<String?> privacyNoticeVersion = const Value.absent(),
+            required DateTime createdAt,
+            required DateTime updatedAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ProcessingOutboxCompanion.insert(
+            id: id,
+            requestKind: requestKind,
+            subjectId: subjectId,
+            payloadJson: payloadJson,
+            deliveryState: deliveryState,
+            adoptionState: adoptionState,
+            privacyNoticeVersion: privacyNoticeVersion,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$ProcessingOutboxTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ProcessingOutboxTable,
+    ProcessingOutboxRow,
+    $$ProcessingOutboxTableFilterComposer,
+    $$ProcessingOutboxTableOrderingComposer,
+    $$ProcessingOutboxTableAnnotationComposer,
+    $$ProcessingOutboxTableCreateCompanionBuilder,
+    $$ProcessingOutboxTableUpdateCompanionBuilder,
+    (
+      ProcessingOutboxRow,
+      BaseReferences<_$AppDatabase, $ProcessingOutboxTable, ProcessingOutboxRow>
+    ),
+    ProcessingOutboxRow,
+    PrefetchHooks Function()>;
+typedef $$ProcessingConsentsTableCreateCompanionBuilder
+    = ProcessingConsentsCompanion Function({
+  required String noticeVersion,
+  required String decision,
+  required DateTime decidedAt,
+  Value<int> rowid,
+});
+typedef $$ProcessingConsentsTableUpdateCompanionBuilder
+    = ProcessingConsentsCompanion Function({
+  Value<String> noticeVersion,
+  Value<String> decision,
+  Value<DateTime> decidedAt,
+  Value<int> rowid,
+});
+
+class $$ProcessingConsentsTableFilterComposer
+    extends Composer<_$AppDatabase, $ProcessingConsentsTable> {
+  $$ProcessingConsentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get noticeVersion => $composableBuilder(
+      column: $table.noticeVersion, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get decision => $composableBuilder(
+      column: $table.decision, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get decidedAt => $composableBuilder(
+      column: $table.decidedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$ProcessingConsentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ProcessingConsentsTable> {
+  $$ProcessingConsentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get noticeVersion => $composableBuilder(
+      column: $table.noticeVersion,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get decision => $composableBuilder(
+      column: $table.decision, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get decidedAt => $composableBuilder(
+      column: $table.decidedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$ProcessingConsentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ProcessingConsentsTable> {
+  $$ProcessingConsentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get noticeVersion => $composableBuilder(
+      column: $table.noticeVersion, builder: (column) => column);
+
+  GeneratedColumn<String> get decision =>
+      $composableBuilder(column: $table.decision, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get decidedAt =>
+      $composableBuilder(column: $table.decidedAt, builder: (column) => column);
+}
+
+class $$ProcessingConsentsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ProcessingConsentsTable,
+    ProcessingConsentRow,
+    $$ProcessingConsentsTableFilterComposer,
+    $$ProcessingConsentsTableOrderingComposer,
+    $$ProcessingConsentsTableAnnotationComposer,
+    $$ProcessingConsentsTableCreateCompanionBuilder,
+    $$ProcessingConsentsTableUpdateCompanionBuilder,
+    (
+      ProcessingConsentRow,
+      BaseReferences<_$AppDatabase, $ProcessingConsentsTable,
+          ProcessingConsentRow>
+    ),
+    ProcessingConsentRow,
+    PrefetchHooks Function()> {
+  $$ProcessingConsentsTableTableManager(
+      _$AppDatabase db, $ProcessingConsentsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ProcessingConsentsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ProcessingConsentsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ProcessingConsentsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> noticeVersion = const Value.absent(),
+            Value<String> decision = const Value.absent(),
+            Value<DateTime> decidedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ProcessingConsentsCompanion(
+            noticeVersion: noticeVersion,
+            decision: decision,
+            decidedAt: decidedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String noticeVersion,
+            required String decision,
+            required DateTime decidedAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ProcessingConsentsCompanion.insert(
+            noticeVersion: noticeVersion,
+            decision: decision,
+            decidedAt: decidedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$ProcessingConsentsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ProcessingConsentsTable,
+    ProcessingConsentRow,
+    $$ProcessingConsentsTableFilterComposer,
+    $$ProcessingConsentsTableOrderingComposer,
+    $$ProcessingConsentsTableAnnotationComposer,
+    $$ProcessingConsentsTableCreateCompanionBuilder,
+    $$ProcessingConsentsTableUpdateCompanionBuilder,
+    (
+      ProcessingConsentRow,
+      BaseReferences<_$AppDatabase, $ProcessingConsentsTable,
+          ProcessingConsentRow>
+    ),
+    ProcessingConsentRow,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -8106,4 +9237,8 @@ class $AppDatabaseManager {
       $$SyncMetadataTableTableManager(_db, _db.syncMetadata);
   $$AiJobsTableTableManager get aiJobs =>
       $$AiJobsTableTableManager(_db, _db.aiJobs);
+  $$ProcessingOutboxTableTableManager get processingOutbox =>
+      $$ProcessingOutboxTableTableManager(_db, _db.processingOutbox);
+  $$ProcessingConsentsTableTableManager get processingConsents =>
+      $$ProcessingConsentsTableTableManager(_db, _db.processingConsents);
 }

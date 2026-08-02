@@ -9,6 +9,7 @@ import 'package:mymenu/domain/capture/seeded_review_items.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/dishes/seeded_dishes.dart';
 import 'package:mymenu/domain/planning/seeded_plan.dart';
+import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/menu/menu_grid_card.dart';
 import 'package:mymenu/features/menu/menu_screen.dart';
@@ -365,6 +366,7 @@ MyMenuState _buildGoldenState() {
     ],
     plan: buildSeededPlan(_goldenPlanDate),
     reviewItems: seededReviewItems,
+    processingConsentDecision: ProcessingConsentDecision.accepted,
   );
 }
 

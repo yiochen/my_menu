@@ -24,6 +24,15 @@ extension SyncRepositoryCaptures on SyncRepository {
   }
 
   Future<void> _processPhotoBatch(db.CaptureBatchRow batch) async {
+    final ProcessingOutboxRepository outbox =
+        ProcessingOutboxRepository(_database);
+    final ProcessingOutboxRequest? request = await outbox.requestForSubject(
+      kind: ProcessingRequestKind.captureGrouping,
+      subjectId: batch.id,
+    );
+    if (request == null || !await outbox.claimForUpload(request.id)) {
+      return;
+    }
     final List<db.CaptureItemRow> initialItems = await _itemsForBatch(batch.id);
     final List<db.CaptureItemRow> photoItems = initialItems
         .where(
@@ -37,6 +46,7 @@ extension SyncRepositoryCaptures on SyncRepository {
           initialItems.single.kind ==
               capture_domain.CaptureItemKind.idea.name) {
         await _finalizeCaptureBatch(batch, initialItems.single);
+        await outbox.markSubmitted(request.id);
       }
       return;
     }
@@ -96,9 +106,11 @@ extension SyncRepositoryCaptures on SyncRepository {
     try {
       await _markBatchStatus(batch.id, CaptureBatchStatus.readyForAi);
       await _finalizeCaptureBatch(batch, activePhotos.first);
+      await outbox.markSubmitted(request.id);
     } on Object catch (error, stackTrace) {
       _logSync('batch finalize failed id=${batch.id}', error, stackTrace);
       if (!_isConnectivityError(error)) {
+        await outbox.markFailed(request.id);
         await _markBatchStatus(
           batch.id,
           CaptureBatchStatus.failed,
