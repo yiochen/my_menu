@@ -65,6 +65,7 @@ class PhotoGalleryTile extends StatelessWidget {
       CapturedPhotoState.failed => const Color(0xFF9D342B),
       CapturedPhotoState.organizing => const Color(0xFF6E5A8D),
       CapturedPhotoState.unorganized => const Color(0xB8322B25),
+      CapturedPhotoState.notADish => const Color(0xB8322B25),
       CapturedPhotoState.organized => const Color(0xC9342F29),
     };
     return Positioned(

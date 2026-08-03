@@ -49,6 +49,25 @@ different from the Supabase service-role key. The first batch dispatch stores
 the project URL and this worker key in Supabase Vault so the one-minute cron
 recovery dispatch can wake the worker after a transient failure.
 
+The pre-launch deployment uses Gemini's free tier. Google may use free-tier
+inputs and outputs to improve its products, and human reviewers may read,
+annotate, and process them. The app therefore requires a versioned disclosure
+and instructs testers not to submit sensitive, confidential, or personally
+identifying content.
+
+Before public launch, move the API project to Paid Tier, obtain any required
+zero-data-retention approval, restore a deployment attestation such as
+`AI_DATA_POLICY=gemini-paid-zdr-v1`, and restore the worker gate before accepting
+public processing jobs. Re-consent users with a new privacy-notice version when
+that provider policy changes.
+
+The routing client does not use grounding, stored interactions, explicit
+context caching, or Gemini Files API uploads. The mobile app sends a
+metadata-free JPEG processing derivative no larger than 1600 pixels on its
+long edge, so HEIC originals and full-resolution photos stay on the device.
+Reverify Google's data-use and retention terms before changing provider,
+project, API surface, or account tier.
+
 ## 3. Deploy the database and functions
 
 ```sh

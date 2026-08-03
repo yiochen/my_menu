@@ -1,6 +1,38 @@
 part of 'my_menu_state.dart';
 
 extension MyMenuDishEdits on MyMenuState {
+  Future<void> resolveReviewToDish(String reviewId, String dishId) async {
+    final ReviewItem item =
+        _reviewItems.firstWhere((ReviewItem review) => review.id == reviewId);
+    final AppRepositories? repositories = _repositories;
+    if (repositories != null && item.captureId != null) {
+      final CaptureItem capture = _captureItems.firstWhere(
+        (CaptureItem capture) => capture.id == item.captureId,
+      );
+      if (capture.batchId == null) {
+        return;
+      }
+      await repositories.captureCorrectionRepository.assignCaptures(
+        batchId: capture.batchId!,
+        captureIds: <String>[capture.id],
+        targetDishId: dishId,
+      );
+      await repositories.captureRepository.dismissSuggestion(capture.id);
+      await _reloadFromRepositories();
+      return;
+    }
+    _reviewItems = _reviewItems
+        .where((ReviewItem review) => review.id != reviewId)
+        .toList(growable: false);
+    _attachCook(
+      dishId,
+      item.summary,
+      imageRef: item.imageRef,
+      notify: false,
+    );
+    _notifyChanged();
+  }
+
   Future<void> addIdea(String text, {String? note}) async {
     final String trimmed = text.trim();
     if (trimmed.isEmpty) {
@@ -30,6 +62,22 @@ extension MyMenuDishEdits on MyMenuState {
                 : const Uuid().v4(),
           );
     final AppRepositories? repositories = _repositories;
+    if (repositories != null && item.captureId != null) {
+      final CaptureItem capture = _captureItems.firstWhere(
+        (CaptureItem capture) => capture.id == item.captureId,
+      );
+      if (capture.batchId == null) {
+        return;
+      }
+      await repositories.captureCorrectionRepository.assignCapturesToNewDish(
+        batchId: capture.batchId!,
+        captureIds: <String>[capture.id],
+        title: 'Captured Dish',
+      );
+      await repositories.captureRepository.dismissSuggestion(capture.id);
+      await _reloadFromRepositories();
+      return;
+    }
     if (repositories != null) {
       await repositories.dishRepository.createDish(
         nextDish,

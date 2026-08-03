@@ -16,9 +16,9 @@ Deno.test("guest capture grouping is ephemeral and idempotent", async () => {
     action: "create",
     operation: "capture_grouping",
     idempotencyKey,
-    inputSchemaVersion: "capture-grouping-input-v1",
-    resultSchemaVersion: "capture-grouping-result-v1",
-    privacyNoticeVersion: "2026-08-02",
+    inputSchemaVersion: "capture-grouping-input-v2",
+    resultSchemaVersion: "capture-grouping-result-v2",
+    privacyNoticeVersion: "2026-08-04",
     assets: [{ assetId, contentType: "image/jpeg", byteSize: 4 }],
   };
 
@@ -116,7 +116,9 @@ Deno.test("guest capture grouping is ephemeral and idempotent", async () => {
   assertEquals(resultResponse.status, 200);
   const result = objectValue(await jsonBody(resultResponse), "result");
   assertEquals(result.operation, "capture_grouping");
-  assertEquals(arrayValue(result, "groups").length, 1);
+  const decisions = arrayValue(result, "decisions");
+  assertEquals(decisions.length, 1);
+  assertEquals("confidence" in objectValue(decisions[0]), false);
 
   const [dishCount, captureCount] = await Promise.all([
     countOwned(admin, "dishes", session.userId),
@@ -202,9 +204,9 @@ async function createJob(headers: HeadersInit, idempotencyKey: string) {
     action: "create",
     operation: "capture_grouping",
     idempotencyKey,
-    inputSchemaVersion: "capture-grouping-input-v1",
-    resultSchemaVersion: "capture-grouping-result-v1",
-    privacyNoticeVersion: "2026-08-02",
+    inputSchemaVersion: "capture-grouping-input-v2",
+    resultSchemaVersion: "capture-grouping-result-v2",
+    privacyNoticeVersion: "2026-08-04",
     assets: [],
   });
   assertEquals(response.status, 200);

@@ -23,8 +23,11 @@ extension CaptureRepositoryDeletion on CaptureRepository {
             ..where((db.CaptureItems table) => table.id.equals(captureId)))
           .write(
         db.CaptureItemsCompanion(
-          status:
-              Value<String>(capture_domain.CaptureItemStatus.localOnly.name),
+          status: Value<String>(
+            item.appliedDishId == null
+                ? capture_domain.CaptureItemStatus.localOnly.name
+                : capture_domain.CaptureItemStatus.applied.name,
+          ),
           failureReason: const Value<String?>(null),
         ),
       );

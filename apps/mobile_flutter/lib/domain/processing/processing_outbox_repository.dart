@@ -248,7 +248,10 @@ class ProcessingOutboxRepository {
                 table.requestKind.equals(
                   ProcessingRequestKind.captureGrouping.databaseValue,
                 ) &
-                table.subjectId.equals(batchId),
+                table.subjectId.equals(batchId) &
+                table.adoptionState
+                    .equals(ProcessingAdoptionState.adopted.name)
+                    .not(),
           ))
         .write(
       db.ProcessingOutboxCompanion(
@@ -305,25 +308,6 @@ class ProcessingOutboxRepository {
                 ProcessingAdoptionState.readyForAdoption.name,
               )),
       ProcessingAdoptionState.adopted,
-    );
-  }
-
-  Future<void> _setDeliveryState(
-    String requestId,
-    ProcessingDeliveryState next, {
-    required ProcessingDeliveryState from,
-  }) async {
-    await (_database.update(_database.processingOutbox)
-          ..where(
-            (db.ProcessingOutbox table) =>
-                table.id.equals(requestId) &
-                table.deliveryState.equals(from.name),
-          ))
-        .write(
-      db.ProcessingOutboxCompanion(
-        deliveryState: Value<String>(next.name),
-        updatedAt: Value<DateTime>(DateTime.now()),
-      ),
     );
   }
 

@@ -75,11 +75,10 @@ mixin FakeProcessingApi on MyMenuApiClient {
       throw const SocketException('Processing upload interrupted');
     }
     final _FakeProcessingRecord record = _processingJobs.values.firstWhere(
-      (_FakeProcessingRecord candidate) =>
-          candidate.job.uploadTargets.any(
-            (ApiProcessingUploadTarget candidateTarget) =>
-                candidateTarget.storagePath == target.storagePath,
-          ),
+      (_FakeProcessingRecord candidate) => candidate.job.uploadTargets.any(
+        (ApiProcessingUploadTarget candidateTarget) =>
+            candidateTarget.storagePath == target.storagePath,
+      ),
     );
     await File(localPath).readAsBytes();
     record.uploadedAssetIds.add(target.assetId);
@@ -100,25 +99,27 @@ mixin FakeProcessingApi on MyMenuApiClient {
       ..result = <String, Object?>{
         'operation': 'capture_grouping',
         'schemaVersion': record.job.resultSchemaVersion,
-        'groups': captures.map((Object? value) {
+        'decisions': captures.map((Object? value) {
           final Map<String, Object?> capture =
               Map<String, Object?>.from(value! as Map<String, Object?>);
           return <String, Object?>{
             'captureIds': <String>[capture['id']! as String],
-            'proposal': <String, Object?>{
+            'outcome': <String, Object?>{
               'type': 'new_dish',
-              'title': 'Captured Dish',
-              'description': 'Deterministic capture grouping proposal.',
+              'draft': <String, Object?>{
+                'title': 'Captured Dish',
+                'description': 'Deterministic capture routing proposal.',
+                'labels': <String>[],
+                'visibleIngredients': <String>[],
+              },
             },
-            'confidence': 1.0,
             'evidence': <String>['Deterministic local provider'],
             'uncertainty': <String>[],
           };
         }).toList(growable: false),
-        'rejectedCaptures': <Object?>[],
         'provenance': <String, Object?>{
           'provider': 'fake',
-          'model': 'fake-date-grouper-v2',
+          'model': 'fake-context-router-v2',
         },
       };
     return record.job = _copyProcessingJob(record.job, status: 'succeeded');

@@ -8,6 +8,7 @@ enum CapturedPhotoState {
   failed,
   organizing,
   unorganized,
+  notADish,
   organized,
 }
 
@@ -30,7 +31,7 @@ class CapturedPhoto {
   String? get batchId => item.batchId;
   int get ordinal => item.ordinal;
   String get imageRef => item.localMediaRef ?? item.remoteMediaRef ?? '';
-  DateTime get capturedAt => item.capturedAt ?? item.createdAt;
+  DateTime get uploadedAt => item.createdAt;
   bool get isOrganized => item.appliedDishId != null;
 
   String get overlayLabel => switch (state) {
@@ -38,6 +39,7 @@ class CapturedPhoto {
         CapturedPhotoState.failed => 'Couldn’t organize',
         CapturedPhotoState.organizing => 'Organizing',
         CapturedPhotoState.unorganized => 'Unorganized',
+        CapturedPhotoState.notADish => 'Not a dish',
         CapturedPhotoState.organized => dish?.title ?? 'Organized',
       };
 
@@ -78,8 +80,7 @@ List<CapturedPhoto> buildCapturedPhotos({
     return CapturedPhoto(
       item: item,
       state: state,
-      dateKey: item.capturedLocalDate ??
-          _localDate(item.capturedAt ?? item.createdAt),
+      dateKey: _localDate(item.createdAt),
       dish: item.appliedDishId == null ? null : dishesById[item.appliedDishId],
       reviewItem: review,
     );
@@ -88,8 +89,8 @@ List<CapturedPhoto> buildCapturedPhotos({
   for (final CapturedPhoto photo in photos) {
     final String groupKey = photo.batchId ?? 'photo:${photo.id}';
     final DateTime? current = groupTimes[groupKey];
-    if (current == null || photo.capturedAt.isAfter(current)) {
-      groupTimes[groupKey] = photo.capturedAt;
+    if (current == null || photo.uploadedAt.isAfter(current)) {
+      groupTimes[groupKey] = photo.uploadedAt;
     }
   }
   return photos
@@ -118,6 +119,9 @@ CapturedPhotoState _photoState(
 ) {
   if (review != null || item.status == CaptureItemStatus.needsReview) {
     return CapturedPhotoState.review;
+  }
+  if (item.status == CaptureItemStatus.notADish) {
+    return CapturedPhotoState.notADish;
   }
   if (item.status == CaptureItemStatus.failed ||
       request?.deliveryState == ProcessingDeliveryState.failed) {

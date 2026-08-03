@@ -10,6 +10,7 @@ enum CaptureItemStatus {
   uploaded,
   classifying,
   needsReview,
+  notADish,
   applied,
   discarded,
   failed,

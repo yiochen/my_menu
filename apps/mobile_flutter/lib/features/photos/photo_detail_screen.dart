@@ -233,6 +233,8 @@ class _StatusSummary extends StatelessWidget {
         'Ready to use now. MyMenu is quietly looking for the right dish.',
       CapturedPhotoState.unorganized =>
         'This photo is ready whenever you want to place it in a dish.',
+      CapturedPhotoState.notADish =>
+        'MyMenu did not find a prepared dish. You can still organize it manually.',
       CapturedPhotoState.organized =>
         'Organized in ${photo.dish?.title ?? 'a dish'}.',
     };

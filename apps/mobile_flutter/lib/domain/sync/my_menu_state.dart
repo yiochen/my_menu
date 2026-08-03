@@ -343,21 +343,6 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
-  void resolveReviewToDish(String reviewId, String dishId) {
-    final ReviewItem item =
-        _reviewItems.firstWhere((ReviewItem review) => review.id == reviewId);
-    _reviewItems = _reviewItems
-        .where((ReviewItem review) => review.id != reviewId)
-        .toList(growable: false);
-    _attachCook(
-      dishId,
-      item.summary,
-      imageRef: item.imageRef,
-      notify: false,
-    );
-    notifyListeners();
-  }
-
   void _attachCook(
     String dishId,
     String note, {
