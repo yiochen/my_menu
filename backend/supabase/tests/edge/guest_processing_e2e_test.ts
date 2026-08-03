@@ -1,0 +1,316 @@
+import { createClient } from "jsr:@supabase/supabase-js@2";
+
+const baseUrl = Deno.env.get("SUPABASE_URL") ?? "http://127.0.0.1:54321";
+const serviceRoleKey = requiredEnv("SUPABASE_SERVICE_ROLE_KEY");
+const anonKey = requiredEnv("SUPABASE_ANON_KEY");
+const workerKey = requiredEnv("AI_WORKER_KEY");
+
+Deno.test("guest capture grouping is ephemeral and idempotent", async () => {
+  const session = await createGuestSession();
+  const admin = createClient(baseUrl, serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const idempotencyKey = crypto.randomUUID();
+  const assetId = crypto.randomUUID();
+  const createBody = {
+    action: "create",
+    operation: "capture_grouping",
+    idempotencyKey,
+    inputSchemaVersion: "capture-grouping-input-v1",
+    resultSchemaVersion: "capture-grouping-result-v1",
+    privacyNoticeVersion: "2026-08-02",
+    assets: [{ assetId, contentType: "image/jpeg", byteSize: 4 }],
+  };
+
+  const first = await post(session.headers, "processing-jobs", createBody);
+  assertEquals(first.status, 200);
+  const firstBody = await jsonBody(first);
+  const repeated = await post(session.headers, "processing-jobs", createBody);
+  const repeatedBody = await jsonBody(repeated);
+  assertEquals(
+    objectValue(repeatedBody, "job").id,
+    objectValue(firstBody, "job").id,
+  );
+  const { data: usageRows, error: usageError } = await admin
+    .from("ai_usage_records")
+    .select("operation,units,outcome,idempotency_key,created_at,expires_at")
+    .eq("user_id", session.userId)
+    .eq("idempotency_key", idempotencyKey);
+  if (usageError != null) {
+    throw new Error(`read usage record: ${usageError.message}`);
+  }
+  assertEquals(usageRows?.length, 1);
+  assertEquals(usageRows?.[0].operation, "capture_grouping");
+  assertEquals(
+    JSON.stringify(usageRows).includes("Private fixture noodles"),
+    false,
+  );
+
+  const job = objectValue(firstBody, "job");
+  const jobId = stringValue(job, "id");
+  const target = objectValue(arrayValue(firstBody, "uploadTargets")[0]);
+  const upload = await admin.storage.from("processing-media").uploadToSignedUrl(
+    stringValue(target, "storagePath"),
+    stringValue(target, "token"),
+    new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])], {
+      type: "image/jpeg",
+    }),
+    { contentType: "image/jpeg", upsert: true },
+  );
+  if (upload.error != null) {
+    throw new Error(`signed processing upload: ${upload.error.message}`);
+  }
+
+  const submit = await post(session.headers, "processing-jobs", {
+    action: "submit",
+    jobId,
+    input: {
+      captures: [{
+        id: assetId,
+        kind: "photo",
+        ordinal: 0,
+        capturedLocalDate: "2026-08-02",
+        assetId,
+      }],
+      dishes: [{
+        localId: crypto.randomUUID(),
+        title: "Private fixture noodles",
+        description: "Never persist this fixture menu content",
+        ingredients: ["secret scallions"],
+        recipeSteps: ["private step"],
+        notes: ["private note"],
+      }],
+    },
+  });
+  assertEquals(submit.status, 200);
+
+  const worker = await post(
+    { "Content-Type": "application/json", "x-mymenu-worker-key": workerKey },
+    "process-ai-jobs",
+    {},
+  );
+  assertEquals(worker.status, 202);
+
+  const completed = await waitForStatus(session.headers, jobId, "succeeded");
+  assertEquals(objectValue(completed, "job").operation, "capture_grouping");
+  const resultResponse = await post(session.headers, "processing-jobs", {
+    action: "result",
+    jobId,
+  });
+  assertEquals(resultResponse.status, 200);
+  const result = objectValue(await jsonBody(resultResponse), "result");
+  assertEquals(result.operation, "capture_grouping");
+  assertEquals(arrayValue(result, "groups").length, 1);
+
+  const [dishCount, captureCount] = await Promise.all([
+    countOwned(admin, "dishes", session.userId),
+    countOwned(admin, "captures", session.userId),
+  ]);
+  assertEquals(dishCount, 0);
+  assertEquals(captureCount, 0);
+
+  const acknowledge = await post(session.headers, "processing-jobs", {
+    action: "acknowledge",
+    jobId,
+  });
+  assertEquals(acknowledge.status, 200);
+  const acknowledged = await post(session.headers, "processing-jobs", {
+    action: "status",
+    jobId,
+  });
+  assertEquals(
+    objectValue(await jsonBody(acknowledged), "job").status,
+    "acknowledged",
+  );
+  assertEquals(await countJobObjects(admin, jobId), 0);
+
+  const canceledJob = await createJob(session.headers, crypto.randomUUID());
+  const canceled = await post(session.headers, "processing-jobs", {
+    action: "cancel",
+    jobId: canceledJob,
+  });
+  assertEquals(canceled.status, 200);
+  const canceledStatus = await post(session.headers, "processing-jobs", {
+    action: "status",
+    jobId: canceledJob,
+  });
+  assertEquals(
+    objectValue(await jsonBody(canceledStatus), "job").status,
+    "canceled",
+  );
+
+  const expiringJob = await createJob(session.headers, crypto.randomUUID());
+  const { error: expireError } = await admin.from("processing_jobs").update({
+    expires_at: "2026-08-01T00:00:00Z",
+  }).eq("id", expiringJob);
+  if (expireError != null) {
+    throw new Error(`expire processing job fixture: ${expireError.message}`);
+  }
+  const cleanup = await post(
+    { "Content-Type": "application/json", "x-mymenu-worker-key": workerKey },
+    "cleanup-processing-jobs",
+    {},
+  );
+  assertEquals(cleanup.status, 200);
+  const expiredStatus = await post(session.headers, "processing-jobs", {
+    action: "status",
+    jobId: expiringJob,
+  });
+  assertEquals(
+    objectValue(await jsonBody(expiredStatus), "job").status,
+    "expired",
+  );
+
+  for (let index = 0; index < 6; index += 1) {
+    await createJob(session.headers, crypto.randomUUID());
+  }
+  const concurrentAllowance = await Promise.all([
+    post(session.headers, "processing-jobs", {
+      ...createBody,
+      idempotencyKey: crypto.randomUUID(),
+      assets: [],
+    }),
+    post(session.headers, "processing-jobs", {
+      ...createBody,
+      idempotencyKey: crypto.randomUUID(),
+      assets: [],
+    }),
+  ]);
+  assertEquals(
+    concurrentAllowance.map((response) => response.status).sort(),
+    [200, 429],
+  );
+  const overAllowance = await post(session.headers, "processing-jobs", {
+    ...createBody,
+    idempotencyKey: crypto.randomUUID(),
+    assets: [],
+  });
+  assertEquals(overAllowance.status, 429);
+});
+
+async function createJob(headers: HeadersInit, idempotencyKey: string) {
+  const response = await post(headers, "processing-jobs", {
+    action: "create",
+    operation: "capture_grouping",
+    idempotencyKey,
+    inputSchemaVersion: "capture-grouping-input-v1",
+    resultSchemaVersion: "capture-grouping-result-v1",
+    privacyNoticeVersion: "2026-08-02",
+    assets: [],
+  });
+  assertEquals(response.status, 200);
+  return stringValue(objectValue(await jsonBody(response), "job"), "id");
+}
+
+async function waitForStatus(
+  headers: HeadersInit,
+  jobId: string,
+  expected: string,
+) {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    const response = await post(headers, "processing-jobs", {
+      action: "status",
+      jobId,
+    });
+    const body = await jsonBody(response);
+    if (objectValue(body, "job").status === expected) {
+      return body;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`processing job ${jobId} did not reach ${expected}`);
+}
+
+async function createGuestSession() {
+  const client = createClient(baseUrl, anonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data, error } = await client.auth.signInAnonymously();
+  if (error != null || data.session == null || data.user == null) {
+    throw new Error(
+      `create guest session: ${error?.message ?? "missing session"}`,
+    );
+  }
+  return {
+    userId: data.user.id,
+    headers: {
+      apikey: anonKey,
+      Authorization: `Bearer ${data.session.access_token}`,
+      "Content-Type": "application/json",
+    },
+  };
+}
+
+function post(headers: HeadersInit, functionName: string, body: unknown) {
+  return fetch(`${baseUrl}/functions/v1/${functionName}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+}
+
+async function jsonBody(response: Response) {
+  const text = await response.text();
+  return text.length === 0 ? {} : JSON.parse(text) as Record<string, unknown>;
+}
+
+async function countOwned(client: any, table: string, userId: string) {
+  const { count, error } = await client.from(table).select("id", {
+    count: "exact",
+    head: true,
+  }).eq("user_id", userId);
+  if (error != null) {
+    throw new Error(`count ${table}: ${error.message}`);
+  }
+  return count;
+}
+
+async function countJobObjects(client: any, jobId: string) {
+  const { data, error } = await client.storage.from("processing-media").list(
+    jobId,
+  );
+  if (error != null) {
+    throw new Error(`list processing objects: ${error.message}`);
+  }
+  return data.length;
+}
+
+function requiredEnv(name: string) {
+  const value = Deno.env.get(name);
+  if (value == null || value.length === 0) {
+    throw new Error(`Missing ${name}`);
+  }
+  return value;
+}
+
+function objectValue(value: unknown, key?: string): Record<string, unknown> {
+  const item = key == null ? value : objectValue(value)[key];
+  if (typeof item !== "object" || item == null || Array.isArray(item)) {
+    throw new Error(`Expected object${key == null ? "" : ` at ${key}`}`);
+  }
+  return item as Record<string, unknown>;
+}
+
+function arrayValue(value: Record<string, unknown>, key: string) {
+  const item = value[key];
+  if (!Array.isArray(item)) {
+    throw new Error(`Expected array at ${key}`);
+  }
+  return item;
+}
+
+function stringValue(value: Record<string, unknown>, key: string) {
+  const item = value[key];
+  if (typeof item !== "string" || item.length === 0) {
+    throw new Error(`Expected string at ${key}`);
+  }
+  return item;
+}
+
+function assertEquals(actual: unknown, expected: unknown) {
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error(
+      `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`,
+    );
+  }
+}

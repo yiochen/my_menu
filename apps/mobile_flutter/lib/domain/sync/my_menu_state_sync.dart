@@ -172,6 +172,14 @@ extension MyMenuStateSync on MyMenuState {
       return false;
     }
     return _hasLocalCapturesWaitingForUpload() ||
+        _processingRequests.any(
+          (ProcessingOutboxRequest request) =>
+              request.deliveryState == ProcessingDeliveryState.pendingUpload ||
+              request.deliveryState == ProcessingDeliveryState.uploading ||
+              request.deliveryState == ProcessingDeliveryState.submitted ||
+              (request.deliveryState == ProcessingDeliveryState.canceled &&
+                  request.serverJobId != null),
+        ) ||
         _aiJobs.any((AiJob job) => job.pendingAction != null);
   }
 

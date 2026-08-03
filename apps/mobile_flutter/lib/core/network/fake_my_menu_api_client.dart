@@ -1,6 +1,6 @@
 part of 'my_menu_api_client.dart';
 
-class FakeMyMenuApiClient extends MyMenuApiClient {
+class FakeMyMenuApiClient extends MyMenuApiClient with FakeProcessingApi {
   final Map<String, ApiAiJob> _aiJobs = <String, ApiAiJob>{};
   final Map<String, _FakeCaptureRecord> _captures =
       <String, _FakeCaptureRecord>{};

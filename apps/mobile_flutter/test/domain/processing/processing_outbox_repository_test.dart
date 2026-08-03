@@ -70,6 +70,66 @@ void main() {
     );
   });
 
+  test('capture processing resumes one server job after an interrupted upload',
+      () async {
+    final Directory temp =
+        await Directory.systemTemp.createTemp('mymenu_processing_resume_');
+    addTearDown(() => temp.delete(recursive: true));
+    final File databaseFile = File('${temp.path}/mymenu.sqlite');
+    final File photo = File('${temp.path}/capture.jpg')
+      ..writeAsBytesSync(<int>[0xff, 0xd8, 0xff, 0xd9]);
+    final FakeMyMenuApiClient server = FakeMyMenuApiClient()
+      ..interruptNextProcessingUpload();
+
+    final AppDatabase firstDatabase =
+        AppDatabase.forTesting(NativeDatabase(databaseFile));
+    final AppRepositories firstRepositories = AppRepositories(
+      database: firstDatabase,
+      apiClient: server,
+    );
+    await firstRepositories.processingConsentRepository.acceptCurrentNotice();
+    await firstRepositories.captureRepository.createPhotoBatch(
+      <CapturedMedia>[
+        CapturedMedia(
+          path: photo.path,
+          capturedAt: DateTime.utc(2026, 8, 2, 12),
+          capturedLocalDate: '2026-08-02',
+          dateSource: CaptureDateSource.camera,
+        ),
+      ],
+    );
+
+    await firstRepositories.syncRepository.processPendingCaptures();
+    final ProcessingOutboxRequest interrupted =
+        (await firstRepositories.processingOutboxRepository.listRequests())
+            .single;
+    expect(interrupted.serverJobId, isNotNull);
+    expect(interrupted.deliveryState, ProcessingDeliveryState.uploading);
+    expect(server.processingJobCreationCount, 1);
+    await firstDatabase.close();
+
+    final AppDatabase restartedDatabase =
+        AppDatabase.forTesting(NativeDatabase(databaseFile));
+    addTearDown(restartedDatabase.close);
+    final AppRepositories restartedRepositories = AppRepositories(
+      database: restartedDatabase,
+      apiClient: server,
+    );
+
+    await restartedRepositories.syncRepository.processPendingCaptures();
+
+    final ProcessingOutboxRequest completed =
+        (await restartedRepositories.processingOutboxRepository.listRequests())
+            .single;
+    expect(completed.idempotencyKey, interrupted.idempotencyKey);
+    expect(completed.serverJobId, interrupted.serverJobId);
+    expect(completed.deliveryState, ProcessingDeliveryState.acknowledged);
+    expect(completed.adoptionState, ProcessingAdoptionState.readyForAdoption);
+    expect(completed.resultPayload?['operation'], 'capture_grouping');
+    expect(server.processingJobCreationCount, 1);
+    expect(server.hasPayloadForProcessingJob(completed.serverJobId!), isFalse);
+  });
+
   test('consent makes held work eligible and disabling holds new uploads',
       () async {
     final AppDatabase database =
@@ -372,11 +432,16 @@ void main() {
     expect(request.adoptionState, ProcessingAdoptionState.adopted);
   });
 
-  test('legacy capture upload waits for current consent', () async {
+  test('capture processing waits for current consent', () async {
+    final Directory temp =
+        await Directory.systemTemp.createTemp('mymenu_processing_consent_');
+    addTearDown(() => temp.delete(recursive: true));
+    final File photo = File('${temp.path}/consented-capture.jpg')
+      ..writeAsBytesSync(<int>[0xff, 0xd8, 0xff, 0xd9]);
     final AppDatabase database =
         AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(database.close);
-    final _RecordingCaptureApiClient api = _RecordingCaptureApiClient();
+    final FakeMyMenuApiClient api = FakeMyMenuApiClient();
     final AppRepositories repositories = AppRepositories(
       database: database,
       apiClient: api,
@@ -384,7 +449,7 @@ void main() {
     await repositories.captureRepository.createPhotoBatch(
       <CapturedMedia>[
         CapturedMedia(
-          path: '/tmp/consented-capture.jpg',
+          path: photo.path,
           capturedAt: DateTime.utc(2026, 8, 1, 13),
           capturedLocalDate: '2026-08-01',
           dateSource: CaptureDateSource.exifOriginal,
@@ -393,15 +458,15 @@ void main() {
     );
 
     await repositories.syncRepository.processPendingCaptures();
-    expect(api.uploadedCaptureIds, isEmpty);
+    expect(api.processingJobCreationCount, 0);
 
     await repositories.processingConsentRepository.acceptCurrentNotice();
     await repositories.syncRepository.processPendingCaptures();
 
-    expect(api.uploadedCaptureIds, hasLength(1));
+    expect(api.processingJobCreationCount, 1);
     final ProcessingOutboxRequest request =
         (await repositories.processingOutboxRepository.listRequests()).single;
-    expect(request.deliveryState, ProcessingDeliveryState.submitted);
+    expect(request.deliveryState, ProcessingDeliveryState.acknowledged);
     expect(
       request.privacyNoticeVersion,
       ProcessingPrivacyNotice.currentVersion,
@@ -454,6 +519,20 @@ void main() {
         (await currentRepositories.captureRepository.createIdeaCapture(
       'legacy idea',
     ))!;
+    final DateTime now = DateTime.utc(2026, 8);
+    await currentDatabase.into(currentDatabase.aiJobs).insert(
+          AiJobsCompanion.insert(
+            id: '50000000-0000-4000-8000-000000000055',
+            jobType: AiJobType.batchGrouping.apiValue,
+            subjectId: captureId,
+            status: AiJobStatus.pendingOffline.databaseValue,
+            idempotencyKey: 'legacy-capture-grouping-$captureId',
+            inputHash: 'legacy-input',
+            inputVersion: 'batch-grouping-v2',
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
     await currentDatabase.close();
 
     sqlite.sqlite3.open(databaseFile.path)
@@ -503,32 +582,6 @@ void main() {
     await repositories.syncRepository.processPendingAiJobs();
     expect(api.scheduledJobIds, hasLength(1));
   });
-}
-
-class _RecordingCaptureApiClient extends FakeMyMenuApiClient {
-  final List<String> uploadedCaptureIds = <String>[];
-
-  @override
-  Future<String> uploadCaptureMediaWithMetadata({
-    required String captureId,
-    required String batchId,
-    required int ordinal,
-    required String localMediaRef,
-    required DateTime capturedAt,
-    required String? capturedLocalDate,
-    required String captureDateSource,
-  }) {
-    uploadedCaptureIds.add(captureId);
-    return super.uploadCaptureMediaWithMetadata(
-      captureId: captureId,
-      batchId: batchId,
-      ordinal: ordinal,
-      localMediaRef: localMediaRef,
-      capturedAt: capturedAt,
-      capturedLocalDate: capturedLocalDate,
-      captureDateSource: captureDateSource,
-    );
-  }
 }
 
 class _RecordingAiApiClient extends FakeMyMenuApiClient {

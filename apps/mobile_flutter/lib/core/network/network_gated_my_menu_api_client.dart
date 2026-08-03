@@ -12,6 +12,72 @@ class NetworkGatedMyMenuApiClient extends MyMenuApiClient {
   }
 
   @override
+  Future<ApiProcessingJob> createProcessingJob({
+    required String operation,
+    required String idempotencyKey,
+    required String inputSchemaVersion,
+    required String resultSchemaVersion,
+    required String privacyNoticeVersion,
+    required List<ApiProcessingAssetManifest> assets,
+  }) {
+    return _online(
+      () => _delegate.createProcessingJob(
+        operation: operation,
+        idempotencyKey: idempotencyKey,
+        inputSchemaVersion: inputSchemaVersion,
+        resultSchemaVersion: resultSchemaVersion,
+        privacyNoticeVersion: privacyNoticeVersion,
+        assets: assets,
+      ),
+    );
+  }
+
+  @override
+  Future<void> uploadProcessingAsset({
+    required ApiProcessingUploadTarget target,
+    required String localPath,
+  }) {
+    return _online(
+      () => _delegate.uploadProcessingAsset(
+        target: target,
+        localPath: localPath,
+      ),
+    );
+  }
+
+  @override
+  Future<ApiProcessingJob> submitProcessingJob({
+    required String jobId,
+    required Map<String, Object?> input,
+  }) {
+    return _online(
+      () => _delegate.submitProcessingJob(jobId: jobId, input: input),
+    );
+  }
+
+  @override
+  Future<ApiProcessingJob> getProcessingJob({required String jobId}) {
+    return _online(() => _delegate.getProcessingJob(jobId: jobId));
+  }
+
+  @override
+  Future<Map<String, Object?>> downloadProcessingResult({
+    required String jobId,
+  }) {
+    return _online(() => _delegate.downloadProcessingResult(jobId: jobId));
+  }
+
+  @override
+  Future<void> acknowledgeProcessingJob({required String jobId}) {
+    return _online(() => _delegate.acknowledgeProcessingJob(jobId: jobId));
+  }
+
+  @override
+  Future<void> cancelProcessingJob({required String jobId}) {
+    return _online(() => _delegate.cancelProcessingJob(jobId: jobId));
+  }
+
+  @override
   Future<void> upsertCaptureBatch({
     required String batchId,
     required int itemCount,
