@@ -115,6 +115,7 @@ class _CaptureSheetTransition extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.only(bottom: bottom),
             child: Container(
+              key: const ValueKey<String>('capture_action_sheet_surface'),
               width: sheetWidth,
               height: sheetHeight,
               clipBehavior: Clip.antiAlias,
@@ -243,7 +244,6 @@ class _CaptureActionSheet extends StatelessWidget {
       includeBottomChromeSpace: false,
       topPadding: 10,
       child: ListView(
-        shrinkWrap: true,
         padding: EdgeInsets.zero,
         children: <Widget>[
           SheetTopBar(title: 'Capture', onClose: () => Navigator.pop(context)),
