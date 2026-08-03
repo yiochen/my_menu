@@ -176,6 +176,7 @@ async function processProcessingJob(client: any, job: JsonRecord) {
         p_job_id: jobId,
         p_lease_token: leaseToken,
         p_error_code: failure.code,
+        p_retryable: failure.retryable,
       },
     );
     if (failError != null) {

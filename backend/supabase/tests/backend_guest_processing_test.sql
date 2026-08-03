@@ -1,5 +1,5 @@
 begin;
-select plan(9);
+select plan(14);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password,
@@ -53,6 +53,23 @@ select is(
     where user_id = '00000000-0000-4000-8000-000000000055'
   ),
   'repeated creation returns the same job'
+);
+
+select throws_ok(
+  $$
+    select * from public.internal_create_processing_job(
+      '00000000-0000-4000-8000-000000000055',
+      'capture_grouping',
+      '00000000-0000-4000-8000-000000000056',
+      'capture-grouping-input-v1',
+      'capture-grouping-result-v1',
+      '2026-08-02',
+      '[{"assetId":"not-a-uuid","contentType":"image/jpeg","byteSize":4}]'::jsonb
+    )
+  $$,
+  'P0001',
+  'Invalid processing asset manifest',
+  'asset manifests require provider-compatible UUID identifiers'
 );
 
 select is(
@@ -115,16 +132,57 @@ select is(
   'clients cannot bypass the guest processing router'
 );
 
-set local role authenticated;
-select set_config(
-  'request.jwt.claim.sub',
-  '00000000-0000-4000-8000-000000000055',
-  true
-);
 select is(
-  (select count(*) from public.processing_jobs),
-  1::bigint,
-  'a guest can read only its own content-free job status'
+  has_table_privilege(
+    'authenticated',
+    'public.processing_jobs',
+    'select'
+  ),
+  false,
+  'a guest cannot bypass the typed status route to read job payloads'
+);
+
+select throws_ok(
+  $$
+    select * from public.internal_submit_processing_job(
+      '00000000-0000-4000-8000-000000000055',
+      (select id from public.processing_jobs where user_id =
+        '00000000-0000-4000-8000-000000000055'),
+      '{"captures":[{"id":"bad","kind":"idea","ordinal":0}],"dishes":[]}'::jsonb
+    )
+  $$,
+  'P0001',
+  'Invalid capture grouping input',
+  'typed submission rejects an incomplete idea capture'
+);
+
+select is(
+  (
+    select status::text from public.internal_submit_processing_job(
+      '00000000-0000-4000-8000-000000000055',
+      (select id from public.processing_jobs where user_id =
+        '00000000-0000-4000-8000-000000000055'),
+      '{"captures":[{"id":"00000000-0000-4000-8000-000000000057","kind":"idea","ordinal":0,"ideaText":"noodles"}],"dishes":[]}'::jsonb
+    )
+  ),
+  'queued',
+  'a complete typed idea capture can be submitted'
+);
+
+select is(
+  (select attempt_count from public.internal_claim_processing_job()),
+  1,
+  'the first worker lease records one attempt'
+);
+
+update public.processing_jobs
+set lease_expires_at = now() - interval '1 second'
+where user_id = '00000000-0000-4000-8000-000000000055';
+
+select is(
+  (select attempt_count from public.internal_claim_processing_job()),
+  2,
+  'an expired worker lease is reclaimed with a bounded attempt count'
 );
 
 select * from finish();

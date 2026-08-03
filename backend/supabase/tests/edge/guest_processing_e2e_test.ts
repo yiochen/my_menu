@@ -49,17 +49,33 @@ Deno.test("guest capture grouping is ephemeral and idempotent", async () => {
   const job = objectValue(firstBody, "job");
   const jobId = stringValue(job, "id");
   const target = objectValue(arrayValue(firstBody, "uploadTargets")[0]);
-  const upload = await admin.storage.from("processing-media").uploadToSignedUrl(
-    stringValue(target, "storagePath"),
-    stringValue(target, "token"),
-    new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])], {
-      type: "image/jpeg",
-    }),
-    { contentType: "image/jpeg", upsert: true },
-  );
+  const upload = await session.client.storage.from("processing-media")
+    .uploadToSignedUrl(
+      stringValue(target, "storagePath"),
+      stringValue(target, "token"),
+      new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])], {
+        type: "image/jpeg",
+      }),
+      { contentType: "image/jpeg", upsert: true },
+    );
   if (upload.error != null) {
     throw new Error(`signed processing upload: ${upload.error.message}`);
   }
+
+  const invalidSubmit = await post(session.headers, "processing-jobs", {
+    action: "submit",
+    jobId,
+    input: {
+      captures: [{
+        id: assetId,
+        kind: "photo",
+        ordinal: 0,
+        assetId: crypto.randomUUID(),
+      }],
+      dishes: [],
+    },
+  });
+  assertEquals(invalidSubmit.status, 400);
 
   const submit = await post(session.headers, "processing-jobs", {
     action: "submit",
@@ -118,10 +134,9 @@ Deno.test("guest capture grouping is ephemeral and idempotent", async () => {
     action: "status",
     jobId,
   });
-  assertEquals(
-    objectValue(await jsonBody(acknowledged), "job").status,
-    "acknowledged",
-  );
+  assertEquals(acknowledged.status, 404);
+  assertEquals(await countRows(admin, "processing_jobs", "id", jobId), 0);
+  assertEquals(await countRows(admin, "processing_assets", "job_id", jobId), 0);
   assertEquals(await countJobObjects(admin, jobId), 0);
 
   const canceledJob = await createJob(session.headers, crypto.randomUUID());
@@ -134,10 +149,7 @@ Deno.test("guest capture grouping is ephemeral and idempotent", async () => {
     action: "status",
     jobId: canceledJob,
   });
-  assertEquals(
-    objectValue(await jsonBody(canceledStatus), "job").status,
-    "canceled",
-  );
+  assertEquals(canceledStatus.status, 404);
 
   const expiringJob = await createJob(session.headers, crypto.randomUUID());
   const { error: expireError } = await admin.from("processing_jobs").update({
@@ -156,10 +168,7 @@ Deno.test("guest capture grouping is ephemeral and idempotent", async () => {
     action: "status",
     jobId: expiringJob,
   });
-  assertEquals(
-    objectValue(await jsonBody(expiredStatus), "job").status,
-    "expired",
-  );
+  assertEquals(expiredStatus.status, 404);
 
   for (let index = 0; index < 6; index += 1) {
     await createJob(session.headers, crypto.randomUUID());
@@ -233,6 +242,7 @@ async function createGuestSession() {
   }
   return {
     userId: data.user.id,
+    client,
     headers: {
       apikey: anonKey,
       Authorization: `Bearer ${data.session.access_token}`,
@@ -273,6 +283,22 @@ async function countJobObjects(client: any, jobId: string) {
     throw new Error(`list processing objects: ${error.message}`);
   }
   return data.length;
+}
+
+async function countRows(
+  client: any,
+  table: string,
+  column: string,
+  value: string,
+) {
+  const { count, error } = await client.from(table).select("*", {
+    count: "exact",
+    head: true,
+  }).eq(column, value);
+  if (error != null) {
+    throw new Error(`count ${table}: ${error.message}`);
+  }
+  return count;
 }
 
 function requiredEnv(name: string) {

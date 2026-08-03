@@ -5,6 +5,7 @@ import 'package:mymenu/core/database/app_database.dart' as db;
 import 'package:mymenu/domain/processing/processing_consent_repository.dart';
 import 'package:mymenu/domain/processing/processing_outbox.dart';
 import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
+import 'package:uuid/uuid.dart';
 
 part 'processing_outbox_server_state.dart';
 
@@ -128,6 +129,15 @@ class ProcessingOutboxRepository {
     required String batchId,
     required DateTime now,
   }) async {
+    final ProcessingOutboxRequest? current = await requestForSubject(
+      kind: ProcessingRequestKind.captureGrouping,
+      subjectId: batchId,
+    );
+    if (current == null ||
+        (current.deliveryState != ProcessingDeliveryState.failed &&
+            current.deliveryState != ProcessingDeliveryState.expired)) {
+      return;
+    }
     final bool isAccepted =
         await ProcessingConsentRepository(_database).currentDecision() ==
             ProcessingConsentDecision.accepted;
@@ -154,6 +164,18 @@ class ProcessingOutboxRepository {
         ),
         privacyNoticeVersion: Value<String?>(
           isAccepted ? ProcessingPrivacyNotice.currentVersion : null,
+        ),
+        idempotencyKey: Value<String>(const Uuid().v4()),
+        serverJobId: const Value<String?>(null),
+        serverExpiresAt: const Value<DateTime?>(null),
+        uploadedAssetIdsJson: const Value<String>('[]'),
+        resultPayloadJson: const Value<String?>(null),
+        resultSchemaVersion: const Value<String?>(null),
+        attemptCount: Value<int>(current.attemptCount + 1),
+        nextRetryAt: const Value<DateTime?>(null),
+        failureCode: const Value<String?>(null),
+        adoptionState: Value<String>(
+          ProcessingAdoptionState.awaitingProposal.name,
         ),
         updatedAt: Value<DateTime>(now),
       ),

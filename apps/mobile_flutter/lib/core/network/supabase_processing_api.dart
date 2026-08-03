@@ -47,7 +47,7 @@ mixin SupabaseProcessingApi on MyMenuApiClient {
           target.storagePath,
           target.token,
           await File(localPath).readAsBytes(),
-          const FileOptions(upsert: true),
+          FileOptions(contentType: target.contentType, upsert: true),
         );
   }
 
@@ -131,6 +131,7 @@ mixin SupabaseProcessingApi on MyMenuApiClient {
           assetId: apiStringValue(target, 'assetId'),
           storagePath: apiStringValue(target, 'storagePath'),
           token: apiStringValue(target, 'token'),
+          contentType: apiStringValue(target, 'contentType'),
         );
       }).toList(growable: false),
     );

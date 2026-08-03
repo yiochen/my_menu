@@ -18,6 +18,10 @@ extension SyncRepositoryCaptures on SyncRepository {
                 .timeout(_controlRequestTimeout);
             await outbox.clearServerJob(request.id);
           } on Object catch (error) {
+            if (_isProcessingJobNotFound(error)) {
+              await outbox.clearServerJob(request.id);
+              continue;
+            }
             _logSync(
               'processing cancel unavailable requestId=${request.id} '
               'code=${_processingErrorCode(error)}',
@@ -162,6 +166,15 @@ extension SyncRepositoryCaptures on SyncRepository {
           .timeout(_controlRequestTimeout);
       await outbox.markAcknowledged(request.id);
     } on Object catch (error) {
+      if (_isProcessingJobNotFound(error)) {
+        if (request.resultPayload != null) {
+          await outbox.markAcknowledged(request.id);
+        } else if (request.serverExpiresAt case final DateTime expiresAt
+            when !DateTime.now().toUtc().isBefore(expiresAt.toUtc())) {
+          await outbox.markExpired(request.id);
+        }
+        return;
+      }
       _logSync(
         'processing result unavailable requestId=${request.id} '
         'code=${_processingErrorCode(error)}',

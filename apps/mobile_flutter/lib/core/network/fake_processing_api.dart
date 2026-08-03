@@ -51,6 +51,7 @@ mixin FakeProcessingApi on MyMenuApiClient {
               assetId: asset.assetId,
               storagePath: 'processing/$id/${asset.assetId}',
               token: 'fake-upload-token',
+              contentType: asset.contentType,
             ),
           )
           .toList(growable: false),
@@ -75,7 +76,10 @@ mixin FakeProcessingApi on MyMenuApiClient {
     }
     final _FakeProcessingRecord record = _processingJobs.values.firstWhere(
       (_FakeProcessingRecord candidate) =>
-          candidate.assetIds.contains(target.assetId),
+          candidate.job.uploadTargets.any(
+            (ApiProcessingUploadTarget candidateTarget) =>
+                candidateTarget.storagePath == target.storagePath,
+          ),
     );
     await File(localPath).readAsBytes();
     record.uploadedAssetIds.add(target.assetId);

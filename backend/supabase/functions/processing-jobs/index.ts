@@ -45,6 +45,8 @@ Deno.serve(async (request: Request) => {
       { error: code },
       code === "free_allowance_exhausted"
         ? 429
+        : code === "processing_job_not_found"
+        ? 404
         : code.startsWith("invalid_")
         ? 400
         : 500,
@@ -92,7 +94,7 @@ async function createJob(client: any, userId: string, body: JsonRecord) {
   });
   const { data: assetRows, error: assetError } = await client
     .from("processing_assets")
-    .select("asset_id,storage_path")
+    .select("asset_id,storage_path,content_type")
     .eq("job_id", row.id)
     .order("asset_id");
   if (assetError != null) {
@@ -110,6 +112,7 @@ async function createJob(client: any, userId: string, body: JsonRecord) {
         assetId: asset.asset_id,
         storagePath: asset.storage_path,
         token: data.token,
+        contentType: asset.content_type,
       };
     }),
   );
@@ -177,6 +180,9 @@ async function ownedJob(client: any, userId: string, jobId: string) {
   const { data, error } = await client.from("processing_jobs").select("*")
     .eq("id", jobId).eq("user_id", userId).single();
   if (error != null) {
+    if (error.code === "PGRST116") {
+      throw new Error("processing_job_not_found");
+    }
     throw error;
   }
   return data as JsonRecord;
@@ -215,6 +221,12 @@ function errorCode(error: unknown) {
     : String(error);
   if (message.includes("free_allowance_exhausted")) {
     return "free_allowance_exhausted";
+  }
+  if (
+    message.includes("processing_job_not_found") ||
+    message.includes("Processing job not found")
+  ) {
+    return "processing_job_not_found";
   }
   if (message.includes("Invalid") || message.includes("Missing required")) {
     return "invalid_request";

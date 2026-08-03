@@ -39,6 +39,9 @@ create table public.processing_jobs (
   model text,
   input_tokens integer,
   output_tokens integer,
+  attempt_count integer not null default 0 check (attempt_count between 0 and 3),
+  max_attempts integer not null default 3 check (max_attempts between 1 and 3),
+  next_retry_at timestamptz,
   lease_token uuid,
   lease_expires_at timestamptz,
   -- Leave one cleanup interval inside the 24-hour retention ceiling.
@@ -94,13 +97,6 @@ grant all on public.processing_jobs to service_role;
 grant all on public.processing_assets to service_role;
 grant all on public.ai_usage_records to service_role;
 grant usage, select on sequence public.ai_usage_records_id_seq to service_role;
-
-create policy processing_jobs_select_own
-on public.processing_jobs for select
-to authenticated
-using (user_id = auth.uid());
-
-grant select on public.processing_jobs to authenticated;
 
 create or replace function public.internal_create_processing_job(
   p_user_id uuid,
@@ -187,7 +183,9 @@ begin
     v_asset_id := nullif(trim(v_asset->>'assetId'), '');
     v_content_type := v_asset->>'contentType';
     v_byte_size := (v_asset->>'byteSize')::integer;
-    if v_asset_id is null or v_content_type not in (
+    if v_asset_id is null
+      or v_asset_id !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      or v_content_type not in (
       'image/jpeg', 'image/png', 'image/heic', 'image/heif'
     ) or v_byte_size < 1 or v_byte_size > 20971520 then
       raise exception 'Invalid processing asset manifest';
@@ -240,6 +238,14 @@ declare
   v_job public.processing_jobs%rowtype;
   v_expected_assets integer;
   v_uploaded_assets integer;
+  v_capture jsonb;
+  v_dish jsonb;
+  v_capture_id text;
+  v_capture_kind text;
+  v_asset_id text;
+  v_capture_ids text[] := '{}'::text[];
+  v_dish_ids text[] := '{}'::text[];
+  v_photo_count integer := 0;
 begin
   if auth.role() <> 'service_role' then
     raise exception 'Service role required';
@@ -259,12 +265,103 @@ begin
   if jsonb_typeof(p_input) <> 'object'
     or jsonb_typeof(p_input->'captures') <> 'array'
     or jsonb_array_length(p_input->'captures') = 0
-    or jsonb_typeof(p_input->'dishes') <> 'array' then
+    or jsonb_array_length(p_input->'captures') > 10
+    or jsonb_typeof(p_input->'dishes') <> 'array'
+    or jsonb_array_length(p_input->'dishes') > 500
+    or octet_length(p_input::text) > 1048576 then
     raise exception 'Invalid capture grouping input';
   end if;
 
+  for v_capture in select value from jsonb_array_elements(p_input->'captures')
+  loop
+    if jsonb_typeof(v_capture) <> 'object'
+      or v_capture - array[
+        'id', 'kind', 'ordinal', 'capturedAt', 'capturedLocalDate',
+        'ideaText', 'assetId'
+      ] <> '{}'::jsonb
+      or jsonb_typeof(v_capture->'id') is distinct from 'string'
+      or jsonb_typeof(v_capture->'kind') is distinct from 'string'
+      or jsonb_typeof(v_capture->'ordinal') is distinct from 'number'
+      or (v_capture->>'ordinal') !~ '^[0-9]+$'
+      or (
+        v_capture ? 'capturedAt'
+        and jsonb_typeof(v_capture->'capturedAt') not in ('string', 'null')
+      )
+      or (
+        v_capture ? 'capturedLocalDate'
+        and jsonb_typeof(v_capture->'capturedLocalDate') not in ('string', 'null')
+      )
+      or (
+        v_capture ? 'ideaText'
+        and jsonb_typeof(v_capture->'ideaText') not in ('string', 'null')
+      ) then
+      raise exception 'Invalid capture grouping input';
+    end if;
+    v_capture_id := nullif(trim(v_capture->>'id'), '');
+    v_capture_kind := v_capture->>'kind';
+    if v_capture_id is null
+      or v_capture_id !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      or v_capture_kind not in ('photo', 'idea')
+      or v_capture_id = any(v_capture_ids) then
+      raise exception 'Invalid capture grouping input';
+    end if;
+    v_capture_ids := array_append(v_capture_ids, v_capture_id);
+    if v_capture_kind = 'photo' then
+      v_asset_id := nullif(trim(v_capture->>'assetId'), '');
+      if v_asset_id is distinct from v_capture_id or not exists (
+        select 1 from public.processing_assets
+        where job_id = p_job_id and asset_id = v_asset_id
+      ) then
+        raise exception 'Invalid capture grouping input';
+      end if;
+      v_photo_count := v_photo_count + 1;
+    elsif jsonb_typeof(v_capture->'ideaText') is distinct from 'string'
+      or nullif(trim(v_capture->>'ideaText'), '') is null
+      or v_capture ? 'assetId' then
+      raise exception 'Invalid capture grouping input';
+    end if;
+  end loop;
+
+  for v_dish in select value from jsonb_array_elements(p_input->'dishes')
+  loop
+    if jsonb_typeof(v_dish) <> 'object'
+      or v_dish - array[
+        'localId', 'title', 'description', 'ingredients',
+        'recipeSteps', 'notes'
+      ] <> '{}'::jsonb
+      or jsonb_typeof(v_dish->'localId') is distinct from 'string'
+      or jsonb_typeof(v_dish->'title') is distinct from 'string'
+      or jsonb_typeof(v_dish->'description') is distinct from 'string'
+      or jsonb_typeof(v_dish->'ingredients') is distinct from 'array'
+      or jsonb_typeof(v_dish->'recipeSteps') is distinct from 'array'
+      or jsonb_typeof(v_dish->'notes') is distinct from 'array'
+      or nullif(trim(v_dish->>'localId'), '') is null
+      or nullif(trim(v_dish->>'title'), '') is null
+      or length(v_dish->>'title') > 300
+      or length(v_dish->>'description') > 5000
+      or exists (
+        select 1 from jsonb_array_elements(v_dish->'ingredients') value
+        where jsonb_typeof(value) <> 'string'
+      )
+      or exists (
+        select 1 from jsonb_array_elements(v_dish->'recipeSteps') value
+        where jsonb_typeof(value) <> 'string'
+      )
+      or exists (
+        select 1 from jsonb_array_elements(v_dish->'notes') value
+        where jsonb_typeof(value) <> 'string'
+      )
+      or (v_dish->>'localId') = any(v_dish_ids) then
+      raise exception 'Invalid capture grouping input';
+    end if;
+    v_dish_ids := array_append(v_dish_ids, v_dish->>'localId');
+  end loop;
+
   select count(*) into v_expected_assets
   from public.processing_assets where job_id = p_job_id;
+  if v_photo_count <> v_expected_assets then
+    raise exception 'Invalid capture grouping input';
+  end if;
   select count(*) into v_uploaded_assets
   from public.processing_assets assets
   join storage.objects objects
@@ -296,9 +393,27 @@ begin
   if auth.role() <> 'service_role' then
     raise exception 'Service role required';
   end if;
+  with exhausted as (
+    update public.processing_jobs
+    set status = 'failed', error_code = 'worker_lease_exhausted',
+        input_payload = null, lease_token = null, lease_expires_at = null,
+        next_retry_at = null, updated_at = now()
+    where status = 'running' and lease_expires_at <= now()
+      and attempt_count >= max_attempts
+    returning user_id, idempotency_key
+  )
+  update public.ai_usage_records usage
+  set outcome = 'failed'
+  from exhausted
+  where usage.user_id = exhausted.user_id
+    and usage.idempotency_key = exhausted.idempotency_key;
+
   select * into v_job
   from public.processing_jobs
-  where status = 'queued' and expires_at > now()
+  where expires_at > now() and attempt_count < max_attempts and (
+    (status = 'queued' and coalesce(next_retry_at, now()) <= now())
+    or (status = 'running' and lease_expires_at <= now())
+  )
   order by created_at
   for update skip locked
   limit 1;
@@ -307,7 +422,9 @@ begin
   end if;
   update public.processing_jobs
   set status = 'running', lease_token = gen_random_uuid(),
-      lease_expires_at = now() + interval '3 minutes', updated_at = now()
+      lease_expires_at = now() + interval '3 minutes',
+      attempt_count = attempt_count + 1, next_retry_at = null,
+      updated_at = now()
   where id = v_job.id returning * into v_job;
   return next v_job;
 end;
@@ -377,7 +494,8 @@ $$;
 create or replace function public.internal_fail_processing_job(
   p_job_id uuid,
   p_lease_token uuid,
-  p_error_code text
+  p_error_code text,
+  p_retryable boolean
 )
 returns setof public.processing_jobs
 language plpgsql
@@ -390,17 +508,31 @@ begin
   if auth.role() <> 'service_role' then
     raise exception 'Service role required';
   end if;
-  update public.processing_jobs
-  set status = 'failed', error_code = left(p_error_code, 80),
-      input_payload = null, result_payload = null, updated_at = now(),
-      lease_token = null, lease_expires_at = null
+  select * into v_job from public.processing_jobs
   where id = p_job_id and status = 'running' and lease_token = p_lease_token
-  returning * into v_job;
+  for update;
   if v_job.id is null then
     raise exception 'Processing job does not have the active lease';
   end if;
-  update public.ai_usage_records set outcome = 'failed'
-  where user_id = v_job.user_id and idempotency_key = v_job.idempotency_key;
+  if p_retryable and v_job.attempt_count < v_job.max_attempts
+    and v_job.expires_at > now() then
+    update public.processing_jobs
+    set status = 'queued', error_code = left(p_error_code, 80),
+        result_payload = null, updated_at = now(), lease_token = null,
+        lease_expires_at = null,
+        next_retry_at = now() + make_interval(
+          secs => least(60, (5 * power(2, v_job.attempt_count - 1))::integer)
+        )
+    where id = p_job_id returning * into v_job;
+  else
+    update public.processing_jobs
+    set status = 'failed', error_code = left(p_error_code, 80),
+        input_payload = null, result_payload = null, updated_at = now(),
+        lease_token = null, lease_expires_at = null, next_retry_at = null
+    where id = p_job_id returning * into v_job;
+    update public.ai_usage_records set outcome = 'failed'
+    where user_id = v_job.user_id and idempotency_key = v_job.idempotency_key;
+  end if;
   return next v_job;
 end;
 $$;
@@ -429,22 +561,19 @@ begin
   if v_job.id is null then
     raise exception 'Processing job not found';
   end if;
-  if p_status = 'acknowledged' and v_job.status not in ('succeeded', 'acknowledged') then
+  if p_status = 'acknowledged' and v_job.status <> 'succeeded' then
     raise exception 'Only succeeded processing can be acknowledged';
   end if;
-  if v_job.status = p_status then
-    return next v_job;
-    return;
-  end if;
-  update public.processing_jobs
-  set status = p_status, input_payload = null, result_payload = null,
-      lease_token = null, lease_expires_at = null, updated_at = now()
-  where id = p_job_id returning * into v_job;
-  delete from public.processing_assets where job_id = p_job_id;
   if p_status = 'canceled' then
     update public.ai_usage_records set outcome = 'canceled'
     where user_id = v_job.user_id and idempotency_key = v_job.idempotency_key;
   end if;
+  delete from public.processing_jobs where id = p_job_id;
+  v_job.status := p_status;
+  v_job.input_payload := null;
+  v_job.result_payload := null;
+  v_job.lease_token := null;
+  v_job.lease_expires_at := null;
   return next v_job;
 end;
 $$;
@@ -461,18 +590,20 @@ begin
   if auth.role() <> 'service_role' then
     raise exception 'Service role required';
   end if;
-  update public.processing_jobs
-  set status = 'expired', input_payload = null, result_payload = null,
-      lease_token = null, lease_expires_at = null, updated_at = now()
+  select * into v_job from public.processing_jobs
   where id = p_job_id and expires_at <= now()
-    and status not in ('acknowledged', 'canceled', 'expired')
-  returning * into v_job;
+  for update;
   if v_job.id is null then
     return;
   end if;
-  delete from public.processing_assets where job_id = p_job_id;
   update public.ai_usage_records set outcome = 'expired'
   where user_id = v_job.user_id and idempotency_key = v_job.idempotency_key;
+  delete from public.processing_jobs where id = p_job_id;
+  v_job.status := 'expired';
+  v_job.input_payload := null;
+  v_job.result_payload := null;
+  v_job.lease_token := null;
+  v_job.lease_expires_at := null;
   return next v_job;
 end;
 $$;
@@ -487,7 +618,7 @@ revoke all on function public.internal_claim_processing_job()
 revoke all on function public.internal_complete_processing_job(
   uuid, uuid, jsonb, text, text, integer, integer
 ) from public, anon, authenticated;
-revoke all on function public.internal_fail_processing_job(uuid, uuid, text)
+revoke all on function public.internal_fail_processing_job(uuid, uuid, text, boolean)
   from public, anon, authenticated;
 revoke all on function public.internal_finish_processing_job(uuid, uuid, text)
   from public, anon, authenticated;
@@ -504,7 +635,7 @@ grant execute on function public.internal_claim_processing_job()
 grant execute on function public.internal_complete_processing_job(
   uuid, uuid, jsonb, text, text, integer, integer
 ) to service_role;
-grant execute on function public.internal_fail_processing_job(uuid, uuid, text)
+grant execute on function public.internal_fail_processing_job(uuid, uuid, text, boolean)
   to service_role;
 grant execute on function public.internal_finish_processing_job(uuid, uuid, text)
   to service_role;

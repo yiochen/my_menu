@@ -1256,7 +1256,8 @@ void main() {
       expect(synced.status, CaptureBatchStatus.processing);
     });
 
-    test('partial retry uploads only the failed item', () async {
+    test('explicit retry starts a fresh attempt and reuploads all assets',
+        () async {
       final _PartialFailureApiClient apiClient = _PartialFailureApiClient();
       repositories = AppRepositories(
         database: database,
@@ -1285,17 +1286,25 @@ void main() {
         batch.items[0].id,
         batch.items[1].id,
       ]);
+      final ProcessingOutboxRequest failedRequest =
+          (await repositories.processingOutboxRepository.listRequests())
+              .single;
 
       await repositories.syncRepository.processPendingCaptures();
       expect(apiClient.uploadedAssetIds, hasLength(2));
 
       await repositories.captureRepository.retryBatch(batch.id);
+      final ProcessingOutboxRequest retryRequest =
+          (await repositories.processingOutboxRepository.listRequests())
+              .single;
+      expect(retryRequest.idempotencyKey, isNot(failedRequest.idempotencyKey));
       await repositories.syncRepository.processPendingCaptures();
       refreshed = (await repositories.captureRepository.listBatches()).single;
 
       expect(apiClient.uploadedAssetIds, <String>[
         batch.items[0].id,
         batch.items[1].id,
+        batch.items[0].id,
         batch.items[1].id,
         batch.items[2].id,
       ]);
@@ -1306,7 +1315,7 @@ void main() {
         isTrue,
       );
       expect(refreshed.status, CaptureBatchStatus.processing);
-      expect(apiClient.processingJobCreationCount, 1);
+      expect(apiClient.processingJobCreationCount, 2);
     });
 
     test('batch rows and durable files rehydrate after database restart',

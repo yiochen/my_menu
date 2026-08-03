@@ -23,11 +23,13 @@ class ApiProcessingUploadTarget {
     required this.assetId,
     required this.storagePath,
     required this.token,
+    required this.contentType,
   });
 
   final String assetId;
   final String storagePath;
   final String token;
+  final String contentType;
 }
 
 class ApiProcessingJob {

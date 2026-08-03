@@ -58,3 +58,9 @@ String _processingFailureReason(String code) {
     _ => 'Processing could not be completed.',
   };
 }
+
+bool _isProcessingJobNotFound(Object error) {
+  final String message = error.toString().toLowerCase();
+  return message.contains('processing_job_not_found') ||
+      (message.contains('404') && message.contains('not_found'));
+}
