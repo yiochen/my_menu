@@ -12,12 +12,59 @@ export 'package:mymenu/core/network/my_menu_api_models.dart';
 part 'fake_my_menu_api_client.dart';
 part 'fake_capture_record.dart';
 part 'fake_capture_grouping.dart';
+part 'fake_processing_api.dart';
 part 'my_menu_ai_api.dart';
 part 'my_menu_api_config.dart';
+part 'processing_api.dart';
 part 'supabase_capture_api.dart';
+part 'supabase_processing_api.dart';
+part 'supabase_read_api.dart';
 part 'supabase_my_menu_api_helpers.dart';
 
 abstract class MyMenuApiClient with AiJobApiDefaults {
+  Future<ApiProcessingJob> createProcessingJob({
+    required String operation,
+    required String idempotencyKey,
+    required String inputSchemaVersion,
+    required String resultSchemaVersion,
+    required String privacyNoticeVersion,
+    required List<ApiProcessingAssetManifest> assets,
+  }) {
+    throw UnimplementedError('Processing job creation is not implemented.');
+  }
+
+  Future<void> uploadProcessingAsset({
+    required ApiProcessingUploadTarget target,
+    required String localPath,
+  }) {
+    throw UnimplementedError('Processing upload is not implemented.');
+  }
+
+  Future<ApiProcessingJob> submitProcessingJob({
+    required String jobId,
+    required Map<String, Object?> input,
+  }) {
+    throw UnimplementedError('Processing submission is not implemented.');
+  }
+
+  Future<ApiProcessingJob> getProcessingJob({required String jobId}) {
+    throw UnimplementedError('Processing status is not implemented.');
+  }
+
+  Future<Map<String, Object?>> downloadProcessingResult({
+    required String jobId,
+  }) {
+    throw UnimplementedError('Processing result download is not implemented.');
+  }
+
+  Future<void> acknowledgeProcessingJob({required String jobId}) {
+    throw UnimplementedError('Processing acknowledgement is not implemented.');
+  }
+
+  Future<void> cancelProcessingJob({required String jobId}) {
+    throw UnimplementedError('Processing cancellation is not implemented.');
+  }
+
   Future<void> upsertCaptureBatch({
     required String batchId,
     required int itemCount,
@@ -156,7 +203,8 @@ abstract class MyMenuApiClient with AiJobApiDefaults {
   Future<List<ApiReviewItem>> getReviewItems(List<String> ids);
 }
 
-class SupabaseMyMenuApiClient extends MyMenuApiClient with SupabaseCaptureApi {
+class SupabaseMyMenuApiClient extends MyMenuApiClient
+    with SupabaseCaptureApi, SupabaseProcessingApi, SupabaseReadApi {
   SupabaseMyMenuApiClient({SupabaseClient? client})
       : _client = client ?? Supabase.instance.client;
 
@@ -289,57 +337,6 @@ class SupabaseMyMenuApiClient extends MyMenuApiClient with SupabaseCaptureApi {
         'events',
       ).map(apiSyncEventFromJson).toList(growable: false),
     );
-  }
-
-  @override
-  Future<List<ApiCapture>> getCaptures(List<String> ids) async {
-    if (ids.isEmpty) {
-      return const <ApiCapture>[];
-    }
-    await _ensureSession();
-
-    final Map<String, Object?> data = await _invokeJson(
-      'get-captures',
-      <String, Object?>{'ids': ids},
-    );
-    return apiListValue(
-      data,
-      'items',
-    ).map(apiCaptureFromJson).toList(growable: false);
-  }
-
-  @override
-  Future<List<ApiDish>> getDishes(List<String> ids) async {
-    if (ids.isEmpty) {
-      return const <ApiDish>[];
-    }
-    await _ensureSession();
-
-    final Map<String, Object?> data = await _invokeJson(
-      'get-dishes',
-      <String, Object?>{'ids': ids},
-    );
-    return apiListValue(
-      data,
-      'items',
-    ).map(apiDishFromJson).toList(growable: false);
-  }
-
-  @override
-  Future<List<ApiReviewItem>> getReviewItems(List<String> ids) async {
-    if (ids.isEmpty) {
-      return const <ApiReviewItem>[];
-    }
-    await _ensureSession();
-
-    final Map<String, Object?> data = await _invokeJson(
-      'get-review-items',
-      <String, Object?>{'ids': ids},
-    );
-    return apiListValue(
-      data,
-      'items',
-    ).map(apiReviewItemFromJson).toList(growable: false);
   }
 
   @override

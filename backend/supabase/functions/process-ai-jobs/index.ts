@@ -5,6 +5,10 @@ import {
 } from "../_shared/ai/grouping_provider.ts";
 import type { GroupingCaptureInput } from "../_shared/ai/grouping_contract.ts";
 import { requireAiWorkerKey } from "../_shared/ai/worker_config.ts";
+import {
+  operationalError,
+  operationalLog,
+} from "../_shared/operational_log.ts";
 import { requireEnv, supabaseFor } from "../_shared/supabase.ts";
 
 declare const EdgeRuntime:
@@ -36,6 +40,10 @@ Deno.serve(async (request: Request) => {
 async function processOneJob() {
   const serviceRoleKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
   const client = supabaseFor(`Bearer ${serviceRoleKey}`, true);
+  const processingJob = await claimProcessingJob(client);
+  if (processingJob != null) {
+    return await processProcessingJob(client, processingJob);
+  }
   const job = await claimJob(client);
   if (job == null) {
     return { processed: 0, failed: 0 };
@@ -68,7 +76,7 @@ async function processOneJob() {
     return { processed: 1, failed: 0, jobId };
   } catch (error) {
     const failure = normalizeFailure(error);
-    console.error(`AI job ${jobId} failed`, failure);
+    operationalError("legacy_ai_job_failed", failure.code, { jobId });
     const { error: failError } = await client.rpc("internal_fail_ai_job", {
       p_job_id: jobId,
       p_lease_token: leaseToken,
@@ -79,10 +87,188 @@ async function processOneJob() {
       },
     });
     if (failError != null) {
-      console.error("Failed to persist AI job failure", failError);
+      operationalError(
+        "legacy_ai_job_failure_persist_failed",
+        "persist_failed",
+        {
+          jobId,
+        },
+      );
     }
     return { processed: 0, failed: 1, jobId };
   }
+}
+
+async function claimProcessingJob(client: any): Promise<JsonRecord | null> {
+  const { data, error } = await client.rpc("internal_claim_processing_job");
+  if (error != null) {
+    if (String(error.message ?? error).includes("does not exist")) {
+      return null;
+    }
+    throw error;
+  }
+  if (!Array.isArray(data) || data.length === 0) {
+    return null;
+  }
+  return data[0] as JsonRecord;
+}
+
+async function processProcessingJob(client: any, job: JsonRecord) {
+  const jobId = stringField(job, "id");
+  const leaseToken = stringField(job, "lease_token");
+  try {
+    const input = recordValue(job.input_payload);
+    const captures = await processingCaptures(client, jobId, input);
+    const provider = createGroupingProvider(
+      Deno.env.get("AI_PROVIDER") ?? "fake",
+      Deno.env.get("AI_MODEL") ?? "fake-date-grouper-v2",
+    );
+    const grouped = await provider.group(captures);
+    const result = {
+      operation: "capture_grouping",
+      schemaVersion: stringField(job, "result_schema_version"),
+      groups: grouped.output.groups.map((group) => ({
+        captureIds: group.captureIds,
+        proposal: {
+          type: "new_dish",
+          title: group.draft.title,
+          description: group.draft.description,
+          labels: group.draft.labels,
+          visibleIngredients: group.draft.visibleIngredients,
+        },
+        confidence: group.uncertainty.length === 0 ? 1 : 0.5,
+        evidence: group.evidence,
+        uncertainty: group.uncertainty,
+      })),
+      rejectedCaptures: grouped.output.rejectedCaptures,
+      provenance: grouped.provenance,
+    };
+    const usage = grouped.provenance.usage;
+    const { error } = await client.rpc("internal_complete_processing_job", {
+      p_job_id: jobId,
+      p_lease_token: leaseToken,
+      p_result: result,
+      p_provider: grouped.provenance.provider,
+      p_model: grouped.provenance.model,
+      p_input_tokens: numericUsage(usage, "inputTokens"),
+      p_output_tokens: numericUsage(usage, "outputTokens"),
+    });
+    if (error != null) {
+      throw error;
+    }
+    operationalLog("processing_job_succeeded", {
+      jobId,
+      operation: "capture_grouping",
+      model: grouped.provenance.model,
+      state: "succeeded",
+    });
+    return { processed: 1, failed: 0, jobId };
+  } catch (error) {
+    const failure = normalizeFailure(error);
+    operationalError("processing_job_failed", failure.code, {
+      jobId,
+      operation: "capture_grouping",
+      state: "failed",
+    });
+    const { error: failError } = await client.rpc(
+      "internal_fail_processing_job",
+      {
+        p_job_id: jobId,
+        p_lease_token: leaseToken,
+        p_error_code: failure.code,
+        p_retryable: failure.retryable,
+      },
+    );
+    if (failError != null) {
+      operationalError(
+        "processing_job_failure_persist_failed",
+        "persist_failed",
+        { jobId },
+      );
+    }
+    return { processed: 0, failed: 1, jobId };
+  }
+}
+
+async function processingCaptures(
+  client: any,
+  jobId: string,
+  input: JsonRecord,
+): Promise<GroupingCaptureInput[]> {
+  const values = arrayField(input, "captures");
+  arrayField(input, "dishes");
+  const { data: assetRows, error } = await client
+    .from("processing_assets")
+    .select("asset_id,storage_bucket,storage_path,content_type")
+    .eq("job_id", jobId);
+  if (error != null) {
+    throw error;
+  }
+  const assets = new Map<string, JsonRecord>(
+    (assetRows ?? []).map((row: JsonRecord) => [String(row.asset_id), row]),
+  );
+  return await Promise.all(values.map(async (value) => {
+    const row = recordValue(value);
+    const kind = stringField(row, "kind");
+    if (kind !== "photo" && kind !== "idea") {
+      throw new AiProviderFailure(
+        "capture_kind_invalid",
+        "Capture kind is invalid",
+        false,
+      );
+    }
+    const capture: GroupingCaptureInput = {
+      id: stringField(row, "id"),
+      ordinal: numberField(row, "ordinal"),
+      kind,
+      ideaText: nullableString(row.ideaText),
+      capturedLocalDate: nullableString(row.capturedLocalDate),
+    };
+    if (kind === "photo") {
+      const assetId = stringField(row, "assetId");
+      const asset = assets.get(assetId);
+      if (asset == null) {
+        throw new AiProviderFailure(
+          "capture_media_unavailable",
+          "Capture media is unavailable",
+          false,
+        );
+      }
+      const { data, error: signedError } = await client.storage
+        .from(stringField(asset, "storage_bucket"))
+        .createSignedUrl(stringField(asset, "storage_path"), 300);
+      if (signedError != null || data?.signedUrl == null) {
+        throw new AiProviderFailure(
+          "capture_media_unavailable",
+          "Capture media is unavailable",
+          true,
+        );
+      }
+      capture.media = {
+        contentType: stringField(asset, "content_type"),
+        signedUrl: data.signedUrl,
+        filename: `${assetId}.image`,
+      };
+    }
+    return capture;
+  }));
+}
+
+function arrayField(row: JsonRecord, key: string) {
+  const value = row[key];
+  if (!Array.isArray(value)) {
+    throw new AiProviderFailure(
+      "capture_grouping_input_invalid",
+      "Capture grouping input is invalid",
+      false,
+    );
+  }
+  return value;
+}
+
+function numericUsage(usage: Record<string, unknown>, key: string) {
+  const value = usage[key];
+  return typeof value === "number" && Number.isInteger(value) ? value : null;
 }
 
 async function claimJob(client: any): Promise<JsonRecord | null> {

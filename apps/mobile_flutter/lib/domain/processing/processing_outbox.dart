@@ -17,7 +17,10 @@ enum ProcessingDeliveryState {
   pendingUpload,
   uploading,
   submitted,
+  downloading,
+  acknowledged,
   failed,
+  expired,
   canceled,
 }
 
@@ -39,6 +42,15 @@ class ProcessingOutboxRequest {
     required this.createdAt,
     required this.updatedAt,
     this.privacyNoticeVersion,
+    this.idempotencyKey = '',
+    this.serverJobId,
+    this.serverExpiresAt,
+    this.uploadedAssetIds = const <String>{},
+    this.resultPayload,
+    this.resultSchemaVersion,
+    this.attemptCount = 0,
+    this.nextRetryAt,
+    this.failureCode,
   });
 
   final String id;
@@ -48,6 +60,15 @@ class ProcessingOutboxRequest {
   final ProcessingDeliveryState deliveryState;
   final ProcessingAdoptionState adoptionState;
   final String? privacyNoticeVersion;
+  final String idempotencyKey;
+  final String? serverJobId;
+  final DateTime? serverExpiresAt;
+  final Set<String> uploadedAssetIds;
+  final Map<String, Object?>? resultPayload;
+  final String? resultSchemaVersion;
+  final int attemptCount;
+  final DateTime? nextRetryAt;
+  final String? failureCode;
   final DateTime createdAt;
   final DateTime updatedAt;
 }

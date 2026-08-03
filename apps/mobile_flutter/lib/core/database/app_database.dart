@@ -9,6 +9,7 @@ export 'package:mymenu/core/database/app_database_local.dart';
 export 'package:mymenu/core/database/app_database_processing.dart';
 
 part 'app_database.g.dart';
+part 'app_database_migrations.dart';
 
 @DataClassName('DishRow')
 class Dishes extends Table {
@@ -198,7 +199,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration {
@@ -208,7 +209,7 @@ class AppDatabase extends _$AppDatabase {
         if (from < 2) {
           await migrator.createTable(dishNotes);
           await migrator.createTable(syncMetadata);
-          await _migrateJsonNotesToRows();
+          await _migrateJsonNotesToRows(this);
         }
         if (from < 3) {
           await migrator.createTable(captureBatches);
@@ -348,6 +349,9 @@ class AppDatabase extends _$AppDatabase {
             );
           }
         }
+        if (from < 13) {
+          await _migrateProcessingOutboxV13(this, migrator);
+        }
         if (from < 12) {
           final Set<String> existingTables = (await customSelect(
             "SELECT name FROM sqlite_master WHERE type = 'table'",
@@ -366,32 +370,5 @@ class AppDatabase extends _$AppDatabase {
         }
       },
     );
-  }
-
-  Future<void> _migrateJsonNotesToRows() async {
-    final List<DishRow> dishRows = await select(dishes).get();
-    for (final DishRow dish in dishRows) {
-      final Object? decoded = jsonDecode(dish.notesJson);
-      if (decoded is! List<dynamic>) {
-        continue;
-      }
-      for (int index = 0; index < decoded.length; index += 1) {
-        final Object? value = decoded[index];
-        if (value is! String || value.trim().isEmpty) {
-          continue;
-        }
-        final DateTime now = DateTime.now();
-        await into(dishNotes).insert(
-          DishNotesCompanion.insert(
-            id: '${dish.id}_note_$index',
-            dishId: dish.id,
-            body: value,
-            position: index,
-            createdAt: now,
-            updatedAt: now,
-          ),
-        );
-      }
-    }
   }
 }

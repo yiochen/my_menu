@@ -18,6 +18,8 @@ void main() {
   testWidgets('shows capture-first actions without mock labels', (
     WidgetTester tester,
   ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     final MyMenuState state = MyMenuState();
 
     await tester.pumpWidget(
@@ -50,6 +52,11 @@ void main() {
     expect(find.text('Recent Captures'), findsNothing);
     expect(find.text('Mock photo capture'), findsNothing);
     expect(find.text('Add dish idea'), findsNothing);
+    final Rect sheet = tester.getRect(
+      find.byKey(const ValueKey<String>('capture_action_sheet_surface')),
+    );
+    final Rect title = tester.getRect(find.text('Capture'));
+    expect(title.top - sheet.top, lessThan(36));
   });
 
   testWidgets('take photo action saves a review item', (

@@ -209,12 +209,6 @@ class CaptureRepository {
       if (useLocalFallback) {
         return;
       }
-      await _insertGroupingJob(
-        jobId: jobId,
-        batchId: batchId,
-        captureIds: captureIds,
-        now: now,
-      );
       await _processingOutboxRepository.enqueueCaptureGrouping(
         requestId: jobId,
         batchId: batchId,
@@ -273,14 +267,6 @@ class CaptureRepository {
               captureDateSource: const Value<String?>('camera'),
             ),
           );
-      await _enqueueSync(id, 'capture_item', 'upsert');
-      await _enqueueSync(id, 'capture_batch', 'upsert');
-      await _insertGroupingJob(
-        jobId: jobId,
-        batchId: id,
-        captureIds: <String>[id],
-        now: now,
-      );
       await _processingOutboxRepository.enqueueCaptureGrouping(
         requestId: jobId,
         batchId: id,
@@ -289,38 +275,6 @@ class CaptureRepository {
       );
     });
     return id;
-  }
-
-  Future<void> _insertGroupingJob({
-    required String jobId,
-    required String batchId,
-    required List<String> captureIds,
-    required DateTime now,
-  }) async {
-    const String inputVersion = 'batch-grouping-v2';
-    final String canonicalInput = jsonEncode(<String, Object?>{
-      'batchId': batchId,
-      'captureIds': captureIds,
-      'grouping': inputVersion,
-    });
-    await _database.into(_database.aiJobs).insert(
-          db.AiJobsCompanion.insert(
-            id: jobId,
-            jobType: AiJobType.batchGrouping.apiValue,
-            subjectId: batchId,
-            status: AiJobStatus.pendingOffline.databaseValue,
-            idempotencyKey:
-                '${AiJobType.batchGrouping.apiValue}:$batchId:$inputVersion',
-            inputHash: base64UrlEncode(utf8.encode(canonicalInput)),
-            inputVersion: inputVersion,
-            promptVersion: const Value<String>('batch-grouping-v2'),
-            modelVersion: const Value<String>('server-selected'),
-            schemaVersion: const Value<String>('batch-grouping-v2'),
-            pendingAction: const Value<String?>('finalize_capture'),
-            createdAt: now,
-            updatedAt: now,
-          ),
-        );
   }
 
   String _dateKey(DateTime date) {
@@ -340,22 +294,5 @@ class CaptureRepository {
       capturedLocalDate: null,
       dateSource: CaptureDateSource.unknown,
     );
-  }
-
-  Future<void> _enqueueSync(
-    String entityId,
-    String entity,
-    String operationType,
-  ) async {
-    await _database.into(_database.syncOperations).insert(
-          db.SyncOperationsCompanion.insert(
-            id: _uuid.v4(),
-            entity: entity,
-            entityId: entityId,
-            operationType: operationType,
-            payloadJson: '{}',
-            createdAt: DateTime.now(),
-          ),
-        );
   }
 }

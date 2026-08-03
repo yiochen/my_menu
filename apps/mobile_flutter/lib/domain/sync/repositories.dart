@@ -38,6 +38,7 @@ part 'repositories_capture_bulk_corrections.dart';
 part 'repositories_capture_correction_rollback.dart';
 part 'repositories_capture_correction_support.dart';
 part 'repositories_capture_sync.dart';
+part 'repositories_capture_processing_support.dart';
 part 'repositories_dish_hydration.dart';
 part 'repositories_support.dart';
 part 'repositories_sync.dart';

@@ -1,5 +1,6 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { json, type JsonRecord } from "./http.ts";
+import { operationalLog } from "./operational_log.ts";
 
 // Keep this loose until the Supabase database types are generated for the repo.
 export type SupabaseClientAny = any;
@@ -77,7 +78,10 @@ export async function rpcOne(
       throw error;
     }
 
-    console.warn(`${fn} hit PostgREST schema cache retry`, error);
+    operationalLog("supabase_schema_cache_retry", {
+      action: fn,
+      code: "schema_cache_retry",
+    });
   }
 
   throw lastError;

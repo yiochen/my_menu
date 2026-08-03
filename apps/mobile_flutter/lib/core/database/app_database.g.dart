@@ -5704,6 +5704,66 @@ class $ProcessingOutboxTable extends ProcessingOutbox
   late final GeneratedColumn<String> privacyNoticeVersion =
       GeneratedColumn<String>('privacy_notice_version', aliasedName, true,
           type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _idempotencyKeyMeta =
+      const VerificationMeta('idempotencyKey');
+  @override
+  late final GeneratedColumn<String> idempotencyKey = GeneratedColumn<String>(
+      'idempotency_key', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(''));
+  static const VerificationMeta _serverJobIdMeta =
+      const VerificationMeta('serverJobId');
+  @override
+  late final GeneratedColumn<String> serverJobId = GeneratedColumn<String>(
+      'server_job_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _serverExpiresAtMeta =
+      const VerificationMeta('serverExpiresAt');
+  @override
+  late final GeneratedColumn<DateTime> serverExpiresAt =
+      GeneratedColumn<DateTime>('server_expires_at', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _uploadedAssetIdsJsonMeta =
+      const VerificationMeta('uploadedAssetIdsJson');
+  @override
+  late final GeneratedColumn<String> uploadedAssetIdsJson =
+      GeneratedColumn<String>('uploaded_asset_ids_json', aliasedName, false,
+          type: DriftSqlType.string,
+          requiredDuringInsert: false,
+          defaultValue: const Constant('[]'));
+  static const VerificationMeta _resultPayloadJsonMeta =
+      const VerificationMeta('resultPayloadJson');
+  @override
+  late final GeneratedColumn<String> resultPayloadJson =
+      GeneratedColumn<String>('result_payload_json', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _resultSchemaVersionMeta =
+      const VerificationMeta('resultSchemaVersion');
+  @override
+  late final GeneratedColumn<String> resultSchemaVersion =
+      GeneratedColumn<String>('result_schema_version', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _attemptCountMeta =
+      const VerificationMeta('attemptCount');
+  @override
+  late final GeneratedColumn<int> attemptCount = GeneratedColumn<int>(
+      'attempt_count', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _nextRetryAtMeta =
+      const VerificationMeta('nextRetryAt');
+  @override
+  late final GeneratedColumn<DateTime> nextRetryAt = GeneratedColumn<DateTime>(
+      'next_retry_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _failureCodeMeta =
+      const VerificationMeta('failureCode');
+  @override
+  late final GeneratedColumn<String> failureCode = GeneratedColumn<String>(
+      'failure_code', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -5725,6 +5785,15 @@ class $ProcessingOutboxTable extends ProcessingOutbox
         deliveryState,
         adoptionState,
         privacyNoticeVersion,
+        idempotencyKey,
+        serverJobId,
+        serverExpiresAt,
+        uploadedAssetIdsJson,
+        resultPayloadJson,
+        resultSchemaVersion,
+        attemptCount,
+        nextRetryAt,
+        failureCode,
         createdAt,
         updatedAt
       ];
@@ -5788,6 +5857,60 @@ class $ProcessingOutboxTable extends ProcessingOutbox
           privacyNoticeVersion.isAcceptableOrUnknown(
               data['privacy_notice_version']!, _privacyNoticeVersionMeta));
     }
+    if (data.containsKey('idempotency_key')) {
+      context.handle(
+          _idempotencyKeyMeta,
+          idempotencyKey.isAcceptableOrUnknown(
+              data['idempotency_key']!, _idempotencyKeyMeta));
+    }
+    if (data.containsKey('server_job_id')) {
+      context.handle(
+          _serverJobIdMeta,
+          serverJobId.isAcceptableOrUnknown(
+              data['server_job_id']!, _serverJobIdMeta));
+    }
+    if (data.containsKey('server_expires_at')) {
+      context.handle(
+          _serverExpiresAtMeta,
+          serverExpiresAt.isAcceptableOrUnknown(
+              data['server_expires_at']!, _serverExpiresAtMeta));
+    }
+    if (data.containsKey('uploaded_asset_ids_json')) {
+      context.handle(
+          _uploadedAssetIdsJsonMeta,
+          uploadedAssetIdsJson.isAcceptableOrUnknown(
+              data['uploaded_asset_ids_json']!, _uploadedAssetIdsJsonMeta));
+    }
+    if (data.containsKey('result_payload_json')) {
+      context.handle(
+          _resultPayloadJsonMeta,
+          resultPayloadJson.isAcceptableOrUnknown(
+              data['result_payload_json']!, _resultPayloadJsonMeta));
+    }
+    if (data.containsKey('result_schema_version')) {
+      context.handle(
+          _resultSchemaVersionMeta,
+          resultSchemaVersion.isAcceptableOrUnknown(
+              data['result_schema_version']!, _resultSchemaVersionMeta));
+    }
+    if (data.containsKey('attempt_count')) {
+      context.handle(
+          _attemptCountMeta,
+          attemptCount.isAcceptableOrUnknown(
+              data['attempt_count']!, _attemptCountMeta));
+    }
+    if (data.containsKey('next_retry_at')) {
+      context.handle(
+          _nextRetryAtMeta,
+          nextRetryAt.isAcceptableOrUnknown(
+              data['next_retry_at']!, _nextRetryAtMeta));
+    }
+    if (data.containsKey('failure_code')) {
+      context.handle(
+          _failureCodeMeta,
+          failureCode.isAcceptableOrUnknown(
+              data['failure_code']!, _failureCodeMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -5828,6 +5951,25 @@ class $ProcessingOutboxTable extends ProcessingOutbox
       privacyNoticeVersion: attachedDatabase.typeMapping.read(
           DriftSqlType.string,
           data['${effectivePrefix}privacy_notice_version']),
+      idempotencyKey: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}idempotency_key'])!,
+      serverJobId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}server_job_id']),
+      serverExpiresAt: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}server_expires_at']),
+      uploadedAssetIdsJson: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}uploaded_asset_ids_json'])!,
+      resultPayloadJson: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}result_payload_json']),
+      resultSchemaVersion: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}result_schema_version']),
+      attemptCount: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}attempt_count'])!,
+      nextRetryAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}next_retry_at']),
+      failureCode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}failure_code']),
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
@@ -5850,6 +5992,15 @@ class ProcessingOutboxRow extends DataClass
   final String deliveryState;
   final String adoptionState;
   final String? privacyNoticeVersion;
+  final String idempotencyKey;
+  final String? serverJobId;
+  final DateTime? serverExpiresAt;
+  final String uploadedAssetIdsJson;
+  final String? resultPayloadJson;
+  final String? resultSchemaVersion;
+  final int attemptCount;
+  final DateTime? nextRetryAt;
+  final String? failureCode;
   final DateTime createdAt;
   final DateTime updatedAt;
   const ProcessingOutboxRow(
@@ -5860,6 +6011,15 @@ class ProcessingOutboxRow extends DataClass
       required this.deliveryState,
       required this.adoptionState,
       this.privacyNoticeVersion,
+      required this.idempotencyKey,
+      this.serverJobId,
+      this.serverExpiresAt,
+      required this.uploadedAssetIdsJson,
+      this.resultPayloadJson,
+      this.resultSchemaVersion,
+      required this.attemptCount,
+      this.nextRetryAt,
+      this.failureCode,
       required this.createdAt,
       required this.updatedAt});
   @override
@@ -5873,6 +6033,27 @@ class ProcessingOutboxRow extends DataClass
     map['adoption_state'] = Variable<String>(adoptionState);
     if (!nullToAbsent || privacyNoticeVersion != null) {
       map['privacy_notice_version'] = Variable<String>(privacyNoticeVersion);
+    }
+    map['idempotency_key'] = Variable<String>(idempotencyKey);
+    if (!nullToAbsent || serverJobId != null) {
+      map['server_job_id'] = Variable<String>(serverJobId);
+    }
+    if (!nullToAbsent || serverExpiresAt != null) {
+      map['server_expires_at'] = Variable<DateTime>(serverExpiresAt);
+    }
+    map['uploaded_asset_ids_json'] = Variable<String>(uploadedAssetIdsJson);
+    if (!nullToAbsent || resultPayloadJson != null) {
+      map['result_payload_json'] = Variable<String>(resultPayloadJson);
+    }
+    if (!nullToAbsent || resultSchemaVersion != null) {
+      map['result_schema_version'] = Variable<String>(resultSchemaVersion);
+    }
+    map['attempt_count'] = Variable<int>(attemptCount);
+    if (!nullToAbsent || nextRetryAt != null) {
+      map['next_retry_at'] = Variable<DateTime>(nextRetryAt);
+    }
+    if (!nullToAbsent || failureCode != null) {
+      map['failure_code'] = Variable<String>(failureCode);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -5890,6 +6071,27 @@ class ProcessingOutboxRow extends DataClass
       privacyNoticeVersion: privacyNoticeVersion == null && nullToAbsent
           ? const Value.absent()
           : Value(privacyNoticeVersion),
+      idempotencyKey: Value(idempotencyKey),
+      serverJobId: serverJobId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serverJobId),
+      serverExpiresAt: serverExpiresAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serverExpiresAt),
+      uploadedAssetIdsJson: Value(uploadedAssetIdsJson),
+      resultPayloadJson: resultPayloadJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resultPayloadJson),
+      resultSchemaVersion: resultSchemaVersion == null && nullToAbsent
+          ? const Value.absent()
+          : Value(resultSchemaVersion),
+      attemptCount: Value(attemptCount),
+      nextRetryAt: nextRetryAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nextRetryAt),
+      failureCode: failureCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(failureCode),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -5907,6 +6109,18 @@ class ProcessingOutboxRow extends DataClass
       adoptionState: serializer.fromJson<String>(json['adoptionState']),
       privacyNoticeVersion:
           serializer.fromJson<String?>(json['privacyNoticeVersion']),
+      idempotencyKey: serializer.fromJson<String>(json['idempotencyKey']),
+      serverJobId: serializer.fromJson<String?>(json['serverJobId']),
+      serverExpiresAt: serializer.fromJson<DateTime?>(json['serverExpiresAt']),
+      uploadedAssetIdsJson:
+          serializer.fromJson<String>(json['uploadedAssetIdsJson']),
+      resultPayloadJson:
+          serializer.fromJson<String?>(json['resultPayloadJson']),
+      resultSchemaVersion:
+          serializer.fromJson<String?>(json['resultSchemaVersion']),
+      attemptCount: serializer.fromJson<int>(json['attemptCount']),
+      nextRetryAt: serializer.fromJson<DateTime?>(json['nextRetryAt']),
+      failureCode: serializer.fromJson<String?>(json['failureCode']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -5922,6 +6136,15 @@ class ProcessingOutboxRow extends DataClass
       'deliveryState': serializer.toJson<String>(deliveryState),
       'adoptionState': serializer.toJson<String>(adoptionState),
       'privacyNoticeVersion': serializer.toJson<String?>(privacyNoticeVersion),
+      'idempotencyKey': serializer.toJson<String>(idempotencyKey),
+      'serverJobId': serializer.toJson<String?>(serverJobId),
+      'serverExpiresAt': serializer.toJson<DateTime?>(serverExpiresAt),
+      'uploadedAssetIdsJson': serializer.toJson<String>(uploadedAssetIdsJson),
+      'resultPayloadJson': serializer.toJson<String?>(resultPayloadJson),
+      'resultSchemaVersion': serializer.toJson<String?>(resultSchemaVersion),
+      'attemptCount': serializer.toJson<int>(attemptCount),
+      'nextRetryAt': serializer.toJson<DateTime?>(nextRetryAt),
+      'failureCode': serializer.toJson<String?>(failureCode),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -5935,6 +6158,15 @@ class ProcessingOutboxRow extends DataClass
           String? deliveryState,
           String? adoptionState,
           Value<String?> privacyNoticeVersion = const Value.absent(),
+          String? idempotencyKey,
+          Value<String?> serverJobId = const Value.absent(),
+          Value<DateTime?> serverExpiresAt = const Value.absent(),
+          String? uploadedAssetIdsJson,
+          Value<String?> resultPayloadJson = const Value.absent(),
+          Value<String?> resultSchemaVersion = const Value.absent(),
+          int? attemptCount,
+          Value<DateTime?> nextRetryAt = const Value.absent(),
+          Value<String?> failureCode = const Value.absent(),
           DateTime? createdAt,
           DateTime? updatedAt}) =>
       ProcessingOutboxRow(
@@ -5947,6 +6179,21 @@ class ProcessingOutboxRow extends DataClass
         privacyNoticeVersion: privacyNoticeVersion.present
             ? privacyNoticeVersion.value
             : this.privacyNoticeVersion,
+        idempotencyKey: idempotencyKey ?? this.idempotencyKey,
+        serverJobId: serverJobId.present ? serverJobId.value : this.serverJobId,
+        serverExpiresAt: serverExpiresAt.present
+            ? serverExpiresAt.value
+            : this.serverExpiresAt,
+        uploadedAssetIdsJson: uploadedAssetIdsJson ?? this.uploadedAssetIdsJson,
+        resultPayloadJson: resultPayloadJson.present
+            ? resultPayloadJson.value
+            : this.resultPayloadJson,
+        resultSchemaVersion: resultSchemaVersion.present
+            ? resultSchemaVersion.value
+            : this.resultSchemaVersion,
+        attemptCount: attemptCount ?? this.attemptCount,
+        nextRetryAt: nextRetryAt.present ? nextRetryAt.value : this.nextRetryAt,
+        failureCode: failureCode.present ? failureCode.value : this.failureCode,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
       );
@@ -5967,6 +6214,30 @@ class ProcessingOutboxRow extends DataClass
       privacyNoticeVersion: data.privacyNoticeVersion.present
           ? data.privacyNoticeVersion.value
           : this.privacyNoticeVersion,
+      idempotencyKey: data.idempotencyKey.present
+          ? data.idempotencyKey.value
+          : this.idempotencyKey,
+      serverJobId:
+          data.serverJobId.present ? data.serverJobId.value : this.serverJobId,
+      serverExpiresAt: data.serverExpiresAt.present
+          ? data.serverExpiresAt.value
+          : this.serverExpiresAt,
+      uploadedAssetIdsJson: data.uploadedAssetIdsJson.present
+          ? data.uploadedAssetIdsJson.value
+          : this.uploadedAssetIdsJson,
+      resultPayloadJson: data.resultPayloadJson.present
+          ? data.resultPayloadJson.value
+          : this.resultPayloadJson,
+      resultSchemaVersion: data.resultSchemaVersion.present
+          ? data.resultSchemaVersion.value
+          : this.resultSchemaVersion,
+      attemptCount: data.attemptCount.present
+          ? data.attemptCount.value
+          : this.attemptCount,
+      nextRetryAt:
+          data.nextRetryAt.present ? data.nextRetryAt.value : this.nextRetryAt,
+      failureCode:
+          data.failureCode.present ? data.failureCode.value : this.failureCode,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -5982,6 +6253,15 @@ class ProcessingOutboxRow extends DataClass
           ..write('deliveryState: $deliveryState, ')
           ..write('adoptionState: $adoptionState, ')
           ..write('privacyNoticeVersion: $privacyNoticeVersion, ')
+          ..write('idempotencyKey: $idempotencyKey, ')
+          ..write('serverJobId: $serverJobId, ')
+          ..write('serverExpiresAt: $serverExpiresAt, ')
+          ..write('uploadedAssetIdsJson: $uploadedAssetIdsJson, ')
+          ..write('resultPayloadJson: $resultPayloadJson, ')
+          ..write('resultSchemaVersion: $resultSchemaVersion, ')
+          ..write('attemptCount: $attemptCount, ')
+          ..write('nextRetryAt: $nextRetryAt, ')
+          ..write('failureCode: $failureCode, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -5989,8 +6269,25 @@ class ProcessingOutboxRow extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(id, requestKind, subjectId, payloadJson,
-      deliveryState, adoptionState, privacyNoticeVersion, createdAt, updatedAt);
+  int get hashCode => Object.hash(
+      id,
+      requestKind,
+      subjectId,
+      payloadJson,
+      deliveryState,
+      adoptionState,
+      privacyNoticeVersion,
+      idempotencyKey,
+      serverJobId,
+      serverExpiresAt,
+      uploadedAssetIdsJson,
+      resultPayloadJson,
+      resultSchemaVersion,
+      attemptCount,
+      nextRetryAt,
+      failureCode,
+      createdAt,
+      updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -6002,6 +6299,15 @@ class ProcessingOutboxRow extends DataClass
           other.deliveryState == this.deliveryState &&
           other.adoptionState == this.adoptionState &&
           other.privacyNoticeVersion == this.privacyNoticeVersion &&
+          other.idempotencyKey == this.idempotencyKey &&
+          other.serverJobId == this.serverJobId &&
+          other.serverExpiresAt == this.serverExpiresAt &&
+          other.uploadedAssetIdsJson == this.uploadedAssetIdsJson &&
+          other.resultPayloadJson == this.resultPayloadJson &&
+          other.resultSchemaVersion == this.resultSchemaVersion &&
+          other.attemptCount == this.attemptCount &&
+          other.nextRetryAt == this.nextRetryAt &&
+          other.failureCode == this.failureCode &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -6014,6 +6320,15 @@ class ProcessingOutboxCompanion extends UpdateCompanion<ProcessingOutboxRow> {
   final Value<String> deliveryState;
   final Value<String> adoptionState;
   final Value<String?> privacyNoticeVersion;
+  final Value<String> idempotencyKey;
+  final Value<String?> serverJobId;
+  final Value<DateTime?> serverExpiresAt;
+  final Value<String> uploadedAssetIdsJson;
+  final Value<String?> resultPayloadJson;
+  final Value<String?> resultSchemaVersion;
+  final Value<int> attemptCount;
+  final Value<DateTime?> nextRetryAt;
+  final Value<String?> failureCode;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -6025,6 +6340,15 @@ class ProcessingOutboxCompanion extends UpdateCompanion<ProcessingOutboxRow> {
     this.deliveryState = const Value.absent(),
     this.adoptionState = const Value.absent(),
     this.privacyNoticeVersion = const Value.absent(),
+    this.idempotencyKey = const Value.absent(),
+    this.serverJobId = const Value.absent(),
+    this.serverExpiresAt = const Value.absent(),
+    this.uploadedAssetIdsJson = const Value.absent(),
+    this.resultPayloadJson = const Value.absent(),
+    this.resultSchemaVersion = const Value.absent(),
+    this.attemptCount = const Value.absent(),
+    this.nextRetryAt = const Value.absent(),
+    this.failureCode = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -6037,6 +6361,15 @@ class ProcessingOutboxCompanion extends UpdateCompanion<ProcessingOutboxRow> {
     required String deliveryState,
     required String adoptionState,
     this.privacyNoticeVersion = const Value.absent(),
+    this.idempotencyKey = const Value.absent(),
+    this.serverJobId = const Value.absent(),
+    this.serverExpiresAt = const Value.absent(),
+    this.uploadedAssetIdsJson = const Value.absent(),
+    this.resultPayloadJson = const Value.absent(),
+    this.resultSchemaVersion = const Value.absent(),
+    this.attemptCount = const Value.absent(),
+    this.nextRetryAt = const Value.absent(),
+    this.failureCode = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
@@ -6056,6 +6389,15 @@ class ProcessingOutboxCompanion extends UpdateCompanion<ProcessingOutboxRow> {
     Expression<String>? deliveryState,
     Expression<String>? adoptionState,
     Expression<String>? privacyNoticeVersion,
+    Expression<String>? idempotencyKey,
+    Expression<String>? serverJobId,
+    Expression<DateTime>? serverExpiresAt,
+    Expression<String>? uploadedAssetIdsJson,
+    Expression<String>? resultPayloadJson,
+    Expression<String>? resultSchemaVersion,
+    Expression<int>? attemptCount,
+    Expression<DateTime>? nextRetryAt,
+    Expression<String>? failureCode,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -6069,6 +6411,17 @@ class ProcessingOutboxCompanion extends UpdateCompanion<ProcessingOutboxRow> {
       if (adoptionState != null) 'adoption_state': adoptionState,
       if (privacyNoticeVersion != null)
         'privacy_notice_version': privacyNoticeVersion,
+      if (idempotencyKey != null) 'idempotency_key': idempotencyKey,
+      if (serverJobId != null) 'server_job_id': serverJobId,
+      if (serverExpiresAt != null) 'server_expires_at': serverExpiresAt,
+      if (uploadedAssetIdsJson != null)
+        'uploaded_asset_ids_json': uploadedAssetIdsJson,
+      if (resultPayloadJson != null) 'result_payload_json': resultPayloadJson,
+      if (resultSchemaVersion != null)
+        'result_schema_version': resultSchemaVersion,
+      if (attemptCount != null) 'attempt_count': attemptCount,
+      if (nextRetryAt != null) 'next_retry_at': nextRetryAt,
+      if (failureCode != null) 'failure_code': failureCode,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -6083,6 +6436,15 @@ class ProcessingOutboxCompanion extends UpdateCompanion<ProcessingOutboxRow> {
       Value<String>? deliveryState,
       Value<String>? adoptionState,
       Value<String?>? privacyNoticeVersion,
+      Value<String>? idempotencyKey,
+      Value<String?>? serverJobId,
+      Value<DateTime?>? serverExpiresAt,
+      Value<String>? uploadedAssetIdsJson,
+      Value<String?>? resultPayloadJson,
+      Value<String?>? resultSchemaVersion,
+      Value<int>? attemptCount,
+      Value<DateTime?>? nextRetryAt,
+      Value<String?>? failureCode,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
       Value<int>? rowid}) {
@@ -6094,6 +6456,15 @@ class ProcessingOutboxCompanion extends UpdateCompanion<ProcessingOutboxRow> {
       deliveryState: deliveryState ?? this.deliveryState,
       adoptionState: adoptionState ?? this.adoptionState,
       privacyNoticeVersion: privacyNoticeVersion ?? this.privacyNoticeVersion,
+      idempotencyKey: idempotencyKey ?? this.idempotencyKey,
+      serverJobId: serverJobId ?? this.serverJobId,
+      serverExpiresAt: serverExpiresAt ?? this.serverExpiresAt,
+      uploadedAssetIdsJson: uploadedAssetIdsJson ?? this.uploadedAssetIdsJson,
+      resultPayloadJson: resultPayloadJson ?? this.resultPayloadJson,
+      resultSchemaVersion: resultSchemaVersion ?? this.resultSchemaVersion,
+      attemptCount: attemptCount ?? this.attemptCount,
+      nextRetryAt: nextRetryAt ?? this.nextRetryAt,
+      failureCode: failureCode ?? this.failureCode,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -6125,6 +6496,35 @@ class ProcessingOutboxCompanion extends UpdateCompanion<ProcessingOutboxRow> {
       map['privacy_notice_version'] =
           Variable<String>(privacyNoticeVersion.value);
     }
+    if (idempotencyKey.present) {
+      map['idempotency_key'] = Variable<String>(idempotencyKey.value);
+    }
+    if (serverJobId.present) {
+      map['server_job_id'] = Variable<String>(serverJobId.value);
+    }
+    if (serverExpiresAt.present) {
+      map['server_expires_at'] = Variable<DateTime>(serverExpiresAt.value);
+    }
+    if (uploadedAssetIdsJson.present) {
+      map['uploaded_asset_ids_json'] =
+          Variable<String>(uploadedAssetIdsJson.value);
+    }
+    if (resultPayloadJson.present) {
+      map['result_payload_json'] = Variable<String>(resultPayloadJson.value);
+    }
+    if (resultSchemaVersion.present) {
+      map['result_schema_version'] =
+          Variable<String>(resultSchemaVersion.value);
+    }
+    if (attemptCount.present) {
+      map['attempt_count'] = Variable<int>(attemptCount.value);
+    }
+    if (nextRetryAt.present) {
+      map['next_retry_at'] = Variable<DateTime>(nextRetryAt.value);
+    }
+    if (failureCode.present) {
+      map['failure_code'] = Variable<String>(failureCode.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -6147,6 +6547,15 @@ class ProcessingOutboxCompanion extends UpdateCompanion<ProcessingOutboxRow> {
           ..write('deliveryState: $deliveryState, ')
           ..write('adoptionState: $adoptionState, ')
           ..write('privacyNoticeVersion: $privacyNoticeVersion, ')
+          ..write('idempotencyKey: $idempotencyKey, ')
+          ..write('serverJobId: $serverJobId, ')
+          ..write('serverExpiresAt: $serverExpiresAt, ')
+          ..write('uploadedAssetIdsJson: $uploadedAssetIdsJson, ')
+          ..write('resultPayloadJson: $resultPayloadJson, ')
+          ..write('resultSchemaVersion: $resultSchemaVersion, ')
+          ..write('attemptCount: $attemptCount, ')
+          ..write('nextRetryAt: $nextRetryAt, ')
+          ..write('failureCode: $failureCode, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -9205,6 +9614,15 @@ typedef $$ProcessingOutboxTableCreateCompanionBuilder
   required String deliveryState,
   required String adoptionState,
   Value<String?> privacyNoticeVersion,
+  Value<String> idempotencyKey,
+  Value<String?> serverJobId,
+  Value<DateTime?> serverExpiresAt,
+  Value<String> uploadedAssetIdsJson,
+  Value<String?> resultPayloadJson,
+  Value<String?> resultSchemaVersion,
+  Value<int> attemptCount,
+  Value<DateTime?> nextRetryAt,
+  Value<String?> failureCode,
   required DateTime createdAt,
   required DateTime updatedAt,
   Value<int> rowid,
@@ -9218,6 +9636,15 @@ typedef $$ProcessingOutboxTableUpdateCompanionBuilder
   Value<String> deliveryState,
   Value<String> adoptionState,
   Value<String?> privacyNoticeVersion,
+  Value<String> idempotencyKey,
+  Value<String?> serverJobId,
+  Value<DateTime?> serverExpiresAt,
+  Value<String> uploadedAssetIdsJson,
+  Value<String?> resultPayloadJson,
+  Value<String?> resultSchemaVersion,
+  Value<int> attemptCount,
+  Value<DateTime?> nextRetryAt,
+  Value<String?> failureCode,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
   Value<int> rowid,
@@ -9253,6 +9680,38 @@ class $$ProcessingOutboxTableFilterComposer
   ColumnFilters<String> get privacyNoticeVersion => $composableBuilder(
       column: $table.privacyNoticeVersion,
       builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get idempotencyKey => $composableBuilder(
+      column: $table.idempotencyKey,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get serverJobId => $composableBuilder(
+      column: $table.serverJobId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get serverExpiresAt => $composableBuilder(
+      column: $table.serverExpiresAt,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get uploadedAssetIdsJson => $composableBuilder(
+      column: $table.uploadedAssetIdsJson,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get resultPayloadJson => $composableBuilder(
+      column: $table.resultPayloadJson,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get resultSchemaVersion => $composableBuilder(
+      column: $table.resultSchemaVersion,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get attemptCount => $composableBuilder(
+      column: $table.attemptCount, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get nextRetryAt => $composableBuilder(
+      column: $table.nextRetryAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get failureCode => $composableBuilder(
+      column: $table.failureCode, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -9294,6 +9753,39 @@ class $$ProcessingOutboxTableOrderingComposer
       column: $table.privacyNoticeVersion,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get idempotencyKey => $composableBuilder(
+      column: $table.idempotencyKey,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get serverJobId => $composableBuilder(
+      column: $table.serverJobId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get serverExpiresAt => $composableBuilder(
+      column: $table.serverExpiresAt,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get uploadedAssetIdsJson => $composableBuilder(
+      column: $table.uploadedAssetIdsJson,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get resultPayloadJson => $composableBuilder(
+      column: $table.resultPayloadJson,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get resultSchemaVersion => $composableBuilder(
+      column: $table.resultSchemaVersion,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get attemptCount => $composableBuilder(
+      column: $table.attemptCount,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get nextRetryAt => $composableBuilder(
+      column: $table.nextRetryAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get failureCode => $composableBuilder(
+      column: $table.failureCode, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 
@@ -9330,6 +9822,33 @@ class $$ProcessingOutboxTableAnnotationComposer
 
   GeneratedColumn<String> get privacyNoticeVersion => $composableBuilder(
       column: $table.privacyNoticeVersion, builder: (column) => column);
+
+  GeneratedColumn<String> get idempotencyKey => $composableBuilder(
+      column: $table.idempotencyKey, builder: (column) => column);
+
+  GeneratedColumn<String> get serverJobId => $composableBuilder(
+      column: $table.serverJobId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get serverExpiresAt => $composableBuilder(
+      column: $table.serverExpiresAt, builder: (column) => column);
+
+  GeneratedColumn<String> get uploadedAssetIdsJson => $composableBuilder(
+      column: $table.uploadedAssetIdsJson, builder: (column) => column);
+
+  GeneratedColumn<String> get resultPayloadJson => $composableBuilder(
+      column: $table.resultPayloadJson, builder: (column) => column);
+
+  GeneratedColumn<String> get resultSchemaVersion => $composableBuilder(
+      column: $table.resultSchemaVersion, builder: (column) => column);
+
+  GeneratedColumn<int> get attemptCount => $composableBuilder(
+      column: $table.attemptCount, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get nextRetryAt => $composableBuilder(
+      column: $table.nextRetryAt, builder: (column) => column);
+
+  GeneratedColumn<String> get failureCode => $composableBuilder(
+      column: $table.failureCode, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -9372,6 +9891,15 @@ class $$ProcessingOutboxTableTableManager extends RootTableManager<
             Value<String> deliveryState = const Value.absent(),
             Value<String> adoptionState = const Value.absent(),
             Value<String?> privacyNoticeVersion = const Value.absent(),
+            Value<String> idempotencyKey = const Value.absent(),
+            Value<String?> serverJobId = const Value.absent(),
+            Value<DateTime?> serverExpiresAt = const Value.absent(),
+            Value<String> uploadedAssetIdsJson = const Value.absent(),
+            Value<String?> resultPayloadJson = const Value.absent(),
+            Value<String?> resultSchemaVersion = const Value.absent(),
+            Value<int> attemptCount = const Value.absent(),
+            Value<DateTime?> nextRetryAt = const Value.absent(),
+            Value<String?> failureCode = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -9384,6 +9912,15 @@ class $$ProcessingOutboxTableTableManager extends RootTableManager<
             deliveryState: deliveryState,
             adoptionState: adoptionState,
             privacyNoticeVersion: privacyNoticeVersion,
+            idempotencyKey: idempotencyKey,
+            serverJobId: serverJobId,
+            serverExpiresAt: serverExpiresAt,
+            uploadedAssetIdsJson: uploadedAssetIdsJson,
+            resultPayloadJson: resultPayloadJson,
+            resultSchemaVersion: resultSchemaVersion,
+            attemptCount: attemptCount,
+            nextRetryAt: nextRetryAt,
+            failureCode: failureCode,
             createdAt: createdAt,
             updatedAt: updatedAt,
             rowid: rowid,
@@ -9396,6 +9933,15 @@ class $$ProcessingOutboxTableTableManager extends RootTableManager<
             required String deliveryState,
             required String adoptionState,
             Value<String?> privacyNoticeVersion = const Value.absent(),
+            Value<String> idempotencyKey = const Value.absent(),
+            Value<String?> serverJobId = const Value.absent(),
+            Value<DateTime?> serverExpiresAt = const Value.absent(),
+            Value<String> uploadedAssetIdsJson = const Value.absent(),
+            Value<String?> resultPayloadJson = const Value.absent(),
+            Value<String?> resultSchemaVersion = const Value.absent(),
+            Value<int> attemptCount = const Value.absent(),
+            Value<DateTime?> nextRetryAt = const Value.absent(),
+            Value<String?> failureCode = const Value.absent(),
             required DateTime createdAt,
             required DateTime updatedAt,
             Value<int> rowid = const Value.absent(),
@@ -9408,6 +9954,15 @@ class $$ProcessingOutboxTableTableManager extends RootTableManager<
             deliveryState: deliveryState,
             adoptionState: adoptionState,
             privacyNoticeVersion: privacyNoticeVersion,
+            idempotencyKey: idempotencyKey,
+            serverJobId: serverJobId,
+            serverExpiresAt: serverExpiresAt,
+            uploadedAssetIdsJson: uploadedAssetIdsJson,
+            resultPayloadJson: resultPayloadJson,
+            resultSchemaVersion: resultSchemaVersion,
+            attemptCount: attemptCount,
+            nextRetryAt: nextRetryAt,
+            failureCode: failureCode,
             createdAt: createdAt,
             updatedAt: updatedAt,
             rowid: rowid,

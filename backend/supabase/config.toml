@@ -18,6 +18,11 @@ public = false
 file_size_limit = "20MiB"
 allowed_mime_types = ["image/jpeg", "image/png", "image/heic", "image/heif"]
 
+[storage.buckets.processing-media]
+public = false
+file_size_limit = "20MiB"
+allowed_mime_types = ["image/jpeg", "image/png", "image/heic", "image/heif"]
+
 [edge_runtime]
 policy = "per_worker"
 
@@ -38,6 +43,14 @@ enabled = true
 verify_jwt = true
 
 [functions.process-ai-jobs]
+enabled = true
+verify_jwt = false
+
+[functions.processing-jobs]
+enabled = true
+verify_jwt = true
+
+[functions.cleanup-processing-jobs]
 enabled = true
 verify_jwt = false
 

@@ -271,7 +271,7 @@ void main() {
               .toList(growable: false);
 
       expect(migratedIds, expectedIds);
-      expect(migratedDatabase.schemaVersion, 12);
+      expect(migratedDatabase.schemaVersion, 13);
     });
 
     test('sync caches local dish web images once', () async {
@@ -798,9 +798,10 @@ void main() {
     });
 
     test('photo capture sync queues its batch for AI after upload', () async {
+      final File photo = await _temporaryPhoto('capture');
       await repositories.seedIfNeeded();
       await repositories.captureRepository.createPhotoCaptures(
-        const <String>['/tmp/capture.jpg'],
+        <String>[photo.path],
       );
 
       var feedItems = await repositories.captureRepository.listFeedItems();
@@ -815,7 +816,11 @@ void main() {
       expect(feedItems.single.status, CaptureItemStatus.classifying);
       expect(batches.single.status, CaptureBatchStatus.processing);
       expect(feedItems.single.appliedDishId, isNull);
-      expect(feedItems.single.remoteMediaRef, startsWith('fake://captures/'));
+      expect(feedItems.single.remoteMediaRef, isNull);
+      final ProcessingOutboxRequest request =
+          (await repositories.processingOutboxRepository.listRequests()).single;
+      expect(request.deliveryState, ProcessingDeliveryState.acknowledged);
+      expect(request.adoptionState, ProcessingAdoptionState.readyForAdoption);
     });
 
     test('photo capture ignores empty refs and uses only processing delivery',
@@ -865,7 +870,7 @@ void main() {
       expect(await database.select(database.syncOperations).get(), isEmpty);
     });
 
-    test('idea capture trims text and queues local sync', () async {
+    test('idea capture trims text and queues processing delivery', () async {
       final String? id = await repositories.captureRepository
           .createIdeaCapture('  kimchi rice  ');
 
@@ -877,12 +882,11 @@ void main() {
       expect(feedItems.single.kind, CaptureItemKind.idea);
       expect(feedItems.single.status, CaptureItemStatus.pendingUpload);
       expect(feedItems.single.text, 'kimchi rice');
-      expect(
-        syncOperations
-            .singleWhere((operation) => operation.entity == 'capture_item')
-            .entityId,
-        id,
-      );
+      expect(syncOperations, isEmpty);
+      final ProcessingOutboxRequest request =
+          (await repositories.processingOutboxRepository.listRequests()).single;
+      expect(request.subjectId, id);
+      expect(request.payload['captureIds'], <String>[id!]);
     });
 
     test('blank idea capture is ignored', () async {
@@ -1048,22 +1052,26 @@ void main() {
       expect(apiClient.deletedBatchIds, isEmpty);
     });
 
-    test('sync repository uploads photos before marking batch ready', () async {
-      final _RecordingApiClient apiClient = _RecordingApiClient();
+    test('sync repository uploads photos without retaining remote refs',
+        () async {
+      final File photo = await _temporaryPhoto('capture');
+      final FakeMyMenuApiClient apiClient = FakeMyMenuApiClient();
       repositories = AppRepositories(
         database: database,
         apiClient: apiClient,
       );
       await repositories.captureRepository.createPhotoCaptures(
-        const <String>['/tmp/capture.jpg'],
+        <String>[photo.path],
       );
 
       await repositories.syncRepository.processPendingCaptures();
       final feedItems = await repositories.captureRepository.listFeedItems();
+      final ProcessingOutboxRequest request =
+          (await repositories.processingOutboxRepository.listRequests()).single;
 
-      expect(apiClient.uploadedCaptureIds, hasLength(1));
-      expect(apiClient.readyBatchIds, hasLength(1));
-      expect(feedItems.single.remoteMediaRef, startsWith('remote://'));
+      expect(apiClient.processingJobCreationCount, 1);
+      expect(request.deliveryState, ProcessingDeliveryState.acknowledged);
+      expect(feedItems.single.remoteMediaRef, isNull);
     });
 
     test('sync repository does nothing when no captures are pending', () async {
@@ -1082,12 +1090,13 @@ void main() {
 
     test('sync repository marks captures failed when remote sync throws',
         () async {
+      final File photo = await _temporaryPhoto('failure');
       repositories = AppRepositories(
         database: database,
         apiClient: _ThrowingApiClient(),
       );
       await repositories.captureRepository.createPhotoCaptures(
-        const <String>['/tmp/capture.jpg'],
+        <String>[photo.path],
       );
 
       final List<Dish> createdDishes =
@@ -1118,12 +1127,13 @@ void main() {
     });
 
     test('offline batch remains pending for restart retry', () async {
+      final File photo = await _temporaryPhoto('offline');
       repositories = AppRepositories(
         database: database,
         apiClient: _OfflineApiClient(),
       );
       await repositories.captureRepository.createPhotoBatch(
-        const <String>['/tmp/offline.jpg'],
+        <String>[photo.path],
       );
 
       await repositories.syncRepository.processPendingCaptures();
@@ -1136,39 +1146,31 @@ void main() {
       expect(batch.items.single.remoteMediaRef, isNull);
     });
 
-    test('restart recovers an upload whose storage object already exists',
+    test('retry resumes the same job after an interrupted signed upload',
         () async {
-      final _RecordingApiClient apiClient = _RecordingApiClient();
+      final File photo = await _temporaryPhoto('interrupted');
+      final FakeMyMenuApiClient apiClient = FakeMyMenuApiClient()
+        ..interruptNextProcessingUpload();
       repositories = AppRepositories(
         database: database,
         apiClient: apiClient,
       );
-      final CaptureBatch batch =
-          (await repositories.captureRepository.createPhotoBatch(
-        const <String>['/tmp/interrupted.jpg'],
-      ))!;
-      final String captureId = batch.items.single.id;
+      await repositories.captureRepository.createPhotoBatch(<String>[
+        photo.path,
+      ]);
 
-      await (database.update(database.captureItems)
-            ..where((table) => table.id.equals(captureId)))
-          .write(
-        const CaptureItemsCompanion(
-          status: Value<String>('failed'),
-          failureReason: Value<String?>(
-            'FunctionException(status: 500, details: '
-            '{error: The resource already exists})',
-          ),
-        ),
-      );
-
+      await repositories.syncRepository.processPendingCaptures();
       await repositories.syncRepository.processPendingCaptures();
 
       final CaptureBatch recovered =
           (await repositories.captureRepository.listBatches()).single;
-      expect(apiClient.uploadedCaptureIds, <String>[captureId]);
+      final ProcessingOutboxRequest request =
+          (await repositories.processingOutboxRepository.listRequests()).single;
+      expect(apiClient.processingJobCreationCount, 1);
       expect(recovered.items.single.status, CaptureItemStatus.classifying);
       expect(recovered.items.single.failureReason, isNull);
       expect(recovered.status, CaptureBatchStatus.processing);
+      expect(request.deliveryState, ProcessingDeliveryState.acknowledged);
     });
 
     test('network change retries an offline batch and clears its marker',
@@ -1188,9 +1190,10 @@ void main() {
       addTearDown(state.dispose);
       addTearDown(networkStatusMonitor.close);
 
-      final CaptureBatch? created = await state.addPhotoCaptures(
-        const <String>['/tmp/zero.jpg', '/tmp/one.jpg'],
-      );
+      final File zero = await _temporaryPhoto('zero');
+      final File one = await _temporaryPhoto('one');
+      final CaptureBatch? created =
+          await state.addPhotoCaptures(<String>[zero.path, one.path]);
       expect(created, isNotNull);
       final CaptureBatch createdBatch = created!;
       await _waitFor(
@@ -1214,13 +1217,7 @@ void main() {
         (CaptureBatch batch) => batch.id == createdBatch.id,
       );
       expect(synced.isWaitingForConnection, isFalse);
-      expect(apiClient.remoteBatchIds, <String>{createdBatch.id});
-      expect(
-        apiClient.uploadedCaptureIds,
-        orderedEquals(
-          createdBatch.items.map((CaptureItem item) => item.id),
-        ),
-      );
+      expect(apiClient.processingJobCreationCount, 1);
       await state.refreshFromServer();
     });
 
@@ -1231,9 +1228,12 @@ void main() {
         database: database,
         apiClient: apiClient,
       );
+      final File zero = await _temporaryPhoto('zero');
+      final File one = await _temporaryPhoto('one');
+      final File two = await _temporaryPhoto('two');
       final CaptureBatch batch =
           (await repositories.captureRepository.createPhotoBatch(
-        const <String>['/tmp/zero.jpg', '/tmp/one.jpg', '/tmp/two.jpg'],
+        <String>[zero.path, one.path, two.path],
       ))!;
 
       await repositories.syncRepository.processPendingCaptures();
@@ -1241,8 +1241,7 @@ void main() {
         (await repositories.captureRepository.listBatches()).single.status,
         CaptureBatchStatus.pendingUpload,
       );
-      expect(apiClient.remoteBatchIds, isEmpty);
-      expect(apiClient.uploadedCaptureIds, isEmpty);
+      expect(apiClient.processingJobCreationCount, 0);
 
       apiClient.isOnline = true;
       await repositories.syncRepository.processPendingCaptures();
@@ -1250,54 +1249,65 @@ void main() {
       final CaptureBatch synced =
           (await repositories.captureRepository.listBatches()).single;
 
-      expect(apiClient.remoteBatchIds, <String>{batch.id});
-      expect(
-        apiClient.uploadedCaptureIds,
-        orderedEquals(batch.items.map((CaptureItem item) => item.id)),
-      );
-      expect(apiClient.uploadedCaptureIds.toSet(), hasLength(3));
+      expect(apiClient.processingJobCreationCount, 1);
+      expect(apiClient.uploadedAssetIds.toSet(), hasLength(3));
+      expect(apiClient.uploadedAssetIds.toSet(),
+          batch.items.map((CaptureItem item) => item.id).toSet());
       expect(synced.status, CaptureBatchStatus.processing);
     });
 
-    test('partial retry uploads only the failed item', () async {
+    test('explicit retry starts a fresh attempt and reuploads all assets',
+        () async {
       final _PartialFailureApiClient apiClient = _PartialFailureApiClient();
       repositories = AppRepositories(
         database: database,
         apiClient: apiClient,
       );
+      final File zero = await _temporaryPhoto('zero');
+      final File one = await _temporaryPhoto('one');
+      final File two = await _temporaryPhoto('two');
       final CaptureBatch batch =
           (await repositories.captureRepository.createPhotoBatch(
-        const <String>['/tmp/zero.jpg', '/tmp/one.jpg', '/tmp/two.jpg'],
+        <String>[zero.path, one.path, two.path],
       ))!;
 
       await repositories.syncRepository.processPendingCaptures();
       var refreshed =
           (await repositories.captureRepository.listBatches()).single;
 
+      expect(refreshed.status, CaptureBatchStatus.failed);
       expect(
-        refreshed.items.map((CaptureItem item) => item.status),
-        orderedEquals(<CaptureItemStatus>[
-          CaptureItemStatus.uploaded,
-          CaptureItemStatus.failed,
-          CaptureItemStatus.uploaded,
-        ]),
+        refreshed.items.every(
+          (CaptureItem item) => item.status == CaptureItemStatus.failed,
+        ),
+        isTrue,
       );
-      expect(refreshed.status, CaptureBatchStatus.uploading);
-      expect(apiClient.uploadedOrdinals, <int>[0, 1, 2]);
-      expect(apiClient.readyBatchIds, isEmpty);
+      expect(apiClient.uploadedAssetIds, <String>[
+        batch.items[0].id,
+        batch.items[1].id,
+      ]);
+      final ProcessingOutboxRequest failedRequest =
+          (await repositories.processingOutboxRepository.listRequests())
+              .single;
 
       await repositories.syncRepository.processPendingCaptures();
-      expect(
-        apiClient.uploadedOrdinals,
-        <int>[0, 1, 2],
-        reason: 'A failed item must wait for explicit retry intent.',
-      );
+      expect(apiClient.uploadedAssetIds, hasLength(2));
 
       await repositories.captureRepository.retryBatch(batch.id);
+      final ProcessingOutboxRequest retryRequest =
+          (await repositories.processingOutboxRepository.listRequests())
+              .single;
+      expect(retryRequest.idempotencyKey, isNot(failedRequest.idempotencyKey));
       await repositories.syncRepository.processPendingCaptures();
       refreshed = (await repositories.captureRepository.listBatches()).single;
 
-      expect(apiClient.uploadedOrdinals, <int>[0, 1, 2, 1]);
+      expect(apiClient.uploadedAssetIds, <String>[
+        batch.items[0].id,
+        batch.items[1].id,
+        batch.items[0].id,
+        batch.items[1].id,
+        batch.items[2].id,
+      ]);
       expect(
         refreshed.items.every(
           (CaptureItem item) => item.status == CaptureItemStatus.classifying,
@@ -1305,7 +1315,7 @@ void main() {
         isTrue,
       );
       expect(refreshed.status, CaptureBatchStatus.processing);
-      expect(apiClient.readyBatchIds, <String>[batch.id]);
+      expect(apiClient.processingJobCreationCount, 2);
     });
 
     test('batch rows and durable files rehydrate after database restart',
@@ -1443,29 +1453,34 @@ void main() {
       expect(result.status, 'queued');
     });
 
-    test('fake AI groups imported photos by original local date', () async {
+    test('processing stores a proposal without creating server menu data',
+        () async {
+      final File july20a = await _temporaryPhoto('july20-a');
+      final File july20b = await _temporaryPhoto('july20-b');
+      final File july21 = await _temporaryPhoto('july21');
+      final File unknown = await _temporaryPhoto('unknown');
       await repositories.captureRepository.createPhotoBatch(
         <CapturedMedia>[
           CapturedMedia(
-            path: '/tmp/july20-a.jpg',
+            path: july20a.path,
             capturedAt: DateTime(2026, 7, 20, 12),
             capturedLocalDate: '2026-07-20',
             dateSource: CaptureDateSource.exifOriginal,
           ),
           CapturedMedia(
-            path: '/tmp/july20-b.jpg',
+            path: july20b.path,
             capturedAt: DateTime(2026, 7, 20, 18),
             capturedLocalDate: '2026-07-20',
             dateSource: CaptureDateSource.exifOriginal,
           ),
           CapturedMedia(
-            path: '/tmp/july21.jpg',
+            path: july21.path,
             capturedAt: DateTime(2026, 7, 21, 12),
             capturedLocalDate: '2026-07-21',
             dateSource: CaptureDateSource.exifOriginal,
           ),
           CapturedMedia(
-            path: '/tmp/unknown.jpg',
+            path: unknown.path,
             capturedAt: DateTime(2026, 7, 22, 12),
             capturedLocalDate: null,
             dateSource: CaptureDateSource.unknown,
@@ -1474,33 +1489,15 @@ void main() {
       );
 
       await repositories.syncRepository.processPendingCaptures();
-      await repositories.syncRepository.pullCaptureSync();
 
       final List<Dish> dishes = await repositories.dishRepository.listDishes();
-      final List<CaptureItem> captures =
-          await repositories.captureRepository.listFeedItems();
-      final Set<String> july20DishIds = captures
-          .where((CaptureItem item) => item.capturedLocalDate == '2026-07-20')
-          .map((CaptureItem item) => item.appliedDishId)
-          .whereType<String>()
-          .toSet();
+      final ProcessingOutboxRequest request =
+          (await repositories.processingOutboxRepository.listRequests()).single;
 
-      expect(dishes, hasLength(3));
-      expect(
-        dishes.map((Dish dish) => dish.title),
-        containsAll(<String>[
-          'Captured Dish · Jul 20',
-          'Captured Dish · Jul 21',
-          'Captured Dish',
-        ]),
-      );
-      expect(july20DishIds, hasLength(1));
-      expect(
-        dishes
-            .singleWhere((Dish dish) => dish.title.endsWith('Jul 20'))
-            .madeCount,
-        1,
-      );
+      expect(dishes, isEmpty);
+      expect(request.deliveryState, ProcessingDeliveryState.acknowledged);
+      expect(request.adoptionState, ProcessingAdoptionState.readyForAdoption);
+      expect(request.resultPayload?['groups'], hasLength(4));
     });
 
     test('pullCaptureSync applies capture result events and advances cursor',
@@ -1736,6 +1733,15 @@ void main() {
   });
 }
 
+Future<File> _temporaryPhoto(String name) async {
+  final Directory directory =
+      await Directory.systemTemp.createTemp('mymenu_processing_fixture_');
+  addTearDown(() => directory.delete(recursive: true));
+  return File('${directory.path}/$name.jpg').writeAsBytes(
+    <int>[0xff, 0xd8, 0xff, 0xd9],
+  );
+}
+
 Dish _zeroHistoryDish({required String id, required String title}) {
   return Dish(
     id: id,
@@ -1877,10 +1883,13 @@ class _RecordingApiClient extends MyMenuApiClient {
 
 class _OfflineApiClient extends FakeMyMenuApiClient {
   @override
-  Future<void> upsertCaptureBatch({
-    required String batchId,
-    required int itemCount,
-    required DateTime createdAt,
+  Future<ApiProcessingJob> createProcessingJob({
+    required String operation,
+    required String idempotencyKey,
+    required String inputSchemaVersion,
+    required String resultSchemaVersion,
+    required String privacyNoticeVersion,
+    required List<ApiProcessingAssetManifest> assets,
   }) {
     throw const SocketException('No network');
   }
@@ -1888,65 +1897,60 @@ class _OfflineApiClient extends FakeMyMenuApiClient {
 
 class _ReconnectApiClient extends FakeMyMenuApiClient {
   bool isOnline = false;
-  final Set<String> remoteBatchIds = <String>{};
-  final List<String> uploadedCaptureIds = <String>[];
+  final List<String> uploadedAssetIds = <String>[];
 
   @override
-  Future<void> upsertCaptureBatch({
-    required String batchId,
-    required int itemCount,
-    required DateTime createdAt,
-  }) async {
+  Future<ApiProcessingJob> createProcessingJob({
+    required String operation,
+    required String idempotencyKey,
+    required String inputSchemaVersion,
+    required String resultSchemaVersion,
+    required String privacyNoticeVersion,
+    required List<ApiProcessingAssetManifest> assets,
+  }) {
     if (!isOnline) {
       throw const SocketException('No network');
     }
-    remoteBatchIds.add(batchId);
-  }
-
-  @override
-  Future<String> uploadCaptureMedia({
-    required String captureId,
-    required String batchId,
-    required int ordinal,
-    required String localMediaRef,
-  }) async {
-    uploadedCaptureIds.add(captureId);
-    return 'remote://$captureId';
-  }
-
-  @override
-  Future<String> uploadCaptureMediaWithMetadata({
-    required String captureId,
-    required String batchId,
-    required int ordinal,
-    required String localMediaRef,
-    required DateTime capturedAt,
-    required String? capturedLocalDate,
-    required String captureDateSource,
-  }) {
-    return uploadCaptureMedia(
-      captureId: captureId,
-      batchId: batchId,
-      ordinal: ordinal,
-      localMediaRef: localMediaRef,
+    return super.createProcessingJob(
+      operation: operation,
+      idempotencyKey: idempotencyKey,
+      inputSchemaVersion: inputSchemaVersion,
+      resultSchemaVersion: resultSchemaVersion,
+      privacyNoticeVersion: privacyNoticeVersion,
+      assets: assets,
     );
+  }
+
+  @override
+  Future<void> uploadProcessingAsset({
+    required ApiProcessingUploadTarget target,
+    required String localPath,
+  }) async {
+    uploadedAssetIds.add(target.assetId);
+    await super.uploadProcessingAsset(target: target, localPath: localPath);
   }
 }
 
 class _HangingReconnectApiClient extends _ReconnectApiClient {
   @override
-  Future<void> upsertCaptureBatch({
-    required String batchId,
-    required int itemCount,
-    required DateTime createdAt,
+  Future<ApiProcessingJob> createProcessingJob({
+    required String operation,
+    required String idempotencyKey,
+    required String inputSchemaVersion,
+    required String resultSchemaVersion,
+    required String privacyNoticeVersion,
+    required List<ApiProcessingAssetManifest> assets,
   }) {
     if (!isOnline) {
-      return Completer<void>().future;
+      return Completer<ApiProcessingJob>().future;
     }
-    return super.upsertCaptureBatch(
-      batchId: batchId,
-      itemCount: itemCount,
-      createdAt: createdAt,
+    return super.createProcessingJob(
+      operation: operation,
+      idempotencyKey: idempotencyKey,
+      inputSchemaVersion: inputSchemaVersion,
+      resultSchemaVersion: resultSchemaVersion,
+      privacyNoticeVersion: privacyNoticeVersion,
+      assets: assets,
     );
   }
 }
@@ -1977,75 +1981,36 @@ Future<void> _waitFor(
 }
 
 class _PartialFailureApiClient extends FakeMyMenuApiClient {
-  final List<int> uploadedOrdinals = <int>[];
-  final List<String> readyBatchIds = <String>[];
+  final List<String> uploadedAssetIds = <String>[];
   bool _failedOnce = false;
 
   @override
-  Future<String> uploadCaptureMedia({
-    required String captureId,
-    required String batchId,
-    required int ordinal,
-    required String localMediaRef,
+  Future<void> uploadProcessingAsset({
+    required ApiProcessingUploadTarget target,
+    required String localPath,
   }) async {
-    uploadedOrdinals.add(ordinal);
-    if (ordinal == 1 && !_failedOnce) {
+    uploadedAssetIds.add(target.assetId);
+    if (uploadedAssetIds.length == 2 && !_failedOnce) {
       _failedOnce = true;
       throw StateError('Injected item upload failure');
     }
-    return 'remote://$captureId';
-  }
-
-  @override
-  Future<String> uploadCaptureMediaWithMetadata({
-    required String captureId,
-    required String batchId,
-    required int ordinal,
-    required String localMediaRef,
-    required DateTime capturedAt,
-    required String? capturedLocalDate,
-    required String captureDateSource,
-  }) {
-    return uploadCaptureMedia(
-      captureId: captureId,
-      batchId: batchId,
-      ordinal: ordinal,
-      localMediaRef: localMediaRef,
-    );
-  }
-
-  @override
-  Future<ApiAiJob> finalizeCaptureBatch({
-    required String batchId,
-    required String kind,
-    required String? ideaText,
-    required DateTime capturedAt,
-    required String? capturedLocalDate,
-    required String captureDateSource,
-    required String jobId,
-    required String idempotencyKey,
-    required String inputHash,
-    required String inputVersion,
-    required int maxAttempts,
-  }) {
-    readyBatchIds.add(batchId);
-    return super.finalizeCaptureBatch(
-      batchId: batchId,
-      kind: kind,
-      ideaText: ideaText,
-      capturedAt: capturedAt,
-      capturedLocalDate: capturedLocalDate,
-      captureDateSource: captureDateSource,
-      jobId: jobId,
-      idempotencyKey: idempotencyKey,
-      inputHash: inputHash,
-      inputVersion: inputVersion,
-      maxAttempts: maxAttempts,
-    );
+    await super.uploadProcessingAsset(target: target, localPath: localPath);
   }
 }
 
 class _ThrowingApiClient extends MyMenuApiClient {
+  @override
+  Future<ApiProcessingJob> createProcessingJob({
+    required String operation,
+    required String idempotencyKey,
+    required String inputSchemaVersion,
+    required String resultSchemaVersion,
+    required String privacyNoticeVersion,
+    required List<ApiProcessingAssetManifest> assets,
+  }) {
+    throw StateError('Remote sync unavailable.');
+  }
+
   @override
   Future<void> upsertCaptureBatch({
     required String batchId,
