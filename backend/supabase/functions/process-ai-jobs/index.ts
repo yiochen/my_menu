@@ -4,6 +4,8 @@ import {
   createGroupingProvider,
 } from "../_shared/ai/grouping_provider.ts";
 import type { GroupingCaptureInput } from "../_shared/ai/grouping_contract.ts";
+import { createRoutingProvider } from "../_shared/ai/routing_provider.ts";
+import type { RoutingDishInput } from "../_shared/ai/routing_contract.ts";
 import { requireAiWorkerKey } from "../_shared/ai/worker_config.ts";
 import {
   operationalError,
@@ -119,6 +121,16 @@ async function processProcessingJob(client: any, job: JsonRecord) {
   try {
     const input = recordValue(job.input_payload);
     const captures = await processingCaptures(client, jobId, input);
+    if (
+      stringField(job, "result_schema_version") === "capture-grouping-result-v2"
+    ) {
+      return await processRoutingJob(
+        client,
+        job,
+        captures,
+        processingDishes(input),
+      );
+    }
     const provider = createGroupingProvider(
       Deno.env.get("AI_PROVIDER") ?? "fake",
       Deno.env.get("AI_MODEL") ?? "fake-date-grouper-v2",
@@ -190,6 +202,45 @@ async function processProcessingJob(client: any, job: JsonRecord) {
   }
 }
 
+async function processRoutingJob(
+  client: any,
+  job: JsonRecord,
+  captures: GroupingCaptureInput[],
+  dishes: RoutingDishInput[],
+) {
+  const jobId = stringField(job, "id");
+  const leaseToken = stringField(job, "lease_token");
+  const provider = createRoutingProvider(
+    Deno.env.get("AI_PROVIDER") ?? "fake",
+    Deno.env.get("AI_MODEL") ?? "fake-context-router-v2",
+  );
+  const routed = await provider.route(captures, dishes);
+  const result = {
+    operation: "capture_grouping",
+    schemaVersion: stringField(job, "result_schema_version"),
+    decisions: routed.output.decisions,
+    provenance: routed.provenance,
+  };
+  const usage = routed.provenance.usage;
+  const { error } = await client.rpc("internal_complete_processing_job", {
+    p_job_id: jobId,
+    p_lease_token: leaseToken,
+    p_result: result,
+    p_provider: routed.provenance.provider,
+    p_model: routed.provenance.model,
+    p_input_tokens: numericUsage(usage, "inputTokens"),
+    p_output_tokens: numericUsage(usage, "outputTokens"),
+  });
+  if (error != null) throw error;
+  operationalLog("processing_job_succeeded", {
+    jobId,
+    operation: "capture_grouping",
+    model: routed.provenance.model,
+    state: "succeeded",
+  });
+  return { processed: 1, failed: 0, jobId };
+}
+
 async function processingCaptures(
   client: any,
   jobId: string,
@@ -254,6 +305,20 @@ async function processingCaptures(
   }));
 }
 
+function processingDishes(input: JsonRecord): RoutingDishInput[] {
+  return arrayField(input, "dishes").map((value) => {
+    const row = recordValue(value);
+    return {
+      localId: stringField(row, "localId"),
+      title: stringField(row, "title"),
+      description: typeof row.description === "string" ? row.description : "",
+      ingredients: stringArrayField(row, "ingredients"),
+      recipeSteps: stringArrayField(row, "recipeSteps"),
+      notes: stringArrayField(row, "notes"),
+    };
+  });
+}
+
 function arrayField(row: JsonRecord, key: string) {
   const value = row[key];
   if (!Array.isArray(value)) {
@@ -269,6 +334,19 @@ function arrayField(row: JsonRecord, key: string) {
 function numericUsage(usage: Record<string, unknown>, key: string) {
   const value = usage[key];
   return typeof value === "number" && Number.isInteger(value) ? value : null;
+}
+
+function stringArrayField(row: JsonRecord, key: string) {
+  return arrayField(row, key).map((value) => {
+    if (typeof value !== "string") {
+      throw new AiProviderFailure(
+        "capture_grouping_input_invalid",
+        `Invalid ${key}`,
+        false,
+      );
+    }
+    return value;
+  });
 }
 
 async function claimJob(client: any): Promise<JsonRecord | null> {

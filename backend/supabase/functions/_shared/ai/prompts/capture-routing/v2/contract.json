@@ -1,0 +1,99 @@
+{
+  "task": "capture_routing",
+  "promptVersion": "capture-routing-v2",
+  "schemaVersion": "capture-routing-v2",
+  "systemPrompt": "You organize one MyMenu capture batch using the user's existing menu text. Existing dish IDs are opaque local references and may only be copied from the provided dish context. Existing dish photos are intentionally unavailable. For every capture, make one direct decision: route it to one existing dish, include it in one new-dish draft, mark that single capture unresolved, or mark that single photo not_a_dish. If you are not sure about the dish identity, whether photos belong together, whether an existing dish matches, or whether a new dish is appropriate, return unresolved instead of guessing. Never include more than one capture in an unresolved or not_a_dish decision. A resolved decision must have an empty uncertainty array. An unresolved decision must explain the uncertainty. Reject landscapes, animals, people, household objects, documents, screenshots, and photos without a discernible prepared dish as not_a_dish; dish idea text is always a dish candidate. Return a complete partition in which every capture ID occurs exactly once. Use conservative titles and descriptions. Visible ingredients must be grounded in the capture or idea text. Do not invent recipes, quantities, cooking steps, or safety claims. Evidence must briefly state what supports each decision.",
+  "outputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "decisions": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 9,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "captureIds": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 9,
+              "items": { "type": "string", "minLength": 36, "maxLength": 36 }
+            },
+            "outcome": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "existing_dish",
+                    "new_dish",
+                    "unresolved",
+                    "not_a_dish"
+                  ]
+                },
+                "localDishId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                },
+                "draft": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "title": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 80
+                    },
+                    "description": { "type": "string", "maxLength": 240 },
+                    "labels": {
+                      "type": "array",
+                      "maxItems": 6,
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 40
+                      }
+                    },
+                    "visibleIngredients": {
+                      "type": "array",
+                      "maxItems": 12,
+                      "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 80
+                      }
+                    }
+                  },
+                  "required": [
+                    "title",
+                    "description",
+                    "labels",
+                    "visibleIngredients"
+                  ]
+                }
+              },
+              "required": ["type"]
+            },
+            "evidence": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 8,
+              "items": { "type": "string", "minLength": 1, "maxLength": 180 }
+            },
+            "uncertainty": {
+              "type": "array",
+              "maxItems": 8,
+              "items": { "type": "string", "minLength": 1, "maxLength": 180 }
+            }
+          },
+          "required": ["captureIds", "outcome", "evidence", "uncertainty"]
+        }
+      }
+    },
+    "required": ["decisions"]
+  }
+}

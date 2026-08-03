@@ -124,7 +124,7 @@ void main() {
     expect(completed.idempotencyKey, interrupted.idempotencyKey);
     expect(completed.serverJobId, interrupted.serverJobId);
     expect(completed.deliveryState, ProcessingDeliveryState.acknowledged);
-    expect(completed.adoptionState, ProcessingAdoptionState.readyForAdoption);
+    expect(completed.adoptionState, ProcessingAdoptionState.adopted);
     expect(completed.resultPayload?['operation'], 'capture_grouping');
     expect(server.processingJobCreationCount, 1);
     expect(server.hasPayloadForProcessingJob(completed.serverJobId!), isFalse);

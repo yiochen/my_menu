@@ -5,6 +5,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:mymenu/core/database/app_database.dart' as db;
 import 'package:mymenu/core/files/dish_image_cache.dart';
 import 'package:mymenu/core/network/my_menu_api_client.dart';
@@ -24,6 +25,7 @@ import 'package:mymenu/domain/processing/processing_consent_repository.dart';
 import 'package:mymenu/domain/processing/processing_outbox.dart';
 import 'package:mymenu/domain/processing/processing_outbox_repository.dart';
 import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 part 'repositories_dishes.dart';
@@ -38,6 +40,8 @@ part 'repositories_capture_bulk_corrections.dart';
 part 'repositories_capture_correction_rollback.dart';
 part 'repositories_capture_correction_support.dart';
 part 'repositories_capture_sync.dart';
+part 'repositories_capture_routing_adoption.dart';
+part 'repositories_capture_routing_contract.dart';
 part 'repositories_capture_processing_support.dart';
 part 'repositories_dish_hydration.dart';
 part 'repositories_support.dart';

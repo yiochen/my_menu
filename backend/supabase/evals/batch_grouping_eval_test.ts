@@ -7,6 +7,14 @@ import {
   type GroupingCaptureInput,
   validateAndCanonicalizeGrouping,
 } from "../functions/_shared/ai/grouping_contract.ts";
+import {
+  createRoutingProvider,
+  FakeRoutingProvider,
+} from "../functions/_shared/ai/routing_provider.ts";
+import {
+  type RoutingDishInput,
+  validateAndCanonicalizeRouting,
+} from "../functions/_shared/ai/routing_contract.ts";
 
 interface EverydayDishDataset {
   datasetVersion: string;
@@ -144,6 +152,118 @@ Deno.test("local eval: dish ideas cannot be rejected as non-dish photos", () => 
           ideaText: "lemon pasta",
         },
       ],
+    )
+  );
+});
+
+Deno.test("local routing eval: an exact menu title routes to the existing dish", async () => {
+  const result = await new FakeRoutingProvider().route([
+    {
+      ...capture(ids.first, 0, null),
+      kind: "idea",
+      ideaText: "lemon pasta",
+    },
+  ], [dish("dish-lemon", "Lemon Pasta")]);
+
+  assertEquals(result.output.decisions, [
+    {
+      captureIds: [ids.first],
+      outcome: { type: "existing_dish", localDishId: "dish-lemon" },
+      evidence: ["The idea title exactly matches an existing dish title."],
+      uncertainty: [],
+    },
+  ]);
+  assert(!("confidence" in result.output.decisions[0]));
+});
+
+Deno.test("local routing eval: an unrelated capture becomes a new dish", async () => {
+  const result = await new FakeRoutingProvider().route([
+    {
+      ...capture(ids.first, 0, null),
+      kind: "idea",
+      ideaText: "oatmeal with berries",
+    },
+  ], [dish("dish-lemon", "Lemon Pasta")]);
+
+  assertEquals(result.output.decisions[0].outcome.type, "new_dish");
+  assertEquals(result.output.decisions[0].uncertainty, []);
+});
+
+Deno.test("local routing eval: ambiguous destinations become unresolved", async () => {
+  const result = await new FakeRoutingProvider().route([
+    {
+      ...capture(ids.first, 0, null),
+      kind: "idea",
+      ideaText: "fried rice",
+    },
+  ], [
+    dish("dish-rice-one", "Fried Rice"),
+    dish("dish-rice-two", "Fried Rice"),
+  ]);
+
+  assertEquals(result.output.decisions[0].outcome.type, "unresolved");
+  assert(result.output.decisions[0].uncertainty.length > 0);
+});
+
+Deno.test("local routing eval: Google free tier needs no data-policy attestation", () => {
+  const previousKey = Deno.env.get("GOOGLE_GENERATIVE_AI_API_KEY");
+  const previousPolicy = Deno.env.get("AI_DATA_POLICY");
+  try {
+    Deno.env.set("GOOGLE_GENERATIVE_AI_API_KEY", "test-key");
+    Deno.env.delete("AI_DATA_POLICY");
+    assertEquals(
+      createRoutingProvider("google", "test-model").provider,
+      "google",
+    );
+  } finally {
+    restoreEnv("GOOGLE_GENERATIVE_AI_API_KEY", previousKey);
+    restoreEnv("AI_DATA_POLICY", previousPolicy);
+  }
+});
+
+Deno.test("local routing eval: mixed outcomes must exactly partition captures", () => {
+  const output = validateAndCanonicalizeRouting({
+    decisions: [
+      {
+        captureIds: [ids.first],
+        outcome: { type: "existing_dish", localDishId: "dish-rice" },
+        evidence: ["The visible dish matches the saved fried rice."],
+        uncertainty: [],
+      },
+      {
+        captureIds: [ids.second],
+        outcome: { type: "unresolved" },
+        evidence: ["A prepared dish is visible."],
+        uncertainty: ["Two menu entries are equally plausible."],
+      },
+      {
+        captureIds: [ids.third],
+        outcome: { type: "not_a_dish" },
+        evidence: ["The photo shows a landscape."],
+        uncertainty: [],
+      },
+    ],
+  }, [
+    capture(ids.first, 0, null),
+    capture(ids.second, 1, null),
+    capture(ids.third, 2, null),
+  ], [dish("dish-rice", "Fried Rice")]);
+
+  assertEquals(output.decisions.length, 3);
+  assertThrows(() =>
+    validateAndCanonicalizeRouting(
+      {
+        decisions: [
+          {
+            captureIds: [ids.first, ids.first],
+            outcome: { type: "new_dish", draft: routingDraft("Dish") },
+            evidence: ["Duplicate test."],
+            uncertainty: [],
+          },
+        ],
+      },
+      [capture(ids.first, 0, null)],
+      [],
     )
   );
 });
@@ -323,6 +443,26 @@ function draftGroup(captureIds: string[]) {
   };
 }
 
+function dish(localId: string, title: string): RoutingDishInput {
+  return {
+    localId,
+    title,
+    description: "",
+    ingredients: [],
+    recipeSteps: [],
+    notes: [],
+  };
+}
+
+function routingDraft(title: string) {
+  return {
+    title,
+    description: "",
+    labels: [],
+    visibleIngredients: [],
+  };
+}
+
 async function fixtureDataUrl(relativePath: string) {
   const bytes = await Deno.readFile(new URL(relativePath, import.meta.url));
   let binary = "";
@@ -417,4 +557,12 @@ function assertThrows(action: () => unknown) {
     return;
   }
   throw new Error("Expected action to throw");
+}
+
+function restoreEnv(name: string, value: string | undefined) {
+  if (value == null) {
+    Deno.env.delete(name);
+  } else {
+    Deno.env.set(name, value);
+  }
 }

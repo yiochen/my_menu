@@ -5,6 +5,7 @@ import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/review/review_alternate_search.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
+import 'package:mymenu/shared/widgets/app_image.dart';
 import 'package:mymenu/shared/widgets/dish_artwork.dart';
 import 'package:mymenu/shared/widgets/local_write_feedback.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
@@ -39,7 +40,10 @@ class _ReviewFlowState extends State<ReviewFlow> {
       return const _ReviewComplete();
     }
     final ReviewItem item = items.first;
-    final Dish suggested = widget.state.dishById(item.suggestedDishIds.first);
+    final String? suggestedId = item.suggestedDishIds.firstOrNull;
+    final Dish? suggested =
+        suggestedId == null ? null : widget.state.dishById(suggestedId);
+    final bool makeNew = _makeNew || suggested == null;
     return FractionallySizedBox(
       heightFactor: 0.97,
       child: _searching
@@ -48,8 +52,9 @@ class _ReviewFlowState extends State<ReviewFlow> {
               query: _query,
               onQueryChanged: (String value) => setState(() => _query = value),
               onBack: () => setState(() => _searching = false),
-              onSelect: (Dish dish) {
-                widget.state.resolveReviewToDish(item.id, dish.id);
+              onSelect: (Dish dish) async {
+                await widget.state.resolveReviewToDish(item.id, dish.id);
+                if (!mounted) return;
                 setState(() {
                   _query = '';
                   _searching = false;
@@ -69,13 +74,13 @@ class _ReviewFlowState extends State<ReviewFlow> {
               item: item,
               suggested: suggested,
               totalCount: items.length,
-              makeNew: _makeNew,
+              makeNew: makeNew,
               onClose: () => Navigator.pop(context),
               onChooseMatch: () => setState(() => _makeNew = false),
               onChooseNew: () => setState(() => _makeNew = true),
               onChooseDifferent: () => setState(() => _searching = true),
               onConfirm: () async {
-                if (_makeNew) {
+                if (makeNew) {
                   final bool saved = await runLocalWriteWithFeedback(
                     context,
                     () => widget.state.createDishFromReview(item.id),
@@ -84,7 +89,10 @@ class _ReviewFlowState extends State<ReviewFlow> {
                     return;
                   }
                 } else {
-                  widget.state.resolveReviewToDish(item.id, suggested.id);
+                  await widget.state.resolveReviewToDish(
+                    item.id,
+                    suggested.id,
+                  );
                 }
                 if (mounted) {
                   setState(() {});
@@ -109,7 +117,7 @@ class _ReviewDecision extends StatelessWidget {
   });
 
   final ReviewItem item;
-  final Dish suggested;
+  final Dish? suggested;
   final int totalCount;
   final bool makeNew;
   final VoidCallback onClose;
@@ -142,19 +150,23 @@ class _ReviewDecision extends StatelessWidget {
           ),
           const SizedBox(height: 7),
           Text(
-            'We found a close match, but you know your cooking best.',
+            suggested == null
+                ? item.summary
+                : 'We found a close match, but you know your cooking best.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 16),
           _ReviewPhoto(dish: suggested, item: item),
           const SizedBox(height: 12),
-          _ReviewChoice(
-            selected: !makeNew,
-            title: 'Add to ${suggested.title}',
-            subtitle: 'Keeps this cooking occasion together',
-            onTap: onChooseMatch,
-          ),
-          const SizedBox(height: 10),
+          if (suggested != null) ...<Widget>[
+            _ReviewChoice(
+              selected: !makeNew,
+              title: 'Add to ${suggested!.title}',
+              subtitle: 'Keeps this cooking occasion together',
+              onTap: onChooseMatch,
+            ),
+            const SizedBox(height: 10),
+          ],
           _ReviewChoice(
             selected: makeNew,
             title: 'Make a new dish',
@@ -223,7 +235,7 @@ class _ReviewHeader extends StatelessWidget {
 class _ReviewPhoto extends StatelessWidget {
   const _ReviewPhoto({required this.dish, required this.item});
 
-  final Dish dish;
+  final Dish? dish;
   final ReviewItem item;
 
   @override
@@ -237,7 +249,14 @@ class _ReviewPhoto extends StatelessWidget {
             SizedBox(
               height: 200,
               width: double.infinity,
-              child: DishArtwork(dish: dish),
+              child: item.imageRef == null
+                  ? dish == null
+                      ? const ColoredBox(color: MyMenuColors.oat2)
+                      : DishArtwork(dish: dish!)
+                  : AppImage(
+                      imageRef: item.imageRef!,
+                      fit: BoxFit.cover,
+                    ),
             ),
             Padding(
               padding: const EdgeInsets.all(16),
@@ -249,7 +268,7 @@ class _ReviewPhoto extends StatelessWidget {
                     Text('Looks like',
                         style: Theme.of(context).textTheme.bodySmall),
                     const SizedBox(height: 3),
-                    Text(dish.title,
+                    Text(dish?.title ?? 'Needs your decision',
                         style: Theme.of(context).textTheme.headlineSmall),
                     const SizedBox(height: 6),
                     Text(

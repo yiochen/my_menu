@@ -104,6 +104,38 @@ void main() {
       <String>['batch-a-first', 'batch-a-second', 'batch-b'],
     );
   });
+
+  test('photos use app upload date instead of photo shoot date', () {
+    final MyMenuState state = MyMenuState.forTesting(
+      captureItems: <CaptureItem>[
+        _photo(
+          'shot-recently-uploaded-earlier',
+          batchId: 'earlier-upload',
+          createdAt: DateTime(2026, 8, 2, 12),
+          capturedAt: DateTime(2026, 8, 2, 11),
+        ),
+        _photo(
+          'shot-years-ago-uploaded-today',
+          batchId: 'latest-upload',
+          createdAt: DateTime(2026, 8, 3, 12),
+          capturedAt: DateTime(2020, 1, 1, 11),
+          capturedLocalDate: '2020-01-01',
+        ),
+      ],
+    );
+
+    expect(
+      state.photos.map((photo) => photo.id),
+      <String>[
+        'shot-years-ago-uploaded-today',
+        'shot-recently-uploaded-earlier',
+      ],
+    );
+    expect(
+      state.photos.map((photo) => photo.dateKey),
+      <String>['2026-08-03', '2026-08-02'],
+    );
+  });
 }
 
 CaptureItem _photo(
@@ -112,7 +144,9 @@ CaptureItem _photo(
   String batchId = 'batch',
   String? dishId,
   CaptureItemStatus status = CaptureItemStatus.localOnly,
+  DateTime? createdAt,
   DateTime? capturedAt,
+  String capturedLocalDate = '2026-08-02',
 }) {
   return CaptureItem(
     id: id,
@@ -120,8 +154,8 @@ CaptureItem _photo(
     ordinal: ordinal,
     kind: CaptureItemKind.photo,
     status: status,
-    createdAt: DateTime.utc(2026, 8, 2),
-    capturedLocalDate: '2026-08-02',
+    createdAt: createdAt ?? DateTime.utc(2026, 8, 2),
+    capturedLocalDate: capturedLocalDate,
     capturedAt: capturedAt,
     localMediaRef: 'fake://$id',
     appliedDishId: dishId,

@@ -104,9 +104,7 @@ class CaptureCorrectionRepository {
         type == CaptureCorrectionType.assignSplit;
     final bool hasExpectedState = isAssignment
         ? items.every(
-            (db.CaptureItemRow item) =>
-                item.kind == capture_domain.CaptureItemKind.photo.name &&
-                item.appliedDishId == null,
+            (db.CaptureItemRow item) => item.appliedDishId == null,
           )
         : items.every(
             (db.CaptureItemRow item) =>

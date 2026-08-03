@@ -813,14 +813,14 @@ void main() {
 
       expect(createdDishes, isEmpty);
       final batches = await repositories.captureRepository.listBatches();
-      expect(feedItems.single.status, CaptureItemStatus.classifying);
-      expect(batches.single.status, CaptureBatchStatus.processing);
-      expect(feedItems.single.appliedDishId, isNull);
+      expect(feedItems.single.status, CaptureItemStatus.applied);
+      expect(batches.single.status, CaptureBatchStatus.applied);
+      expect(feedItems.single.appliedDishId, isNotNull);
       expect(feedItems.single.remoteMediaRef, isNull);
       final ProcessingOutboxRequest request =
           (await repositories.processingOutboxRepository.listRequests()).single;
       expect(request.deliveryState, ProcessingDeliveryState.acknowledged);
-      expect(request.adoptionState, ProcessingAdoptionState.readyForAdoption);
+      expect(request.adoptionState, ProcessingAdoptionState.adopted);
     });
 
     test('photo capture ignores empty refs and uses only processing delivery',
@@ -902,7 +902,7 @@ void main() {
       expect(syncOperations, isEmpty);
     });
 
-    test('idea capture sync starts backend classification', () async {
+    test('idea capture sync adopts the backend decision locally', () async {
       await repositories.seedIfNeeded();
       final String? id = await repositories.captureRepository
           .createIdeaCapture('late night udon');
@@ -913,8 +913,30 @@ void main() {
 
       expect(id, isNotNull);
       expect(createdDishes, isEmpty);
-      expect(feedItems.single.status, CaptureItemStatus.classifying);
-      expect(feedItems.single.appliedDishId, isNull);
+      expect(feedItems.single.status, CaptureItemStatus.applied);
+      expect(feedItems.single.appliedDishId, isNotNull);
+    });
+
+    test('an unresolved idea can be manually assigned to a dish', () async {
+      const String dishId = 'dish_manual_idea';
+      await repositories.dishRepository.upsertDish(
+        _zeroHistoryDish(id: dishId, title: 'Manual Idea'),
+      );
+      final String ideaId = (await repositories.captureRepository
+          .createIdeaCapture('ambiguous noodles'))!;
+      final CaptureItem idea =
+          (await repositories.captureRepository.listFeedItems()).single;
+
+      await repositories.captureCorrectionRepository.assignCaptures(
+        batchId: idea.batchId!,
+        captureIds: <String>[ideaId],
+        targetDishId: dishId,
+      );
+
+      final CaptureItem assigned =
+          (await repositories.captureRepository.listFeedItems()).single;
+      expect(assigned.status, CaptureItemStatus.applied);
+      expect(assigned.appliedDishId, dishId);
     });
 
     test('dismissed suggestion keeps the photo and cancels processing',
@@ -1167,9 +1189,9 @@ void main() {
       final ProcessingOutboxRequest request =
           (await repositories.processingOutboxRepository.listRequests()).single;
       expect(apiClient.processingJobCreationCount, 1);
-      expect(recovered.items.single.status, CaptureItemStatus.classifying);
+      expect(recovered.items.single.status, CaptureItemStatus.applied);
       expect(recovered.items.single.failureReason, isNull);
-      expect(recovered.status, CaptureBatchStatus.processing);
+      expect(recovered.status, CaptureBatchStatus.applied);
       expect(request.deliveryState, ProcessingDeliveryState.acknowledged);
     });
 
@@ -1209,7 +1231,7 @@ void main() {
         () => state.captureBatches.any(
           (CaptureBatch batch) =>
               batch.id == createdBatch.id &&
-              batch.status == CaptureBatchStatus.processing,
+              batch.status == CaptureBatchStatus.applied,
         ),
       );
 
@@ -1253,7 +1275,7 @@ void main() {
       expect(apiClient.uploadedAssetIds.toSet(), hasLength(3));
       expect(apiClient.uploadedAssetIds.toSet(),
           batch.items.map((CaptureItem item) => item.id).toSet());
-      expect(synced.status, CaptureBatchStatus.processing);
+      expect(synced.status, CaptureBatchStatus.applied);
     });
 
     test('explicit retry starts a fresh attempt and reuploads all assets',
@@ -1287,16 +1309,14 @@ void main() {
         batch.items[1].id,
       ]);
       final ProcessingOutboxRequest failedRequest =
-          (await repositories.processingOutboxRepository.listRequests())
-              .single;
+          (await repositories.processingOutboxRepository.listRequests()).single;
 
       await repositories.syncRepository.processPendingCaptures();
       expect(apiClient.uploadedAssetIds, hasLength(2));
 
       await repositories.captureRepository.retryBatch(batch.id);
       final ProcessingOutboxRequest retryRequest =
-          (await repositories.processingOutboxRepository.listRequests())
-              .single;
+          (await repositories.processingOutboxRepository.listRequests()).single;
       expect(retryRequest.idempotencyKey, isNot(failedRequest.idempotencyKey));
       await repositories.syncRepository.processPendingCaptures();
       refreshed = (await repositories.captureRepository.listBatches()).single;
@@ -1310,11 +1330,11 @@ void main() {
       ]);
       expect(
         refreshed.items.every(
-          (CaptureItem item) => item.status == CaptureItemStatus.classifying,
+          (CaptureItem item) => item.status == CaptureItemStatus.applied,
         ),
         isTrue,
       );
-      expect(refreshed.status, CaptureBatchStatus.processing);
+      expect(refreshed.status, CaptureBatchStatus.applied);
       expect(apiClient.processingJobCreationCount, 2);
     });
 
@@ -1453,7 +1473,7 @@ void main() {
       expect(result.status, 'queued');
     });
 
-    test('processing stores a proposal without creating server menu data',
+    test('processing adopts a proposal without creating server menu data',
         () async {
       final File july20a = await _temporaryPhoto('july20-a');
       final File july20b = await _temporaryPhoto('july20-b');
@@ -1494,10 +1514,112 @@ void main() {
       final ProcessingOutboxRequest request =
           (await repositories.processingOutboxRepository.listRequests()).single;
 
-      expect(dishes, isEmpty);
+      expect(dishes, hasLength(4));
       expect(request.deliveryState, ProcessingDeliveryState.acknowledged);
-      expect(request.adoptionState, ProcessingAdoptionState.readyForAdoption);
-      expect(request.resultPayload?['groups'], hasLength(4));
+      expect(request.adoptionState, ProcessingAdoptionState.adopted);
+      expect(request.resultPayload?['decisions'], hasLength(4));
+    });
+
+    test('direct routing adopts mixed outcomes once and keeps them undoable',
+        () async {
+      const String existingDishId = 'dish_existing_route';
+      await repositories.dishRepository.upsertDish(
+        _zeroHistoryDish(id: existingDishId, title: 'Existing Route'),
+      );
+      final CaptureBatch batch =
+          (await repositories.captureRepository.createPhotoBatch(
+        <String>[
+          (await _temporaryPhoto('existing-route')).path,
+          (await _temporaryPhoto('unclear-route')).path,
+          (await _temporaryPhoto('not-a-dish')).path,
+        ],
+      ))!;
+      final ProcessingOutboxRequest pending =
+          (await repositories.processingOutboxRepository.listRequests()).single;
+      final List<String> captureIds = batch.items
+          .map((CaptureItem item) => item.id)
+          .toList(growable: false);
+      final Map<String, Object?> result = <String, Object?>{
+        'operation': 'capture_grouping',
+        'schemaVersion': 'capture-grouping-result-v2',
+        'decisions': <Map<String, Object?>>[
+          <String, Object?>{
+            'captureIds': <String>[captureIds[0]],
+            'outcome': <String, Object?>{
+              'type': 'existing_dish',
+              'localDishId': existingDishId,
+            },
+            'evidence': <String>['Matches the saved dish.'],
+            'uncertainty': <String>[],
+          },
+          <String, Object?>{
+            'captureIds': <String>[captureIds[1]],
+            'outcome': <String, Object?>{'type': 'unresolved'},
+            'evidence': <String>['A prepared dish is visible.'],
+            'uncertainty': <String>['The destination is unclear.'],
+          },
+          <String, Object?>{
+            'captureIds': <String>[captureIds[2]],
+            'outcome': <String, Object?>{'type': 'not_a_dish'},
+            'evidence': <String>['The photo contains no prepared dish.'],
+            'uncertainty': <String>[],
+          },
+        ],
+      };
+      await (database.update(database.processingOutbox)
+            ..where((table) => table.id.equals(pending.id)))
+          .write(
+        ProcessingOutboxCompanion(
+          payloadJson: Value<String>(jsonEncode(<String, Object?>{
+            'batchId': batch.id,
+            'captureIds': captureIds,
+            'submittedDishIds': <String>[existingDishId],
+          })),
+          deliveryState:
+              Value<String>(ProcessingDeliveryState.acknowledged.name),
+          adoptionState:
+              Value<String>(ProcessingAdoptionState.readyForAdoption.name),
+          resultPayloadJson: Value<String?>(jsonEncode(result)),
+          resultSchemaVersion:
+              const Value<String?>('capture-grouping-result-v2'),
+        ),
+      );
+
+      await repositories.syncRepository.processPendingCaptures();
+      await repositories.syncRepository.processPendingCaptures();
+
+      final Map<String, CaptureItem> captures = <String, CaptureItem>{
+        for (final CaptureItem item
+            in await repositories.captureRepository.listFeedItems())
+          item.id: item,
+      };
+      expect(captures[captureIds[0]]!.status, CaptureItemStatus.applied);
+      expect(captures[captureIds[0]]!.appliedDishId, existingDishId);
+      expect(captures[captureIds[1]]!.status, CaptureItemStatus.needsReview);
+      expect(captures[captureIds[2]]!.status, CaptureItemStatus.notADish);
+      expect(
+        (await repositories.captureRepository.listReviewItems()).single.id,
+        'review_${pending.id}_${captureIds[1]}',
+      );
+      expect(
+        await repositories.captureCorrectionRepository.listCorrections(),
+        hasLength(1),
+      );
+      expect(
+        (await repositories.processingOutboxRepository.listRequests())
+            .single
+            .adoptionState,
+        ProcessingAdoptionState.adopted,
+      );
+
+      await repositories.captureCorrectionRepository.undoLatest(
+        batch.id,
+        captureId: captureIds[0],
+      );
+      final CaptureItem restored =
+          (await repositories.captureRepository.listFeedItems())
+              .singleWhere((CaptureItem item) => item.id == captureIds[0]);
+      expect(restored.appliedDishId, isNull);
     });
 
     test('pullCaptureSync applies capture result events and advances cursor',

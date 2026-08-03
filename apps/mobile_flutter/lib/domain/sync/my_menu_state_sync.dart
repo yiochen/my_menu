@@ -191,7 +191,8 @@ extension MyMenuStateSync on MyMenuState {
         CaptureItemStatus.uploading ||
         CaptureItemStatus.uploaded ||
         CaptureItemStatus.classifying ||
-        CaptureItemStatus.needsReview =>
+        CaptureItemStatus.needsReview ||
+        CaptureItemStatus.notADish =>
           true,
         CaptureItemStatus.applied ||
         CaptureItemStatus.discarded ||

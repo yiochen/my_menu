@@ -6,8 +6,11 @@ extension SyncRepositoryCaptures on SyncRepository {
         ProcessingOutboxRepository(_database);
     final List<ProcessingOutboxRequest> requests = await outbox.listRequests();
     for (final ProcessingOutboxRequest request in requests) {
-      if (request.kind != ProcessingRequestKind.captureGrouping ||
-          request.deliveryState == ProcessingDeliveryState.acknowledged) {
+      if (request.kind != ProcessingRequestKind.captureGrouping) {
+        continue;
+      }
+      if (request.deliveryState == ProcessingDeliveryState.acknowledged &&
+          request.adoptionState != ProcessingAdoptionState.readyForAdoption) {
         continue;
       }
       if (request.deliveryState == ProcessingDeliveryState.canceled) {
@@ -28,9 +31,17 @@ extension SyncRepositoryCaptures on SyncRepository {
             );
           }
         }
+        await _deleteProcessingAssets(request.id);
         continue;
       }
       if (request.deliveryState == ProcessingDeliveryState.expired) {
+        await _deleteProcessingAssets(request.id);
+        continue;
+      }
+      if (request.deliveryState == ProcessingDeliveryState.acknowledged &&
+          request.adoptionState == ProcessingAdoptionState.readyForAdoption) {
+        await _adoptCaptureRoutingProposal(request);
+        await _deleteProcessingAssets(request.id);
         continue;
       }
       await _resumeCaptureGrouping(outbox, request);
@@ -51,14 +62,16 @@ extension SyncRepositoryCaptures on SyncRepository {
       try {
         final List<db.CaptureItemRow> captures =
             await _activeItemsForBatch(request.subjectId);
+        final Map<String, String> processingAssets =
+            await _prepareProcessingAssets(request.id, captures);
         final ApiProcessingJob job = await _apiClient
             .createProcessingJob(
               operation: request.kind.databaseValue,
               idempotencyKey: request.idempotencyKey,
-              inputSchemaVersion: 'capture-grouping-input-v1',
-              resultSchemaVersion: 'capture-grouping-result-v1',
+              inputSchemaVersion: 'capture-grouping-input-v2',
+              resultSchemaVersion: 'capture-grouping-result-v2',
               privacyNoticeVersion: request.privacyNoticeVersion!,
-              assets: await _assetManifest(captures),
+              assets: await _assetManifest(processingAssets),
             )
             .timeout(_controlRequestTimeout);
         await outbox.recordServerJob(
@@ -74,11 +87,25 @@ extension SyncRepositoryCaptures on SyncRepository {
           kind: request.kind,
           subjectId: request.subjectId,
         ))!;
-        await _uploadProcessingAssets(outbox, request, job, captures);
+        await _uploadProcessingAssets(
+          outbox,
+          request,
+          job,
+          processingAssets,
+        );
+        final Map<String, Object?> input =
+            await _captureGroupingInput(captures);
+        await outbox.recordSubmittedDishIds(
+          request.id,
+          (input['dishes']! as List<Object?>).map(
+            (Object? value) =>
+                (value! as Map<String, Object?>)['localId']! as String,
+          ),
+        );
         await _apiClient
             .submitProcessingJob(
               jobId: job.id,
-              input: await _captureGroupingInput(captures),
+              input: input,
             )
             .timeout(_controlRequestTimeout);
         await outbox.markSubmitted(request.id);
@@ -165,6 +192,13 @@ extension SyncRepositoryCaptures on SyncRepository {
           .acknowledgeProcessingJob(jobId: job.id)
           .timeout(_controlRequestTimeout);
       await outbox.markAcknowledged(request.id);
+      final ProcessingOutboxRequest acknowledged =
+          (await outbox.requestForSubject(
+        kind: request.kind,
+        subjectId: request.subjectId,
+      ))!;
+      await _adoptCaptureRoutingProposal(acknowledged);
+      await _deleteProcessingAssets(request.id);
     } on Object catch (error) {
       if (_isProcessingJobNotFound(error)) {
         if (request.resultPayload != null) {
@@ -198,125 +232,47 @@ extension SyncRepositoryCaptures on SyncRepository {
   }
 
   Future<List<ApiProcessingAssetManifest>> _assetManifest(
-    List<db.CaptureItemRow> captures,
+    Map<String, String> processingAssets,
   ) async {
-    final List<ApiProcessingAssetManifest> assets =
+    final List<ApiProcessingAssetManifest> manifest =
         <ApiProcessingAssetManifest>[];
-    for (final db.CaptureItemRow capture in captures) {
-      final String? path = capture.localMediaRef;
-      if (capture.kind != capture_domain.CaptureItemKind.photo.name ||
-          path == null) {
-        continue;
-      }
-      assets.add(
+    for (final MapEntry<String, String> asset in processingAssets.entries) {
+      manifest.add(
         ApiProcessingAssetManifest(
-          assetId: capture.id,
-          contentType: _processingContentType(path),
-          byteSize: await File(path).length(),
+          assetId: asset.key,
+          contentType: _processingContentType,
+          byteSize: await File(asset.value).length(),
         ),
       );
     }
-    return assets;
+    return manifest;
   }
 
   Future<void> _uploadProcessingAssets(
     ProcessingOutboxRepository outbox,
     ProcessingOutboxRequest request,
     ApiProcessingJob job,
-    List<db.CaptureItemRow> captures,
+    Map<String, String> processingAssets,
   ) async {
     for (final ApiProcessingUploadTarget target in job.uploadTargets) {
       if (request.uploadedAssetIds.contains(target.assetId)) {
         continue;
       }
-      final db.CaptureItemRow capture = captures.firstWhere(
-        (db.CaptureItemRow item) => item.id == target.assetId,
-      );
+      final String? localPath = processingAssets[target.assetId];
+      if (localPath == null) {
+        throw FileSystemException(
+          'Processing derivative is unavailable.',
+          target.assetId,
+        );
+      }
       await _apiClient.uploadProcessingAsset(
         target: target,
-        localPath: capture.localMediaRef!,
+        localPath: localPath,
       );
       await outbox.markAssetUploaded(request.id, target.assetId);
       await _markCaptureStatus(
         target.assetId,
         capture_domain.CaptureItemStatus.uploaded,
-      );
-    }
-  }
-
-  Future<Map<String, Object?>> _captureGroupingInput(
-    List<db.CaptureItemRow> captures,
-  ) async {
-    final List<db.DishRow> dishes =
-        await _database.select(_database.dishes).get();
-    final List<db.DishNoteRow> notes =
-        await _database.select(_database.dishNotes).get();
-    return <String, Object?>{
-      'captures': captures
-          .map(
-            (db.CaptureItemRow capture) => <String, Object?>{
-              'id': capture.id,
-              'kind': capture.kind,
-              'ordinal': capture.ordinal,
-              'capturedAt': capture.capturedAt?.toUtc().toIso8601String(),
-              'capturedLocalDate': capture.capturedLocalDate,
-              'ideaText': capture.ideaText,
-              if (capture.kind == capture_domain.CaptureItemKind.photo.name)
-                'assetId': capture.id,
-            },
-          )
-          .toList(growable: false),
-      'dishes': dishes
-          .map(
-            (db.DishRow dish) => <String, Object?>{
-              'localId': dish.id,
-              'title': dish.title,
-              'description': dish.description,
-              'ingredients': _jsonStringList(dish.ingredientsJson),
-              'recipeSteps': _jsonStringList(dish.recipeStepsJson),
-              'notes': notes
-                  .where((db.DishNoteRow note) => note.dishId == dish.id)
-                  .map((db.DishNoteRow note) => note.body)
-                  .toList(growable: false),
-            },
-          )
-          .toList(growable: false),
-    };
-  }
-
-  void _validateCaptureGroupingResult(
-    ProcessingOutboxRequest request,
-    Map<String, Object?> result, {
-    required String schemaVersion,
-  }) {
-    if (result['operation'] != request.kind.databaseValue ||
-        result['schemaVersion'] != schemaVersion ||
-        result['groups'] is! List<Object?> ||
-        result['rejectedCaptures'] is! List<Object?>) {
-      throw const FormatException('Invalid capture grouping proposal.');
-    }
-    final Set<String> expected =
-        (request.payload['captureIds']! as List<Object?>)
-            .whereType<String>()
-            .toSet();
-    final List<String> decisions = <String>[];
-    for (final Object? value in result['groups']! as List<Object?>) {
-      final Map<String, Object?> group =
-          Map<String, Object?>.from(value! as Map<String, Object?>);
-      decisions.addAll(
-        (group['captureIds']! as List<Object?>).whereType<String>(),
-      );
-    }
-    for (final Object? value in result['rejectedCaptures']! as List<Object?>) {
-      final Map<String, Object?> rejected =
-          Map<String, Object?>.from(value! as Map<String, Object?>);
-      decisions.add(rejected['captureId']! as String);
-    }
-    if (decisions.length != decisions.toSet().length ||
-        decisions.toSet().difference(expected).isNotEmpty ||
-        expected.difference(decisions.toSet()).isNotEmpty) {
-      throw const FormatException(
-        'Capture grouping proposal must exactly partition the input.',
       );
     }
   }

@@ -109,20 +109,35 @@ class _ProcessingConsentContent extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Text(
-          'MyMenu can send new captures to its processing service so AI can '
-          'suggest where they belong.',
+          'MyMenu can send reduced copies of new captures and your existing '
+          'dish text to Google Gemini so AI can organize them.',
           style: textTheme.bodyMedium,
         ),
         const SizedBox(height: 12),
         const _PrivacyPoint(
           icon: Icons.phonelink_lock_outlined,
-          text: 'Your existing dishes, notes, plans, and photos stay on this '
-              'device.',
+          text: 'Dish titles, descriptions, ingredients, recipe steps, and '
+              'notes are included. Existing covers and source photos are not.',
         ),
         const SizedBox(height: 9),
         const _PrivacyPoint(
           icon: Icons.cloud_upload_outlined,
-          text: 'Only new captures that need AI processing are uploaded.',
+          text: 'MyMenu deletes processing content after receipt or within 24 '
+              'hours. On Gemini’s free tier, Google may use submitted content '
+              'and AI responses to improve its products, and human reviewers '
+              'may read or annotate them.',
+        ),
+        const SizedBox(height: 9),
+        const _PrivacyPoint(
+          icon: Icons.visibility_off_outlined,
+          text: 'For pre-launch testing, submit only food content that is not '
+              'sensitive, confidential, or personally identifying.',
+        ),
+        const SizedBox(height: 9),
+        const _PrivacyPoint(
+          icon: Icons.receipt_long_outlined,
+          text: 'Content-free usage records last up to 90 days and routine '
+              'operational logs up to 30 days.',
         ),
         const SizedBox(height: 9),
         const _PrivacyPoint(
