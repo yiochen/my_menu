@@ -80,7 +80,11 @@ jobs:
           cd backend
           supabase start
           supabase db reset
-          supabase functions serve > /tmp/mymenu-supabase-functions.log 2>&1 &
+          STATUS_JSON="$(supabase status -o json)"
+          AI_WORKER_KEY="$(printf '%s' "$STATUS_JSON" | jq -r '.SERVICE_ROLE_KEY')" \
+            AI_PROVIDER=fake \
+            AI_MODEL=fake-date-grouper-v2 \
+            supabase functions serve > /tmp/mymenu-supabase-functions.log 2>&1 &
           echo "$!" > /tmp/mymenu-supabase-functions.pid
 
           for _ in {1..90}; do
@@ -97,10 +101,10 @@ jobs:
           fi
 
           cd ..
-          STATUS_JSON="$(cd backend && supabase status -o json)"
           SUPABASE_URL=http://127.0.0.1:54321 \
             SUPABASE_ANON_KEY="$(printf '%s' "$STATUS_JSON" | jq -r '.ANON_KEY')" \
             SUPABASE_SERVICE_ROLE_KEY="$(printf '%s' "$STATUS_JSON" | jq -r '.SERVICE_ROLE_KEY')" \
+            AI_WORKER_KEY="$(printf '%s' "$STATUS_JSON" | jq -r '.SERVICE_ROLE_KEY')" \
             deno test --allow-net --allow-env --allow-read backend/supabase/tests/edge
 
       - name: Upload Supabase function logs
