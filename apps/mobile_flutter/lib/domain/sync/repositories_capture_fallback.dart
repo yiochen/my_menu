@@ -20,11 +20,11 @@ extension CaptureRepositoryFallback on CaptureRepository {
               ))
             .get();
     for (final db.ProcessingOutboxRow request in requests) {
-      await _adoptWaitingPhotoBatch(request);
+      await _keepWaitingPhotoBatchLocal(request);
     }
   }
 
-  Future<void> _adoptWaitingPhotoBatch(
+  Future<void> _keepWaitingPhotoBatchLocal(
     db.ProcessingOutboxRow request,
   ) async {
     final List<db.CaptureItemRow> items =
@@ -42,11 +42,7 @@ extension CaptureRepositoryFallback on CaptureRepository {
                         .not(),
               ))
             .get();
-    if (items.isEmpty ||
-        items.any(
-          (db.CaptureItemRow item) =>
-              item.localMediaRef == null && item.remoteMediaRef == null,
-        )) {
+    if (items.isEmpty) {
       return;
     }
     final DateTime now = DateTime.now();
@@ -55,14 +51,6 @@ extension CaptureRepositoryFallback on CaptureRepository {
         if (item.appliedDishId != null) {
           continue;
         }
-        final String dishId = _uuid.v4();
-        await _insertUntitledPhotoDish(
-          dishId: dishId,
-          captureId: item.id,
-          imageRef: item.localMediaRef ?? item.remoteMediaRef!,
-          capturedAt: item.capturedAt ?? item.createdAt,
-          createdAt: now,
-        );
         await (_database.update(_database.captureItems)
               ..where(
                 (db.CaptureItems table) => table.id.equals(item.id),
@@ -70,9 +58,9 @@ extension CaptureRepositoryFallback on CaptureRepository {
             .write(
           db.CaptureItemsCompanion(
             status: Value<String>(
-              capture_domain.CaptureItemStatus.applied.name,
+              capture_domain.CaptureItemStatus.localOnly.name,
             ),
-            appliedDishId: Value<String?>(dishId),
+            appliedDishId: const Value<String?>(null),
             failureReason: const Value<String?>(null),
           ),
         );
@@ -103,42 +91,7 @@ extension CaptureRepositoryFallback on CaptureRepository {
             ))
           .go();
       await _processingOutboxRepository.cancelBeforeUpload(request.id);
+      await _processingOutboxRepository.rejectProposal(request.id);
     });
-  }
-
-  Future<void> _insertUntitledPhotoDish({
-    required String dishId,
-    required String captureId,
-    required String imageRef,
-    required DateTime capturedAt,
-    required DateTime createdAt,
-  }) async {
-    await _database.into(_database.dishes).insert(
-          db.DishesCompanion.insert(
-            id: dishId,
-            title: 'Untitled dish',
-            description: '',
-            heroImageUrl: imageRef,
-            category: 'Captured',
-            prepMinutes: 0,
-            difficulty: 'Not set',
-            madeCount: 0,
-            lastMadeLabel: 'Not cooked yet',
-            ingredientsJson: '[]',
-            recipeStepsJson: '[]',
-            notesJson: '[]',
-            createdAt: Value<DateTime?>(createdAt),
-          ),
-        );
-    await _database.into(_database.sourcePhotos).insert(
-          db.SourcePhotosCompanion.insert(
-            id: '${captureId}_source',
-            dishId: dishId,
-            url: imageRef,
-            capturedLabel: 'Today',
-            captureId: Value<String?>(captureId),
-            capturedAt: Value<DateTime?>(capturedAt),
-          ),
-        );
   }
 }

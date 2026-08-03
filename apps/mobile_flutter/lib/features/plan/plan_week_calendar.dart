@@ -3,23 +3,30 @@ import 'package:flutter/material.dart';
 import 'package:mymenu/domain/planning/plan_dates.dart';
 import 'package:mymenu/domain/planning/planned_meal.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
+import 'package:mymenu/shared/widgets/photos_entry_button.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
 class PlanWeekCalendar extends StatefulWidget {
   const PlanWeekCalendar({
     required this.selectedDate,
     required this.plan,
+    required this.unorganizedPhotoCount,
+    required this.organizingPhotos,
     required this.onPickDate,
     required this.onToday,
     required this.onSelect,
+    required this.onOpenPhotos,
     super.key,
   });
 
   final DateTime selectedDate;
   final List<PlannedMeal> plan;
+  final int unorganizedPhotoCount;
+  final bool organizingPhotos;
   final VoidCallback onPickDate;
   final VoidCallback onToday;
   final ValueChanged<DateTime> onSelect;
+  final VoidCallback onOpenPhotos;
 
   @override
   State<PlanWeekCalendar> createState() => _PlanWeekCalendarState();
@@ -81,6 +88,12 @@ class _PlanWeekCalendarState extends State<PlanWeekCalendar> {
               icon: Icons.today_outlined,
               semanticLabel: 'Jump to today',
               onPressed: widget.onToday,
+            ),
+            const SizedBox(width: 9),
+            PhotosEntryButton(
+              unorganizedCount: widget.unorganizedPhotoCount,
+              organizing: widget.organizingPhotos,
+              onPressed: widget.onOpenPhotos,
             ),
           ],
         ),

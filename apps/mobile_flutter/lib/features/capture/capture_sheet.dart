@@ -6,23 +6,26 @@ import 'package:flutter/services.dart';
 
 import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
+import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/capture/add_idea_sheet.dart';
 import 'package:mymenu/features/capture/camera_batch_sheet.dart';
-import 'package:mymenu/features/capture/capture_feed_sheet.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
 import 'package:mymenu/features/capture/capture_outcome_sheet.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/local_write_feedback.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
-enum CaptureAction { takePhoto, importPhotos, addIdea, recentCaptures }
+enum CaptureAction { takePhoto, importPhotos, addIdea }
 
-Future<void> showCaptureSheet(
+enum CaptureCompletion { photosAdded, ideaAdded }
+
+Future<CaptureCompletion?> showCaptureSheet(
   BuildContext context,
   MyMenuState state,
-  CaptureMediaService mediaService,
-) async {
+  CaptureMediaService mediaService, {
+  String? targetDishId,
+}) async {
   final CaptureAction? action = await showGeneralDialog<CaptureAction>(
     context: context,
     barrierDismissible: true,
@@ -34,40 +37,41 @@ Future<void> showCaptureSheet(
       enableDrag: false,
       backgroundColor: Colors.transparent,
       elevation: 0,
-      builder: (_) => _CaptureActionSheet(
-        hasCaptures:
-            state.captureBatches.isNotEmpty || state.captureItems.isNotEmpty,
-      ),
+      builder: (_) => const _CaptureActionSheet(),
     ),
     transitionBuilder: (_, Animation<double> animation, __, Widget child) =>
         _CaptureSheetTransition(animation: animation, child: child),
   );
   if (!context.mounted || action == null) {
-    return;
+    return null;
   }
   switch (action) {
     case CaptureAction.takePhoto:
-      await _captureMedia(
+      final bool added = await _captureMedia(
         context,
         state,
         () => collectCameraBatch(context, mediaService),
+        targetDishId: targetDishId,
       );
+      return added ? CaptureCompletion.photosAdded : null;
     case CaptureAction.importPhotos:
-      await _captureMedia(
+      final bool added = await _captureMedia(
         context,
         state,
         mediaService.importPhotos,
+        targetDishId: targetDishId,
       );
+      return added ? CaptureCompletion.photosAdded : null;
     case CaptureAction.addIdea:
       final AddIdeaIntent? intent = await showAddIdeaSheet(context);
       if (intent != null && context.mounted) {
-        await runLocalWriteWithFeedback(
+        final bool added = await runLocalWriteWithFeedback(
           context,
           () => state.addIdea(intent.title, note: intent.note),
         );
+        return added ? CaptureCompletion.ideaAdded : null;
       }
-    case CaptureAction.recentCaptures:
-      await showCaptureFeedSheet(context, state);
+      return null;
   }
 }
 
@@ -167,36 +171,44 @@ class _CaptureSheetTransition extends StatelessWidget {
   }
 }
 
-Future<void> _captureMedia(
+Future<bool> _captureMedia(
   BuildContext context,
   MyMenuState state,
-  Future<List<CapturedMedia>> Function() capture,
-) async {
+  Future<List<CapturedMedia>> Function() capture, {
+  String? targetDishId,
+}) async {
   try {
     final List<CapturedMedia> capturedMedia = await capture();
     if (!context.mounted || capturedMedia.isEmpty) {
-      return;
+      return false;
     }
-    final CaptureBatch? batch = await state.addPhotoCaptures(capturedMedia);
+    final CaptureBatch? batch = await state.addPhotoCaptures(
+      capturedMedia,
+      targetDishId: targetDishId,
+    );
     if (!context.mounted) {
-      return;
+      return false;
     }
     if (batch != null) {
-      final bool createdLocally = batch.status == CaptureBatchStatus.applied;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(createdLocally
+          content: Text(targetDishId != null
               ? capturedMedia.length == 1
-                  ? 'Photo added as an Untitled dish.'
-                  : '${capturedMedia.length} photos added as separate '
-                      'Untitled dishes.'
-              : capturedMedia.length == 1
-                  ? 'Photo is uploading. A dish placeholder shows its progress.'
-                  : '${capturedMedia.length} photos are uploading. A dish '
-                      'placeholder shows their progress.'),
+                  ? 'Photo added to this dish.'
+                  : '${capturedMedia.length} photos added to this dish.'
+              : state.processingConsentDecision ==
+                      ProcessingConsentDecision.accepted
+                  ? capturedMedia.length == 1
+                      ? 'Photo saved. You can use it now while MyMenu organizes it.'
+                      : '${capturedMedia.length} photos saved. You can use them now '
+                          'while MyMenu organizes them.'
+                  : capturedMedia.length == 1
+                      ? 'Photo saved. It’s ready to organize.'
+                      : '${capturedMedia.length} photos saved. They’re ready to organize.'),
         ),
       );
     }
+    return batch != null;
   } on PlatformException catch (_) {
     if (context.mounted) {
       await showCaptureOutcomeSheet(
@@ -207,6 +219,7 @@ Future<void> _captureMedia(
         photoCount: 0,
       );
     }
+    return false;
   } on Exception catch (_) {
     if (context.mounted) {
       await showCaptureOutcomeSheet(
@@ -217,13 +230,12 @@ Future<void> _captureMedia(
         photoCount: 0,
       );
     }
+    return false;
   }
 }
 
 class _CaptureActionSheet extends StatelessWidget {
-  const _CaptureActionSheet({required this.hasCaptures});
-
-  final bool hasCaptures;
+  const _CaptureActionSheet();
 
   @override
   Widget build(BuildContext context) {
@@ -269,15 +281,6 @@ class _CaptureActionSheet extends StatelessWidget {
             primary: true,
             onTap: () => Navigator.pop(context, CaptureAction.takePhoto),
           ),
-          if (hasCaptures) ...<Widget>[
-            const SizedBox(height: 10),
-            _CaptureActionTile(
-              icon: Icons.collections_outlined,
-              title: 'Recent Captures',
-              subtitle: 'Check upload status or retry a photo',
-              onTap: () => Navigator.pop(context, CaptureAction.recentCaptures),
-            ),
-          ],
           const SizedBox(height: 10),
           _CaptureActionTile(
             icon: Icons.photo_library_outlined,

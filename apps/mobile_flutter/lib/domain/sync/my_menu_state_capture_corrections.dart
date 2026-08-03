@@ -14,6 +14,20 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
     return matches.firstOrNull;
   }
 
+  CaptureCorrection? latestCaptureCorrectionForPhoto(String captureId) {
+    final List<CaptureCorrection> matches = _captureCorrections
+        .where(
+          (CaptureCorrection correction) =>
+              correction.captureIds.contains(captureId) && correction.canUndo,
+        )
+        .toList(growable: false)
+      ..sort(
+        (CaptureCorrection left, CaptureCorrection right) =>
+            right.createdAt.compareTo(left.createdAt),
+      );
+    return matches.firstOrNull;
+  }
+
   Future<CaptureCorrection?> moveCapturePhotos({
     required String batchId,
     required List<String> captureIds,
@@ -30,9 +44,6 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
       targetDishId: targetDishId,
     );
     await _reloadFromRepositories();
-    if (correction != null) {
-      unawaited(_syncCaptureCorrections());
-    }
     return correction;
   }
 
@@ -52,9 +63,6 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
       title: title,
     );
     await _reloadFromRepositories();
-    if (correction != null) {
-      unawaited(_syncCaptureCorrections());
-    }
     return correction;
   }
 
@@ -74,9 +82,6 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
       targetDishId: targetDishId,
     );
     await _reloadFromRepositories();
-    if (correction != null) {
-      unawaited(_syncCaptureCorrections());
-    }
     return correction;
   }
 
@@ -96,44 +101,23 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
       title: title,
     );
     await _reloadFromRepositories();
-    if (correction != null) {
-      unawaited(_syncCaptureCorrections());
-    }
     return correction;
   }
 
   Future<CaptureCorrection?> undoLatestCaptureCorrection(
-    String batchId,
-  ) async {
+    String batchId, {
+    String? captureId,
+  }) async {
     final AppRepositories? repositories = _repositories;
     if (repositories == null) {
       return null;
     }
     final CaptureCorrection? correction =
-        await repositories.captureCorrectionRepository.undoLatest(batchId);
+        await repositories.captureCorrectionRepository.undoLatest(
+      batchId,
+      captureId: captureId,
+    );
     await _reloadFromRepositories();
-    if (correction != null) {
-      unawaited(_syncCaptureCorrections());
-    }
     return correction;
-  }
-
-  Future<void> _syncCaptureCorrections() async {
-    final AppRepositories? repositories = _repositories;
-    if (repositories == null) {
-      return;
-    }
-    await repositories.syncRepository.processPendingOperations();
-    try {
-      await repositories.syncRepository.pullCaptureSync();
-    } on Object catch (error, stackTrace) {
-      developer.log(
-        'Capture correction pull unavailable.',
-        name: 'mymenu.sync',
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }
-    await _reloadFromRepositories();
   }
 }

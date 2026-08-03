@@ -11,6 +11,7 @@ import 'package:mymenu/core/network/my_menu_api_client.dart';
 import 'package:mymenu/core/network/network_status_monitor.dart';
 import 'package:mymenu/domain/ai/ai_job.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
+import 'package:mymenu/domain/capture/capture_correction.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
 import 'package:mymenu/domain/capture/review_item.dart';
@@ -18,6 +19,7 @@ import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/dishes/seeded_dishes.dart';
 import 'package:mymenu/domain/planning/planned_meal.dart';
 import 'package:mymenu/domain/planning/seeded_plan.dart';
+import 'package:mymenu/domain/processing/processing_outbox.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/domain/sync/repositories.dart';
 import 'package:sqlite3/sqlite3.dart' as sqlite;
@@ -816,7 +818,7 @@ void main() {
       expect(feedItems.single.remoteMediaRef, startsWith('fake://captures/'));
     });
 
-    test('photo capture ignores empty refs and creates sync operations',
+    test('photo capture ignores empty refs and uses only processing delivery',
         () async {
       final List<String> ids =
           await repositories.captureRepository.createPhotoCaptures(
@@ -834,14 +836,9 @@ void main() {
           containsAll(
             const <String>['/tmp/one.jpg', '/tmp/two.jpg'],
           ));
-      expect(syncOperations.length, 3);
+      expect(syncOperations, isEmpty);
       expect(
-        syncOperations.where((operation) => operation.entity == 'capture_item'),
-        hasLength(2),
-      );
-      expect(
-        syncOperations
-            .where((operation) => operation.entity == 'capture_batch'),
+        await repositories.processingOutboxRepository.listRequests(),
         hasLength(1),
       );
     });
@@ -916,7 +913,8 @@ void main() {
       expect(feedItems.single.appliedDishId, isNull);
     });
 
-    test('discarded capture is not processed by sync', () async {
+    test('dismissed suggestion keeps the photo and cancels processing',
+        () async {
       await repositories.seedIfNeeded();
       final List<String> ids =
           await repositories.captureRepository.createPhotoCaptures(
@@ -929,11 +927,14 @@ void main() {
       final feedItems = await repositories.captureRepository.listFeedItems();
 
       expect(createdDishes, isEmpty);
-      expect(feedItems.single.status, CaptureItemStatus.discarded);
+      expect(feedItems.single.status, CaptureItemStatus.localOnly);
+      final request =
+          (await repositories.processingOutboxRepository.listRequests()).single;
+      expect(request.deliveryState, ProcessingDeliveryState.canceled);
+      expect(request.adoptionState, ProcessingAdoptionState.rejected);
     });
 
-    test('deleting an unclassified capture removes it locally and syncs',
-        () async {
+    test('deleting an unclassified capture is device-local', () async {
       final DateTime now = DateTime.utc(2026, 7, 27);
       await database.into(database.captureItems).insert(
             CaptureItemsCompanion.insert(
@@ -958,28 +959,10 @@ void main() {
             .getSingleOrNull(),
         isNull,
       );
-      expect(
-        (await database.select(database.syncOperations).get()).where(
-          (SyncOperationRow row) =>
-              row.entity == 'capture_item' &&
-              row.operationType == 'delete' &&
-              row.completedAt == null,
-        ),
-        hasLength(1),
-      );
-
-      await repositories.syncRepository.processPendingOperations();
-
-      expect(
-        (await database.select(database.syncOperations).get()).where(
-          (SyncOperationRow row) =>
-              row.entity == 'capture_item' && row.completedAt == null,
-        ),
-        isEmpty,
-      );
+      expect(await database.select(database.syncOperations).get(), isEmpty);
     });
 
-    test('deleting a pending batch removes its local graph and syncs',
+    test('deleting a pending batch removes its local graph without legacy sync',
         () async {
       final Directory directory =
           await Directory.systemTemp.createTemp('mymenu_pending_batch_');
@@ -1058,20 +1041,11 @@ void main() {
       expect(secondFile.existsSync(), isFalse);
       final List<SyncOperationRow> operations =
           await database.select(database.syncOperations).get();
-      expect(
-        operations.where(
-          (SyncOperationRow row) =>
-              row.entity == 'capture_batch' &&
-              row.entityId == batchId &&
-              row.operationType == 'delete' &&
-              row.completedAt == null,
-        ),
-        hasLength(1),
-      );
+      expect(operations, isEmpty);
 
       await repositories.syncRepository.processPendingOperations();
 
-      expect(apiClient.deletedBatchIds, <String>[batchId]);
+      expect(apiClient.deletedBatchIds, isEmpty);
     });
 
     test('sync repository uploads photos before marking batch ready', () async {
@@ -1571,6 +1545,166 @@ void main() {
         DateTime.utc(2026, 6, 20, 11),
       );
       expect(cursor.value, '42');
+
+      final CaptureCorrection automatic =
+          (await repositories.captureCorrectionRepository.listCorrections())
+              .single;
+      expect(automatic.type, CaptureCorrectionType.autoAssign);
+      expect(automatic.isUserAuthored, isFalse);
+
+      await repositories.captureCorrectionRepository.undoLatest(
+        'capture_sync_result',
+      );
+      final CaptureItem restored =
+          (await repositories.captureRepository.listFeedItems()).single;
+      expect(restored.status, CaptureItemStatus.uploaded);
+      expect(restored.appliedDishId, isNull);
+      expect(await repositories.dishRepository.listDishes(), isEmpty);
+    });
+
+    test('late result cannot resurrect a locally deleted photo or dish',
+        () async {
+      final DateTime now = DateTime.utc(2026, 6, 20, 12);
+      await database.into(database.captureBatches).insert(
+            CaptureBatchesCompanion.insert(
+              id: 'capture_sync_result',
+              status: CaptureBatchStatus.processing.name,
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+      await database.into(database.captureItems).insert(
+            CaptureItemsCompanion.insert(
+              id: 'capture_sync_result',
+              batchId: const Value<String?>('capture_sync_result'),
+              kind: CaptureItemKind.photo.name,
+              status: CaptureItemStatus.classifying.name,
+              createdAt: now,
+              localMediaRef: const Value<String?>('/tmp/deleted-photo.jpg'),
+            ),
+          );
+      await database.into(database.processingOutbox).insert(
+            ProcessingOutboxCompanion.insert(
+              id: 'request_deleted_capture',
+              requestKind: ProcessingRequestKind.captureGrouping.databaseValue,
+              subjectId: 'capture_sync_result',
+              payloadJson: '{"captureIds":["capture_sync_result"]}',
+              deliveryState: ProcessingDeliveryState.submitted.name,
+              adoptionState: ProcessingAdoptionState.awaitingProposal.name,
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+      repositories = AppRepositories(
+        database: database,
+        apiClient: _SyncResultApiClient(),
+      );
+
+      await repositories.captureRepository.deleteCapture(
+        'capture_sync_result',
+      );
+      await repositories.syncRepository.pullCaptureSync();
+
+      expect(await repositories.captureRepository.listFeedItems(), isEmpty);
+      expect(await repositories.dishRepository.listDishes(), isEmpty);
+      expect(await repositories.captureRepository.listReviewItems(), isEmpty);
+    });
+
+    test('late rejected organization cannot hydrate an empty AI dish',
+        () async {
+      final DateTime now = DateTime.utc(2026, 6, 20, 12);
+      await repositories.dishRepository.upsertDish(
+        _zeroHistoryDish(id: 'dish_manual', title: 'Manual choice'),
+      );
+      await database.into(database.captureBatches).insert(
+            CaptureBatchesCompanion.insert(
+              id: 'capture_sync_result',
+              status: CaptureBatchStatus.applied.name,
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+      await database.into(database.captureItems).insert(
+            CaptureItemsCompanion.insert(
+              id: 'capture_sync_result',
+              batchId: const Value<String?>('capture_sync_result'),
+              kind: CaptureItemKind.photo.name,
+              status: CaptureItemStatus.applied.name,
+              createdAt: now,
+              localMediaRef: const Value<String?>('/tmp/manual-choice.jpg'),
+              appliedDishId: const Value<String?>('dish_manual'),
+            ),
+          );
+      await database.into(database.processingOutbox).insert(
+            ProcessingOutboxCompanion.insert(
+              id: 'request_rejected_capture',
+              requestKind: ProcessingRequestKind.captureGrouping.databaseValue,
+              subjectId: 'capture_sync_result',
+              payloadJson: '{"captureIds":["capture_sync_result"]}',
+              deliveryState: ProcessingDeliveryState.submitted.name,
+              adoptionState: ProcessingAdoptionState.rejected.name,
+              createdAt: now,
+              updatedAt: now,
+            ),
+          );
+      repositories = AppRepositories(
+        database: database,
+        apiClient: _SyncResultApiClient(),
+      );
+
+      await repositories.syncRepository.pullCaptureSync();
+
+      final CaptureItem capture =
+          (await repositories.captureRepository.listFeedItems()).single;
+      final List<Dish> dishes = await repositories.dishRepository.listDishes();
+      expect(capture.appliedDishId, 'dish_manual');
+      expect(dishes.map((Dish dish) => dish.id), <String>['dish_manual']);
+    });
+
+    test('dish-context capture assigns atomically without processing work',
+        () async {
+      await repositories.dishRepository.upsertDish(
+        _zeroHistoryDish(id: 'dish_direct', title: 'Direct dish'),
+      );
+
+      final CaptureBatch batch =
+          (await repositories.captureRepository.createPhotoBatch(
+        const <String>['/tmp/direct-one.jpg', '/tmp/direct-two.jpg'],
+        targetDishId: 'dish_direct',
+      ))!;
+      final Dish dish = (await repositories.dishRepository.listDishes())
+          .singleWhere((Dish dish) => dish.id == 'dish_direct');
+
+      expect(batch.status, CaptureBatchStatus.applied);
+      expect(
+        batch.items.map((CaptureItem item) => item.appliedDishId).toSet(),
+        <String>{'dish_direct'},
+      );
+      expect(dish.sourcePhotos, hasLength(2));
+      expect(dish.heroImageUrl, '/tmp/direct-one.jpg');
+      expect(dish.madeCount, 1);
+      expect(
+        await repositories.processingOutboxRepository.listRequests(),
+        isEmpty,
+      );
+      expect(
+        await repositories.captureCorrectionRepository.listCorrections(),
+        hasLength(1),
+      );
+
+      await repositories.captureRepository.deleteCapture(batch.items[0].id);
+      final Dish afterFirstDelete =
+          (await repositories.dishRepository.listDishes())
+              .singleWhere((Dish dish) => dish.id == 'dish_direct');
+      expect(afterFirstDelete.heroImageUrl, '/tmp/direct-two.jpg');
+      expect(afterFirstDelete.madeCount, 1);
+
+      await repositories.captureRepository.deleteCapture(batch.items[1].id);
+      final Dish afterSecondDelete =
+          (await repositories.dishRepository.listDishes())
+              .singleWhere((Dish dish) => dish.id == 'dish_direct');
+      expect(afterSecondDelete.heroImageUrl, isEmpty);
+      expect(afterSecondDelete.madeCount, 0);
     });
 
     test(
@@ -2077,6 +2211,7 @@ class _SyncResultApiClient extends MyMenuApiClient {
       if (ids.contains('capture_sync_result'))
         ApiCapture(
           id: 'capture_sync_result',
+          batchId: 'capture_sync_result',
           kind: CaptureItemKind.photo.name,
           status: CaptureItemStatus.applied.name,
           capturedAt: DateTime.utc(2026, 6, 20, 12),

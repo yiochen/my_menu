@@ -242,7 +242,11 @@ void main() {
         child: MaterialApp(
           theme: AppTheme.data,
           home: Scaffold(
-            body: MenuScreen(query: '', onQueryChanged: (_) {}),
+            body: MenuScreen(
+              query: '',
+              onQueryChanged: (_) {},
+              onOpenPhotos: () {},
+            ),
           ),
         ),
       ),

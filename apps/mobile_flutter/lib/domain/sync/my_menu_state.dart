@@ -8,6 +8,7 @@ import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_correction.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
+import 'package:mymenu/domain/capture/captured_photo.dart';
 import 'package:mymenu/domain/capture/review_item.dart';
 import 'package:mymenu/domain/capture/seeded_review_items.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
@@ -16,6 +17,7 @@ import 'package:mymenu/domain/planning/plan_dates.dart';
 import 'package:mymenu/domain/planning/planned_meal.dart';
 import 'package:mymenu/domain/planning/seeded_plan.dart';
 import 'package:mymenu/domain/processing/processing_consent_prompt.dart';
+import 'package:mymenu/domain/processing/processing_outbox.dart';
 import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
 import 'package:mymenu/domain/sync/repositories.dart';
 import 'package:uuid/uuid.dart';
@@ -30,6 +32,7 @@ part 'my_menu_state_dish_deletion.dart';
 part 'my_menu_state_planning.dart';
 part 'my_menu_state_sync.dart';
 part 'my_menu_state_processing.dart';
+part 'my_menu_state_photos.dart';
 
 class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
   MyMenuState({
@@ -43,6 +46,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
         _captureItems = const <CaptureItem>[],
         _captureCorrections = const <CaptureCorrection>[],
         _aiJobs = const <AiJob>[],
+        _processingRequests = const <ProcessingOutboxRequest>[],
         _reviewItems = repositories == null
             ? List<ReviewItem>.of(seededReviewItems)
             : const <ReviewItem>[],
@@ -68,6 +72,8 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
     List<CaptureItem> captureItems = const <CaptureItem>[],
     List<CaptureCorrection> captureCorrections = const <CaptureCorrection>[],
     List<AiJob> aiJobs = const <AiJob>[],
+    List<ProcessingOutboxRequest> processingRequests =
+        const <ProcessingOutboxRequest>[],
     List<ReviewItem> reviewItems = const <ReviewItem>[],
     ProcessingConsentDecision processingConsentDecision =
         ProcessingConsentDecision.notDecided,
@@ -77,6 +83,9 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
         _captureItems = List<CaptureItem>.of(captureItems),
         _captureCorrections = List<CaptureCorrection>.of(captureCorrections),
         _aiJobs = List<AiJob>.of(aiJobs),
+        _processingRequests = List<ProcessingOutboxRequest>.of(
+          processingRequests,
+        ),
         _reviewItems = List<ReviewItem>.of(reviewItems),
         _processingConsentDecision = processingConsentDecision,
         _extraPlanDays = 0,
@@ -89,12 +98,15 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
   List<CaptureItem> _captureItems;
   List<CaptureCorrection> _captureCorrections;
   List<AiJob> _aiJobs;
+  List<ProcessingOutboxRequest> _processingRequests;
   List<ReviewItem> _reviewItems;
   int? _extraPlanDays;
   final AppRepositories? _repositories;
   final NetworkStatusMonitor? _networkStatusMonitor;
   final Map<String, _PendingDishDeletion> _pendingDishDeletions =
       <String, _PendingDishDeletion>{};
+  final Map<String, _PendingCaptureDeletion> _pendingCaptureDeletions =
+      <String, _PendingCaptureDeletion>{};
   final Map<String, _PendingCaptureBatchDeletion>
       _pendingCaptureBatchDeletions = <String, _PendingCaptureBatchDeletion>{};
   StreamSubscription<void>? _networkStatusSubscription;
@@ -115,14 +127,34 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
         ),
       );
   List<PlannedMeal> get plan => _validPlannedMeals;
-  List<CaptureBatch> get captureBatches => List<CaptureBatch>.unmodifiable(
-        _captureBatches.where(
-          (CaptureBatch batch) => !_pendingCaptureBatchIds.contains(batch.id),
-        ),
-      );
+  List<CaptureBatch> get captureBatches {
+    final Set<String> hiddenCaptureIds = _hiddenCaptureIds;
+    return List<CaptureBatch>.unmodifiable(
+      _captureBatches
+          .where(
+            (CaptureBatch batch) => !_pendingCaptureBatchIds.contains(batch.id),
+          )
+          .map(
+            (CaptureBatch batch) => CaptureBatch(
+              id: batch.id,
+              status: batch.status,
+              createdAt: batch.createdAt,
+              updatedAt: batch.updatedAt,
+              items: batch.items
+                  .where(
+                    (CaptureItem item) => !hiddenCaptureIds.contains(item.id),
+                  )
+                  .toList(growable: false),
+              failureReason: batch.failureReason,
+            ),
+          )
+          .where((CaptureBatch batch) => batch.items.isNotEmpty),
+    );
+  }
+
   List<CaptureItem> get captureItems => List<CaptureItem>.unmodifiable(
         _captureItems.where(
-          (CaptureItem item) => !_pendingCaptureIds.contains(item.id),
+          (CaptureItem item) => !_hiddenCaptureIds.contains(item.id),
         ),
       );
   List<CaptureCorrection> get captureCorrections =>
@@ -134,8 +166,25 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
       );
   List<ReviewItem> get reviewItems => List<ReviewItem>.unmodifiable(
         _reviewItems.where(
-          (ReviewItem item) => !_pendingCaptureIds.contains(item.captureId),
+          (ReviewItem item) => !_hiddenCaptureIds.contains(item.captureId),
         ),
+      );
+  List<ProcessingOutboxRequest> get processingRequests =>
+      List<ProcessingOutboxRequest>.unmodifiable(_processingRequests);
+  List<CapturedPhoto> get photos => List<CapturedPhoto>.unmodifiable(
+        buildCapturedPhotos(
+          items: captureItems,
+          dishes: dishes,
+          reviewItems: reviewItems,
+          processingRequests: processingRequests,
+        ),
+      );
+  int get unorganizedPhotoCount =>
+      photos.where((CapturedPhoto photo) => !photo.isOrganized).length;
+  int get organizedPhotoCount =>
+      photos.where((CapturedPhoto photo) => photo.isOrganized).length;
+  bool get isOrganizingPhotos => photos.any(
+        (CapturedPhoto photo) => photo.state == CapturedPhotoState.organizing,
       );
   ProcessingConsentDecision get processingConsentDecision =>
       _processingConsentDecision;

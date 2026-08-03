@@ -155,6 +155,51 @@ void main() {
       expect(state.dishes, isEmpty);
     });
 
+    test('staged photo deletion stays hidden and Undo restores it', () async {
+      final DateTime now = DateTime.utc(2026, 8, 2);
+      final CaptureItem photo = CaptureItem(
+        id: 'photo_to_delete',
+        batchId: 'photo_batch',
+        kind: CaptureItemKind.photo,
+        status: CaptureItemStatus.localOnly,
+        createdAt: now,
+        localMediaRef: '/tmp/photo_to_delete.jpg',
+        capturedLocalDate: '2026-08-02',
+      );
+      final CaptureBatch batch = CaptureBatch(
+        id: 'photo_batch',
+        status: CaptureBatchStatus.local,
+        createdAt: now,
+        updatedAt: now,
+        items: <CaptureItem>[photo],
+      );
+      final MyMenuState state = MyMenuState.forTesting(
+        captureBatches: <CaptureBatch>[batch],
+        captureItems: <CaptureItem>[photo],
+      );
+      addTearDown(state.dispose);
+
+      final CaptureDeletionTicket ticket = state.stageCaptureDeletion(
+        <String>[photo.id],
+        undoWindow: const Duration(days: 1),
+      );
+
+      expect(state.photos, isEmpty);
+      expect(state.captureItems, isEmpty);
+      expect(state.captureBatches, isEmpty);
+      expect(state.undoCaptureDeletion(ticket), isTrue);
+      expect(state.photos.single.id, photo.id);
+      expect(state.captureBatches.single.items.single.id, photo.id);
+
+      final CaptureDeletionTicket committed = state.stageCaptureDeletion(
+        <String>[photo.id],
+        undoWindow: const Duration(days: 1),
+      );
+      await state.commitCaptureDeletion(committed);
+      expect(state.photos, isEmpty);
+      expect(state.pendingCaptureDeletionCount, 0);
+    });
+
     test(
       'grouping completed during Undo stays hidden and is preserved by Undo',
       () {

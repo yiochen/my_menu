@@ -47,6 +47,7 @@ void main() {
     expect(find.text('Take Photo'), findsOneWidget);
     expect(find.text('Import Photos'), findsOneWidget);
     expect(find.text('Add Idea'), findsOneWidget);
+    expect(find.text('Recent Captures'), findsNothing);
     expect(find.text('Mock photo capture'), findsNothing);
     expect(find.text('Add dish idea'), findsNothing);
   });
@@ -135,7 +136,7 @@ void main() {
       batch.items.map((item) => item.ordinal).toList(growable: false),
       <int>[0, 1, 2],
     );
-    expect(find.textContaining('dish placeholder'), findsOneWidget);
+    expect(find.textContaining('photos saved'), findsOneWidget);
     expect(find.text('3 photos organized into 1 dish'), findsNothing);
     state.dispose();
   });
@@ -172,7 +173,7 @@ void main() {
       batch.items.map((item) => item.ordinal).toList(growable: false),
       <int>[0, 1, 2, 3],
     );
-    expect(find.textContaining('dish placeholder'), findsOneWidget);
+    expect(find.textContaining('photos saved'), findsOneWidget);
     expect(find.text('4 photos organized into 1 dish'), findsNothing);
     state.dispose();
   });

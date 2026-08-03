@@ -94,6 +94,7 @@ extension SyncRepositoryPull on SyncRepository {
     final Set<String> deletedDishIds = <String>{};
     final Set<String> deletedReviewItemIds = <String>{};
     final Set<String> deletedAiJobIds = <String>{};
+    final Set<String> capturesAppliedToNewDishes = <String>{};
 
     for (final ApiSyncEvent event in events) {
       final String? captureId = event.entityIds['captureId'];
@@ -130,6 +131,15 @@ extension SyncRepositoryPull on SyncRepository {
             reviewItemIds.add(reviewItemId);
           }
         case 'capture.applied_to_new_dish':
+          if (captureId != null) {
+            capturesAppliedToNewDishes.add(captureId);
+          }
+          if (captureId != null) {
+            captureIds.add(captureId);
+          }
+          if (dishId != null) {
+            dishIds.add(dishId);
+          }
         case 'capture.applied_to_existing_dish':
           if (captureId != null) {
             captureIds.add(captureId);
@@ -209,12 +219,21 @@ extension SyncRepositoryPull on SyncRepository {
     final List<ApiAiJob> aiJobs =
         await _apiClient.getAiJobs(aiJobIds.toList(growable: false));
 
+    final Set<String> rejectedResultDishIds = <String>{};
     await _database.transaction(() async {
       for (final ApiCaptureBatch batch in batches) {
         await _upsertCaptureBatch(batch);
       }
       for (final ApiCapture capture in captures) {
-        await _upsertCapture(capture);
+        final bool adopted = await _upsertCapture(
+          capture,
+          createdDishId: capturesAppliedToNewDishes.contains(capture.id)
+              ? capture.appliedDishId
+              : null,
+        );
+        if (!adopted && capture.appliedDishId != null) {
+          rejectedResultDishIds.add(capture.appliedDishId!);
+        }
       }
       for (final ApiReviewItem item in reviewItems) {
         await _upsertReviewItem(item);
@@ -224,7 +243,9 @@ extension SyncRepositoryPull on SyncRepository {
       }
     });
     for (final ApiDish dish in dishes) {
-      await _upsertDish(dish);
+      if (!rejectedResultDishIds.contains(dish.id)) {
+        await _upsertDish(dish);
+      }
     }
   }
 
@@ -312,58 +333,6 @@ extension SyncRepositoryPull on SyncRepository {
         // The authoritative row is gone; a missing local copy is harmless.
       }
     }
-  }
-
-  Future<void> _upsertCapture(ApiCapture capture) async {
-    final db.CaptureItemRow? existing =
-        await (_database.select(_database.captureItems)
-              ..where((db.CaptureItems table) => table.id.equals(capture.id)))
-            .getSingleOrNull();
-
-    await _database.into(_database.captureItems).insertOnConflictUpdate(
-          db.CaptureItemsCompanion.insert(
-            id: capture.id,
-            batchId: Value<String?>(existing?.batchId ?? capture.batchId),
-            ordinal: Value<int>(capture.ordinal ?? existing?.ordinal ?? 0),
-            kind: capture.kind,
-            status: _localCaptureStatus(capture.status),
-            createdAt: capture.capturedAt,
-            localMediaRef: Value<String?>(existing?.localMediaRef),
-            remoteMediaRef: Value<String?>(capture.image?.mediaRef),
-            ideaText: Value<String?>(capture.ideaText),
-            capturedAt: Value<DateTime?>(capture.capturedAt),
-            capturedLocalDate: Value<String?>(capture.capturedLocalDate),
-            captureDateSource: Value<String?>(capture.captureDateSource),
-            appliedDishId: Value<String?>(capture.appliedDishId),
-            failureReason: Value<String?>(capture.failureReason),
-          ),
-        );
-    final String? batchId = existing?.batchId ?? capture.batchId;
-    if (batchId != null && capture.status == 'needs_review') {
-      await ProcessingOutboxRepository(_database).markProposalReadyForSubject(
-        kind: ProcessingRequestKind.captureGrouping,
-        subjectId: batchId,
-      );
-    }
-  }
-
-  Future<void> _upsertReviewItem(ApiReviewItem item) async {
-    await _database.into(_database.reviewItems).insertOnConflictUpdate(
-          db.ReviewItemsCompanion.insert(
-            id: item.id,
-            captureId: Value<String?>(item.captureId),
-            summary: item.summary,
-            suggestedDishIdsJson: jsonEncode(item.suggestedDishIds),
-            confidenceLabel: item.confidenceLabel ?? item.status,
-          ),
-        );
-  }
-
-  String _localCaptureStatus(String status) {
-    return switch (status) {
-      'needs_review' => capture_domain.CaptureItemStatus.needsReview.name,
-      _ => status,
-    };
   }
 
   String _localBatchStatus(String status) {

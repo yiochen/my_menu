@@ -151,7 +151,8 @@ void main() {
     expect(request.privacyNoticeVersion, isNull);
   });
 
-  test('declined AI creates one local untitled dish per photo', () async {
+  test('declined AI keeps every photo locally available and unorganized',
+      () async {
     final AppDatabase database =
         AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(database.close);
@@ -182,29 +183,12 @@ void main() {
     expect(batch!.status, CaptureBatchStatus.applied);
     expect(
       batch.items.map((CaptureItem item) => item.status),
-      everyElement(CaptureItemStatus.applied),
+      everyElement(CaptureItemStatus.localOnly),
     );
     final dishes = await repositories.dishRepository.listDishes();
-    expect(dishes, hasLength(2));
-    expect(
-      dishes.map((dish) => dish.title),
-      everyElement('Untitled dish'),
-    );
-    expect(
-      dishes.map((dish) => dish.heroImageUrl).toSet(),
-      <String>{'/tmp/no-ai-one.jpg', '/tmp/no-ai-two.jpg'},
-    );
-    expect(
-      dishes
-          .expand((dish) => dish.sourcePhotos)
-          .map((photo) => photo.url)
-          .toSet(),
-      <String>{'/tmp/no-ai-one.jpg', '/tmp/no-ai-two.jpg'},
-    );
-    expect(
-      batch.items.map((CaptureItem item) => item.appliedDishId).toSet(),
-      dishes.map((dish) => dish.id).toSet(),
-    );
+    expect(dishes, isEmpty);
+    expect(batch.items.map((CaptureItem item) => item.appliedDishId),
+        everyElement(isNull));
     expect(
       await repositories.processingOutboxRepository.listRequests(),
       isEmpty,
@@ -213,7 +197,7 @@ void main() {
     expect(await database.select(database.syncOperations).get(), isEmpty);
   });
 
-  test('declining repairs an existing held photo as a local dish', () async {
+  test('declining cancels held AI work without inventing a dish', () async {
     final AppDatabase database =
         AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(database.close);
@@ -240,11 +224,10 @@ void main() {
         (await repositories.captureRepository.listBatches()).single;
     final ProcessingOutboxRequest request =
         (await repositories.processingOutboxRepository.listRequests()).single;
-    expect(dishes.single.title, 'Untitled dish');
-    expect(dishes.single.heroImageUrl, '/tmp/already-waiting.jpg');
+    expect(dishes, isEmpty);
     expect(repairedBatch.status, CaptureBatchStatus.applied);
-    expect(repairedBatch.items.single.status, CaptureItemStatus.applied);
-    expect(repairedBatch.items.single.appliedDishId, dishes.single.id);
+    expect(repairedBatch.items.single.status, CaptureItemStatus.localOnly);
+    expect(repairedBatch.items.single.appliedDishId, isNull);
     expect(request.deliveryState, ProcessingDeliveryState.canceled);
     expect(await database.select(database.aiJobs).get(), isEmpty);
     expect(await database.select(database.syncOperations).get(), isEmpty);

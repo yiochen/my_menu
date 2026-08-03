@@ -201,6 +201,51 @@ class ProcessingOutboxRepository {
     );
   }
 
+  Future<void> rejectProposal(String requestId) {
+    return _setAdoptionStateWhere(
+      (db.ProcessingOutbox table) => table.id.equals(requestId),
+      ProcessingAdoptionState.rejected,
+    );
+  }
+
+  Future<void> supersedeCaptureGrouping(String batchId) async {
+    final DateTime now = DateTime.now();
+    await (_database.update(_database.processingOutbox)
+          ..where(
+            (db.ProcessingOutbox table) =>
+                table.requestKind.equals(
+                  ProcessingRequestKind.captureGrouping.databaseValue,
+                ) &
+                table.subjectId.equals(batchId),
+          ))
+        .write(
+      db.ProcessingOutboxCompanion(
+        adoptionState: Value<String>(ProcessingAdoptionState.rejected.name),
+        updatedAt: Value<DateTime>(now),
+      ),
+    );
+    await (_database.update(_database.processingOutbox)
+          ..where(
+            (db.ProcessingOutbox table) =>
+                table.requestKind.equals(
+                  ProcessingRequestKind.captureGrouping.databaseValue,
+                ) &
+                table.subjectId.equals(batchId) &
+                (table.deliveryState.equals(
+                      ProcessingDeliveryState.waitingForConsent.name,
+                    ) |
+                    table.deliveryState.equals(
+                      ProcessingDeliveryState.pendingUpload.name,
+                    )),
+          ))
+        .write(
+      db.ProcessingOutboxCompanion(
+        deliveryState: Value<String>(ProcessingDeliveryState.canceled.name),
+        updatedAt: Value<DateTime>(now),
+      ),
+    );
+  }
+
   Future<void> markProposalReadyForSubject({
     required ProcessingRequestKind kind,
     required String subjectId,
