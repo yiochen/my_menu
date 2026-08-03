@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
+import 'package:mymenu/features/menu/menu_grid_card.dart';
 import 'package:mymenu/shared/widgets/app_image.dart';
 import 'package:mymenu/shared/widgets/dish_artwork.dart';
 import 'package:mymenu/shared/widgets/food_cover_placeholder.dart';
@@ -64,6 +65,43 @@ void main() {
     expect(
       (placeholder.image as AssetImage).assetName,
       FoodCoverPlaceholder.assetPath,
+    );
+  });
+
+  testWidgets('menu cards request display-sized artwork decoding', (
+    WidgetTester tester,
+  ) async {
+    final Dish dish = Dish(
+      id: 'menu-dish',
+      title: 'Menu Dish',
+      description: '',
+      heroImageUrl: '/captures/menu-dish.jpg',
+      category: 'Dinner',
+      prepMinutes: 20,
+      difficulty: 'Easy',
+      madeCount: 1,
+      lastMadeLabel: 'Today',
+      ingredients: const <String>[],
+      recipeSteps: const <String>[],
+      notes: const <DishNote>[],
+      sourcePhotos: const <SourcePhoto>[],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 180,
+            height: 260,
+            child: MenuGridCard(dish: dish, onTap: () {}),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester.widget<AppImage>(find.byType(AppImage)).resizeForDisplay,
+      isTrue,
     );
   });
 }

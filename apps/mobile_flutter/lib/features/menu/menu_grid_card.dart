@@ -166,7 +166,7 @@ class _MenuCardArtwork extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: <Widget>[
-        DishArtwork(dish: dish),
+        DishArtwork(dish: dish, resizeForDisplay: true),
         if (selectionMode)
           Positioned.fill(
             child: ColoredBox(

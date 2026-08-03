@@ -8,11 +8,13 @@ class DishArtwork extends StatelessWidget {
   const DishArtwork({
     required this.dish,
     this.fit = BoxFit.cover,
+    this.resizeForDisplay = false,
     super.key,
   });
 
   final Dish dish;
   final BoxFit fit;
+  final bool resizeForDisplay;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +26,7 @@ class DishArtwork extends StatelessWidget {
       width: double.infinity,
       height: double.infinity,
       fit: fit,
+      resizeForDisplay: resizeForDisplay,
     );
   }
 }

@@ -27,16 +27,53 @@ class DishRepository {
   Future<List<Dish>> listDishes() async {
     final List<db.DishRow> rows =
         await _database.select(_database.dishes).get();
-    final List<Dish> dishes = <Dish>[];
-    for (final db.DishRow row in rows) {
-      dishes.add(
-        row.toDomain(
-          await _sourcePhotosFor(row.id),
-          await _notesFor(row.id),
-        ),
-      );
+    if (rows.isEmpty) {
+      return const <Dish>[];
     }
-    return dishes;
+
+    final List<String> dishIds =
+        rows.map((db.DishRow row) => row.id).toList(growable: false);
+    final List<db.SourcePhotoRow> sourceRows = await (_database.select(
+      _database.sourcePhotos,
+    )..where((db.SourcePhotos table) => table.dishId.isIn(dishIds)))
+        .get();
+    final List<db.DishNoteRow> noteRows = await (_database.select(
+      _database.dishNotes,
+    )
+          ..where(
+            (db.DishNotes table) =>
+                table.dishId.isIn(dishIds) & table.deletedAt.isNull(),
+          )
+          ..orderBy(<OrderingTerm Function(db.$DishNotesTable)>[
+            (db.DishNotes table) => OrderingTerm.asc(table.dishId),
+            (db.DishNotes table) => OrderingTerm.asc(table.position),
+            (db.DishNotes table) => OrderingTerm.asc(table.createdAt),
+          ]))
+        .get();
+
+    final Map<String, List<SourcePhoto>> sourcesByDishId =
+        <String, List<SourcePhoto>>{};
+    for (final db.SourcePhotoRow row in sourceRows) {
+      sourcesByDishId
+          .putIfAbsent(row.dishId, () => <SourcePhoto>[])
+          .add(row.toDomain());
+    }
+    final Map<String, List<DishNote>> notesByDishId =
+        <String, List<DishNote>>{};
+    for (final db.DishNoteRow row in noteRows) {
+      notesByDishId
+          .putIfAbsent(row.dishId, () => <DishNote>[])
+          .add(row.toDomain());
+    }
+
+    return rows
+        .map(
+          (db.DishRow row) => row.toDomain(
+            sourcesByDishId[row.id] ?? const <SourcePhoto>[],
+            notesByDishId[row.id] ?? const <DishNote>[],
+          ),
+        )
+        .toList(growable: false);
   }
 
   Future<void> upsertDish(Dish dish) async {
@@ -304,14 +341,6 @@ class DishRepository {
         ),
       );
     }
-  }
-
-  Future<List<SourcePhoto>> _sourcePhotosFor(String dishId) async {
-    final List<db.SourcePhotoRow> rows = await (_database.select(
-      _database.sourcePhotos,
-    )..where((db.SourcePhotos table) => table.dishId.equals(dishId)))
-        .get();
-    return rows.map((db.SourcePhotoRow row) => row.toDomain()).toList();
   }
 
   Future<List<DishNote>> _notesFor(String dishId) async {

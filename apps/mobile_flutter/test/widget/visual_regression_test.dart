@@ -580,6 +580,10 @@ Future<void> _expectFullAppGolden(
 Future<void> _settleGoldenFrame(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 100));
   await tester.pumpAndSettle();
+  await tester.runAsync(
+    () => Future<void>.delayed(const Duration(milliseconds: 100)),
+  );
+  await tester.pumpAndSettle();
 }
 
 Future<void> _loadGoldenFonts() async {

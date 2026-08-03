@@ -56,6 +56,29 @@ void main() {
       expect(plannedMeals.length, buildSeededPlan().length);
     });
 
+    test('loads the complete dish graph with a fixed number of reads',
+        () async {
+      final _SelectCounter queryCounter = _SelectCounter();
+      final AppDatabase measuredDatabase = AppDatabase.forTesting(
+        NativeDatabase.memory().interceptWith(queryCounter),
+      );
+      addTearDown(measuredDatabase.close);
+      final AppRepositories measuredRepositories = AppRepositories(
+        database: measuredDatabase,
+        apiClient: FakeMyMenuApiClient(),
+      );
+      await measuredRepositories.seedIfNeeded();
+      queryCounter.reset();
+
+      final List<Dish> dishes =
+          await measuredRepositories.dishRepository.listDishes();
+
+      expect(dishes.length, seededDishes.length);
+      expect(dishes.every((Dish dish) => dish.sourcePhotos.isNotEmpty), isTrue);
+      expect(dishes.every((Dish dish) => dish.notes.isNotEmpty), isTrue);
+      expect(queryCounter.selectCount, 3);
+    });
+
     test('seedIfNeeded is idempotent', () async {
       await repositories.seedIfNeeded();
       await repositories.seedIfNeeded();
@@ -2381,5 +2404,21 @@ class _DeleteThenHydrationFailureApiClient extends FakeMyMenuApiClient {
   @override
   Future<List<ApiDish>> getDishes(List<String> ids) {
     throw StateError('Dish hydration failed.');
+  }
+}
+
+class _SelectCounter extends QueryInterceptor {
+  int selectCount = 0;
+
+  void reset() => selectCount = 0;
+
+  @override
+  Future<List<Map<String, Object?>>> runSelect(
+    QueryExecutor executor,
+    String statement,
+    List<Object?> args,
+  ) {
+    selectCount += 1;
+    return executor.runSelect(statement, args);
   }
 }
