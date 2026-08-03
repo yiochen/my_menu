@@ -84,16 +84,30 @@ List<CapturedPhoto> buildCapturedPhotos({
       reviewItem: review,
     );
   }).toList(growable: false);
+  final Map<String, DateTime> groupTimes = <String, DateTime>{};
+  for (final CapturedPhoto photo in photos) {
+    final String groupKey = photo.batchId ?? 'photo:${photo.id}';
+    final DateTime? current = groupTimes[groupKey];
+    if (current == null || photo.capturedAt.isAfter(current)) {
+      groupTimes[groupKey] = photo.capturedAt;
+    }
+  }
   return photos
     ..sort((CapturedPhoto left, CapturedPhoto right) {
       final int byDate = right.dateKey.compareTo(left.dateKey);
       if (byDate != 0) {
         return byDate;
       }
-      if (left.batchId != null && left.batchId == right.batchId) {
-        return left.ordinal.compareTo(right.ordinal);
+      final String leftGroup = left.batchId ?? 'photo:${left.id}';
+      final String rightGroup = right.batchId ?? 'photo:${right.id}';
+      if (leftGroup == rightGroup) {
+        final int byOrdinal = left.ordinal.compareTo(right.ordinal);
+        return byOrdinal != 0 ? byOrdinal : left.id.compareTo(right.id);
       }
-      return right.capturedAt.compareTo(left.capturedAt);
+      final int byGroupTime = groupTimes[rightGroup]!.compareTo(
+        groupTimes[leftGroup]!,
+      );
+      return byGroupTime != 0 ? byGroupTime : leftGroup.compareTo(rightGroup);
     });
 }
 

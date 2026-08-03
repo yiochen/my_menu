@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mymenu/domain/capture/captured_photo.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 
@@ -52,6 +53,82 @@ Future<String?> showNewPhotoDishDialog(BuildContext context) async {
   );
   controller.dispose();
   return result;
+}
+
+Future<Map<String, String>?> showPhotoSplitDialog(
+  BuildContext context, {
+  required List<CapturedPhoto> photos,
+  required List<Dish> dishes,
+}) {
+  final Map<String, String> assignments = <String, String>{};
+  return showDialog<Map<String, String>>(
+    context: context,
+    builder: (BuildContext context) => StatefulBuilder(
+      builder: (BuildContext context, StateSetter setState) {
+        final bool canSplit = assignments.length == photos.length &&
+            assignments.values.toSet().length > 1;
+        return AlertDialog(
+          title: const Text('Split across dishes'),
+          content: SizedBox(
+            width: 420,
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: photos.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (BuildContext context, int index) {
+                final CapturedPhoto photo = photos[index];
+                return Row(
+                  children: <Widget>[
+                    SizedBox(
+                      width: 76,
+                      child: Text('Photo ${index + 1}'),
+                    ),
+                    Expanded(
+                      child: DropdownButton<String>(
+                        key: ValueKey<String>('split_photo_${photo.id}'),
+                        value: assignments[photo.id],
+                        isExpanded: true,
+                        hint: const Text('Choose dish'),
+                        items: dishes
+                            .map(
+                              (Dish dish) => DropdownMenuItem<String>(
+                                value: dish.id,
+                                child: Text(dish.title),
+                              ),
+                            )
+                            .toList(growable: false),
+                        onChanged: (String? value) {
+                          if (value != null) {
+                            setState(() => assignments[photo.id] = value);
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              key: const ValueKey<String>('confirm_photo_split'),
+              onPressed: canSplit
+                  ? () => Navigator.pop(
+                        context,
+                        Map<String, String>.from(assignments),
+                      )
+                  : null,
+              child: const Text('Split'),
+            ),
+          ],
+        );
+      },
+    ),
+  );
 }
 
 class _DishPicker extends StatefulWidget {

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 
 import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
+import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/capture/add_idea_sheet.dart';
 import 'package:mymenu/features/capture/camera_batch_sheet.dart';
@@ -175,30 +176,29 @@ Future<void> _captureMedia(
     if (!context.mounted || capturedMedia.isEmpty) {
       return;
     }
-    final CaptureBatch? batch = await state.addPhotoCaptures(capturedMedia);
+    final CaptureBatch? batch = await state.addPhotoCaptures(
+      capturedMedia,
+      targetDishId: targetDishId,
+    );
     if (!context.mounted) {
       return;
     }
     if (batch != null) {
-      if (targetDishId != null) {
-        await state.organizePhotos(
-          captureIds: batch.items.map((item) => item.id),
-          dishId: targetDishId,
-        );
-        if (!context.mounted) {
-          return;
-        }
-      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(targetDishId != null
               ? capturedMedia.length == 1
                   ? 'Photo added to this dish.'
                   : '${capturedMedia.length} photos added to this dish.'
-              : capturedMedia.length == 1
-                  ? 'Photo saved. You can use it now while MyMenu organizes it.'
-                  : '${capturedMedia.length} photos saved. You can use them now '
-                      'while MyMenu organizes them.'),
+              : state.processingConsentDecision ==
+                      ProcessingConsentDecision.accepted
+                  ? capturedMedia.length == 1
+                      ? 'Photo saved. You can use it now while MyMenu organizes it.'
+                      : '${capturedMedia.length} photos saved. You can use them now '
+                          'while MyMenu organizes them.'
+                  : capturedMedia.length == 1
+                      ? 'Photo saved. It’s ready to organize.'
+                      : '${capturedMedia.length} photos saved. They’re ready to organize.'),
         ),
       );
     }

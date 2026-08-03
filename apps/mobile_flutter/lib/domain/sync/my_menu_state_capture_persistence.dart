@@ -1,8 +1,11 @@
 part of 'my_menu_state.dart';
 
 extension MyMenuStateCapturePersistence on MyMenuState {
-  Future<CaptureBatch?> addPhotoCaptures(List<Object> capturedMedia) {
-    return _createPhotoCaptures(capturedMedia);
+  Future<CaptureBatch?> addPhotoCaptures(
+    List<Object> capturedMedia, {
+    String? targetDishId,
+  }) {
+    return _createPhotoCaptures(capturedMedia, targetDishId: targetDishId);
   }
 
   void discardCapture(String captureId) {
@@ -92,8 +95,9 @@ extension MyMenuStateCapturePersistence on MyMenuState {
   }
 
   Future<CaptureBatch?> _createPhotoCaptures(
-    List<Object> capturedMedia,
-  ) async {
+    List<Object> capturedMedia, {
+    String? targetDishId,
+  }) async {
     final AppRepositories? repositories = _repositories;
     if (repositories == null) {
       final List<ReviewItem> nextReviewItems = _reviewItemsWithPhotoCaptures(
@@ -113,13 +117,20 @@ extension MyMenuStateCapturePersistence on MyMenuState {
     }
 
     final CaptureBatch? batch =
-        await repositories.captureRepository.createPhotoBatch(capturedMedia);
+        await repositories.captureRepository.createPhotoBatch(
+      capturedMedia,
+      targetDishId: targetDishId,
+    );
     if (batch == null) {
       return null;
     }
-    _startCaptureSyncPollingWindow();
+    if (targetDishId == null) {
+      _startCaptureSyncPollingWindow();
+    }
     await _reloadFromRepositories();
-    unawaited(_syncCaptures());
+    if (targetDishId == null) {
+      unawaited(_syncCaptures());
+    }
     return batch;
   }
 

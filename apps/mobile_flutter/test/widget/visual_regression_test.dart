@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/app/home_shell.dart';
+import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/capture/seeded_review_items.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/dishes/seeded_dishes.dart';
@@ -69,6 +70,81 @@ void main() {
           findsOneWidget,
         );
         await _expectFullAppGolden(tester, 'ui_menu_home');
+      });
+    });
+
+    testWidgets('photo gallery', (WidgetTester tester) async {
+      final MyMenuState state = _buildPhotoGoldenState();
+      addTearDown(state.dispose);
+      await runWithMockNetworkImages(() async {
+        await _pumpGoldenApp(tester, state);
+        await tester.tap(find.text('Menu'));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const ValueKey<String>('menu_photos_button')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('All 3'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Photos'), findsOneWidget);
+        expect(find.text('Unorganized 2'), findsOneWidget);
+        await _expectFullAppGolden(tester, 'ui_photo_gallery');
+      });
+    });
+
+    testWidgets('photo detail', (WidgetTester tester) async {
+      final MyMenuState state = _buildPhotoGoldenState();
+      addTearDown(state.dispose);
+      await runWithMockNetworkImages(() async {
+        await _pumpGoldenApp(tester, state);
+        await tester.tap(find.text('Menu'));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const ValueKey<String>('menu_photos_button')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const ValueKey<String>('photo_tile_golden_unorganized')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Add to a dish'), findsOneWidget);
+        await _expectFullAppGolden(tester, 'ui_photo_detail');
+      });
+    });
+
+    testWidgets('empty photo gallery', (WidgetTester tester) async {
+      final MyMenuState state = MyMenuState.forTesting(dishes: seededDishes);
+      addTearDown(state.dispose);
+      await runWithMockNetworkImages(() async {
+        await _pumpGoldenApp(tester, state);
+        await tester.tap(find.text('Menu'));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const ValueKey<String>('menu_photos_button')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Your photos will live here'), findsOneWidget);
+        await _expectFullAppGolden(tester, 'ui_photo_gallery_empty');
+      });
+    });
+
+    testWidgets('dense photo gallery', (WidgetTester tester) async {
+      final MyMenuState state = _buildDensePhotoGoldenState();
+      addTearDown(state.dispose);
+      await runWithMockNetworkImages(() async {
+        await _pumpGoldenApp(tester, state);
+        await tester.tap(find.text('Menu'));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const ValueKey<String>('menu_photos_button')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Unorganized 18'), findsOneWidget);
+        await _expectFullAppGolden(tester, 'ui_photo_gallery_dense');
       });
     });
 
@@ -366,6 +442,67 @@ MyMenuState _buildGoldenState() {
     plan: buildSeededPlan(_goldenPlanDate),
     reviewItems: seededReviewItems,
     processingConsentDecision: ProcessingConsentDecision.accepted,
+  );
+}
+
+MyMenuState _buildPhotoGoldenState() {
+  final DateTime capturedAt = DateTime(2026, 7, 22, 18, 30);
+  return MyMenuState.forTesting(
+    dishes: seededDishes,
+    captureItems: <CaptureItem>[
+      CaptureItem(
+        id: 'golden_unorganized',
+        batchId: 'golden_batch',
+        kind: CaptureItemKind.photo,
+        status: CaptureItemStatus.localOnly,
+        createdAt: capturedAt,
+        capturedAt: capturedAt,
+        capturedLocalDate: '2026-07-22',
+        localMediaRef: seededDishes[0].heroImageUrl,
+      ),
+      CaptureItem(
+        id: 'golden_review',
+        batchId: 'golden_review_batch',
+        kind: CaptureItemKind.photo,
+        status: CaptureItemStatus.needsReview,
+        createdAt: capturedAt.subtract(const Duration(minutes: 8)),
+        capturedAt: capturedAt.subtract(const Duration(minutes: 8)),
+        capturedLocalDate: '2026-07-22',
+        localMediaRef: seededDishes[1].heroImageUrl,
+      ),
+      CaptureItem(
+        id: 'golden_organized',
+        batchId: 'golden_organized_batch',
+        kind: CaptureItemKind.photo,
+        status: CaptureItemStatus.applied,
+        createdAt: capturedAt.subtract(const Duration(days: 1)),
+        capturedAt: capturedAt.subtract(const Duration(days: 1)),
+        capturedLocalDate: '2026-07-21',
+        localMediaRef: seededDishes[2].heroImageUrl,
+        appliedDishId: seededDishes[2].id,
+      ),
+    ],
+  );
+}
+
+MyMenuState _buildDensePhotoGoldenState() {
+  final DateTime capturedAt = DateTime(2026, 7, 22, 18, 30);
+  return MyMenuState.forTesting(
+    dishes: seededDishes,
+    captureItems: List<CaptureItem>.generate(18, (int index) {
+      final DateTime itemTime = capturedAt.subtract(Duration(minutes: index));
+      return CaptureItem(
+        id: 'golden_dense_$index',
+        batchId: 'golden_dense_batch_${index ~/ 3}',
+        ordinal: index % 3,
+        kind: CaptureItemKind.photo,
+        status: CaptureItemStatus.localOnly,
+        createdAt: itemTime,
+        capturedAt: itemTime,
+        capturedLocalDate: '2026-07-22',
+        localMediaRef: seededDishes[index % seededDishes.length].heroImageUrl,
+      );
+    }),
   );
 }
 

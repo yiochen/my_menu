@@ -1,18 +1,28 @@
 part of 'repositories.dart';
 
 extension SyncRepositoryCaptureAdoption on SyncRepository {
-  Future<void> _upsertCapture(ApiCapture capture) async {
+  Future<bool> _upsertCapture(
+    ApiCapture capture, {
+    String? createdDishId,
+  }) async {
     final db.CaptureItemRow? existing =
         await (_database.select(_database.captureItems)
               ..where((db.CaptureItems table) => table.id.equals(capture.id)))
             .getSingleOrNull();
+    if (existing == null && await _isRejectedBatch(capture.batchId)) {
+      return false;
+    }
     final bool preserveLocalOrganization = existing != null &&
         await _hasAuthoritativeLocalOrganization(capture.id, existing.batchId);
     if (!preserveLocalOrganization &&
         existing != null &&
         existing.appliedDishId == null &&
         capture.appliedDishId != null) {
-      await _recordAutomaticOrganization(existing, capture.appliedDishId!);
+      await _recordAutomaticOrganization(
+        existing,
+        capture.appliedDishId!,
+        createdDishId: createdDishId,
+      );
     }
 
     await _database.into(_database.captureItems).insertOnConflictUpdate(
@@ -48,6 +58,8 @@ extension SyncRepositoryCaptureAdoption on SyncRepository {
         subjectId: batchId,
       );
     }
+    return !(preserveLocalOrganization &&
+        capture.appliedDishId != existing.appliedDishId);
   }
 
   Future<void> _upsertReviewItem(ApiReviewItem item) async {
@@ -57,11 +69,13 @@ extension SyncRepositoryCaptureAdoption on SyncRepository {
                 (db.CaptureItems table) => table.id.equals(item.captureId),
               ))
             .getSingleOrNull();
-    if (capture != null &&
-        await _hasAuthoritativeLocalOrganization(
-          capture.id,
-          capture.batchId,
-        )) {
+    if (capture == null) {
+      return;
+    }
+    if (await _hasAuthoritativeLocalOrganization(
+      capture.id,
+      capture.batchId,
+    )) {
       return;
     }
     await _database.into(_database.reviewItems).insertOnConflictUpdate(
@@ -110,10 +124,29 @@ extension SyncRepositoryCaptureAdoption on SyncRepository {
     });
   }
 
+  Future<bool> _isRejectedBatch(String? batchId) async {
+    if (batchId == null) {
+      return false;
+    }
+    final db.ProcessingOutboxRow? request =
+        await (_database.select(_database.processingOutbox)
+              ..where(
+                (db.ProcessingOutbox table) =>
+                    table.subjectId.equals(batchId) &
+                    table.adoptionState.equals(
+                      ProcessingAdoptionState.rejected.name,
+                    ),
+              )
+              ..limit(1))
+            .getSingleOrNull();
+    return request != null;
+  }
+
   Future<void> _recordAutomaticOrganization(
     db.CaptureItemRow existing,
-    String targetDishId,
-  ) async {
+    String targetDishId, {
+    String? createdDishId,
+  }) async {
     final DateTime now = DateTime.now();
     final String correctionId = 'auto_${existing.id}_$targetDishId';
     await _database.into(_database.captureCorrections).insertOnConflictUpdate(
@@ -130,6 +163,7 @@ extension SyncRepositoryCaptureAdoption on SyncRepository {
               },
             }),
             targetDishId: targetDishId,
+            createdDishId: Value<String?>(createdDishId),
             status: CaptureCorrectionStatus.synced.name,
             createdAt: now,
             updatedAt: now,

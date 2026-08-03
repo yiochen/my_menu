@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:mymenu/domain/capture/capture_correction.dart';
+import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 
 class PhotoSelectionBar extends StatelessWidget {
@@ -38,8 +42,8 @@ class PhotoSelectionBar extends StatelessWidget {
                 icon: const Icon(Icons.restaurant_menu_rounded),
               ),
               IconButton(
-                tooltip: 'Split selected photos into a new dish',
-                onPressed: onCreate,
+                tooltip: 'Split selected photos across dishes',
+                onPressed: count > 1 ? onCreate : null,
                 color: Colors.white,
                 icon: const Icon(Icons.call_split_rounded),
               ),
@@ -55,4 +59,62 @@ class PhotoSelectionBar extends StatelessWidget {
       ),
     );
   }
+}
+
+void showPhotoUndoSnackBar(
+  BuildContext context,
+  MyMenuState state,
+  String? batchId,
+  String message,
+) {
+  if (batchId == null) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      action: SnackBarAction(
+        label: 'Undo',
+        onPressed: () => unawaited(
+          state.undoLatestCaptureCorrection(batchId),
+        ),
+      ),
+    ),
+  );
+}
+
+void showPhotoBulkUndoSnackBar(
+  BuildContext context,
+  MyMenuState state,
+  List<CaptureCorrection> corrections,
+  String message,
+) {
+  if (corrections.isEmpty) return;
+  final List<String> ids = corrections
+      .map((CaptureCorrection correction) => correction.id)
+      .toList(growable: false);
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      action: SnackBarAction(
+        label: 'Undo',
+        onPressed: () => unawaited(state.undoPhotoCorrections(ids)),
+      ),
+    ),
+  );
+}
+
+Future<SnackBarClosedReason> showPhotoDeletionUndo(
+  BuildContext context,
+  Set<String> ids, {
+  required VoidCallback onUndo,
+}) {
+  return ScaffoldMessenger.of(context)
+      .showSnackBar(
+        SnackBar(
+          content: Text(
+            ids.length == 1 ? 'Photo removed' : '${ids.length} photos removed',
+          ),
+          action: SnackBarAction(label: 'Undo', onPressed: onUndo),
+        ),
+      )
+      .closed;
 }

@@ -94,6 +94,7 @@ extension SyncRepositoryPull on SyncRepository {
     final Set<String> deletedDishIds = <String>{};
     final Set<String> deletedReviewItemIds = <String>{};
     final Set<String> deletedAiJobIds = <String>{};
+    final Set<String> capturesAppliedToNewDishes = <String>{};
 
     for (final ApiSyncEvent event in events) {
       final String? captureId = event.entityIds['captureId'];
@@ -130,6 +131,15 @@ extension SyncRepositoryPull on SyncRepository {
             reviewItemIds.add(reviewItemId);
           }
         case 'capture.applied_to_new_dish':
+          if (captureId != null) {
+            capturesAppliedToNewDishes.add(captureId);
+          }
+          if (captureId != null) {
+            captureIds.add(captureId);
+          }
+          if (dishId != null) {
+            dishIds.add(dishId);
+          }
         case 'capture.applied_to_existing_dish':
           if (captureId != null) {
             captureIds.add(captureId);
@@ -209,12 +219,21 @@ extension SyncRepositoryPull on SyncRepository {
     final List<ApiAiJob> aiJobs =
         await _apiClient.getAiJobs(aiJobIds.toList(growable: false));
 
+    final Set<String> rejectedResultDishIds = <String>{};
     await _database.transaction(() async {
       for (final ApiCaptureBatch batch in batches) {
         await _upsertCaptureBatch(batch);
       }
       for (final ApiCapture capture in captures) {
-        await _upsertCapture(capture);
+        final bool adopted = await _upsertCapture(
+          capture,
+          createdDishId: capturesAppliedToNewDishes.contains(capture.id)
+              ? capture.appliedDishId
+              : null,
+        );
+        if (!adopted && capture.appliedDishId != null) {
+          rejectedResultDishIds.add(capture.appliedDishId!);
+        }
       }
       for (final ApiReviewItem item in reviewItems) {
         await _upsertReviewItem(item);
@@ -224,7 +243,9 @@ extension SyncRepositoryPull on SyncRepository {
       }
     });
     for (final ApiDish dish in dishes) {
-      await _upsertDish(dish);
+      if (!rejectedResultDishIds.contains(dish.id)) {
+        await _upsertDish(dish);
+      }
     }
   }
 

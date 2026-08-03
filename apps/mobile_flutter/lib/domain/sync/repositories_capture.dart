@@ -80,7 +80,10 @@ class CaptureRepository {
     }).toList(growable: false);
   }
 
-  Future<CaptureBatch?> createPhotoBatch(List<Object> capturedMedia) async {
+  Future<CaptureBatch?> createPhotoBatch(
+    List<Object> capturedMedia, {
+    String? targetDishId,
+  }) async {
     final List<CapturedMedia> media = capturedMedia
         .map(_normalizeCapturedMedia)
         .where((CapturedMedia item) => item.path.trim().isNotEmpty)
@@ -90,12 +93,25 @@ class CaptureRepository {
       return null;
     }
 
+    final String? authoritativeDishId = targetDishId?.trim();
+    final db.DishRow? targetDish = authoritativeDishId == null
+        ? null
+        : await (_database.select(_database.dishes)
+              ..where(
+                (db.Dishes table) => table.id.equals(authoritativeDishId),
+              ))
+            .getSingleOrNull();
+    if (authoritativeDishId != null && targetDish == null) {
+      throw StateError('The selected dish no longer exists.');
+    }
+
     final String batchId = _uuid.v4();
     final String jobId = _uuid.v4();
     final DateTime now = DateTime.now();
     final ProcessingConsentDecision consent =
         await ProcessingConsentRepository(_database).currentDecision();
     final bool useLocalFallback = consent == ProcessingConsentDecision.declined;
+    final bool isAuthoritativelyAssigned = authoritativeDishId != null;
     final List<String> captureIds = List<String>.generate(
       media.length,
       (_) => _uuid.v4(),
@@ -104,7 +120,7 @@ class CaptureRepository {
       await _database.into(_database.captureBatches).insert(
             db.CaptureBatchesCompanion.insert(
               id: batchId,
-              status: useLocalFallback
+              status: useLocalFallback || isAuthoritativelyAssigned
                   ? CaptureBatchStatus.applied.name
                   : CaptureBatchStatus.pendingUpload.name,
               createdAt: now,
@@ -120,20 +136,75 @@ class CaptureRepository {
                 batchId: Value<String?>(batchId),
                 ordinal: Value<int>(ordinal),
                 kind: capture_domain.CaptureItemKind.photo.name,
-                status: useLocalFallback
-                    ? capture_domain.CaptureItemStatus.localOnly.name
-                    : capture_domain.CaptureItemStatus.pendingUpload.name,
+                status: isAuthoritativelyAssigned
+                    ? capture_domain.CaptureItemStatus.applied.name
+                    : useLocalFallback
+                        ? capture_domain.CaptureItemStatus.localOnly.name
+                        : capture_domain.CaptureItemStatus.pendingUpload.name,
                 createdAt: now,
                 localMediaRef: Value<String?>(item.path),
                 capturedAt: Value<DateTime?>(item.capturedAt),
                 capturedLocalDate: Value<String?>(item.capturedLocalDate),
                 captureDateSource: Value<String?>(item.dateSource.apiValue),
-                appliedDishId: const Value<String?>(null),
+                appliedDishId: Value<String?>(authoritativeDishId),
               ),
             );
+        if (authoritativeDishId != null) {
+          await _database.into(_database.sourcePhotos).insert(
+                db.SourcePhotosCompanion.insert(
+                  id: '${id}_source',
+                  dishId: authoritativeDishId,
+                  url: item.path,
+                  capturedLabel: 'Today',
+                  captureId: Value<String?>(id),
+                  capturedAt: Value<DateTime?>(item.capturedAt),
+                  confidenceLabel: const Value<String?>('Added to dish'),
+                ),
+              );
+          continue;
+        }
         if (useLocalFallback) {
           continue;
         }
+      }
+      if (authoritativeDishId != null) {
+        await (_database.update(_database.dishes)
+              ..where(
+                (db.Dishes table) => table.id.equals(authoritativeDishId),
+              ))
+            .write(
+          db.DishesCompanion(
+            heroImageUrl: Value<String>(
+              targetDish!.heroImageUrl.isEmpty
+                  ? media.first.path
+                  : targetDish.heroImageUrl,
+            ),
+            madeCount: Value<int>(targetDish.madeCount + 1),
+            lastMadeLabel: const Value<String>('Today'),
+          ),
+        );
+        final String correctionId = _uuid.v4();
+        await _database.into(_database.captureCorrections).insert(
+              db.CaptureCorrectionsCompanion.insert(
+                id: correctionId,
+                batchId: batchId,
+                actionType: CaptureCorrectionType.assign.name,
+                captureIdsJson: jsonEncode(captureIds),
+                previousDishIdsJson: jsonEncode(<String, Object?>{
+                  for (final String captureId in captureIds)
+                    captureId: <String, Object?>{
+                      'dishId': null,
+                      'status': capture_domain.CaptureItemStatus.localOnly.name,
+                      'failureReason': null,
+                    },
+                }),
+                targetDishId: authoritativeDishId,
+                status: CaptureCorrectionStatus.synced.name,
+                createdAt: now,
+                updatedAt: now,
+              ),
+            );
+        return;
       }
       if (useLocalFallback) {
         return;
@@ -157,8 +228,14 @@ class CaptureRepository {
     );
   }
 
-  Future<List<String>> createPhotoCaptures(List<Object> capturedMedia) async {
-    final CaptureBatch? batch = await createPhotoBatch(capturedMedia);
+  Future<List<String>> createPhotoCaptures(
+    List<Object> capturedMedia, {
+    String? targetDishId,
+  }) async {
+    final CaptureBatch? batch = await createPhotoBatch(
+      capturedMedia,
+      targetDishId: targetDishId,
+    );
     return batch?.items
             .map((capture_domain.CaptureItem item) => item.id)
             .toList(growable: false) ??
@@ -263,114 +340,6 @@ class CaptureRepository {
       capturedLocalDate: null,
       dateSource: CaptureDateSource.unknown,
     );
-  }
-
-  Future<void> discardCapture(String captureId) async {
-    await dismissSuggestion(captureId);
-  }
-
-  Future<void> dismissSuggestion(String captureId) async {
-    final db.CaptureItemRow? item =
-        await (_database.select(_database.captureItems)
-              ..where((db.CaptureItems table) => table.id.equals(captureId)))
-            .getSingleOrNull();
-    if (item == null) {
-      return;
-    }
-    await _database.transaction(() async {
-      await (_database.delete(_database.reviewItems)
-            ..where(
-              (db.ReviewItems table) => table.captureId.equals(captureId),
-            ))
-          .go();
-      await (_database.update(_database.captureItems)
-            ..where((db.CaptureItems table) => table.id.equals(captureId)))
-          .write(
-        db.CaptureItemsCompanion(
-          status:
-              Value<String>(capture_domain.CaptureItemStatus.localOnly.name),
-          failureReason: const Value<String?>(null),
-        ),
-      );
-      if (item.batchId case final String batchId) {
-        await _processingOutboxRepository.supersedeCaptureGrouping(batchId);
-      }
-    });
-  }
-
-  Future<void> deleteCapture(String captureId) async {
-    final db.CaptureItemRow? capture =
-        await (_database.select(_database.captureItems)
-              ..where((db.CaptureItems table) => table.id.equals(captureId)))
-            .getSingleOrNull();
-    if (capture == null) {
-      return;
-    }
-    await _database.transaction(() async {
-      if (capture.batchId case final String batchId) {
-        await _processingOutboxRepository.supersedeCaptureGrouping(batchId);
-        await (_database.delete(_database.aiJobs)
-              ..where((db.AiJobs table) => table.subjectId.equals(batchId)))
-            .go();
-      }
-      await (_database.delete(_database.reviewItems)
-            ..where(
-              (db.ReviewItems table) => table.captureId.equals(captureId),
-            ))
-          .go();
-      await (_database.delete(_database.sourcePhotos)
-            ..where(
-              (db.SourcePhotos table) =>
-                  table.captureId.equals(captureId) |
-                  table.id.equals('${captureId}_source'),
-            ))
-          .go();
-      await (_database.delete(_database.captureItems)
-            ..where((db.CaptureItems table) => table.id.equals(captureId)))
-          .go();
-      await (_database.delete(_database.syncOperations)
-            ..where(
-              (db.SyncOperations table) => table.entityId.equals(captureId),
-            ))
-          .go();
-    });
-    await _deleteLocalCaptureCopies(<String?>[capture.localMediaRef]);
-  }
-
-  Future<void> retryBatch(String batchId) async {
-    final DateTime now = DateTime.now();
-    await _database.transaction(() async {
-      await (_database.update(_database.captureItems)
-            ..where(
-              (db.$CaptureItemsTable table) =>
-                  table.batchId.equals(batchId) &
-                  table.status.equals(
-                    capture_domain.CaptureItemStatus.failed.name,
-                  ),
-            ))
-          .write(
-        db.CaptureItemsCompanion(
-          status: Value<String>(
-            capture_domain.CaptureItemStatus.pendingUpload.name,
-          ),
-          failureReason: const Value<String?>(null),
-        ),
-      );
-      await (_database.update(
-        _database.captureBatches,
-      )..where((db.$CaptureBatchesTable table) => table.id.equals(batchId)))
-          .write(
-        db.CaptureBatchesCompanion(
-          status: Value<String>(CaptureBatchStatus.pendingUpload.name),
-          updatedAt: Value<DateTime>(now),
-          failureReason: const Value<String?>(null),
-        ),
-      );
-      await _processingOutboxRepository.retryCaptureGrouping(
-        batchId: batchId,
-        now: now,
-      );
-    });
   }
 
   Future<void> _enqueueSync(

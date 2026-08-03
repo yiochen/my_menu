@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -142,6 +144,165 @@ void main() {
       expect(await _sourceCount(database, 'dish_a'), 1);
       expect(await _sourceCount(database, 'dish_b'), 2);
       expect(await _pendingCorrectionOperations(database), isEmpty);
+    });
+
+    test('photo-targeted undo does not revert a sibling correction', () async {
+      final AppRepositories repositories = AppRepositories(
+        database: database,
+        apiClient: FakeMyMenuApiClient(),
+      );
+      await repositories.captureCorrectionRepository.moveCaptures(
+        batchId: 'batch_1',
+        captureIds: const <String>['capture_a'],
+        targetDishId: 'dish_b',
+      );
+      await repositories.captureCorrectionRepository.moveCaptures(
+        batchId: 'batch_1',
+        captureIds: const <String>['capture_b'],
+        targetDishId: 'dish_b',
+      );
+
+      await repositories.captureCorrectionRepository.undoLatest(
+        'batch_1',
+        captureId: 'capture_a',
+      );
+
+      expect(await _assignedDish(database, 'capture_a'), 'dish_a');
+      expect(await _assignedDish(database, 'capture_b'), 'dish_b');
+    });
+
+    test('moving a duplicate media path updates only its capture source',
+        () async {
+      await (database.update(database.captureItems)
+            ..where(
+              (CaptureItems table) => table.id.isIn(
+                const <String>['capture_a', 'capture_b'],
+              ),
+            ))
+          .write(
+        const CaptureItemsCompanion(
+          localMediaRef: Value<String?>('fake://duplicate'),
+          remoteMediaRef: Value<String?>('fake://duplicate'),
+        ),
+      );
+      await (database.update(database.sourcePhotos)
+            ..where(
+              (SourcePhotos table) => table.id.isIn(
+                const <String>['capture_a_source', 'capture_b_source'],
+              ),
+            ))
+          .write(
+        const SourcePhotosCompanion(url: Value<String>('fake://duplicate')),
+      );
+      final AppRepositories repositories = AppRepositories(
+        database: database,
+        apiClient: FakeMyMenuApiClient(),
+      );
+
+      await repositories.captureCorrectionRepository.moveCaptures(
+        batchId: 'batch_1',
+        captureIds: const <String>['capture_a'],
+        targetDishId: 'dish_b',
+      );
+
+      expect(await _sourceDish(database, 'capture_a_source'), 'dish_b');
+      expect(await _sourceDish(database, 'capture_b_source'), 'dish_a');
+    });
+
+    test('targeted undo keeps an AI-created dish used by a sibling', () async {
+      final DateTime now = DateTime.utc(2026, 7, 27, 12);
+      await database.into(database.dishes).insert(
+            DishesCompanion.insert(
+              id: 'dish_ai',
+              title: 'AI grouped dish',
+              description: '',
+              heroImageUrl: 'fake://capture_a',
+              category: 'Captured',
+              prepMinutes: 0,
+              difficulty: 'Not set',
+              madeCount: 1,
+              lastMadeLabel: 'Today',
+              ingredientsJson: '[]',
+              recipeStepsJson: '[]',
+              notesJson: '[]',
+            ),
+          );
+      for (final String captureId in <String>['capture_a', 'capture_b']) {
+        await (database.update(database.captureItems)
+              ..where(
+                (CaptureItems table) => table.id.equals(captureId),
+              ))
+            .write(
+          const CaptureItemsCompanion(
+            appliedDishId: Value<String?>('dish_ai'),
+          ),
+        );
+        await (database.update(database.sourcePhotos)
+              ..where(
+                (SourcePhotos table) => table.id.equals('${captureId}_source'),
+              ))
+            .write(
+          const SourcePhotosCompanion(dishId: Value<String>('dish_ai')),
+        );
+        await database.into(database.captureCorrections).insert(
+              CaptureCorrectionsCompanion.insert(
+                id: 'auto_$captureId',
+                batchId: 'batch_1',
+                actionType: CaptureCorrectionType.autoAssign.name,
+                captureIdsJson: jsonEncode(<String>[captureId]),
+                previousDishIdsJson: jsonEncode(<String, Object?>{
+                  captureId: <String, Object?>{
+                    'dishId': 'dish_a',
+                    'status': 'applied',
+                    'failureReason': null,
+                  },
+                }),
+                targetDishId: 'dish_ai',
+                createdDishId: const Value<String?>('dish_ai'),
+                status: CaptureCorrectionStatus.synced.name,
+                createdAt: now,
+                updatedAt: now,
+              ),
+            );
+      }
+      final AppRepositories repositories = AppRepositories(
+        database: database,
+        apiClient: FakeMyMenuApiClient(),
+      );
+
+      await repositories.captureCorrectionRepository.undoLatest(
+        'batch_1',
+        captureId: 'capture_a',
+      );
+
+      expect(await _dishCount(database, 'dish_ai'), 1);
+      expect(await _assignedDish(database, 'capture_a'), 'dish_a');
+      expect(await _assignedDish(database, 'capture_b'), 'dish_ai');
+      expect(await _sourceDish(database, 'capture_b_source'), 'dish_ai');
+    });
+
+    test('bulk split and undo restore the whole user action', () async {
+      final AppRepositories repositories = AppRepositories(
+        database: database,
+        apiClient: FakeMyMenuApiClient(),
+      );
+
+      final List<CaptureCorrection> corrections = await repositories
+          .captureCorrectionRepository
+          .applyAssignments(const <String, String>{
+        'capture_a': 'dish_b',
+        'capture_c': 'dish_a',
+      });
+      expect(corrections, hasLength(2));
+      expect(await _assignedDish(database, 'capture_a'), 'dish_b');
+      expect(await _assignedDish(database, 'capture_c'), 'dish_a');
+
+      await repositories.captureCorrectionRepository.undoCorrections(
+        corrections.map((CaptureCorrection correction) => correction.id),
+      );
+
+      expect(await _assignedDish(database, 'capture_a'), 'dish_a');
+      expect(await _assignedDish(database, 'capture_c'), 'dish_b');
     });
 
     test('manual assignment can restore an unclassified photo with undo',
@@ -336,6 +497,13 @@ Future<int> _dishCount(AppDatabase database, String dishId) async {
             ..where((Dishes table) => table.id.equals(dishId)))
           .get())
       .length;
+}
+
+Future<String> _sourceDish(AppDatabase database, String sourceId) async {
+  return (await (database.select(database.sourcePhotos)
+            ..where((SourcePhotos table) => table.id.equals(sourceId)))
+          .getSingle())
+      .dishId;
 }
 
 Future<int> _madeCount(AppDatabase database, String dishId) async {

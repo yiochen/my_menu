@@ -76,6 +76,34 @@ void main() {
     );
     expect(state.isOrganizingPhotos, isTrue);
   });
+
+  test('batch groups stay contiguous and retain picker ordinal order', () {
+    final MyMenuState state = MyMenuState.forTesting(
+      captureItems: <CaptureItem>[
+        _photo(
+          'batch-a-first',
+          batchId: 'batch-a',
+          capturedAt: DateTime.utc(2026, 8, 2, 8),
+        ),
+        _photo(
+          'batch-a-second',
+          batchId: 'batch-a',
+          ordinal: 1,
+          capturedAt: DateTime.utc(2026, 8, 2, 10),
+        ),
+        _photo(
+          'batch-b',
+          batchId: 'batch-b',
+          capturedAt: DateTime.utc(2026, 8, 2, 9),
+        ),
+      ],
+    );
+
+    expect(
+      state.photos.map((photo) => photo.id),
+      <String>['batch-a-first', 'batch-a-second', 'batch-b'],
+    );
+  });
 }
 
 CaptureItem _photo(
@@ -84,6 +112,7 @@ CaptureItem _photo(
   String batchId = 'batch',
   String? dishId,
   CaptureItemStatus status = CaptureItemStatus.localOnly,
+  DateTime? capturedAt,
 }) {
   return CaptureItem(
     id: id,
@@ -93,6 +122,7 @@ CaptureItem _photo(
     status: status,
     createdAt: DateTime.utc(2026, 8, 2),
     capturedLocalDate: '2026-08-02',
+    capturedAt: capturedAt,
     localMediaRef: 'fake://$id',
     appliedDishId: dishId,
   );

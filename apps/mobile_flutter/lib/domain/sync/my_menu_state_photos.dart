@@ -5,39 +5,36 @@ extension MyMenuStatePhotos on MyMenuState {
     required Iterable<String> captureIds,
     required String dishId,
   }) async {
-    final Set<String> requested = captureIds.toSet();
-    final List<CaptureItem> selected = captureItems
-        .where((CaptureItem item) => requested.contains(item.id))
-        .toList(growable: false);
-    final Map<(String, bool), List<String>> groups =
-        <(String, bool), List<String>>{};
-    for (final CaptureItem item in selected) {
-      final String? batchId = item.batchId;
-      if (batchId == null) {
-        continue;
-      }
-      groups.putIfAbsent(
-        (batchId, item.appliedDishId == null),
-        () => <String>[],
-      ).add(item.id);
+    return organizePhotoAssignments(<String, String>{
+      for (final String captureId in captureIds.toSet()) captureId: dishId,
+    });
+  }
+
+  Future<List<CaptureCorrection>> organizePhotoAssignments(
+    Map<String, String> dishIdByCaptureId,
+  ) async {
+    final AppRepositories? repositories = _repositories;
+    if (repositories == null) {
+      return const <CaptureCorrection>[];
     }
-    final List<CaptureCorrection> corrections = <CaptureCorrection>[];
-    for (final MapEntry<(String, bool), List<String>> group in groups.entries) {
-      final CaptureCorrection? correction = group.key.$2
-          ? await assignUnclassifiedPhotos(
-              batchId: group.key.$1,
-              captureIds: group.value,
-              targetDishId: dishId,
-            )
-          : await moveCapturePhotos(
-              batchId: group.key.$1,
-              captureIds: group.value,
-              targetDishId: dishId,
-            );
-      if (correction != null) {
-        corrections.add(correction);
-      }
+    final List<CaptureCorrection> corrections = await repositories
+        .captureCorrectionRepository
+        .applyAssignments(dishIdByCaptureId);
+    await _reloadFromRepositories();
+    return corrections;
+  }
+
+  Future<List<CaptureCorrection>> undoPhotoCorrections(
+    Iterable<String> correctionIds,
+  ) async {
+    final AppRepositories? repositories = _repositories;
+    if (repositories == null) {
+      return const <CaptureCorrection>[];
     }
+    final List<CaptureCorrection> corrections = await repositories
+        .captureCorrectionRepository
+        .undoCorrections(correctionIds);
+    await _reloadFromRepositories();
     return corrections;
   }
 

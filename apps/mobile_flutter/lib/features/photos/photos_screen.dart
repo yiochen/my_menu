@@ -85,7 +85,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
             ? PhotoSelectionBar(
                 count: _selectedIds.length,
                 onAssign: () => _assignSelected(state),
-                onCreate: () => _createDishForSelected(state),
+                onCreate: () => _splitSelected(state),
                 onDelete: () => _stageDeletion(state, _selectedIds.toSet()),
               )
             : null,
@@ -268,9 +268,8 @@ class _PhotosScreenState extends State<PhotosScreen> {
               !sibling.isOrganized,
         )
         .toList(growable: false);
-    final CaptureCorrection? latest = photo.batchId == null
-        ? null
-        : state.latestCaptureCorrection(photo.batchId!);
+    final CaptureCorrection? latest =
+        state.latestCaptureCorrectionForPhoto(photo.id);
     final PhotoDetailIntent? intent =
         await Navigator.of(context).push<PhotoDetailIntent>(
       MaterialPageRoute<PhotoDetailIntent>(
@@ -290,13 +289,25 @@ class _PhotosScreenState extends State<PhotosScreen> {
     switch (intent.action) {
       case PhotoDetailAction.assign:
         await state.organizePhotos(captureIds: ids, dishId: intent.dishId!);
-        _showUndo(state, photo.batchId, 'Photo organized');
+        if (!mounted) return;
+        showPhotoUndoSnackBar(
+          context,
+          state,
+          photo.batchId,
+          'Photo organized',
+        );
       case PhotoDetailAction.createDish:
         await state.organizePhotosIntoNewDish(
           captureIds: ids,
           title: intent.title!,
         );
-        _showUndo(state, photo.batchId, 'Dish created from photo');
+        if (!mounted) return;
+        showPhotoUndoSnackBar(
+          context,
+          state,
+          photo.batchId,
+          'Dish created from photo',
+        );
       case PhotoDetailAction.delete:
         await _stageDeletion(state, <String>{photo.id});
       case PhotoDetailAction.dismiss:
@@ -307,7 +318,10 @@ class _PhotosScreenState extends State<PhotosScreen> {
         }
       case PhotoDetailAction.undo:
         if (photo.batchId != null) {
-          await state.undoLatestCaptureCorrection(photo.batchId!);
+          await state.undoLatestCaptureCorrection(
+            photo.batchId!,
+            captureId: photo.id,
+          );
         }
       case PhotoDetailAction.viewDish:
         if (intent.dishId != null && mounted) {
@@ -323,21 +337,38 @@ class _PhotosScreenState extends State<PhotosScreen> {
   Future<void> _assignSelected(MyMenuState state) async {
     final result = await showPhotoDishPicker(context, dishes: state.dishes);
     if (result == null) return;
-    await state.organizePhotos(
+    final List<CaptureCorrection> corrections = await state.organizePhotos(
       captureIds: _selectedIds,
       dishId: result.dishId,
     );
-    if (mounted) setState(_clearSelection);
+    if (mounted) {
+      setState(_clearSelection);
+      showPhotoBulkUndoSnackBar(
+          context, state, corrections, 'Photos organized');
+    }
   }
 
-  Future<void> _createDishForSelected(MyMenuState state) async {
-    final String? title = await showNewPhotoDishDialog(context);
-    if (title == null) return;
-    await state.organizePhotosIntoNewDish(
-      captureIds: _selectedIds,
-      title: title,
+  Future<void> _splitSelected(MyMenuState state) async {
+    final List<CapturedPhoto> selected = state.photos
+        .where((CapturedPhoto photo) => _selectedIds.contains(photo.id))
+        .toList(growable: false);
+    final Map<String, String>? assignments = await showPhotoSplitDialog(
+      context,
+      photos: selected,
+      dishes: state.dishes,
     );
-    if (mounted) setState(_clearSelection);
+    if (assignments == null) return;
+    final List<CaptureCorrection> corrections =
+        await state.organizePhotoAssignments(assignments);
+    if (mounted) {
+      setState(_clearSelection);
+      showPhotoBulkUndoSnackBar(
+        context,
+        state,
+        corrections,
+        'Photos split across dishes',
+      );
+    }
   }
 
   Future<void> _stageDeletion(MyMenuState state, Set<String> ids) async {
@@ -345,17 +376,11 @@ class _PhotosScreenState extends State<PhotosScreen> {
       _pendingDeletionIds.addAll(ids);
       _clearSelection();
     });
-    final controller = ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-            ids.length == 1 ? 'Photo removed' : '${ids.length} photos removed'),
-        action: SnackBarAction(
-          label: 'Undo',
-          onPressed: () => setState(() => _pendingDeletionIds.removeAll(ids)),
-        ),
-      ),
+    final SnackBarClosedReason reason = await showPhotoDeletionUndo(
+      context,
+      ids,
+      onUndo: () => setState(() => _pendingDeletionIds.removeAll(ids)),
     );
-    final SnackBarClosedReason reason = await controller.closed;
     if (reason == SnackBarClosedReason.action ||
         ids.every((String id) => !_pendingDeletionIds.contains(id))) {
       return;
@@ -364,20 +389,6 @@ class _PhotosScreenState extends State<PhotosScreen> {
       await state.deleteCapture(id);
     }
     if (mounted) setState(() => _pendingDeletionIds.removeAll(ids));
-  }
-
-  void _showUndo(MyMenuState state, String? batchId, String message) {
-    if (batchId == null) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        action: SnackBarAction(
-          label: 'Undo',
-          onPressed: () =>
-              unawaited(state.undoLatestCaptureCorrection(batchId)),
-        ),
-      ),
-    );
   }
 
   void _clearSelection() {

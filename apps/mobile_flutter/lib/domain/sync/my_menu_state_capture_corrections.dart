@@ -14,6 +14,20 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
     return matches.firstOrNull;
   }
 
+  CaptureCorrection? latestCaptureCorrectionForPhoto(String captureId) {
+    final List<CaptureCorrection> matches = _captureCorrections
+        .where(
+          (CaptureCorrection correction) =>
+              correction.captureIds.contains(captureId) && correction.canUndo,
+        )
+        .toList(growable: false)
+      ..sort(
+        (CaptureCorrection left, CaptureCorrection right) =>
+            right.createdAt.compareTo(left.createdAt),
+      );
+    return matches.firstOrNull;
+  }
+
   Future<CaptureCorrection?> moveCapturePhotos({
     required String batchId,
     required List<String> captureIds,
@@ -91,14 +105,18 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
   }
 
   Future<CaptureCorrection?> undoLatestCaptureCorrection(
-    String batchId,
-  ) async {
+    String batchId, {
+    String? captureId,
+  }) async {
     final AppRepositories? repositories = _repositories;
     if (repositories == null) {
       return null;
     }
     final CaptureCorrection? correction =
-        await repositories.captureCorrectionRepository.undoLatest(batchId);
+        await repositories.captureCorrectionRepository.undoLatest(
+      batchId,
+      captureId: captureId,
+    );
     await _reloadFromRepositories();
     return correction;
   }

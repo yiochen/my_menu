@@ -65,9 +65,47 @@ void main() {
 
     expect(find.text('1 selected'), findsOneWidget);
     expect(find.byTooltip('Add selected photos to a dish'), findsOneWidget);
-    expect(find.byTooltip('Split selected photos into a new dish'),
-        findsOneWidget);
+    expect(
+        find.byTooltip('Split selected photos across dishes'), findsOneWidget);
     expect(find.byTooltip('Delete selected photos'), findsOneWidget);
+  });
+
+  testWidgets('selected photos can be mapped to different dishes',
+      (WidgetTester tester) async {
+    final MyMenuState state = _state();
+    await tester.pumpWidget(_app(state));
+    await tester.longPress(
+      find.byKey(const ValueKey<String>('photo_tile_unorganized')),
+    );
+    await tester.tap(
+      find.byKey(const ValueKey<String>('photo_tile_review')),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Split selected photos across dishes'));
+    await tester.pumpAndSettle();
+    expect(find.text('Split across dishes'), findsOneWidget);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('split_photo_unorganized')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Miso salmon').last);
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey<String>('split_photo_review')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Charred corn ramen').last);
+    await tester.pumpAndSettle();
+
+    final FilledButton confirm = tester.widget<FilledButton>(
+      find.byKey(const ValueKey<String>('confirm_photo_split')),
+    );
+    expect(confirm.onPressed, isNotNull);
+    await tester.tap(find.byKey(const ValueKey<String>('confirm_photo_split')));
+    await tester.pumpAndSettle();
+    expect(find.text('Split across dishes'), findsNothing);
   });
 }
 
@@ -97,9 +135,24 @@ MyMenuState _state() {
     notes: const <DishNote>[],
     sourcePhotos: const <SourcePhoto>[],
   );
+  final Dish secondDish = Dish(
+    id: 'dish_2',
+    title: 'Charred corn ramen',
+    description: '',
+    heroImageUrl: '',
+    category: 'Dinner',
+    prepMinutes: 0,
+    difficulty: '',
+    madeCount: 1,
+    lastMadeLabel: 'Today',
+    ingredients: const <String>[],
+    recipeSteps: const <String>[],
+    notes: const <DishNote>[],
+    sourcePhotos: const <SourcePhoto>[],
+  );
   final DateTime now = DateTime.now();
   return MyMenuState.forTesting(
-    dishes: <Dish>[dish],
+    dishes: <Dish>[dish, secondDish],
     captureItems: <CaptureItem>[
       CaptureItem(
         id: 'unorganized',
