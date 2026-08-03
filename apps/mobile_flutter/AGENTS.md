@@ -18,6 +18,10 @@ Use `fake` for Android integration tests unless the test explicitly starts and
 targets a local Supabase stack. Use `supabase` only with both `SUPABASE_URL` and
 `SUPABASE_ANON_KEY` provided.
 
+# Device Handoff
+
+- After completing Flutter changes, install the current build when an authorized adb device is connected so the user can test it. Limit adb interaction to device discovery, building, and installation; do not launch or stop apps, navigate, send input, clear data, or otherwise change the device's UI state because the user may be actively using it.
+
 Keep code organized under:
 
 - `lib/app` for app wiring
@@ -32,3 +36,4 @@ Keep code organized under:
 - The repository pre-commit hook runs the Flutter and Supabase checks. After a focused verification pass, let the hook provide the final full validation instead of rerunning the expensive backend checks separately.
 - When updating a visual regression, run the targeted test with `--update-goldens`, then inspect `git status` and keep only the intended golden changes; Flutter may rewrite unrelated goldens in the same run.
 - When replacing a standard Flutter surface such as `showModalBottomSheet` with a custom transition, preserve important widget, semantics, and result-returning contracts so existing tests and route callers continue to work.
+- For circular badges and status dots, use an explicit square constraint plus `BoxShape.circle`; do not rely on a fixed height, minimum width, or rounded corners because aligned containers can expand under bounded parent constraints and render as pills. Add a widget test that asserts equal width and height.

@@ -102,19 +102,19 @@ void showPhotoBulkUndoSnackBar(
   );
 }
 
-Future<SnackBarClosedReason> showPhotoDeletionUndo(
+ScaffoldFeatureController<SnackBar, SnackBarClosedReason> showPhotoDeletionUndo(
   BuildContext context,
   Set<String> ids, {
+  required Duration duration,
   required VoidCallback onUndo,
 }) {
-  return ScaffoldMessenger.of(context)
-      .showSnackBar(
-        SnackBar(
-          content: Text(
-            ids.length == 1 ? 'Photo removed' : '${ids.length} photos removed',
-          ),
-          action: SnackBarAction(label: 'Undo', onPressed: onUndo),
-        ),
-      )
-      .closed;
+  return ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      duration: duration,
+      content: Text(
+        ids.length == 1 ? 'Photo removed' : '${ids.length} photos removed',
+      ),
+      action: SnackBarAction(label: 'Undo', onPressed: onUndo),
+    ),
+  );
 }

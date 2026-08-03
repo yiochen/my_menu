@@ -9,6 +9,8 @@ import 'package:mymenu/features/dish_detail/cook_again_sheet.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_content.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_hero.dart';
 import 'package:mymenu/features/dish_detail/recipe_section_editor.dart';
+import 'package:mymenu/features/photos/photos_route.dart';
+import 'package:mymenu/features/photos/photos_screen.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/local_write_feedback.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
@@ -96,12 +98,7 @@ class _DishDetailScreenState extends State<DishDetailScreen>
                 child: DishDetailContent(
                   dish: dish,
                   tab: tab,
-                  onAddPhoto: () => showCaptureSheet(
-                    context,
-                    state,
-                    ImagePickerCaptureMediaService(),
-                    targetDishId: dish.id,
-                  ),
+                  onAddPhoto: () => _addPhoto(context, state, dish),
                   onAddNote: () => _addNote(context, state, dish),
                   onEditIngredients: () => _editRecipeSection(
                     context,
@@ -120,6 +117,29 @@ class _DishDetailScreenState extends State<DishDetailScreen>
             }).toList(growable: false),
           ),
         ),
+      ),
+    );
+  }
+
+  Future<void> _addPhoto(
+    BuildContext context,
+    MyMenuState state,
+    Dish dish,
+  ) async {
+    final CaptureCompletion? completion = await showCaptureSheet(
+      context,
+      state,
+      ImagePickerCaptureMediaService(),
+      targetDishId: dish.id,
+    );
+    if (completion != CaptureCompletion.photosAdded || !context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    await Navigator.of(context).push<void>(
+      photosRoute(
+        initialFilter: PhotoFilter.all,
+        reduceMotion: MediaQuery.disableAnimationsOf(context),
       ),
     );
   }

@@ -11,6 +11,7 @@ import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
 import 'package:mymenu/features/capture/capture_sheet.dart';
 import 'package:mymenu/features/menu/menu_screen.dart';
+import 'package:mymenu/features/photos/photos_route.dart';
 import 'package:mymenu/features/photos/photos_screen.dart';
 import 'package:mymenu/features/plan/plan_screen.dart';
 import 'package:mymenu/features/review/review_sheet.dart';
@@ -31,7 +32,6 @@ class _HomeShellState extends State<HomeShell> {
   int _selectedIndex = 0;
   String _query = '';
   bool _menuSelectionActive = false;
-  bool _showPhotos = false;
 
   @override
   Widget build(BuildContext context) {
@@ -57,37 +57,21 @@ class _HomeShellState extends State<HomeShell> {
                   0 => PlanScreen(
                       key: const ValueKey<String>('plan_destination'),
                       onOpenReview: () => showReviewSheet(context, state),
+                      onOpenPhotos: () => _openPhotos(state),
                     ),
-                  _ => _showPhotos
-                      ? PhotosScreen(
-                          key: const ValueKey<String>('photos_destination'),
-                          initialFilter: state.unorganizedPhotoCount > 0
-                              ? PhotoFilter.unorganized
-                              : PhotoFilter.all,
-                          onSelectionModeChanged: (bool active) {
-                            if (_menuSelectionActive != active) {
-                              setState(() => _menuSelectionActive = active);
-                            }
-                          },
-                          onBack: () => setState(() {
-                            _menuSelectionActive = false;
-                            _showPhotos = false;
-                          }),
-                        )
-                      : MenuScreen(
-                          key: const ValueKey<String>('menu_destination'),
-                          query: _query,
-                          onQueryChanged: (String value) {
-                            setState(() => _query = value);
-                          },
-                          onSelectionModeChanged: (bool active) {
-                            if (_menuSelectionActive != active) {
-                              setState(() => _menuSelectionActive = active);
-                            }
-                          },
-                          onOpenPhotos: () =>
-                              setState(() => _showPhotos = true),
-                        ),
+                  _ => MenuScreen(
+                      key: const ValueKey<String>('menu_destination'),
+                      query: _query,
+                      onQueryChanged: (String value) {
+                        setState(() => _query = value);
+                      },
+                      onSelectionModeChanged: (bool active) {
+                        if (_menuSelectionActive != active) {
+                          setState(() => _menuSelectionActive = active);
+                        }
+                      },
+                      onOpenPhotos: () => _openPhotos(state),
+                    ),
                 },
                 if (!_menuSelectionActive)
                   _FloatingBottomShell(
@@ -98,7 +82,6 @@ class _HomeShellState extends State<HomeShell> {
                         _selectedIndex = value;
                         if (value != 1) {
                           _menuSelectionActive = false;
-                          _showPhotos = false;
                         }
                       });
                     },
@@ -120,7 +103,23 @@ class _HomeShellState extends State<HomeShell> {
     if (!mounted) {
       return;
     }
-    await showCaptureSheet(context, state, _captureMediaService);
+    final CaptureCompletion? completion =
+        await showCaptureSheet(context, state, _captureMediaService);
+    if (completion == CaptureCompletion.photosAdded && mounted) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      await _openPhotos(state);
+    }
+  }
+
+  Future<void> _openPhotos(MyMenuState state) {
+    return Navigator.of(context).push<void>(
+      photosRoute(
+        initialFilter: state.unorganizedPhotoCount > 0
+            ? PhotoFilter.unorganized
+            : PhotoFilter.all,
+        reduceMotion: MediaQuery.disableAnimationsOf(context),
+      ),
+    );
   }
 }
 

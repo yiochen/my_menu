@@ -73,6 +73,23 @@ void main() {
       });
     });
 
+    testWidgets('menu with unorganized photo badge',
+        (WidgetTester tester) async {
+      final MyMenuState state = _buildPhotoGoldenState();
+      addTearDown(state.dispose);
+      await runWithMockNetworkImages(() async {
+        await _pumpGoldenApp(tester, state);
+        await tester.tap(find.text('Menu'));
+        await tester.pumpAndSettle();
+
+        final Finder badge = find.byKey(
+          const ValueKey<String>('menu_photos_badge'),
+        );
+        expect(tester.getSize(badge), const Size.square(18));
+        await _expectFullAppGolden(tester, 'ui_menu_unorganized_photos');
+      });
+    });
+
     testWidgets('photo gallery', (WidgetTester tester) async {
       final MyMenuState state = _buildPhotoGoldenState();
       addTearDown(state.dispose);

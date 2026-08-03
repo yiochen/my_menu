@@ -10,11 +10,16 @@ import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
 class PlanScreen extends StatefulWidget {
-  const PlanScreen({required this.onOpenReview, super.key});
+  const PlanScreen({
+    required this.onOpenReview,
+    required this.onOpenPhotos,
+    super.key,
+  });
 
   // Review entry now lives on the Menu navigation badge. This callback stays
   // in the public contract while callers migrate without changing Plan UI.
   final VoidCallback onOpenReview;
+  final VoidCallback onOpenPhotos;
 
   @override
   State<PlanScreen> createState() => _PlanScreenState();
@@ -61,9 +66,12 @@ class _PlanScreenState extends State<PlanScreen> {
               child: PlanWeekCalendar(
                 selectedDate: _selectedDate,
                 plan: state.plan,
+                unorganizedPhotoCount: state.unorganizedPhotoCount,
+                organizingPhotos: state.isOrganizingPhotos,
                 onPickDate: _pickDate,
                 onToday: () => _selectDate(_sampleToday),
                 onSelect: _selectDate,
+                onOpenPhotos: widget.onOpenPhotos,
               ),
             ),
           ),

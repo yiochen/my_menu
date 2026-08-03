@@ -18,7 +18,9 @@ import 'package:mymenu/shared/widgets/warm_components.dart';
 
 enum CaptureAction { takePhoto, importPhotos, addIdea }
 
-Future<void> showCaptureSheet(
+enum CaptureCompletion { photosAdded, ideaAdded }
+
+Future<CaptureCompletion?> showCaptureSheet(
   BuildContext context,
   MyMenuState state,
   CaptureMediaService mediaService, {
@@ -41,31 +43,35 @@ Future<void> showCaptureSheet(
         _CaptureSheetTransition(animation: animation, child: child),
   );
   if (!context.mounted || action == null) {
-    return;
+    return null;
   }
   switch (action) {
     case CaptureAction.takePhoto:
-      await _captureMedia(
+      final bool added = await _captureMedia(
         context,
         state,
         () => collectCameraBatch(context, mediaService),
         targetDishId: targetDishId,
       );
+      return added ? CaptureCompletion.photosAdded : null;
     case CaptureAction.importPhotos:
-      await _captureMedia(
+      final bool added = await _captureMedia(
         context,
         state,
         mediaService.importPhotos,
         targetDishId: targetDishId,
       );
+      return added ? CaptureCompletion.photosAdded : null;
     case CaptureAction.addIdea:
       final AddIdeaIntent? intent = await showAddIdeaSheet(context);
       if (intent != null && context.mounted) {
-        await runLocalWriteWithFeedback(
+        final bool added = await runLocalWriteWithFeedback(
           context,
           () => state.addIdea(intent.title, note: intent.note),
         );
+        return added ? CaptureCompletion.ideaAdded : null;
       }
+      return null;
   }
 }
 
@@ -165,7 +171,7 @@ class _CaptureSheetTransition extends StatelessWidget {
   }
 }
 
-Future<void> _captureMedia(
+Future<bool> _captureMedia(
   BuildContext context,
   MyMenuState state,
   Future<List<CapturedMedia>> Function() capture, {
@@ -174,14 +180,14 @@ Future<void> _captureMedia(
   try {
     final List<CapturedMedia> capturedMedia = await capture();
     if (!context.mounted || capturedMedia.isEmpty) {
-      return;
+      return false;
     }
     final CaptureBatch? batch = await state.addPhotoCaptures(
       capturedMedia,
       targetDishId: targetDishId,
     );
     if (!context.mounted) {
-      return;
+      return false;
     }
     if (batch != null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -202,6 +208,7 @@ Future<void> _captureMedia(
         ),
       );
     }
+    return batch != null;
   } on PlatformException catch (_) {
     if (context.mounted) {
       await showCaptureOutcomeSheet(
@@ -212,6 +219,7 @@ Future<void> _captureMedia(
         photoCount: 0,
       );
     }
+    return false;
   } on Exception catch (_) {
     if (context.mounted) {
       await showCaptureOutcomeSheet(
@@ -222,6 +230,7 @@ Future<void> _captureMedia(
         photoCount: 0,
       );
     }
+    return false;
   }
 }
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mymenu/features/menu/menu_photos_button.dart';
+import 'package:mymenu/shared/widgets/photos_entry_button.dart';
 
 void main() {
   testWidgets('photo button shows a stationary unorganized count',
@@ -8,7 +8,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: MenuPhotosButton(
+          body: PhotosEntryButton(
             unorganizedCount: 3,
             organizing: false,
             onPressed: () {},
@@ -18,6 +18,17 @@ void main() {
     );
 
     expect(find.text('3'), findsOneWidget);
+    final Finder badge = find.byKey(
+      const ValueKey<String>('menu_photos_badge'),
+    );
+    expect(tester.getSize(badge), const Size.square(18));
+    final DecoratedBox badgeDecoration = tester.widget<DecoratedBox>(
+      find.descendant(of: badge, matching: find.byType(DecoratedBox)),
+    );
+    expect(
+      (badgeDecoration.decoration as BoxDecoration).shape,
+      BoxShape.circle,
+    );
     expect(
       tester
           .getSemantics(
@@ -33,7 +44,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: MenuPhotosButton(
+          body: PhotosEntryButton(
             unorganizedCount: 3,
             organizing: true,
             onPressed: () {},

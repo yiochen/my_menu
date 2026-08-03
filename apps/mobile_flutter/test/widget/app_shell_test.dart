@@ -262,7 +262,10 @@ void main() {
           child: MaterialApp(
             theme: AppTheme.data,
             home: Scaffold(
-              body: PlanScreen(onOpenReview: () {}),
+              body: PlanScreen(
+                onOpenReview: () {},
+                onOpenPhotos: () {},
+              ),
             ),
           ),
         ),

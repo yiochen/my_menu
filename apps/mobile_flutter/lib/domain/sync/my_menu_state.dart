@@ -105,6 +105,8 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
   final NetworkStatusMonitor? _networkStatusMonitor;
   final Map<String, _PendingDishDeletion> _pendingDishDeletions =
       <String, _PendingDishDeletion>{};
+  final Map<String, _PendingCaptureDeletion> _pendingCaptureDeletions =
+      <String, _PendingCaptureDeletion>{};
   final Map<String, _PendingCaptureBatchDeletion>
       _pendingCaptureBatchDeletions = <String, _PendingCaptureBatchDeletion>{};
   StreamSubscription<void>? _networkStatusSubscription;
@@ -125,14 +127,34 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
         ),
       );
   List<PlannedMeal> get plan => _validPlannedMeals;
-  List<CaptureBatch> get captureBatches => List<CaptureBatch>.unmodifiable(
-        _captureBatches.where(
-          (CaptureBatch batch) => !_pendingCaptureBatchIds.contains(batch.id),
-        ),
-      );
+  List<CaptureBatch> get captureBatches {
+    final Set<String> hiddenCaptureIds = _hiddenCaptureIds;
+    return List<CaptureBatch>.unmodifiable(
+      _captureBatches
+          .where(
+            (CaptureBatch batch) => !_pendingCaptureBatchIds.contains(batch.id),
+          )
+          .map(
+            (CaptureBatch batch) => CaptureBatch(
+              id: batch.id,
+              status: batch.status,
+              createdAt: batch.createdAt,
+              updatedAt: batch.updatedAt,
+              items: batch.items
+                  .where(
+                    (CaptureItem item) => !hiddenCaptureIds.contains(item.id),
+                  )
+                  .toList(growable: false),
+              failureReason: batch.failureReason,
+            ),
+          )
+          .where((CaptureBatch batch) => batch.items.isNotEmpty),
+    );
+  }
+
   List<CaptureItem> get captureItems => List<CaptureItem>.unmodifiable(
         _captureItems.where(
-          (CaptureItem item) => !_pendingCaptureIds.contains(item.id),
+          (CaptureItem item) => !_hiddenCaptureIds.contains(item.id),
         ),
       );
   List<CaptureCorrection> get captureCorrections =>
@@ -144,7 +166,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
       );
   List<ReviewItem> get reviewItems => List<ReviewItem>.unmodifiable(
         _reviewItems.where(
-          (ReviewItem item) => !_pendingCaptureIds.contains(item.captureId),
+          (ReviewItem item) => !_hiddenCaptureIds.contains(item.captureId),
         ),
       );
   List<ProcessingOutboxRequest> get processingRequests =>

@@ -11,6 +11,7 @@ import 'package:mymenu/features/photos/photo_date_groups.dart';
 import 'package:mymenu/features/photos/photo_detail_screen.dart';
 import 'package:mymenu/features/photos/photo_gallery_tile.dart';
 import 'package:mymenu/features/photos/photo_organize_dialogs.dart';
+import 'package:mymenu/features/photos/photos_deletion_controller.dart';
 import 'package:mymenu/features/photos/photos_selection_bar.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 
@@ -35,15 +36,19 @@ class PhotosScreen extends StatefulWidget {
 class _PhotosScreenState extends State<PhotosScreen> {
   late PhotoFilter _filter = widget.initialFilter;
   final Set<String> _selectedIds = <String>{};
-  final Set<String> _pendingDeletionIds = <String>{};
+  final PhotosDeletionController _deletions = PhotosDeletionController();
   bool _selectionMode = false;
+
+  @override
+  void dispose() {
+    _deletions.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final MyMenuState state = MyMenuScope.of(context);
-    final List<CapturedPhoto> allPhotos = state.photos
-        .where((CapturedPhoto photo) => !_pendingDeletionIds.contains(photo.id))
-        .toList(growable: false);
+    final List<CapturedPhoto> allPhotos = state.photos;
     final List<CapturedPhoto> visible = allPhotos.where((CapturedPhoto photo) {
       return switch (_filter) {
         PhotoFilter.all => true,
@@ -57,10 +62,9 @@ class _PhotosScreenState extends State<PhotosScreen> {
     final Map<String, List<CapturedPhoto>> groups = groupPhotosByDate(visible);
 
     return PopScope<void>(
-      canPop: false,
       onPopInvokedWithResult: (bool didPop, void result) {
+        widget.onSelectionModeChanged?.call(false);
         if (!didPop) {
-          widget.onSelectionModeChanged?.call(false);
           widget.onBack();
         }
       },
@@ -100,7 +104,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
         children: <Widget>[
           IconButton(
             key: const ValueKey<String>('photos_back'),
-            tooltip: 'Back to dishes',
+            tooltip: 'Back',
             onPressed: () {
               widget.onSelectionModeChanged?.call(false);
               widget.onBack();
@@ -372,23 +376,8 @@ class _PhotosScreenState extends State<PhotosScreen> {
   }
 
   Future<void> _stageDeletion(MyMenuState state, Set<String> ids) async {
-    setState(() {
-      _pendingDeletionIds.addAll(ids);
-      _clearSelection();
-    });
-    final SnackBarClosedReason reason = await showPhotoDeletionUndo(
-      context,
-      ids,
-      onUndo: () => setState(() => _pendingDeletionIds.removeAll(ids)),
-    );
-    if (reason == SnackBarClosedReason.action ||
-        ids.every((String id) => !_pendingDeletionIds.contains(id))) {
-      return;
-    }
-    for (final String id in ids) {
-      await state.deleteCapture(id);
-    }
-    if (mounted) setState(() => _pendingDeletionIds.removeAll(ids));
+    setState(_clearSelection);
+    _deletions.stage(context, state, ids);
   }
 
   void _clearSelection() {

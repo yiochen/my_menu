@@ -38,11 +38,26 @@ void main() {
     await tester.tap(
       find.byKey(const ValueKey<String>('menu_photos_button')),
     );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
+    final Finder expandingSurface = find.byKey(
+      const ValueKey<String>('photos_morph_surface'),
+    );
+    expect(expandingSurface, findsOneWidget);
+    final Size expandingSize = tester.getSize(expandingSurface);
+    expect(expandingSize.width, greaterThan(46));
+    expect(expandingSize.width, lessThan(tester.view.physicalSize.width));
     await tester.pumpAndSettle();
     expect(find.text('Photos'), findsOneWidget);
     expect(find.text('Your photos will live here'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey<String>('photos_back')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(
+      find.byKey(const ValueKey<String>('photos_morph_surface')),
+      findsOneWidget,
+    );
     await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey<String>('menu_search_field')),
@@ -50,24 +65,45 @@ void main() {
     );
   });
 
+  testWidgets('plan photo icon opens the gallery and back restores the plan',
+      (WidgetTester tester) async {
+    final MyMenuState state = MyMenuState.forTesting();
+    addTearDown(state.dispose);
+    await tester.pumpWidget(
+      MyMenuScope(
+        notifier: state,
+        child: MaterialApp(
+          theme: AppTheme.data,
+          home: const HomeShell(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey<String>('plan_screen')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey<String>('menu_photos_button')),
+      findsOneWidget,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey<String>('menu_photos_button')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Photos'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey<String>('photos_back')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey<String>('plan_screen')), findsOneWidget);
+  });
+
   testWidgets(
       'capture is immediately usable, can be assigned, filtered, and undone',
       (WidgetTester tester) async {
-    final AppDatabase database =
-        AppDatabase.forTesting(NativeDatabase.memory());
-    addTearDown(database.close);
-    final AppRepositories repositories = AppRepositories(
-      database: database,
-      apiClient: FakeMyMenuApiClient(),
-    );
-    await repositories.processingConsentRepository.declineCurrentNotice();
-    await repositories.dishRepository.upsertDish(_dish());
-    final MyMenuState state = MyMenuState(
-      repositories: repositories,
-      networkStatusMonitor: const InertNetworkStatusMonitor(),
-    );
-    addTearDown(state.dispose);
-    await state.initialized;
+    final ({AppDatabase database, MyMenuState state}) fixture =
+        await _buildRepositoryState(withDish: true);
+    addTearDown(fixture.database.close);
+    addTearDown(fixture.state.dispose);
+    final MyMenuState state = fixture.state;
     await tester.pumpWidget(
       MyMenuScope(
         notifier: state,
@@ -85,15 +121,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(state.photos, hasLength(1));
     expect(state.unorganizedPhotoCount, 1);
-    await tester.pump(const Duration(seconds: 5));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Menu'));
-    await tester.pumpAndSettle();
-    await tester.tap(
-      find.byKey(const ValueKey<String>('menu_photos_button')),
-    );
-    await tester.pumpAndSettle();
+    expect(find.text('Photos'), findsOneWidget);
     final String captureId = state.photos.single.id;
     final ValueKey<String> tileKey = ValueKey<String>('photo_tile_$captureId');
     expect(find.byKey(tileKey), findsOneWidget);
@@ -116,6 +144,93 @@ void main() {
     await tester.pumpAndSettle();
     expect(state.unorganizedPhotoCount, 1);
     expect(state.organizedPhotoCount, 0);
+
+    await tester.tap(find.byKey(const ValueKey<String>('photos_back')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey<String>('plan_screen')), findsOneWidget);
+  });
+
+  testWidgets('capture from menu returns to menu after closing photos',
+      (WidgetTester tester) async {
+    final ({AppDatabase database, MyMenuState state}) fixture =
+        await _buildRepositoryState();
+    addTearDown(fixture.database.close);
+    addTearDown(fixture.state.dispose);
+    await tester.pumpWidget(
+      MyMenuScope(
+        notifier: fixture.state,
+        child: MaterialApp(
+          theme: AppTheme.data,
+          home: HomeShell(captureMediaService: _ImportMediaService()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Menu'));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey<String>('menu_search_field')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const ValueKey<String>('capture_fab')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Import Photos'));
+    await tester.pumpAndSettle();
+    expect(find.text('Photos'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey<String>('photos_back')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey<String>('menu_search_field')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey<String>('plan_screen')), findsNothing);
+  });
+
+  testWidgets('deleted photo stays hidden after closing and reopening photos',
+      (WidgetTester tester) async {
+    final ({AppDatabase database, MyMenuState state}) fixture =
+        await _buildRepositoryState();
+    addTearDown(fixture.database.close);
+    addTearDown(fixture.state.dispose);
+    await tester.pumpWidget(
+      MyMenuScope(
+        notifier: fixture.state,
+        child: MaterialApp(
+          theme: AppTheme.data,
+          home: HomeShell(captureMediaService: _ImportMediaService()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey<String>('capture_fab')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Import Photos'));
+    await tester.pumpAndSettle();
+    final ValueKey<String> tileKey =
+        ValueKey<String>('photo_tile_${fixture.state.photos.single.id}');
+
+    await tester.longPress(find.byKey(tileKey));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Delete selected photos'));
+    await tester.pump();
+    expect(find.byKey(tileKey), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey<String>('photos_back')));
+    await tester.pumpAndSettle();
+    expect(fixture.state.photos, isEmpty);
+    expect(
+      await fixture.database.select(fixture.database.captureItems).get(),
+      isEmpty,
+    );
+    await tester.tap(
+      find.byKey(const ValueKey<String>('menu_photos_button')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(tileKey), findsNothing);
   });
 }
 
@@ -132,6 +247,26 @@ class _ImportMediaService implements CaptureMediaService {
 
   @override
   Future<CapturedMedia?> takePhoto() async => null;
+}
+
+Future<({AppDatabase database, MyMenuState state})> _buildRepositoryState({
+  bool withDish = false,
+}) async {
+  final AppDatabase database = AppDatabase.forTesting(NativeDatabase.memory());
+  final AppRepositories repositories = AppRepositories(
+    database: database,
+    apiClient: FakeMyMenuApiClient(),
+  );
+  await repositories.processingConsentRepository.declineCurrentNotice();
+  if (withDish) {
+    await repositories.dishRepository.upsertDish(_dish());
+  }
+  final MyMenuState state = MyMenuState(
+    repositories: repositories,
+    networkStatusMonitor: const InertNetworkStatusMonitor(),
+  );
+  await state.initialized;
+  return (database: database, state: state);
 }
 
 Dish _dish() {

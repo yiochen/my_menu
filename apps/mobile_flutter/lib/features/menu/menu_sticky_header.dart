@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:mymenu/features/menu/menu_photos_button.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
+import 'package:mymenu/shared/widgets/photos_entry_button.dart';
 
 class MenuStickyHeader extends StatelessWidget {
   const MenuStickyHeader({
@@ -115,7 +115,7 @@ class _SearchHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 9),
-        MenuPhotosButton(
+        PhotosEntryButton(
           unorganizedCount: unorganizedPhotoCount,
           organizing: organizingPhotos,
           onPressed: onOpenPhotos,
