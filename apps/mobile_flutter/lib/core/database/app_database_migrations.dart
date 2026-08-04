@@ -1,5 +1,127 @@
 part of 'app_database.dart';
 
+Future<void> _migrateProgressivePreviewsV15(
+  AppDatabase database,
+  Migrator migrator,
+) async {
+  final Set<String> existingTables = (await database
+          .customSelect(
+            "SELECT name FROM sqlite_master WHERE type = 'table'",
+          )
+          .get())
+      .map((QueryRow row) => row.read<String>('name'))
+      .toSet();
+  if (existingTables.contains('dishes')) {
+    final Set<String> columns = await _tableColumns(database, 'dishes');
+    if (!columns.contains('hero_thumbnail_url')) {
+      await migrator.addColumn(
+        database.dishes,
+        database.dishes.heroThumbnailUrl,
+      );
+    }
+    if (!columns.contains('hero_placeholder_url')) {
+      await migrator.addColumn(
+        database.dishes,
+        database.dishes.heroPlaceholderUrl,
+      );
+    }
+  }
+  if (existingTables.contains('source_photos')) {
+    final Set<String> columns = await _tableColumns(database, 'source_photos');
+    if (!columns.contains('thumbnail_url')) {
+      await migrator.addColumn(
+        database.sourcePhotos,
+        database.sourcePhotos.thumbnailUrl,
+      );
+    }
+    if (!columns.contains('placeholder_url')) {
+      await migrator.addColumn(
+        database.sourcePhotos,
+        database.sourcePhotos.placeholderUrl,
+      );
+    }
+  }
+  if (existingTables.contains('capture_items')) {
+    final Set<String> columns = await _tableColumns(database, 'capture_items');
+    if (!columns.contains('local_thumbnail_ref')) {
+      await migrator.addColumn(
+        database.captureItems,
+        database.captureItems.localThumbnailRef,
+      );
+    }
+    if (!columns.contains('local_placeholder_ref')) {
+      await migrator.addColumn(
+        database.captureItems,
+        database.captureItems.localPlaceholderRef,
+      );
+    }
+  }
+}
+
+Future<Set<String>> _tableColumns(
+  AppDatabase database,
+  String tableName,
+) async {
+  return (await database.customSelect('PRAGMA table_info($tableName)').get())
+      .map((QueryRow row) => row.read<String>('name'))
+      .toSet();
+}
+
+Future<void> _migrateMediaPreviewsV14(
+  AppDatabase database,
+  Migrator migrator,
+) async {
+  final Set<String> existingTables = (await database
+          .customSelect(
+            "SELECT name FROM sqlite_master WHERE type = 'table'",
+          )
+          .get())
+      .map((QueryRow row) => row.read<String>('name'))
+      .toSet();
+  if (existingTables.contains('dishes')) {
+    final Set<String> columns = (await database
+            .customSelect(
+              'PRAGMA table_info(dishes)',
+            )
+            .get())
+        .map((QueryRow row) => row.read<String>('name'))
+        .toSet();
+    if (!columns.contains('hero_preview_url')) {
+      await migrator.addColumn(database.dishes, database.dishes.heroPreviewUrl);
+    }
+  }
+  if (existingTables.contains('source_photos')) {
+    final Set<String> columns = (await database
+            .customSelect(
+              'PRAGMA table_info(source_photos)',
+            )
+            .get())
+        .map((QueryRow row) => row.read<String>('name'))
+        .toSet();
+    if (!columns.contains('preview_url')) {
+      await migrator.addColumn(
+        database.sourcePhotos,
+        database.sourcePhotos.previewUrl,
+      );
+    }
+  }
+  if (existingTables.contains('capture_items')) {
+    final Set<String> columns = (await database
+            .customSelect(
+              'PRAGMA table_info(capture_items)',
+            )
+            .get())
+        .map((QueryRow row) => row.read<String>('name'))
+        .toSet();
+    if (!columns.contains('local_preview_ref')) {
+      await migrator.addColumn(
+        database.captureItems,
+        database.captureItems.localPreviewRef,
+      );
+    }
+  }
+}
+
 Future<void> _migrateProcessingOutboxV13(
   AppDatabase database,
   Migrator migrator,

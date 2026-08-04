@@ -288,7 +288,11 @@ extension SyncRepositoryPull on SyncRepository {
     required Set<String> reviewItemIds,
     required Set<String> aiJobIds,
   }) async {
-    await DishRepository(_database, _dishImageCache).deleteLocalDishes(dishIds);
+    await DishRepository(
+      _database,
+      _dishImageCache,
+      _imageDerivativeStore,
+    ).deleteLocalDishes(dishIds);
     final List<db.CaptureItemRow> captureRows = captureIds.isEmpty
         ? const <db.CaptureItemRow>[]
         : await (_database.select(_database.captureItems)
@@ -333,6 +337,15 @@ extension SyncRepositoryPull on SyncRepository {
         // The authoritative row is gone; a missing local copy is harmless.
       }
     }
+    await _imageDerivativeStore.remove(
+      refs: captureRows.expand(
+        (db.CaptureItemRow row) => <String?>[
+          row.localPreviewRef,
+          row.localThumbnailRef,
+          row.localPlaceholderRef,
+        ],
+      ),
+    );
   }
 
   String _localBatchStatus(String status) {

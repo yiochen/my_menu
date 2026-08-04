@@ -289,7 +289,13 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
 
       final int index =
           prompt.trim().isEmpty ? 0 : prompt.length % dish.sourcePhotos.length;
-      return dish.copyWith(heroImageUrl: dish.sourcePhotos[index].url);
+      final SourcePhoto source = dish.sourcePhotos[index];
+      return dish.copyWith(
+        heroImageUrl: source.url,
+        heroPreviewUrl: source.previewUrl ?? '',
+        heroThumbnailUrl: source.thumbnailUrl ?? '',
+        heroPlaceholderUrl: source.placeholderUrl ?? '',
+      );
     }).toList(growable: false);
     notifyListeners();
   }

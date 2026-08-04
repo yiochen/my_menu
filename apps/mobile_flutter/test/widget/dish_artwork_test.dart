@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
+import 'package:mymenu/features/menu/menu_grid_card.dart';
 import 'package:mymenu/shared/widgets/app_image.dart';
 import 'package:mymenu/shared/widgets/dish_artwork.dart';
 import 'package:mymenu/shared/widgets/food_cover_placeholder.dart';
@@ -10,11 +11,13 @@ void main() {
     WidgetTester tester,
   ) async {
     const String capturedPhoto = '/captures/clam-noodle.jpg';
+    const String preview = '/previews/clam-noodle.jpg';
     final Dish dish = Dish(
       id: 'user-dish',
       title: 'Clam Noodle Dish',
       description: '',
       heroImageUrl: capturedPhoto,
+      heroPreviewUrl: preview,
       category: 'Pasta',
       prepMinutes: 0,
       difficulty: 'Not set',
@@ -64,6 +67,54 @@ void main() {
     expect(
       (placeholder.image as AssetImage).assetName,
       FoodCoverPlaceholder.assetPath,
+    );
+  });
+
+  testWidgets('menu cards request display-sized artwork decoding', (
+    WidgetTester tester,
+  ) async {
+    final Dish dish = Dish(
+      id: 'menu-dish',
+      title: 'Menu Dish',
+      description: '',
+      heroImageUrl: '/captures/menu-dish.jpg',
+      heroPreviewUrl: '/previews/menu-dish.jpg',
+      heroThumbnailUrl: '/thumbnails/menu-dish.jpg',
+      heroPlaceholderUrl: '/placeholders/menu-dish.jpg',
+      category: 'Dinner',
+      prepMinutes: 20,
+      difficulty: 'Easy',
+      madeCount: 1,
+      lastMadeLabel: 'Today',
+      ingredients: const <String>[],
+      recipeSteps: const <String>[],
+      notes: const <DishNote>[],
+      sourcePhotos: const <SourcePhoto>[],
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Center(
+          child: SizedBox(
+            width: 180,
+            height: 260,
+            child: MenuGridCard(dish: dish, onTap: () {}),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester.widget<AppImage>(find.byType(AppImage)).resizeForDisplay,
+      isTrue,
+    );
+    expect(
+      tester.widget<AppImage>(find.byType(AppImage)).imageRef,
+      '/thumbnails/menu-dish.jpg',
+    );
+    expect(
+      tester.widget<AppImage>(find.byType(AppImage)).placeholderImageRef,
+      '/placeholders/menu-dish.jpg',
     );
   });
 }

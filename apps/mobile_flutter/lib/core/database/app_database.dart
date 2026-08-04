@@ -17,6 +17,9 @@ class Dishes extends Table {
   TextColumn get title => text()();
   TextColumn get description => text()();
   TextColumn get heroImageUrl => text()();
+  TextColumn get heroPreviewUrl => text().nullable()();
+  TextColumn get heroThumbnailUrl => text().nullable()();
+  TextColumn get heroPlaceholderUrl => text().nullable()();
   TextColumn get category => text()();
   IntColumn get prepMinutes => integer()();
   TextColumn get difficulty => text()();
@@ -51,6 +54,9 @@ class SourcePhotos extends Table {
   TextColumn get id => text()();
   TextColumn get dishId => text()();
   TextColumn get url => text()();
+  TextColumn get previewUrl => text().nullable()();
+  TextColumn get thumbnailUrl => text().nullable()();
+  TextColumn get placeholderUrl => text().nullable()();
   TextColumn get capturedLabel => text()();
   TextColumn get note => text().nullable()();
   TextColumn get confidenceLabel => text().nullable()();
@@ -71,6 +77,9 @@ class CaptureItems extends Table {
   TextColumn get status => text()();
   DateTimeColumn get createdAt => dateTime()();
   TextColumn get localMediaRef => text().nullable()();
+  TextColumn get localPreviewRef => text().nullable()();
+  TextColumn get localThumbnailRef => text().nullable()();
+  TextColumn get localPlaceholderRef => text().nullable()();
   TextColumn get remoteMediaRef => text().nullable()();
   TextColumn get ideaText => text().nullable()();
   DateTimeColumn get capturedAt => dateTime().nullable()();
@@ -199,7 +208,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration {
@@ -367,6 +376,12 @@ class AppDatabase extends _$AppDatabase {
               value: 'true',
             ),
           );
+        }
+        if (from < 14) {
+          await _migrateMediaPreviewsV14(this, migrator);
+        }
+        if (from < 15) {
+          await _migrateProgressivePreviewsV15(this, migrator);
         }
       },
     );

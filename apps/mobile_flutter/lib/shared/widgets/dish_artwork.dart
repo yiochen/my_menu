@@ -8,22 +8,28 @@ class DishArtwork extends StatelessWidget {
   const DishArtwork({
     required this.dish,
     this.fit = BoxFit.cover,
+    this.resizeForDisplay = false,
     super.key,
   });
 
   final Dish dish;
   final BoxFit fit;
+  final bool resizeForDisplay;
 
   @override
   Widget build(BuildContext context) {
-    if (dish.heroImageUrl.trim().isEmpty) {
+    final String imageRef =
+        resizeForDisplay ? dish.cardImageUrl : dish.heroImageUrl;
+    if (imageRef.trim().isEmpty) {
       return const DishArtworkPlaceholder();
     }
     return AppImage(
-      imageRef: dish.heroImageUrl,
+      imageRef: imageRef,
       width: double.infinity,
       height: double.infinity,
       fit: fit,
+      resizeForDisplay: resizeForDisplay,
+      placeholderImageRef: resizeForDisplay ? dish.cardPlaceholderUrl : null,
     );
   }
 }

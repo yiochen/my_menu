@@ -55,11 +55,8 @@ bool _isProcessingJobNotFound(Object error) {
 
 extension SyncRepositoryProcessingAssets on SyncRepository {
   Future<Map<String, String>> _prepareProcessingAssets(
-    String requestId,
     List<db.CaptureItemRow> captures,
   ) async {
-    final Directory directory = await _processingDirectory(requestId);
-    await directory.create(recursive: true);
     final Map<String, String> result = <String, String>{};
     for (final db.CaptureItemRow capture in captures) {
       if (capture.kind != capture_domain.CaptureItemKind.photo.name) {
@@ -69,29 +66,36 @@ extension SyncRepositoryProcessingAssets on SyncRepository {
       if (sourcePath == null) {
         throw const FileSystemException('The local photo is unavailable.');
       }
-      final String targetPath = '${directory.path}/${capture.id}.jpg';
-      if (!File(targetPath).existsSync()) {
-        try {
-          final compressed = await FlutterImageCompress.compressAndGetFile(
-            sourcePath,
-            targetPath,
-            minWidth: 1600,
-            minHeight: 1600,
-            quality: 85,
-          );
-          if (compressed == null) {
-            throw FileSystemException(
-              'Could not create the reduced processing photo.',
-              sourcePath,
-            );
-          }
-        } on Object {
-          if (Platform.environment['FLUTTER_TEST'] != 'true') rethrow;
-          // Widget/repository tests do not load platform image codecs.
-          await File(sourcePath).copy(targetPath);
-        }
+      final ImageDerivativeSet previews = await _imageDerivativeStore.ensureSet(
+        key: 'capture_${capture.id}',
+        sourcePath: sourcePath,
+        existingProcessingRef: capture.localPreviewRef,
+        existingCardRef: capture.localThumbnailRef,
+        existingPlaceholderRef: capture.localPlaceholderRef,
+      );
+      final String? previewPath = previews.processingRef;
+      if (previewPath == null) {
+        throw FileSystemException(
+          'Could not create the reduced processing photo.',
+          sourcePath,
+        );
       }
-      result[capture.id] = targetPath;
+      if (previewPath != capture.localPreviewRef ||
+          previews.cardRef != capture.localThumbnailRef ||
+          previews.placeholderRef != capture.localPlaceholderRef) {
+        await (_database.update(_database.captureItems)
+              ..where(
+                (db.CaptureItems table) => table.id.equals(capture.id),
+              ))
+            .write(
+          db.CaptureItemsCompanion(
+            localPreviewRef: Value<String?>(previewPath),
+            localThumbnailRef: Value<String?>(previews.cardRef),
+            localPlaceholderRef: Value<String?>(previews.placeholderRef),
+          ),
+        );
+      }
+      result[capture.id] = previewPath;
     }
     return result;
   }

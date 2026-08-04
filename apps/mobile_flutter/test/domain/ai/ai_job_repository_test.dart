@@ -202,7 +202,7 @@ void main() {
       addTearDown(migrated.close);
 
       expect(await migrated.select(migrated.aiJobs).get(), isEmpty);
-      expect(migrated.schemaVersion, 13);
+      expect(migrated.schemaVersion, 15);
     });
   });
 }

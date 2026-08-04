@@ -85,6 +85,13 @@ extension CaptureRepositoryDeletion on CaptureRepository {
       }
     });
     await _deleteLocalCaptureCopies(<String?>[capture.localMediaRef]);
+    await _imageDerivativeStore.remove(
+      refs: <String?>[
+        capture.localPreviewRef,
+        capture.localThumbnailRef,
+        capture.localPlaceholderRef,
+      ],
+    );
   }
 
   Future<void> retryBatch(String batchId) async {
@@ -201,6 +208,15 @@ extension CaptureRepositoryDeletion on CaptureRepository {
     await _deleteLocalCaptureCopies(
       captures.map((db.CaptureItemRow capture) => capture.localMediaRef),
     );
+    await _imageDerivativeStore.remove(
+      refs: captures.expand(
+        (db.CaptureItemRow capture) => <String?>[
+          capture.localPreviewRef,
+          capture.localThumbnailRef,
+          capture.localPlaceholderRef,
+        ],
+      ),
+    );
   }
 
   Future<void> _refreshDishAfterCaptureRemoval({
@@ -233,6 +249,15 @@ extension CaptureRepositoryDeletion on CaptureRepository {
     final String heroImageUrl = removedRefs.contains(dish.heroImageUrl)
         ? sources.firstOrNull?.url ?? ''
         : dish.heroImageUrl;
+    final String? heroPreviewUrl = removedRefs.contains(dish.heroImageUrl)
+        ? sources.firstOrNull?.previewUrl
+        : dish.heroPreviewUrl;
+    final String? heroThumbnailUrl = removedRefs.contains(dish.heroImageUrl)
+        ? sources.firstOrNull?.thumbnailUrl
+        : dish.heroThumbnailUrl;
+    final String? heroPlaceholderUrl = removedRefs.contains(dish.heroImageUrl)
+        ? sources.firstOrNull?.placeholderUrl
+        : dish.heroPlaceholderUrl;
     final int madeCount = sources.isEmpty
         ? 0
         : batchStillPresent
@@ -245,6 +270,9 @@ extension CaptureRepositoryDeletion on CaptureRepository {
         .write(
       db.DishesCompanion(
         heroImageUrl: Value<String>(heroImageUrl),
+        heroPreviewUrl: Value<String?>(heroPreviewUrl),
+        heroThumbnailUrl: Value<String?>(heroThumbnailUrl),
+        heroPlaceholderUrl: Value<String?>(heroPlaceholderUrl),
         madeCount: Value<int>(madeCount),
         lastMadeLabel: Value<String>(
           madeCount == 0 ? 'Not cooked yet' : dish.lastMadeLabel,

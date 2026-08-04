@@ -4,11 +4,14 @@ class CaptureRepository {
   CaptureRepository(
     this._database, [
     ProcessingOutboxRepository? processingOutboxRepository,
-  ]) : _processingOutboxRepository =
-            processingOutboxRepository ?? ProcessingOutboxRepository(_database);
+    ImageDerivativeStore? imageDerivativeStore,
+  ])  : _processingOutboxRepository =
+            processingOutboxRepository ?? ProcessingOutboxRepository(_database),
+        _imageDerivativeStore = imageDerivativeStore ?? ImageDerivativeStore();
 
   final db.AppDatabase _database;
   final ProcessingOutboxRepository _processingOutboxRepository;
+  final ImageDerivativeStore _imageDerivativeStore;
   final Uuid _uuid = const Uuid();
   static const int maxBatchItems = 9;
 
@@ -116,106 +119,149 @@ class CaptureRepository {
       media.length,
       (_) => _uuid.v4(),
     );
-    await _database.transaction(() async {
-      await _database.into(_database.captureBatches).insert(
-            db.CaptureBatchesCompanion.insert(
-              id: batchId,
-              status: useLocalFallback || isAuthoritativelyAssigned
-                  ? CaptureBatchStatus.applied.name
-                  : CaptureBatchStatus.pendingUpload.name,
-              createdAt: now,
-              updatedAt: now,
-            ),
-          );
-      for (int ordinal = 0; ordinal < media.length; ordinal += 1) {
-        final String id = captureIds[ordinal];
-        final CapturedMedia item = media[ordinal];
-        await _database.into(_database.captureItems).insert(
-              db.CaptureItemsCompanion.insert(
-                id: id,
-                batchId: Value<String?>(batchId),
-                ordinal: Value<int>(ordinal),
-                kind: capture_domain.CaptureItemKind.photo.name,
-                status: isAuthoritativelyAssigned
-                    ? capture_domain.CaptureItemStatus.applied.name
-                    : useLocalFallback
-                        ? capture_domain.CaptureItemStatus.localOnly.name
-                        : capture_domain.CaptureItemStatus.pendingUpload.name,
-                createdAt: now,
-                localMediaRef: Value<String?>(item.path),
-                capturedAt: Value<DateTime?>(item.capturedAt),
-                capturedLocalDate: Value<String?>(item.capturedLocalDate),
-                captureDateSource: Value<String?>(item.dateSource.apiValue),
-                appliedDishId: Value<String?>(authoritativeDishId),
-              ),
-            );
-        if (authoritativeDishId != null) {
-          await _database.into(_database.sourcePhotos).insert(
-                db.SourcePhotosCompanion.insert(
-                  id: '${id}_source',
-                  dishId: authoritativeDishId,
-                  url: item.path,
-                  capturedLabel: 'Today',
-                  captureId: Value<String?>(id),
-                  capturedAt: Value<DateTime?>(item.capturedAt),
-                  confidenceLabel: const Value<String?>('Added to dish'),
-                ),
-              );
-          continue;
-        }
-        if (useLocalFallback) {
-          continue;
-        }
-      }
-      if (authoritativeDishId != null) {
-        await (_database.update(_database.dishes)
-              ..where(
-                (db.Dishes table) => table.id.equals(authoritativeDishId),
-              ))
-            .write(
-          db.DishesCompanion(
-            heroImageUrl: Value<String>(
-              targetDish!.heroImageUrl.isEmpty
-                  ? media.first.path
-                  : targetDish.heroImageUrl,
-            ),
-            madeCount: Value<int>(targetDish.madeCount + 1),
-            lastMadeLabel: const Value<String>('Today'),
-          ),
-        );
-        final String correctionId = _uuid.v4();
-        await _database.into(_database.captureCorrections).insert(
-              db.CaptureCorrectionsCompanion.insert(
-                id: correctionId,
-                batchId: batchId,
-                actionType: CaptureCorrectionType.assign.name,
-                captureIdsJson: jsonEncode(captureIds),
-                previousDishIdsJson: jsonEncode(<String, Object?>{
-                  for (final String captureId in captureIds)
-                    captureId: <String, Object?>{
-                      'dishId': null,
-                      'status': capture_domain.CaptureItemStatus.localOnly.name,
-                      'failureReason': null,
-                    },
-                }),
-                targetDishId: authoritativeDishId,
-                status: CaptureCorrectionStatus.synced.name,
+    final List<ImageDerivativeSet> previews = await _createCapturePreviews(
+      captureIds,
+      media,
+    );
+    try {
+      await _database.transaction(() async {
+        await _database.into(_database.captureBatches).insert(
+              db.CaptureBatchesCompanion.insert(
+                id: batchId,
+                status: useLocalFallback || isAuthoritativelyAssigned
+                    ? CaptureBatchStatus.applied.name
+                    : CaptureBatchStatus.pendingUpload.name,
                 createdAt: now,
                 updatedAt: now,
               ),
             );
-        return;
-      }
-      if (useLocalFallback) {
-        return;
-      }
-      await _processingOutboxRepository.enqueueCaptureGrouping(
-        requestId: jobId,
-        batchId: batchId,
-        captureIds: captureIds,
-        now: now,
+        for (int ordinal = 0; ordinal < media.length; ordinal += 1) {
+          final String id = captureIds[ordinal];
+          final CapturedMedia item = media[ordinal];
+          await _database.into(_database.captureItems).insert(
+                db.CaptureItemsCompanion.insert(
+                  id: id,
+                  batchId: Value<String?>(batchId),
+                  ordinal: Value<int>(ordinal),
+                  kind: capture_domain.CaptureItemKind.photo.name,
+                  status: isAuthoritativelyAssigned
+                      ? capture_domain.CaptureItemStatus.applied.name
+                      : useLocalFallback
+                          ? capture_domain.CaptureItemStatus.localOnly.name
+                          : capture_domain.CaptureItemStatus.pendingUpload.name,
+                  createdAt: now,
+                  localMediaRef: Value<String?>(item.path),
+                  localPreviewRef: Value<String?>(
+                    previews[ordinal].processingRef,
+                  ),
+                  localThumbnailRef: Value<String?>(
+                    previews[ordinal].cardRef,
+                  ),
+                  localPlaceholderRef: Value<String?>(
+                    previews[ordinal].placeholderRef,
+                  ),
+                  capturedAt: Value<DateTime?>(item.capturedAt),
+                  capturedLocalDate: Value<String?>(item.capturedLocalDate),
+                  captureDateSource: Value<String?>(item.dateSource.apiValue),
+                  appliedDishId: Value<String?>(authoritativeDishId),
+                ),
+              );
+          if (authoritativeDishId != null) {
+            await _database.into(_database.sourcePhotos).insert(
+                  db.SourcePhotosCompanion.insert(
+                    id: '${id}_source',
+                    dishId: authoritativeDishId,
+                    url: item.path,
+                    previewUrl: Value<String?>(
+                      previews[ordinal].processingRef,
+                    ),
+                    thumbnailUrl: Value<String?>(previews[ordinal].cardRef),
+                    placeholderUrl: Value<String?>(
+                      previews[ordinal].placeholderRef,
+                    ),
+                    capturedLabel: 'Today',
+                    captureId: Value<String?>(id),
+                    capturedAt: Value<DateTime?>(item.capturedAt),
+                    confidenceLabel: const Value<String?>('Added to dish'),
+                  ),
+                );
+            continue;
+          }
+          if (useLocalFallback) {
+            continue;
+          }
+        }
+        if (authoritativeDishId != null) {
+          await (_database.update(_database.dishes)
+                ..where(
+                  (db.Dishes table) => table.id.equals(authoritativeDishId),
+                ))
+              .write(
+            db.DishesCompanion(
+              heroImageUrl: Value<String>(
+                targetDish!.heroImageUrl.isEmpty
+                    ? media.first.path
+                    : targetDish.heroImageUrl,
+              ),
+              heroPreviewUrl: Value<String?>(
+                targetDish.heroImageUrl.isEmpty
+                    ? previews.first.processingRef
+                    : targetDish.heroPreviewUrl,
+              ),
+              heroThumbnailUrl: Value<String?>(
+                targetDish.heroImageUrl.isEmpty
+                    ? previews.first.cardRef
+                    : targetDish.heroThumbnailUrl,
+              ),
+              heroPlaceholderUrl: Value<String?>(
+                targetDish.heroImageUrl.isEmpty
+                    ? previews.first.placeholderRef
+                    : targetDish.heroPlaceholderUrl,
+              ),
+              madeCount: Value<int>(targetDish.madeCount + 1),
+              lastMadeLabel: const Value<String>('Today'),
+            ),
+          );
+          final String correctionId = _uuid.v4();
+          await _database.into(_database.captureCorrections).insert(
+                db.CaptureCorrectionsCompanion.insert(
+                  id: correctionId,
+                  batchId: batchId,
+                  actionType: CaptureCorrectionType.assign.name,
+                  captureIdsJson: jsonEncode(captureIds),
+                  previousDishIdsJson: jsonEncode(<String, Object?>{
+                    for (final String captureId in captureIds)
+                      captureId: <String, Object?>{
+                        'dishId': null,
+                        'status':
+                            capture_domain.CaptureItemStatus.localOnly.name,
+                        'failureReason': null,
+                      },
+                  }),
+                  targetDishId: authoritativeDishId,
+                  status: CaptureCorrectionStatus.synced.name,
+                  createdAt: now,
+                  updatedAt: now,
+                ),
+              );
+          return;
+        }
+        if (useLocalFallback) {
+          return;
+        }
+        await _processingOutboxRepository.enqueueCaptureGrouping(
+          requestId: jobId,
+          batchId: batchId,
+          captureIds: captureIds,
+          now: now,
+        );
+      });
+    } on Object {
+      await _imageDerivativeStore.remove(
+        refs: previews.expand((ImageDerivativeSet preview) => preview.refs),
       );
-    });
+      rethrow;
+    }
 
     return (await listBatches()).firstWhere(
       (CaptureBatch batch) => batch.id == batchId,
@@ -281,6 +327,39 @@ class CaptureRepository {
     final String month = date.month.toString().padLeft(2, '0');
     final String day = date.day.toString().padLeft(2, '0');
     return '${date.year}-$month-$day';
+  }
+
+  Future<List<ImageDerivativeSet>> _createCapturePreviews(
+    List<String> captureIds,
+    List<CapturedMedia> media,
+  ) async {
+    const ImageDerivativeSet empty = ImageDerivativeSet(
+      processingRef: null,
+      cardRef: null,
+      placeholderRef: null,
+    );
+    final List<ImageDerivativeSet> previews =
+        List<ImageDerivativeSet>.filled(media.length, empty);
+    for (int index = 0; index < media.length; index += 2) {
+      final List<int> indexes = <int>[
+        index,
+        if (index + 1 < media.length) index + 1,
+      ];
+      final List<ImageDerivativeSet> results = await Future.wait(
+        indexes.map((int itemIndex) {
+          return _imageDerivativeStore.ensureSet(
+            key: 'capture_${captureIds[itemIndex]}',
+            sourcePath: media[itemIndex].path,
+          );
+        }),
+      );
+      for (int resultIndex = 0;
+          resultIndex < indexes.length;
+          resultIndex += 1) {
+        previews[indexes[resultIndex]] = results[resultIndex];
+      }
+    }
+    return previews;
   }
 
   CapturedMedia _normalizeCapturedMedia(Object value) {

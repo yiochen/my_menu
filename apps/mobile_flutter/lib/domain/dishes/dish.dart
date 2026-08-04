@@ -15,12 +15,18 @@ class Dish {
     required this.sourcePhotos,
     this.isFavorite = false,
     this.createdAt,
+    this.heroPreviewUrl,
+    this.heroThumbnailUrl,
+    this.heroPlaceholderUrl,
   });
 
   final String id;
   final String title;
   final String description;
   final String heroImageUrl;
+  final String? heroPreviewUrl;
+  final String? heroThumbnailUrl;
+  final String? heroPlaceholderUrl;
   final String category;
   final int prepMinutes;
   final String difficulty;
@@ -33,11 +39,28 @@ class Dish {
   final bool isFavorite;
   final DateTime? createdAt;
 
+  String get cardImageUrl {
+    final String thumbnail = heroThumbnailUrl?.trim() ?? '';
+    if (thumbnail.isNotEmpty) {
+      return thumbnail;
+    }
+    final String preview = heroPreviewUrl?.trim() ?? '';
+    return preview.isEmpty ? heroImageUrl : preview;
+  }
+
+  String? get cardPlaceholderUrl {
+    final String placeholder = heroPlaceholderUrl?.trim() ?? '';
+    return placeholder.isEmpty ? null : placeholder;
+  }
+
   Dish copyWith({
     String? id,
     String? title,
     String? description,
     String? heroImageUrl,
+    String? heroPreviewUrl,
+    String? heroThumbnailUrl,
+    String? heroPlaceholderUrl,
     String? category,
     int? prepMinutes,
     String? difficulty,
@@ -55,6 +78,9 @@ class Dish {
       title: title ?? this.title,
       description: description ?? this.description,
       heroImageUrl: heroImageUrl ?? this.heroImageUrl,
+      heroPreviewUrl: heroPreviewUrl ?? this.heroPreviewUrl,
+      heroThumbnailUrl: heroThumbnailUrl ?? this.heroThumbnailUrl,
+      heroPlaceholderUrl: heroPlaceholderUrl ?? this.heroPlaceholderUrl,
       category: category ?? this.category,
       prepMinutes: prepMinutes ?? this.prepMinutes,
       difficulty: difficulty ?? this.difficulty,
@@ -106,6 +132,9 @@ class SourcePhoto {
     this.capturedAt,
     this.note,
     this.confidenceLabel,
+    this.previewUrl,
+    this.thumbnailUrl,
+    this.placeholderUrl,
   });
 
   final String? id;
@@ -116,4 +145,7 @@ class SourcePhoto {
   final DateTime? capturedAt;
   final String? note;
   final String? confidenceLabel;
+  final String? previewUrl;
+  final String? thumbnailUrl;
+  final String? placeholderUrl;
 }

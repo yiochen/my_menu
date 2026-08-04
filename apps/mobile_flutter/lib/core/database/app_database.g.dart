@@ -30,6 +30,24 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, DishRow> {
   late final GeneratedColumn<String> heroImageUrl = GeneratedColumn<String>(
       'hero_image_url', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _heroPreviewUrlMeta =
+      const VerificationMeta('heroPreviewUrl');
+  @override
+  late final GeneratedColumn<String> heroPreviewUrl = GeneratedColumn<String>(
+      'hero_preview_url', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _heroThumbnailUrlMeta =
+      const VerificationMeta('heroThumbnailUrl');
+  @override
+  late final GeneratedColumn<String> heroThumbnailUrl = GeneratedColumn<String>(
+      'hero_thumbnail_url', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _heroPlaceholderUrlMeta =
+      const VerificationMeta('heroPlaceholderUrl');
+  @override
+  late final GeneratedColumn<String> heroPlaceholderUrl =
+      GeneratedColumn<String>('hero_placeholder_url', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _categoryMeta =
       const VerificationMeta('category');
   @override
@@ -100,6 +118,9 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, DishRow> {
         title,
         description,
         heroImageUrl,
+        heroPreviewUrl,
+        heroThumbnailUrl,
+        heroPlaceholderUrl,
         category,
         prepMinutes,
         difficulty,
@@ -147,6 +168,24 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, DishRow> {
               data['hero_image_url']!, _heroImageUrlMeta));
     } else if (isInserting) {
       context.missing(_heroImageUrlMeta);
+    }
+    if (data.containsKey('hero_preview_url')) {
+      context.handle(
+          _heroPreviewUrlMeta,
+          heroPreviewUrl.isAcceptableOrUnknown(
+              data['hero_preview_url']!, _heroPreviewUrlMeta));
+    }
+    if (data.containsKey('hero_thumbnail_url')) {
+      context.handle(
+          _heroThumbnailUrlMeta,
+          heroThumbnailUrl.isAcceptableOrUnknown(
+              data['hero_thumbnail_url']!, _heroThumbnailUrlMeta));
+    }
+    if (data.containsKey('hero_placeholder_url')) {
+      context.handle(
+          _heroPlaceholderUrlMeta,
+          heroPlaceholderUrl.isAcceptableOrUnknown(
+              data['hero_placeholder_url']!, _heroPlaceholderUrlMeta));
     }
     if (data.containsKey('category')) {
       context.handle(_categoryMeta,
@@ -233,6 +272,12 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, DishRow> {
           .read(DriftSqlType.string, data['${effectivePrefix}description'])!,
       heroImageUrl: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}hero_image_url'])!,
+      heroPreviewUrl: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}hero_preview_url']),
+      heroThumbnailUrl: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}hero_thumbnail_url']),
+      heroPlaceholderUrl: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}hero_placeholder_url']),
       category: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}category'])!,
       prepMinutes: attachedDatabase.typeMapping
@@ -267,6 +312,9 @@ class DishRow extends DataClass implements Insertable<DishRow> {
   final String title;
   final String description;
   final String heroImageUrl;
+  final String? heroPreviewUrl;
+  final String? heroThumbnailUrl;
+  final String? heroPlaceholderUrl;
   final String category;
   final int prepMinutes;
   final String difficulty;
@@ -282,6 +330,9 @@ class DishRow extends DataClass implements Insertable<DishRow> {
       required this.title,
       required this.description,
       required this.heroImageUrl,
+      this.heroPreviewUrl,
+      this.heroThumbnailUrl,
+      this.heroPlaceholderUrl,
       required this.category,
       required this.prepMinutes,
       required this.difficulty,
@@ -299,6 +350,15 @@ class DishRow extends DataClass implements Insertable<DishRow> {
     map['title'] = Variable<String>(title);
     map['description'] = Variable<String>(description);
     map['hero_image_url'] = Variable<String>(heroImageUrl);
+    if (!nullToAbsent || heroPreviewUrl != null) {
+      map['hero_preview_url'] = Variable<String>(heroPreviewUrl);
+    }
+    if (!nullToAbsent || heroThumbnailUrl != null) {
+      map['hero_thumbnail_url'] = Variable<String>(heroThumbnailUrl);
+    }
+    if (!nullToAbsent || heroPlaceholderUrl != null) {
+      map['hero_placeholder_url'] = Variable<String>(heroPlaceholderUrl);
+    }
     map['category'] = Variable<String>(category);
     map['prep_minutes'] = Variable<int>(prepMinutes);
     map['difficulty'] = Variable<String>(difficulty);
@@ -320,6 +380,15 @@ class DishRow extends DataClass implements Insertable<DishRow> {
       title: Value(title),
       description: Value(description),
       heroImageUrl: Value(heroImageUrl),
+      heroPreviewUrl: heroPreviewUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(heroPreviewUrl),
+      heroThumbnailUrl: heroThumbnailUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(heroThumbnailUrl),
+      heroPlaceholderUrl: heroPlaceholderUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(heroPlaceholderUrl),
       category: Value(category),
       prepMinutes: Value(prepMinutes),
       difficulty: Value(difficulty),
@@ -343,6 +412,10 @@ class DishRow extends DataClass implements Insertable<DishRow> {
       title: serializer.fromJson<String>(json['title']),
       description: serializer.fromJson<String>(json['description']),
       heroImageUrl: serializer.fromJson<String>(json['heroImageUrl']),
+      heroPreviewUrl: serializer.fromJson<String?>(json['heroPreviewUrl']),
+      heroThumbnailUrl: serializer.fromJson<String?>(json['heroThumbnailUrl']),
+      heroPlaceholderUrl:
+          serializer.fromJson<String?>(json['heroPlaceholderUrl']),
       category: serializer.fromJson<String>(json['category']),
       prepMinutes: serializer.fromJson<int>(json['prepMinutes']),
       difficulty: serializer.fromJson<String>(json['difficulty']),
@@ -363,6 +436,9 @@ class DishRow extends DataClass implements Insertable<DishRow> {
       'title': serializer.toJson<String>(title),
       'description': serializer.toJson<String>(description),
       'heroImageUrl': serializer.toJson<String>(heroImageUrl),
+      'heroPreviewUrl': serializer.toJson<String?>(heroPreviewUrl),
+      'heroThumbnailUrl': serializer.toJson<String?>(heroThumbnailUrl),
+      'heroPlaceholderUrl': serializer.toJson<String?>(heroPlaceholderUrl),
       'category': serializer.toJson<String>(category),
       'prepMinutes': serializer.toJson<int>(prepMinutes),
       'difficulty': serializer.toJson<String>(difficulty),
@@ -381,6 +457,9 @@ class DishRow extends DataClass implements Insertable<DishRow> {
           String? title,
           String? description,
           String? heroImageUrl,
+          Value<String?> heroPreviewUrl = const Value.absent(),
+          Value<String?> heroThumbnailUrl = const Value.absent(),
+          Value<String?> heroPlaceholderUrl = const Value.absent(),
           String? category,
           int? prepMinutes,
           String? difficulty,
@@ -396,6 +475,14 @@ class DishRow extends DataClass implements Insertable<DishRow> {
         title: title ?? this.title,
         description: description ?? this.description,
         heroImageUrl: heroImageUrl ?? this.heroImageUrl,
+        heroPreviewUrl:
+            heroPreviewUrl.present ? heroPreviewUrl.value : this.heroPreviewUrl,
+        heroThumbnailUrl: heroThumbnailUrl.present
+            ? heroThumbnailUrl.value
+            : this.heroThumbnailUrl,
+        heroPlaceholderUrl: heroPlaceholderUrl.present
+            ? heroPlaceholderUrl.value
+            : this.heroPlaceholderUrl,
         category: category ?? this.category,
         prepMinutes: prepMinutes ?? this.prepMinutes,
         difficulty: difficulty ?? this.difficulty,
@@ -416,6 +503,15 @@ class DishRow extends DataClass implements Insertable<DishRow> {
       heroImageUrl: data.heroImageUrl.present
           ? data.heroImageUrl.value
           : this.heroImageUrl,
+      heroPreviewUrl: data.heroPreviewUrl.present
+          ? data.heroPreviewUrl.value
+          : this.heroPreviewUrl,
+      heroThumbnailUrl: data.heroThumbnailUrl.present
+          ? data.heroThumbnailUrl.value
+          : this.heroThumbnailUrl,
+      heroPlaceholderUrl: data.heroPlaceholderUrl.present
+          ? data.heroPlaceholderUrl.value
+          : this.heroPlaceholderUrl,
       category: data.category.present ? data.category.value : this.category,
       prepMinutes:
           data.prepMinutes.present ? data.prepMinutes.value : this.prepMinutes,
@@ -445,6 +541,9 @@ class DishRow extends DataClass implements Insertable<DishRow> {
           ..write('title: $title, ')
           ..write('description: $description, ')
           ..write('heroImageUrl: $heroImageUrl, ')
+          ..write('heroPreviewUrl: $heroPreviewUrl, ')
+          ..write('heroThumbnailUrl: $heroThumbnailUrl, ')
+          ..write('heroPlaceholderUrl: $heroPlaceholderUrl, ')
           ..write('category: $category, ')
           ..write('prepMinutes: $prepMinutes, ')
           ..write('difficulty: $difficulty, ')
@@ -465,6 +564,9 @@ class DishRow extends DataClass implements Insertable<DishRow> {
       title,
       description,
       heroImageUrl,
+      heroPreviewUrl,
+      heroThumbnailUrl,
+      heroPlaceholderUrl,
       category,
       prepMinutes,
       difficulty,
@@ -483,6 +585,9 @@ class DishRow extends DataClass implements Insertable<DishRow> {
           other.title == this.title &&
           other.description == this.description &&
           other.heroImageUrl == this.heroImageUrl &&
+          other.heroPreviewUrl == this.heroPreviewUrl &&
+          other.heroThumbnailUrl == this.heroThumbnailUrl &&
+          other.heroPlaceholderUrl == this.heroPlaceholderUrl &&
           other.category == this.category &&
           other.prepMinutes == this.prepMinutes &&
           other.difficulty == this.difficulty &&
@@ -500,6 +605,9 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
   final Value<String> title;
   final Value<String> description;
   final Value<String> heroImageUrl;
+  final Value<String?> heroPreviewUrl;
+  final Value<String?> heroThumbnailUrl;
+  final Value<String?> heroPlaceholderUrl;
   final Value<String> category;
   final Value<int> prepMinutes;
   final Value<String> difficulty;
@@ -516,6 +624,9 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
     this.title = const Value.absent(),
     this.description = const Value.absent(),
     this.heroImageUrl = const Value.absent(),
+    this.heroPreviewUrl = const Value.absent(),
+    this.heroThumbnailUrl = const Value.absent(),
+    this.heroPlaceholderUrl = const Value.absent(),
     this.category = const Value.absent(),
     this.prepMinutes = const Value.absent(),
     this.difficulty = const Value.absent(),
@@ -533,6 +644,9 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
     required String title,
     required String description,
     required String heroImageUrl,
+    this.heroPreviewUrl = const Value.absent(),
+    this.heroThumbnailUrl = const Value.absent(),
+    this.heroPlaceholderUrl = const Value.absent(),
     required String category,
     required int prepMinutes,
     required String difficulty,
@@ -561,6 +675,9 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
     Expression<String>? title,
     Expression<String>? description,
     Expression<String>? heroImageUrl,
+    Expression<String>? heroPreviewUrl,
+    Expression<String>? heroThumbnailUrl,
+    Expression<String>? heroPlaceholderUrl,
     Expression<String>? category,
     Expression<int>? prepMinutes,
     Expression<String>? difficulty,
@@ -578,6 +695,10 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
       if (title != null) 'title': title,
       if (description != null) 'description': description,
       if (heroImageUrl != null) 'hero_image_url': heroImageUrl,
+      if (heroPreviewUrl != null) 'hero_preview_url': heroPreviewUrl,
+      if (heroThumbnailUrl != null) 'hero_thumbnail_url': heroThumbnailUrl,
+      if (heroPlaceholderUrl != null)
+        'hero_placeholder_url': heroPlaceholderUrl,
       if (category != null) 'category': category,
       if (prepMinutes != null) 'prep_minutes': prepMinutes,
       if (difficulty != null) 'difficulty': difficulty,
@@ -597,6 +718,9 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
       Value<String>? title,
       Value<String>? description,
       Value<String>? heroImageUrl,
+      Value<String?>? heroPreviewUrl,
+      Value<String?>? heroThumbnailUrl,
+      Value<String?>? heroPlaceholderUrl,
       Value<String>? category,
       Value<int>? prepMinutes,
       Value<String>? difficulty,
@@ -613,6 +737,9 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
       title: title ?? this.title,
       description: description ?? this.description,
       heroImageUrl: heroImageUrl ?? this.heroImageUrl,
+      heroPreviewUrl: heroPreviewUrl ?? this.heroPreviewUrl,
+      heroThumbnailUrl: heroThumbnailUrl ?? this.heroThumbnailUrl,
+      heroPlaceholderUrl: heroPlaceholderUrl ?? this.heroPlaceholderUrl,
       category: category ?? this.category,
       prepMinutes: prepMinutes ?? this.prepMinutes,
       difficulty: difficulty ?? this.difficulty,
@@ -641,6 +768,15 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
     }
     if (heroImageUrl.present) {
       map['hero_image_url'] = Variable<String>(heroImageUrl.value);
+    }
+    if (heroPreviewUrl.present) {
+      map['hero_preview_url'] = Variable<String>(heroPreviewUrl.value);
+    }
+    if (heroThumbnailUrl.present) {
+      map['hero_thumbnail_url'] = Variable<String>(heroThumbnailUrl.value);
+    }
+    if (heroPlaceholderUrl.present) {
+      map['hero_placeholder_url'] = Variable<String>(heroPlaceholderUrl.value);
     }
     if (category.present) {
       map['category'] = Variable<String>(category.value);
@@ -685,6 +821,9 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
           ..write('title: $title, ')
           ..write('description: $description, ')
           ..write('heroImageUrl: $heroImageUrl, ')
+          ..write('heroPreviewUrl: $heroPreviewUrl, ')
+          ..write('heroThumbnailUrl: $heroThumbnailUrl, ')
+          ..write('heroPlaceholderUrl: $heroPlaceholderUrl, ')
           ..write('category: $category, ')
           ..write('prepMinutes: $prepMinutes, ')
           ..write('difficulty: $difficulty, ')
@@ -1105,6 +1244,24 @@ class $SourcePhotosTable extends SourcePhotos
   late final GeneratedColumn<String> url = GeneratedColumn<String>(
       'url', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _previewUrlMeta =
+      const VerificationMeta('previewUrl');
+  @override
+  late final GeneratedColumn<String> previewUrl = GeneratedColumn<String>(
+      'preview_url', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _thumbnailUrlMeta =
+      const VerificationMeta('thumbnailUrl');
+  @override
+  late final GeneratedColumn<String> thumbnailUrl = GeneratedColumn<String>(
+      'thumbnail_url', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _placeholderUrlMeta =
+      const VerificationMeta('placeholderUrl');
+  @override
+  late final GeneratedColumn<String> placeholderUrl = GeneratedColumn<String>(
+      'placeholder_url', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _capturedLabelMeta =
       const VerificationMeta('capturedLabel');
   @override
@@ -1145,6 +1302,9 @@ class $SourcePhotosTable extends SourcePhotos
         id,
         dishId,
         url,
+        previewUrl,
+        thumbnailUrl,
+        placeholderUrl,
         capturedLabel,
         note,
         confidenceLabel,
@@ -1178,6 +1338,24 @@ class $SourcePhotosTable extends SourcePhotos
           _urlMeta, url.isAcceptableOrUnknown(data['url']!, _urlMeta));
     } else if (isInserting) {
       context.missing(_urlMeta);
+    }
+    if (data.containsKey('preview_url')) {
+      context.handle(
+          _previewUrlMeta,
+          previewUrl.isAcceptableOrUnknown(
+              data['preview_url']!, _previewUrlMeta));
+    }
+    if (data.containsKey('thumbnail_url')) {
+      context.handle(
+          _thumbnailUrlMeta,
+          thumbnailUrl.isAcceptableOrUnknown(
+              data['thumbnail_url']!, _thumbnailUrlMeta));
+    }
+    if (data.containsKey('placeholder_url')) {
+      context.handle(
+          _placeholderUrlMeta,
+          placeholderUrl.isAcceptableOrUnknown(
+              data['placeholder_url']!, _placeholderUrlMeta));
     }
     if (data.containsKey('captured_label')) {
       context.handle(
@@ -1228,6 +1406,12 @@ class $SourcePhotosTable extends SourcePhotos
           .read(DriftSqlType.string, data['${effectivePrefix}dish_id'])!,
       url: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}url'])!,
+      previewUrl: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}preview_url']),
+      thumbnailUrl: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}thumbnail_url']),
+      placeholderUrl: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}placeholder_url']),
       capturedLabel: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}captured_label'])!,
       note: attachedDatabase.typeMapping
@@ -1253,6 +1437,9 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
   final String id;
   final String dishId;
   final String url;
+  final String? previewUrl;
+  final String? thumbnailUrl;
+  final String? placeholderUrl;
   final String capturedLabel;
   final String? note;
   final String? confidenceLabel;
@@ -1263,6 +1450,9 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
       {required this.id,
       required this.dishId,
       required this.url,
+      this.previewUrl,
+      this.thumbnailUrl,
+      this.placeholderUrl,
       required this.capturedLabel,
       this.note,
       this.confidenceLabel,
@@ -1275,6 +1465,15 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
     map['id'] = Variable<String>(id);
     map['dish_id'] = Variable<String>(dishId);
     map['url'] = Variable<String>(url);
+    if (!nullToAbsent || previewUrl != null) {
+      map['preview_url'] = Variable<String>(previewUrl);
+    }
+    if (!nullToAbsent || thumbnailUrl != null) {
+      map['thumbnail_url'] = Variable<String>(thumbnailUrl);
+    }
+    if (!nullToAbsent || placeholderUrl != null) {
+      map['placeholder_url'] = Variable<String>(placeholderUrl);
+    }
     map['captured_label'] = Variable<String>(capturedLabel);
     if (!nullToAbsent || note != null) {
       map['note'] = Variable<String>(note);
@@ -1299,6 +1498,15 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
       id: Value(id),
       dishId: Value(dishId),
       url: Value(url),
+      previewUrl: previewUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(previewUrl),
+      thumbnailUrl: thumbnailUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(thumbnailUrl),
+      placeholderUrl: placeholderUrl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(placeholderUrl),
       capturedLabel: Value(capturedLabel),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       confidenceLabel: confidenceLabel == null && nullToAbsent
@@ -1323,6 +1531,9 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
       id: serializer.fromJson<String>(json['id']),
       dishId: serializer.fromJson<String>(json['dishId']),
       url: serializer.fromJson<String>(json['url']),
+      previewUrl: serializer.fromJson<String?>(json['previewUrl']),
+      thumbnailUrl: serializer.fromJson<String?>(json['thumbnailUrl']),
+      placeholderUrl: serializer.fromJson<String?>(json['placeholderUrl']),
       capturedLabel: serializer.fromJson<String>(json['capturedLabel']),
       note: serializer.fromJson<String?>(json['note']),
       confidenceLabel: serializer.fromJson<String?>(json['confidenceLabel']),
@@ -1339,6 +1550,9 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
       'id': serializer.toJson<String>(id),
       'dishId': serializer.toJson<String>(dishId),
       'url': serializer.toJson<String>(url),
+      'previewUrl': serializer.toJson<String?>(previewUrl),
+      'thumbnailUrl': serializer.toJson<String?>(thumbnailUrl),
+      'placeholderUrl': serializer.toJson<String?>(placeholderUrl),
       'capturedLabel': serializer.toJson<String>(capturedLabel),
       'note': serializer.toJson<String?>(note),
       'confidenceLabel': serializer.toJson<String?>(confidenceLabel),
@@ -1352,6 +1566,9 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
           {String? id,
           String? dishId,
           String? url,
+          Value<String?> previewUrl = const Value.absent(),
+          Value<String?> thumbnailUrl = const Value.absent(),
+          Value<String?> placeholderUrl = const Value.absent(),
           String? capturedLabel,
           Value<String?> note = const Value.absent(),
           Value<String?> confidenceLabel = const Value.absent(),
@@ -1362,6 +1579,11 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
         id: id ?? this.id,
         dishId: dishId ?? this.dishId,
         url: url ?? this.url,
+        previewUrl: previewUrl.present ? previewUrl.value : this.previewUrl,
+        thumbnailUrl:
+            thumbnailUrl.present ? thumbnailUrl.value : this.thumbnailUrl,
+        placeholderUrl:
+            placeholderUrl.present ? placeholderUrl.value : this.placeholderUrl,
         capturedLabel: capturedLabel ?? this.capturedLabel,
         note: note.present ? note.value : this.note,
         confidenceLabel: confidenceLabel.present
@@ -1378,6 +1600,14 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
       id: data.id.present ? data.id.value : this.id,
       dishId: data.dishId.present ? data.dishId.value : this.dishId,
       url: data.url.present ? data.url.value : this.url,
+      previewUrl:
+          data.previewUrl.present ? data.previewUrl.value : this.previewUrl,
+      thumbnailUrl: data.thumbnailUrl.present
+          ? data.thumbnailUrl.value
+          : this.thumbnailUrl,
+      placeholderUrl: data.placeholderUrl.present
+          ? data.placeholderUrl.value
+          : this.placeholderUrl,
       capturedLabel: data.capturedLabel.present
           ? data.capturedLabel.value
           : this.capturedLabel,
@@ -1400,6 +1630,9 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
           ..write('id: $id, ')
           ..write('dishId: $dishId, ')
           ..write('url: $url, ')
+          ..write('previewUrl: $previewUrl, ')
+          ..write('thumbnailUrl: $thumbnailUrl, ')
+          ..write('placeholderUrl: $placeholderUrl, ')
           ..write('capturedLabel: $capturedLabel, ')
           ..write('note: $note, ')
           ..write('confidenceLabel: $confidenceLabel, ')
@@ -1411,8 +1644,19 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
   }
 
   @override
-  int get hashCode => Object.hash(id, dishId, url, capturedLabel, note,
-      confidenceLabel, captureId, cookingOccasionId, capturedAt);
+  int get hashCode => Object.hash(
+      id,
+      dishId,
+      url,
+      previewUrl,
+      thumbnailUrl,
+      placeholderUrl,
+      capturedLabel,
+      note,
+      confidenceLabel,
+      captureId,
+      cookingOccasionId,
+      capturedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1420,6 +1664,9 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
           other.id == this.id &&
           other.dishId == this.dishId &&
           other.url == this.url &&
+          other.previewUrl == this.previewUrl &&
+          other.thumbnailUrl == this.thumbnailUrl &&
+          other.placeholderUrl == this.placeholderUrl &&
           other.capturedLabel == this.capturedLabel &&
           other.note == this.note &&
           other.confidenceLabel == this.confidenceLabel &&
@@ -1432,6 +1679,9 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
   final Value<String> id;
   final Value<String> dishId;
   final Value<String> url;
+  final Value<String?> previewUrl;
+  final Value<String?> thumbnailUrl;
+  final Value<String?> placeholderUrl;
   final Value<String> capturedLabel;
   final Value<String?> note;
   final Value<String?> confidenceLabel;
@@ -1443,6 +1693,9 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
     this.id = const Value.absent(),
     this.dishId = const Value.absent(),
     this.url = const Value.absent(),
+    this.previewUrl = const Value.absent(),
+    this.thumbnailUrl = const Value.absent(),
+    this.placeholderUrl = const Value.absent(),
     this.capturedLabel = const Value.absent(),
     this.note = const Value.absent(),
     this.confidenceLabel = const Value.absent(),
@@ -1455,6 +1708,9 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
     required String id,
     required String dishId,
     required String url,
+    this.previewUrl = const Value.absent(),
+    this.thumbnailUrl = const Value.absent(),
+    this.placeholderUrl = const Value.absent(),
     required String capturedLabel,
     this.note = const Value.absent(),
     this.confidenceLabel = const Value.absent(),
@@ -1470,6 +1726,9 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
     Expression<String>? id,
     Expression<String>? dishId,
     Expression<String>? url,
+    Expression<String>? previewUrl,
+    Expression<String>? thumbnailUrl,
+    Expression<String>? placeholderUrl,
     Expression<String>? capturedLabel,
     Expression<String>? note,
     Expression<String>? confidenceLabel,
@@ -1482,6 +1741,9 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
       if (id != null) 'id': id,
       if (dishId != null) 'dish_id': dishId,
       if (url != null) 'url': url,
+      if (previewUrl != null) 'preview_url': previewUrl,
+      if (thumbnailUrl != null) 'thumbnail_url': thumbnailUrl,
+      if (placeholderUrl != null) 'placeholder_url': placeholderUrl,
       if (capturedLabel != null) 'captured_label': capturedLabel,
       if (note != null) 'note': note,
       if (confidenceLabel != null) 'confidence_label': confidenceLabel,
@@ -1496,6 +1758,9 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
       {Value<String>? id,
       Value<String>? dishId,
       Value<String>? url,
+      Value<String?>? previewUrl,
+      Value<String?>? thumbnailUrl,
+      Value<String?>? placeholderUrl,
       Value<String>? capturedLabel,
       Value<String?>? note,
       Value<String?>? confidenceLabel,
@@ -1507,6 +1772,9 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
       id: id ?? this.id,
       dishId: dishId ?? this.dishId,
       url: url ?? this.url,
+      previewUrl: previewUrl ?? this.previewUrl,
+      thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
+      placeholderUrl: placeholderUrl ?? this.placeholderUrl,
       capturedLabel: capturedLabel ?? this.capturedLabel,
       note: note ?? this.note,
       confidenceLabel: confidenceLabel ?? this.confidenceLabel,
@@ -1528,6 +1796,15 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
     }
     if (url.present) {
       map['url'] = Variable<String>(url.value);
+    }
+    if (previewUrl.present) {
+      map['preview_url'] = Variable<String>(previewUrl.value);
+    }
+    if (thumbnailUrl.present) {
+      map['thumbnail_url'] = Variable<String>(thumbnailUrl.value);
+    }
+    if (placeholderUrl.present) {
+      map['placeholder_url'] = Variable<String>(placeholderUrl.value);
     }
     if (capturedLabel.present) {
       map['captured_label'] = Variable<String>(capturedLabel.value);
@@ -1559,6 +1836,9 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
           ..write('id: $id, ')
           ..write('dishId: $dishId, ')
           ..write('url: $url, ')
+          ..write('previewUrl: $previewUrl, ')
+          ..write('thumbnailUrl: $thumbnailUrl, ')
+          ..write('placeholderUrl: $placeholderUrl, ')
           ..write('capturedLabel: $capturedLabel, ')
           ..write('note: $note, ')
           ..write('confidenceLabel: $confidenceLabel, ')
@@ -1933,6 +2213,24 @@ class $CaptureItemsTable extends CaptureItems
   late final GeneratedColumn<String> localMediaRef = GeneratedColumn<String>(
       'local_media_ref', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _localPreviewRefMeta =
+      const VerificationMeta('localPreviewRef');
+  @override
+  late final GeneratedColumn<String> localPreviewRef = GeneratedColumn<String>(
+      'local_preview_ref', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _localThumbnailRefMeta =
+      const VerificationMeta('localThumbnailRef');
+  @override
+  late final GeneratedColumn<String> localThumbnailRef =
+      GeneratedColumn<String>('local_thumbnail_ref', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _localPlaceholderRefMeta =
+      const VerificationMeta('localPlaceholderRef');
+  @override
+  late final GeneratedColumn<String> localPlaceholderRef =
+      GeneratedColumn<String>('local_placeholder_ref', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _remoteMediaRefMeta =
       const VerificationMeta('remoteMediaRef');
   @override
@@ -1984,6 +2282,9 @@ class $CaptureItemsTable extends CaptureItems
         status,
         createdAt,
         localMediaRef,
+        localPreviewRef,
+        localThumbnailRef,
+        localPlaceholderRef,
         remoteMediaRef,
         ideaText,
         capturedAt,
@@ -2038,6 +2339,24 @@ class $CaptureItemsTable extends CaptureItems
           _localMediaRefMeta,
           localMediaRef.isAcceptableOrUnknown(
               data['local_media_ref']!, _localMediaRefMeta));
+    }
+    if (data.containsKey('local_preview_ref')) {
+      context.handle(
+          _localPreviewRefMeta,
+          localPreviewRef.isAcceptableOrUnknown(
+              data['local_preview_ref']!, _localPreviewRefMeta));
+    }
+    if (data.containsKey('local_thumbnail_ref')) {
+      context.handle(
+          _localThumbnailRefMeta,
+          localThumbnailRef.isAcceptableOrUnknown(
+              data['local_thumbnail_ref']!, _localThumbnailRefMeta));
+    }
+    if (data.containsKey('local_placeholder_ref')) {
+      context.handle(
+          _localPlaceholderRefMeta,
+          localPlaceholderRef.isAcceptableOrUnknown(
+              data['local_placeholder_ref']!, _localPlaceholderRefMeta));
     }
     if (data.containsKey('remote_media_ref')) {
       context.handle(
@@ -2102,6 +2421,12 @@ class $CaptureItemsTable extends CaptureItems
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       localMediaRef: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}local_media_ref']),
+      localPreviewRef: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}local_preview_ref']),
+      localThumbnailRef: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}local_thumbnail_ref']),
+      localPlaceholderRef: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}local_placeholder_ref']),
       remoteMediaRef: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}remote_media_ref']),
       ideaText: attachedDatabase.typeMapping
@@ -2133,6 +2458,9 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
   final String status;
   final DateTime createdAt;
   final String? localMediaRef;
+  final String? localPreviewRef;
+  final String? localThumbnailRef;
+  final String? localPlaceholderRef;
   final String? remoteMediaRef;
   final String? ideaText;
   final DateTime? capturedAt;
@@ -2148,6 +2476,9 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
       required this.status,
       required this.createdAt,
       this.localMediaRef,
+      this.localPreviewRef,
+      this.localThumbnailRef,
+      this.localPlaceholderRef,
       this.remoteMediaRef,
       this.ideaText,
       this.capturedAt,
@@ -2168,6 +2499,15 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
     map['created_at'] = Variable<DateTime>(createdAt);
     if (!nullToAbsent || localMediaRef != null) {
       map['local_media_ref'] = Variable<String>(localMediaRef);
+    }
+    if (!nullToAbsent || localPreviewRef != null) {
+      map['local_preview_ref'] = Variable<String>(localPreviewRef);
+    }
+    if (!nullToAbsent || localThumbnailRef != null) {
+      map['local_thumbnail_ref'] = Variable<String>(localThumbnailRef);
+    }
+    if (!nullToAbsent || localPlaceholderRef != null) {
+      map['local_placeholder_ref'] = Variable<String>(localPlaceholderRef);
     }
     if (!nullToAbsent || remoteMediaRef != null) {
       map['remote_media_ref'] = Variable<String>(remoteMediaRef);
@@ -2206,6 +2546,15 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
       localMediaRef: localMediaRef == null && nullToAbsent
           ? const Value.absent()
           : Value(localMediaRef),
+      localPreviewRef: localPreviewRef == null && nullToAbsent
+          ? const Value.absent()
+          : Value(localPreviewRef),
+      localThumbnailRef: localThumbnailRef == null && nullToAbsent
+          ? const Value.absent()
+          : Value(localThumbnailRef),
+      localPlaceholderRef: localPlaceholderRef == null && nullToAbsent
+          ? const Value.absent()
+          : Value(localPlaceholderRef),
       remoteMediaRef: remoteMediaRef == null && nullToAbsent
           ? const Value.absent()
           : Value(remoteMediaRef),
@@ -2241,6 +2590,11 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
       status: serializer.fromJson<String>(json['status']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       localMediaRef: serializer.fromJson<String?>(json['localMediaRef']),
+      localPreviewRef: serializer.fromJson<String?>(json['localPreviewRef']),
+      localThumbnailRef:
+          serializer.fromJson<String?>(json['localThumbnailRef']),
+      localPlaceholderRef:
+          serializer.fromJson<String?>(json['localPlaceholderRef']),
       remoteMediaRef: serializer.fromJson<String?>(json['remoteMediaRef']),
       ideaText: serializer.fromJson<String?>(json['ideaText']),
       capturedAt: serializer.fromJson<DateTime?>(json['capturedAt']),
@@ -2263,6 +2617,9 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
       'status': serializer.toJson<String>(status),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'localMediaRef': serializer.toJson<String?>(localMediaRef),
+      'localPreviewRef': serializer.toJson<String?>(localPreviewRef),
+      'localThumbnailRef': serializer.toJson<String?>(localThumbnailRef),
+      'localPlaceholderRef': serializer.toJson<String?>(localPlaceholderRef),
       'remoteMediaRef': serializer.toJson<String?>(remoteMediaRef),
       'ideaText': serializer.toJson<String?>(ideaText),
       'capturedAt': serializer.toJson<DateTime?>(capturedAt),
@@ -2281,6 +2638,9 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
           String? status,
           DateTime? createdAt,
           Value<String?> localMediaRef = const Value.absent(),
+          Value<String?> localPreviewRef = const Value.absent(),
+          Value<String?> localThumbnailRef = const Value.absent(),
+          Value<String?> localPlaceholderRef = const Value.absent(),
           Value<String?> remoteMediaRef = const Value.absent(),
           Value<String?> ideaText = const Value.absent(),
           Value<DateTime?> capturedAt = const Value.absent(),
@@ -2297,6 +2657,15 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
         createdAt: createdAt ?? this.createdAt,
         localMediaRef:
             localMediaRef.present ? localMediaRef.value : this.localMediaRef,
+        localPreviewRef: localPreviewRef.present
+            ? localPreviewRef.value
+            : this.localPreviewRef,
+        localThumbnailRef: localThumbnailRef.present
+            ? localThumbnailRef.value
+            : this.localThumbnailRef,
+        localPlaceholderRef: localPlaceholderRef.present
+            ? localPlaceholderRef.value
+            : this.localPlaceholderRef,
         remoteMediaRef:
             remoteMediaRef.present ? remoteMediaRef.value : this.remoteMediaRef,
         ideaText: ideaText.present ? ideaText.value : this.ideaText,
@@ -2323,6 +2692,15 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
       localMediaRef: data.localMediaRef.present
           ? data.localMediaRef.value
           : this.localMediaRef,
+      localPreviewRef: data.localPreviewRef.present
+          ? data.localPreviewRef.value
+          : this.localPreviewRef,
+      localThumbnailRef: data.localThumbnailRef.present
+          ? data.localThumbnailRef.value
+          : this.localThumbnailRef,
+      localPlaceholderRef: data.localPlaceholderRef.present
+          ? data.localPlaceholderRef.value
+          : this.localPlaceholderRef,
       remoteMediaRef: data.remoteMediaRef.present
           ? data.remoteMediaRef.value
           : this.remoteMediaRef,
@@ -2354,6 +2732,9 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
           ..write('status: $status, ')
           ..write('createdAt: $createdAt, ')
           ..write('localMediaRef: $localMediaRef, ')
+          ..write('localPreviewRef: $localPreviewRef, ')
+          ..write('localThumbnailRef: $localThumbnailRef, ')
+          ..write('localPlaceholderRef: $localPlaceholderRef, ')
           ..write('remoteMediaRef: $remoteMediaRef, ')
           ..write('ideaText: $ideaText, ')
           ..write('capturedAt: $capturedAt, ')
@@ -2374,6 +2755,9 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
       status,
       createdAt,
       localMediaRef,
+      localPreviewRef,
+      localThumbnailRef,
+      localPlaceholderRef,
       remoteMediaRef,
       ideaText,
       capturedAt,
@@ -2392,6 +2776,9 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
           other.status == this.status &&
           other.createdAt == this.createdAt &&
           other.localMediaRef == this.localMediaRef &&
+          other.localPreviewRef == this.localPreviewRef &&
+          other.localThumbnailRef == this.localThumbnailRef &&
+          other.localPlaceholderRef == this.localPlaceholderRef &&
           other.remoteMediaRef == this.remoteMediaRef &&
           other.ideaText == this.ideaText &&
           other.capturedAt == this.capturedAt &&
@@ -2409,6 +2796,9 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
   final Value<String> status;
   final Value<DateTime> createdAt;
   final Value<String?> localMediaRef;
+  final Value<String?> localPreviewRef;
+  final Value<String?> localThumbnailRef;
+  final Value<String?> localPlaceholderRef;
   final Value<String?> remoteMediaRef;
   final Value<String?> ideaText;
   final Value<DateTime?> capturedAt;
@@ -2425,6 +2815,9 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
     this.status = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.localMediaRef = const Value.absent(),
+    this.localPreviewRef = const Value.absent(),
+    this.localThumbnailRef = const Value.absent(),
+    this.localPlaceholderRef = const Value.absent(),
     this.remoteMediaRef = const Value.absent(),
     this.ideaText = const Value.absent(),
     this.capturedAt = const Value.absent(),
@@ -2442,6 +2835,9 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
     required String status,
     required DateTime createdAt,
     this.localMediaRef = const Value.absent(),
+    this.localPreviewRef = const Value.absent(),
+    this.localThumbnailRef = const Value.absent(),
+    this.localPlaceholderRef = const Value.absent(),
     this.remoteMediaRef = const Value.absent(),
     this.ideaText = const Value.absent(),
     this.capturedAt = const Value.absent(),
@@ -2462,6 +2858,9 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
     Expression<String>? status,
     Expression<DateTime>? createdAt,
     Expression<String>? localMediaRef,
+    Expression<String>? localPreviewRef,
+    Expression<String>? localThumbnailRef,
+    Expression<String>? localPlaceholderRef,
     Expression<String>? remoteMediaRef,
     Expression<String>? ideaText,
     Expression<DateTime>? capturedAt,
@@ -2479,6 +2878,10 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
       if (status != null) 'status': status,
       if (createdAt != null) 'created_at': createdAt,
       if (localMediaRef != null) 'local_media_ref': localMediaRef,
+      if (localPreviewRef != null) 'local_preview_ref': localPreviewRef,
+      if (localThumbnailRef != null) 'local_thumbnail_ref': localThumbnailRef,
+      if (localPlaceholderRef != null)
+        'local_placeholder_ref': localPlaceholderRef,
       if (remoteMediaRef != null) 'remote_media_ref': remoteMediaRef,
       if (ideaText != null) 'idea_text': ideaText,
       if (capturedAt != null) 'captured_at': capturedAt,
@@ -2498,6 +2901,9 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
       Value<String>? status,
       Value<DateTime>? createdAt,
       Value<String?>? localMediaRef,
+      Value<String?>? localPreviewRef,
+      Value<String?>? localThumbnailRef,
+      Value<String?>? localPlaceholderRef,
       Value<String?>? remoteMediaRef,
       Value<String?>? ideaText,
       Value<DateTime?>? capturedAt,
@@ -2514,6 +2920,9 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       localMediaRef: localMediaRef ?? this.localMediaRef,
+      localPreviewRef: localPreviewRef ?? this.localPreviewRef,
+      localThumbnailRef: localThumbnailRef ?? this.localThumbnailRef,
+      localPlaceholderRef: localPlaceholderRef ?? this.localPlaceholderRef,
       remoteMediaRef: remoteMediaRef ?? this.remoteMediaRef,
       ideaText: ideaText ?? this.ideaText,
       capturedAt: capturedAt ?? this.capturedAt,
@@ -2548,6 +2957,16 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
     }
     if (localMediaRef.present) {
       map['local_media_ref'] = Variable<String>(localMediaRef.value);
+    }
+    if (localPreviewRef.present) {
+      map['local_preview_ref'] = Variable<String>(localPreviewRef.value);
+    }
+    if (localThumbnailRef.present) {
+      map['local_thumbnail_ref'] = Variable<String>(localThumbnailRef.value);
+    }
+    if (localPlaceholderRef.present) {
+      map['local_placeholder_ref'] =
+          Variable<String>(localPlaceholderRef.value);
     }
     if (remoteMediaRef.present) {
       map['remote_media_ref'] = Variable<String>(remoteMediaRef.value);
@@ -2586,6 +3005,9 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
           ..write('status: $status, ')
           ..write('createdAt: $createdAt, ')
           ..write('localMediaRef: $localMediaRef, ')
+          ..write('localPreviewRef: $localPreviewRef, ')
+          ..write('localThumbnailRef: $localThumbnailRef, ')
+          ..write('localPlaceholderRef: $localPlaceholderRef, ')
           ..write('remoteMediaRef: $remoteMediaRef, ')
           ..write('ideaText: $ideaText, ')
           ..write('capturedAt: $capturedAt, ')
@@ -6852,6 +7274,9 @@ typedef $$DishesTableCreateCompanionBuilder = DishesCompanion Function({
   required String title,
   required String description,
   required String heroImageUrl,
+  Value<String?> heroPreviewUrl,
+  Value<String?> heroThumbnailUrl,
+  Value<String?> heroPlaceholderUrl,
   required String category,
   required int prepMinutes,
   required String difficulty,
@@ -6869,6 +7294,9 @@ typedef $$DishesTableUpdateCompanionBuilder = DishesCompanion Function({
   Value<String> title,
   Value<String> description,
   Value<String> heroImageUrl,
+  Value<String?> heroPreviewUrl,
+  Value<String?> heroThumbnailUrl,
+  Value<String?> heroPlaceholderUrl,
   Value<String> category,
   Value<int> prepMinutes,
   Value<String> difficulty,
@@ -6902,6 +7330,18 @@ class $$DishesTableFilterComposer
 
   ColumnFilters<String> get heroImageUrl => $composableBuilder(
       column: $table.heroImageUrl, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get heroPreviewUrl => $composableBuilder(
+      column: $table.heroPreviewUrl,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get heroThumbnailUrl => $composableBuilder(
+      column: $table.heroThumbnailUrl,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get heroPlaceholderUrl => $composableBuilder(
+      column: $table.heroPlaceholderUrl,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get category => $composableBuilder(
       column: $table.category, builder: (column) => ColumnFilters(column));
@@ -6958,6 +7398,18 @@ class $$DishesTableOrderingComposer
       column: $table.heroImageUrl,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get heroPreviewUrl => $composableBuilder(
+      column: $table.heroPreviewUrl,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get heroThumbnailUrl => $composableBuilder(
+      column: $table.heroThumbnailUrl,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get heroPlaceholderUrl => $composableBuilder(
+      column: $table.heroPlaceholderUrl,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get category => $composableBuilder(
       column: $table.category, builder: (column) => ColumnOrderings(column));
 
@@ -7012,6 +7464,15 @@ class $$DishesTableAnnotationComposer
 
   GeneratedColumn<String> get heroImageUrl => $composableBuilder(
       column: $table.heroImageUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get heroPreviewUrl => $composableBuilder(
+      column: $table.heroPreviewUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get heroThumbnailUrl => $composableBuilder(
+      column: $table.heroThumbnailUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get heroPlaceholderUrl => $composableBuilder(
+      column: $table.heroPlaceholderUrl, builder: (column) => column);
 
   GeneratedColumn<String> get category =>
       $composableBuilder(column: $table.category, builder: (column) => column);
@@ -7071,6 +7532,9 @@ class $$DishesTableTableManager extends RootTableManager<
             Value<String> title = const Value.absent(),
             Value<String> description = const Value.absent(),
             Value<String> heroImageUrl = const Value.absent(),
+            Value<String?> heroPreviewUrl = const Value.absent(),
+            Value<String?> heroThumbnailUrl = const Value.absent(),
+            Value<String?> heroPlaceholderUrl = const Value.absent(),
             Value<String> category = const Value.absent(),
             Value<int> prepMinutes = const Value.absent(),
             Value<String> difficulty = const Value.absent(),
@@ -7088,6 +7552,9 @@ class $$DishesTableTableManager extends RootTableManager<
             title: title,
             description: description,
             heroImageUrl: heroImageUrl,
+            heroPreviewUrl: heroPreviewUrl,
+            heroThumbnailUrl: heroThumbnailUrl,
+            heroPlaceholderUrl: heroPlaceholderUrl,
             category: category,
             prepMinutes: prepMinutes,
             difficulty: difficulty,
@@ -7105,6 +7572,9 @@ class $$DishesTableTableManager extends RootTableManager<
             required String title,
             required String description,
             required String heroImageUrl,
+            Value<String?> heroPreviewUrl = const Value.absent(),
+            Value<String?> heroThumbnailUrl = const Value.absent(),
+            Value<String?> heroPlaceholderUrl = const Value.absent(),
             required String category,
             required int prepMinutes,
             required String difficulty,
@@ -7122,6 +7592,9 @@ class $$DishesTableTableManager extends RootTableManager<
             title: title,
             description: description,
             heroImageUrl: heroImageUrl,
+            heroPreviewUrl: heroPreviewUrl,
+            heroThumbnailUrl: heroThumbnailUrl,
+            heroPlaceholderUrl: heroPlaceholderUrl,
             category: category,
             prepMinutes: prepMinutes,
             difficulty: difficulty,
@@ -7353,6 +7826,9 @@ typedef $$SourcePhotosTableCreateCompanionBuilder = SourcePhotosCompanion
   required String id,
   required String dishId,
   required String url,
+  Value<String?> previewUrl,
+  Value<String?> thumbnailUrl,
+  Value<String?> placeholderUrl,
   required String capturedLabel,
   Value<String?> note,
   Value<String?> confidenceLabel,
@@ -7366,6 +7842,9 @@ typedef $$SourcePhotosTableUpdateCompanionBuilder = SourcePhotosCompanion
   Value<String> id,
   Value<String> dishId,
   Value<String> url,
+  Value<String?> previewUrl,
+  Value<String?> thumbnailUrl,
+  Value<String?> placeholderUrl,
   Value<String> capturedLabel,
   Value<String?> note,
   Value<String?> confidenceLabel,
@@ -7392,6 +7871,16 @@ class $$SourcePhotosTableFilterComposer
 
   ColumnFilters<String> get url => $composableBuilder(
       column: $table.url, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get previewUrl => $composableBuilder(
+      column: $table.previewUrl, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get thumbnailUrl => $composableBuilder(
+      column: $table.thumbnailUrl, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get placeholderUrl => $composableBuilder(
+      column: $table.placeholderUrl,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get capturedLabel => $composableBuilder(
       column: $table.capturedLabel, builder: (column) => ColumnFilters(column));
@@ -7432,6 +7921,17 @@ class $$SourcePhotosTableOrderingComposer
   ColumnOrderings<String> get url => $composableBuilder(
       column: $table.url, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get previewUrl => $composableBuilder(
+      column: $table.previewUrl, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get thumbnailUrl => $composableBuilder(
+      column: $table.thumbnailUrl,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get placeholderUrl => $composableBuilder(
+      column: $table.placeholderUrl,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get capturedLabel => $composableBuilder(
       column: $table.capturedLabel,
       builder: (column) => ColumnOrderings(column));
@@ -7471,6 +7971,15 @@ class $$SourcePhotosTableAnnotationComposer
 
   GeneratedColumn<String> get url =>
       $composableBuilder(column: $table.url, builder: (column) => column);
+
+  GeneratedColumn<String> get previewUrl => $composableBuilder(
+      column: $table.previewUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get thumbnailUrl => $composableBuilder(
+      column: $table.thumbnailUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get placeholderUrl => $composableBuilder(
+      column: $table.placeholderUrl, builder: (column) => column);
 
   GeneratedColumn<String> get capturedLabel => $composableBuilder(
       column: $table.capturedLabel, builder: (column) => column);
@@ -7520,6 +8029,9 @@ class $$SourcePhotosTableTableManager extends RootTableManager<
             Value<String> id = const Value.absent(),
             Value<String> dishId = const Value.absent(),
             Value<String> url = const Value.absent(),
+            Value<String?> previewUrl = const Value.absent(),
+            Value<String?> thumbnailUrl = const Value.absent(),
+            Value<String?> placeholderUrl = const Value.absent(),
             Value<String> capturedLabel = const Value.absent(),
             Value<String?> note = const Value.absent(),
             Value<String?> confidenceLabel = const Value.absent(),
@@ -7532,6 +8044,9 @@ class $$SourcePhotosTableTableManager extends RootTableManager<
             id: id,
             dishId: dishId,
             url: url,
+            previewUrl: previewUrl,
+            thumbnailUrl: thumbnailUrl,
+            placeholderUrl: placeholderUrl,
             capturedLabel: capturedLabel,
             note: note,
             confidenceLabel: confidenceLabel,
@@ -7544,6 +8059,9 @@ class $$SourcePhotosTableTableManager extends RootTableManager<
             required String id,
             required String dishId,
             required String url,
+            Value<String?> previewUrl = const Value.absent(),
+            Value<String?> thumbnailUrl = const Value.absent(),
+            Value<String?> placeholderUrl = const Value.absent(),
             required String capturedLabel,
             Value<String?> note = const Value.absent(),
             Value<String?> confidenceLabel = const Value.absent(),
@@ -7556,6 +8074,9 @@ class $$SourcePhotosTableTableManager extends RootTableManager<
             id: id,
             dishId: dishId,
             url: url,
+            previewUrl: previewUrl,
+            thumbnailUrl: thumbnailUrl,
+            placeholderUrl: placeholderUrl,
             capturedLabel: capturedLabel,
             note: note,
             confidenceLabel: confidenceLabel,
@@ -7770,6 +8291,9 @@ typedef $$CaptureItemsTableCreateCompanionBuilder = CaptureItemsCompanion
   required String status,
   required DateTime createdAt,
   Value<String?> localMediaRef,
+  Value<String?> localPreviewRef,
+  Value<String?> localThumbnailRef,
+  Value<String?> localPlaceholderRef,
   Value<String?> remoteMediaRef,
   Value<String?> ideaText,
   Value<DateTime?> capturedAt,
@@ -7788,6 +8312,9 @@ typedef $$CaptureItemsTableUpdateCompanionBuilder = CaptureItemsCompanion
   Value<String> status,
   Value<DateTime> createdAt,
   Value<String?> localMediaRef,
+  Value<String?> localPreviewRef,
+  Value<String?> localThumbnailRef,
+  Value<String?> localPlaceholderRef,
   Value<String?> remoteMediaRef,
   Value<String?> ideaText,
   Value<DateTime?> capturedAt,
@@ -7827,6 +8354,18 @@ class $$CaptureItemsTableFilterComposer
 
   ColumnFilters<String> get localMediaRef => $composableBuilder(
       column: $table.localMediaRef, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get localPreviewRef => $composableBuilder(
+      column: $table.localPreviewRef,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get localThumbnailRef => $composableBuilder(
+      column: $table.localThumbnailRef,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get localPlaceholderRef => $composableBuilder(
+      column: $table.localPlaceholderRef,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get remoteMediaRef => $composableBuilder(
       column: $table.remoteMediaRef,
@@ -7882,6 +8421,18 @@ class $$CaptureItemsTableOrderingComposer
 
   ColumnOrderings<String> get localMediaRef => $composableBuilder(
       column: $table.localMediaRef,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get localPreviewRef => $composableBuilder(
+      column: $table.localPreviewRef,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get localThumbnailRef => $composableBuilder(
+      column: $table.localThumbnailRef,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get localPlaceholderRef => $composableBuilder(
+      column: $table.localPlaceholderRef,
       builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get remoteMediaRef => $composableBuilder(
@@ -7941,6 +8492,15 @@ class $$CaptureItemsTableAnnotationComposer
   GeneratedColumn<String> get localMediaRef => $composableBuilder(
       column: $table.localMediaRef, builder: (column) => column);
 
+  GeneratedColumn<String> get localPreviewRef => $composableBuilder(
+      column: $table.localPreviewRef, builder: (column) => column);
+
+  GeneratedColumn<String> get localThumbnailRef => $composableBuilder(
+      column: $table.localThumbnailRef, builder: (column) => column);
+
+  GeneratedColumn<String> get localPlaceholderRef => $composableBuilder(
+      column: $table.localPlaceholderRef, builder: (column) => column);
+
   GeneratedColumn<String> get remoteMediaRef => $composableBuilder(
       column: $table.remoteMediaRef, builder: (column) => column);
 
@@ -7996,6 +8556,9 @@ class $$CaptureItemsTableTableManager extends RootTableManager<
             Value<String> status = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<String?> localMediaRef = const Value.absent(),
+            Value<String?> localPreviewRef = const Value.absent(),
+            Value<String?> localThumbnailRef = const Value.absent(),
+            Value<String?> localPlaceholderRef = const Value.absent(),
             Value<String?> remoteMediaRef = const Value.absent(),
             Value<String?> ideaText = const Value.absent(),
             Value<DateTime?> capturedAt = const Value.absent(),
@@ -8013,6 +8576,9 @@ class $$CaptureItemsTableTableManager extends RootTableManager<
             status: status,
             createdAt: createdAt,
             localMediaRef: localMediaRef,
+            localPreviewRef: localPreviewRef,
+            localThumbnailRef: localThumbnailRef,
+            localPlaceholderRef: localPlaceholderRef,
             remoteMediaRef: remoteMediaRef,
             ideaText: ideaText,
             capturedAt: capturedAt,
@@ -8030,6 +8596,9 @@ class $$CaptureItemsTableTableManager extends RootTableManager<
             required String status,
             required DateTime createdAt,
             Value<String?> localMediaRef = const Value.absent(),
+            Value<String?> localPreviewRef = const Value.absent(),
+            Value<String?> localThumbnailRef = const Value.absent(),
+            Value<String?> localPlaceholderRef = const Value.absent(),
             Value<String?> remoteMediaRef = const Value.absent(),
             Value<String?> ideaText = const Value.absent(),
             Value<DateTime?> capturedAt = const Value.absent(),
@@ -8047,6 +8616,9 @@ class $$CaptureItemsTableTableManager extends RootTableManager<
             status: status,
             createdAt: createdAt,
             localMediaRef: localMediaRef,
+            localPreviewRef: localPreviewRef,
+            localThumbnailRef: localThumbnailRef,
+            localPlaceholderRef: localPlaceholderRef,
             remoteMediaRef: remoteMediaRef,
             ideaText: ideaText,
             capturedAt: capturedAt,

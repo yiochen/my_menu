@@ -1,10 +1,15 @@
 part of 'repositories.dart';
 
 class DishRepository {
-  DishRepository(this._database, this._dishImageCache);
+  DishRepository(
+    this._database,
+    this._dishImageCache,
+    this._imageDerivativeStore,
+  );
 
   final db.AppDatabase _database;
   final DishImageCache _dishImageCache;
+  final ImageDerivativeStore _imageDerivativeStore;
 
   Future<void> _seedIfEmpty() async {
     final int existingCount =
@@ -27,16 +32,53 @@ class DishRepository {
   Future<List<Dish>> listDishes() async {
     final List<db.DishRow> rows =
         await _database.select(_database.dishes).get();
-    final List<Dish> dishes = <Dish>[];
-    for (final db.DishRow row in rows) {
-      dishes.add(
-        row.toDomain(
-          await _sourcePhotosFor(row.id),
-          await _notesFor(row.id),
-        ),
-      );
+    if (rows.isEmpty) {
+      return const <Dish>[];
     }
-    return dishes;
+
+    final List<String> dishIds =
+        rows.map((db.DishRow row) => row.id).toList(growable: false);
+    final List<db.SourcePhotoRow> sourceRows = await (_database.select(
+      _database.sourcePhotos,
+    )..where((db.SourcePhotos table) => table.dishId.isIn(dishIds)))
+        .get();
+    final List<db.DishNoteRow> noteRows = await (_database.select(
+      _database.dishNotes,
+    )
+          ..where(
+            (db.DishNotes table) =>
+                table.dishId.isIn(dishIds) & table.deletedAt.isNull(),
+          )
+          ..orderBy(<OrderingTerm Function(db.$DishNotesTable)>[
+            (db.DishNotes table) => OrderingTerm.asc(table.dishId),
+            (db.DishNotes table) => OrderingTerm.asc(table.position),
+            (db.DishNotes table) => OrderingTerm.asc(table.createdAt),
+          ]))
+        .get();
+
+    final Map<String, List<SourcePhoto>> sourcesByDishId =
+        <String, List<SourcePhoto>>{};
+    for (final db.SourcePhotoRow row in sourceRows) {
+      sourcesByDishId
+          .putIfAbsent(row.dishId, () => <SourcePhoto>[])
+          .add(row.toDomain());
+    }
+    final Map<String, List<DishNote>> notesByDishId =
+        <String, List<DishNote>>{};
+    for (final db.DishNoteRow row in noteRows) {
+      notesByDishId
+          .putIfAbsent(row.dishId, () => <DishNote>[])
+          .add(row.toDomain());
+    }
+
+    return rows
+        .map(
+          (db.DishRow row) => row.toDomain(
+            sourcesByDishId[row.id] ?? const <SourcePhoto>[],
+            notesByDishId[row.id] ?? const <DishNote>[],
+          ),
+        )
+        .toList(growable: false);
   }
 
   Future<void> upsertDish(Dish dish) async {
@@ -199,6 +241,25 @@ class DishRepository {
         ...sourceRows.map((db.SourcePhotoRow row) => row.url),
       ],
     );
+    await _imageDerivativeStore.remove(
+      refs: <String?>[
+        ...dishRows.map((db.DishRow row) => row.heroPreviewUrl),
+        ...dishRows.map((db.DishRow row) => row.heroThumbnailUrl),
+        ...dishRows.map((db.DishRow row) => row.heroPlaceholderUrl),
+        ...sourceRows.map((db.SourcePhotoRow row) => row.previewUrl),
+        ...sourceRows.map((db.SourcePhotoRow row) => row.thumbnailUrl),
+        ...sourceRows.map((db.SourcePhotoRow row) => row.placeholderUrl),
+        ...captureRows.map(
+          (db.CaptureItemRow row) => row.localPreviewRef,
+        ),
+        ...captureRows.map(
+          (db.CaptureItemRow row) => row.localThumbnailRef,
+        ),
+        ...captureRows.map(
+          (db.CaptureItemRow row) => row.localPlaceholderRef,
+        ),
+      ],
+    );
     await _deleteOwnedCaptureFiles(
       captureRows.map((db.CaptureItemRow row) => row.localMediaRef),
     );
@@ -295,6 +356,9 @@ class DishRepository {
           id: '${dish.id}_source_$index',
           dishId: dish.id,
           url: photo.url,
+          previewUrl: Value<String?>(photo.previewUrl),
+          thumbnailUrl: Value<String?>(photo.thumbnailUrl),
+          placeholderUrl: Value<String?>(photo.placeholderUrl),
           capturedLabel: photo.capturedLabel,
           captureId: Value<String?>(photo.captureId),
           cookingOccasionId: Value<String?>(photo.cookingOccasionId),
@@ -304,14 +368,6 @@ class DishRepository {
         ),
       );
     }
-  }
-
-  Future<List<SourcePhoto>> _sourcePhotosFor(String dishId) async {
-    final List<db.SourcePhotoRow> rows = await (_database.select(
-      _database.sourcePhotos,
-    )..where((db.SourcePhotos table) => table.dishId.equals(dishId)))
-        .get();
-    return rows.map((db.SourcePhotoRow row) => row.toDomain()).toList();
   }
 
   Future<List<DishNote>> _notesFor(String dishId) async {
