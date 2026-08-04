@@ -162,7 +162,6 @@ void main() {
           capturedLabel: 'Jul 20',
           cookingOccasionId: 'occasion_old',
           capturedAt: DateTime.utc(2026, 7, 20, 18),
-          note: 'Use less salt next time.',
         ),
       ],
     );
@@ -192,7 +191,8 @@ void main() {
     );
     expect(find.textContaining('times made'), findsNothing);
     expect(find.textContaining('source photos across'), findsNothing);
-    expect(find.text('Use less salt next time.'), findsOneWidget);
+    expect(find.byKey(const ValueKey('dish_note_dish_salmon_note_0')),
+        findsOneWidget);
     expect(find.text('July 18, 2026'), findsNothing);
   });
 

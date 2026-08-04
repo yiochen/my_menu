@@ -18,7 +18,7 @@ Deno.test("guest capture grouping is ephemeral and idempotent", async () => {
     idempotencyKey,
     inputSchemaVersion: "capture-grouping-input-v2",
     resultSchemaVersion: "capture-grouping-result-v2",
-    privacyNoticeVersion: "2026-08-04",
+    privacyNoticeVersion: "2026-08-04-cover-v1",
     assets: [{ assetId, contentType: "image/jpeg", byteSize: 4 }],
   };
 
@@ -199,6 +199,78 @@ Deno.test("guest capture grouping is ephemeral and idempotent", async () => {
   assertEquals(overAllowance.status, 429);
 });
 
+Deno.test("guest idea cover uses the bounded contract and charges on acknowledgement", async () => {
+  const session = await createGuestSession();
+  const admin = createClient(baseUrl, serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const idempotencyKey = crypto.randomUUID();
+  const created = await post(session.headers, "processing-jobs", {
+    action: "create",
+    operation: "cover_generation",
+    idempotencyKey,
+    inputSchemaVersion: "cover-generation-input-v1",
+    resultSchemaVersion: "cover-generation-result-v1",
+    privacyNoticeVersion: "2026-08-04-cover-v1",
+    assets: [],
+  });
+  assertEquals(created.status, 200);
+  const jobId = stringValue(
+    objectValue(await jsonBody(created), "job"),
+    "id",
+  );
+  const submitted = await post(session.headers, "processing-jobs", {
+    action: "submit",
+    jobId,
+    input: {
+      dishTitle: "Golden curry",
+      sources: [],
+      notes: [{ body: "Glossy golden sauce", position: 0 }],
+      treatment: {
+        look: "warm_cozy",
+        view: "auto",
+        finish: "menu_ready",
+      },
+      origin: "manual",
+      contractVersion: "cover-generation-v1",
+    },
+  });
+  assertEquals(submitted.status, 200);
+  const worker = await post(
+    { "Content-Type": "application/json", "x-mymenu-worker-key": workerKey },
+    "process-ai-jobs",
+    {},
+  );
+  assertEquals(worker.status, 202);
+  await waitForStatus(session.headers, jobId, "succeeded");
+  const delivered = await post(session.headers, "processing-jobs", {
+    action: "result",
+    jobId,
+  });
+  const result = objectValue(await jsonBody(delivered), "result");
+  assertEquals(result.operation, "cover_generation");
+  assertEquals(objectValue(result, "validation").valid, true);
+  const before = await usageFor(admin, session.userId, idempotencyKey);
+  assertEquals(before.units, 0);
+  assertEquals(before.outcome, "reserved");
+  const acknowledged = await post(session.headers, "processing-jobs", {
+    action: "acknowledge",
+    jobId,
+  });
+  assertEquals(acknowledged.status, 200);
+  const after = await usageFor(admin, session.userId, idempotencyKey);
+  assertEquals(after.units, 1);
+  assertEquals(after.outcome, "succeeded");
+});
+
+async function usageFor(client: any, userId: string, idempotencyKey: string) {
+  const { data, error } = await client.from("ai_usage_records")
+    .select("units,outcome").eq("user_id", userId)
+    .eq("idempotency_key", idempotencyKey).single();
+  if (error != null) throw error;
+  return data as { units: number; outcome: string };
+}
+
 async function createJob(headers: HeadersInit, idempotencyKey: string) {
   const response = await post(headers, "processing-jobs", {
     action: "create",
@@ -206,7 +278,7 @@ async function createJob(headers: HeadersInit, idempotencyKey: string) {
     idempotencyKey,
     inputSchemaVersion: "capture-grouping-input-v2",
     resultSchemaVersion: "capture-grouping-result-v2",
-    privacyNoticeVersion: "2026-08-04",
+    privacyNoticeVersion: "2026-08-04-cover-v1",
     assets: [],
   });
   assertEquals(response.status, 200);

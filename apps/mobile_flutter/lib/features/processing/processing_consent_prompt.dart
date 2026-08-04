@@ -109,15 +109,16 @@ class _ProcessingConsentContent extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         Text(
-          'MyMenu can send reduced copies of new captures and your existing '
-          'dish text to Google Gemini so AI can organize them.',
+          'MyMenu can send reduced copies of new captures and dish context to '
+          'Google Gemini to organize captures and generate improved covers.',
           style: textTheme.bodyMedium,
         ),
         const SizedBox(height: 12),
         const _PrivacyPoint(
           icon: Icons.phonelink_lock_outlined,
-          text: 'Dish titles, descriptions, ingredients, recipe steps, and '
-              'notes are included. Existing covers and source photos are not.',
+          text: 'Cover generation can include the dish title, every standalone '
+              'Note, and up to three Sources you choose. Automatic covers use '
+              'up to three newly organized Sources and become the cover when ready.',
         ),
         const SizedBox(height: 9),
         const _PrivacyPoint(
@@ -143,7 +144,8 @@ class _ProcessingConsentContent extends StatelessWidget {
         const _PrivacyPoint(
           icon: Icons.no_accounts_outlined,
           text: 'AI is optional. Capture and every local menu feature keep '
-              'working if you choose Not now.',
+              'working if you choose Not now. Allowing AI turns automatic '
+              'cover generation on by default; you can turn it off later.',
         ),
         const SizedBox(height: 14),
         Text(

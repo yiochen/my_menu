@@ -229,6 +229,8 @@ corrections, and dish deletion.
 
 ### Capture Path
 
+For photo capture:
+
 1. Copy/import the original photo into the app file store.
 2. Persist the capture batch/items and original local capture date.
 3. If AI consent is enabled, create a local processing-outbox entry in the same
@@ -241,6 +243,20 @@ corrections, and dish deletion.
 The local outbox may wait indefinitely before a server job is created. The
 server's 24-hour retention begins only after server job creation.
 
+Add Idea follows a direct local path instead: atomically create the Dish and its
+optional standalone Note without grouping, Review, Photos placement, or
+Organization allowance. After current AI consent, it may enqueue a separate
+context-grounded Cover job. No Cover outbox entry or upload is created before
+consent acceptance.
+
+### Cover Generation Path
+
+For a newly eligible photo-based Dish, enqueue a separate Cover job only after
+the grouping proposal is locally adopted or resolved. An established Dish does
+not regenerate automatically when another Source is added. Automatic and manual
+Cover work use the same typed contract, lifecycle, validation, and local result
+storage described in [AI Cover Improvement Design](ai-cover-improvement-design.md).
+
 ### Processing Submission
 
 For capture grouping, the client builds:
@@ -250,8 +266,15 @@ For capture grouping, the client builds:
   steps, and notes
 - no existing cover or source photos
 
-For Improve Cover, it includes only the photos explicitly selected for that
-operation.
+For Cover generation, the client builds one versioned context containing:
+
+- normalized Dish title
+- zero to three explicitly selected Source photos
+- every current standalone Note, with stable ordering and timestamps
+- enum-valued look, view, and finish treatment
+
+It includes no Dish description, structured ingredients, recipe steps,
+generated Cover history, unselected Source images, or broader Menu context.
 
 The coordinator:
 
@@ -287,8 +310,11 @@ ID.
 - high-confidence new-dish proposals may create the local dish automatically
 - ambiguous results create local review items
 - not-a-dish results remain local capture outcomes
-- generated images become local covers only after the operation's acceptance
-  policy is satisfied
+- validated automatic initial Covers may be adopted locally without another
+  confirmation and remain undoable
+- validated manual Proposed Covers wait for explicit acceptance
+- every valid delivered generated image is stored in local Cover history and
+  never appears in the Journal
 - every automatic grouping adoption remains locally undoable
 
 If adoption is replayed after a crash, it must detect that the proposal was

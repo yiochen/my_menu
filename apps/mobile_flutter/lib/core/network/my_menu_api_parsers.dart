@@ -168,7 +168,6 @@ ApiSourcePhoto apiSourcePhotoFromJson(Map<String, Object?> data) {
     captureId: apiOptionalStringValue(data, 'captureId'),
     cookingOccasionId: apiOptionalStringValue(data, 'cookingOccasionId'),
     capturedAt: apiOptionalDateTimeValue(data, 'capturedAt'),
-    note: apiOptionalStringValue(data, 'note'),
     confidenceLabel: apiOptionalStringValue(data, 'confidenceLabel'),
   );
 }

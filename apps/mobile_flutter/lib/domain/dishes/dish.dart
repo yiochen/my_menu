@@ -130,7 +130,6 @@ class SourcePhoto {
     this.captureId,
     this.cookingOccasionId,
     this.capturedAt,
-    this.note,
     this.confidenceLabel,
     this.previewUrl,
     this.thumbnailUrl,
@@ -143,7 +142,6 @@ class SourcePhoto {
   final String? captureId;
   final String? cookingOccasionId;
   final DateTime? capturedAt;
-  final String? note;
   final String? confidenceLabel;
   final String? previewUrl;
   final String? thumbnailUrl;

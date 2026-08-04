@@ -93,6 +93,29 @@ mixin FakeProcessingApi on MyMenuApiClient {
     if (!record.uploadedAssetIds.containsAll(record.assetIds)) {
       throw StateError('Processing assets are not uploaded.');
     }
+    if (record.job.operation == 'cover_generation') {
+      record
+        ..input = input
+        ..result = <String, Object?>{
+          'operation': 'cover_generation',
+          'schemaVersion': record.job.resultSchemaVersion,
+          'proposalId': 'proposal-$jobId',
+          'output': <String, Object?>{
+            'contentType': 'image/png',
+            'imageBase64':
+                'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+          },
+          'validation': <String, Object?>{
+            'valid': true,
+            'confidence': 1.0,
+          },
+          'provenance': <String, Object?>{
+            'provider': 'fake',
+            'model': 'fake-cover-v1',
+          },
+        };
+      return record.job = _copyProcessingJob(record.job, status: 'succeeded');
+    }
     final List<Object?> captures = input['captures']! as List<Object?>;
     record
       ..input = input

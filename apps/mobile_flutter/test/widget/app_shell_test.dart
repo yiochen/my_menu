@@ -55,7 +55,7 @@ void main() {
       });
     });
 
-    testWidgets('first capture asks once and either choice opens capture', (
+    testWidgets('capture choices open before AI consent is requested', (
       WidgetTester tester,
     ) async {
       await runWithMockNetworkImages(() async {
@@ -64,18 +64,9 @@ void main() {
 
         await tester.tap(find.byKey(const ValueKey<String>('capture_fab')));
         await tester.pumpAndSettle();
-        expect(find.text('Let MyMenu use AI?'), findsOneWidget);
-
-        await tester.tap(find.text('Not now'));
-        await tester.pumpAndSettle();
-        expect(find.text('Capture'), findsOneWidget);
-        Navigator.of(tester.element(find.text('Capture'))).pop();
-        await tester.pumpAndSettle();
-
-        await tester.tap(find.byKey(const ValueKey<String>('capture_fab')));
-        await tester.pumpAndSettle();
         expect(find.text('Let MyMenu use AI?'), findsNothing);
         expect(find.text('Capture'), findsOneWidget);
+        expect(find.text('Add Idea'), findsOneWidget);
       });
     });
 
@@ -85,13 +76,17 @@ void main() {
       await runWithMockNetworkImages(() async {
         await tester.pumpWidget(_debugTestApp());
         await tester.pumpAndSettle();
-
-        await tester.tap(find.byKey(const ValueKey<String>('capture_fab')));
+        final MyMenuState state = MyMenuScope.read(
+          tester.element(find.byKey(const ValueKey<String>('plan_screen'))),
+        );
+        final Future<ProcessingConsentDecision> consent =
+            state.requestProcessingConsent(
+          trigger: ProcessingConsentTrigger.improveCover,
+        );
         await tester.pumpAndSettle();
         await tester.tap(find.text('Allow AI processing'));
         await tester.pumpAndSettle();
-        Navigator.of(tester.element(find.text('Capture'))).pop();
-        await tester.pumpAndSettle();
+        await consent;
 
         await tester.tap(
           find.byKey(const ValueKey<String>('debug_controls_open')),
@@ -105,6 +100,8 @@ void main() {
         await tester.pumpAndSettle();
 
         await tester.tap(find.byKey(const ValueKey<String>('capture_fab')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Take Photo'));
         await tester.pumpAndSettle();
         expect(find.text('Let MyMenu use AI?'), findsOneWidget);
       });
@@ -179,9 +176,12 @@ void main() {
 
         await tester.tap(find.byKey(const ValueKey<String>('capture_fab')));
         await tester.pumpAndSettle();
+        await tester.tap(find.text('Take Photo'));
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Not now'));
         await tester.pumpAndSettle();
-        expect(find.text('Capture'), findsOneWidget);
+        expect(find.text('Let MyMenu use AI?'), findsNothing);
+        expect(find.text('Camera access is off'), findsOneWidget);
         expect(
           find.byKey(const ValueKey<String>('debug_controls_open')),
           findsOneWidget,
@@ -191,22 +191,6 @@ void main() {
           movedLauncherPosition,
         );
 
-        await tester.tap(
-          debugLauncher,
-        );
-        await tester.pumpAndSettle();
-        expect(
-          find.byKey(const ValueKey<String>('debug_controls_panel')),
-          findsOneWidget,
-        );
-        await tester.tap(
-          find.byKey(const ValueKey<String>('debug_controls_close')),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Take Photo'));
-        await tester.pumpAndSettle();
-
-        expect(find.text('Camera access is off'), findsOneWidget);
         expect(tester.takeException(), isNull);
       });
     });
@@ -287,8 +271,6 @@ void main() {
 
         await tester.tap(find.byKey(const ValueKey('capture_fab')));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Not now'));
-        await tester.pumpAndSettle();
         await tester.scrollUntilVisible(
           find.text('Add Idea'),
           120,
@@ -311,7 +293,10 @@ void main() {
           scrollable: find.byType(Scrollable).last,
         );
         await tester.tap(find.text('Save idea'));
-        await tester.pump(const Duration(seconds: 2));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Let MyMenu use AI?'), findsOneWidget);
+        await tester.tap(find.text('Not now'));
         await tester.pumpAndSettle();
 
         expect(find.text('Add an idea'), findsNothing);

@@ -199,7 +199,7 @@ Deno.test("get-dishes returns hydrated dishes and missing ids", async () => {
   assertEquals(sourcePhoto.id, fixture.imageId);
   assertEquals(sourcePhoto.captureId, fixture.captureId);
   assertEquals(sourcePhoto.cookingOccasionId, null);
-  assertEquals(sourcePhoto.note, "Added from capture.");
+  assertEquals("note" in sourcePhoto, false);
   assertEquals(sourcePhoto.confidenceLabel, "high");
   assertSignedUrl(sourcePhoto.mediaRef);
 });
@@ -332,7 +332,6 @@ async function createFixture(): Promise<Fixture> {
       byte_size: 4,
       width: 1,
       height: 1,
-      note: "Added from capture.",
       confidence_label: "high",
       captured_at: capturedAt,
     }),

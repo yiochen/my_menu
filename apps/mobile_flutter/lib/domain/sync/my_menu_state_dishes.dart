@@ -33,21 +33,30 @@ extension MyMenuDishEdits on MyMenuState {
     _notifyChanged();
   }
 
-  Future<void> addIdea(String text, {String? note}) async {
+  Future<String?> addIdea(String text, {String? note}) async {
     final String trimmed = text.trim();
     if (trimmed.isEmpty) {
-      return;
+      return null;
     }
     final Dish nextDish = _buildIdeaDish(trimmed, note: note);
 
     final AppRepositories? repositories = _repositories;
     if (repositories != null) {
-      await repositories.dishRepository.createDish(nextDish);
+      await repositories.database.transaction(() async {
+        await repositories.dishRepository.createDish(nextDish);
+        await repositories.coverRepository.enqueueAutomaticCover(
+          dishId: nextDish.id,
+          sourceIds: const <String>[],
+          now: nextDish.createdAt ?? DateTime.now(),
+        );
+      });
       await _reloadFromRepositories();
-      return;
+      _startCaptureSyncPollingWindow();
+      return nextDish.id;
     }
     _dishes = <Dish>[nextDish, ..._dishes];
     _notifyChanged();
+    return nextDish.id;
   }
 
   Future<void> createDishFromReview(String reviewId) async {

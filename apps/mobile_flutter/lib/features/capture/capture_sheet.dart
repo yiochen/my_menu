@@ -6,14 +6,14 @@ import 'package:flutter/services.dart';
 
 import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
+import 'package:mymenu/domain/processing/processing_consent_prompt.dart';
 import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
-import 'package:mymenu/features/capture/add_idea_sheet.dart';
 import 'package:mymenu/features/capture/camera_batch_sheet.dart';
+import 'package:mymenu/features/capture/capture_add_idea.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
 import 'package:mymenu/features/capture/capture_outcome_sheet.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
-import 'package:mymenu/shared/widgets/local_write_feedback.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
 enum CaptureAction { takePhoto, importPhotos, addIdea }
@@ -25,6 +25,7 @@ Future<CaptureCompletion?> showCaptureSheet(
   MyMenuState state,
   CaptureMediaService mediaService, {
   String? targetDishId,
+  bool requestAiConsent = true,
 }) async {
   final CaptureAction? action = await showGeneralDialog<CaptureAction>(
     context: context,
@@ -47,6 +48,14 @@ Future<CaptureCompletion?> showCaptureSheet(
   }
   switch (action) {
     case CaptureAction.takePhoto:
+      if (requestAiConsent) {
+        await state.requestProcessingConsent(
+          trigger: ProcessingConsentTrigger.capture,
+        );
+        if (!context.mounted) {
+          return null;
+        }
+      }
       final bool added = await _captureMedia(
         context,
         state,
@@ -55,6 +64,14 @@ Future<CaptureCompletion?> showCaptureSheet(
       );
       return added ? CaptureCompletion.photosAdded : null;
     case CaptureAction.importPhotos:
+      if (requestAiConsent) {
+        await state.requestProcessingConsent(
+          trigger: ProcessingConsentTrigger.capture,
+        );
+        if (!context.mounted) {
+          return null;
+        }
+      }
       final bool added = await _captureMedia(
         context,
         state,
@@ -63,15 +80,9 @@ Future<CaptureCompletion?> showCaptureSheet(
       );
       return added ? CaptureCompletion.photosAdded : null;
     case CaptureAction.addIdea:
-      final AddIdeaIntent? intent = await showAddIdeaSheet(context);
-      if (intent != null && context.mounted) {
-        final bool added = await runLocalWriteWithFeedback(
-          context,
-          () => state.addIdea(intent.title, note: intent.note),
-        );
-        return added ? CaptureCompletion.ideaAdded : null;
-      }
-      return null;
+      return await captureAddIdea(context, state)
+          ? CaptureCompletion.ideaAdded
+          : null;
   }
 }
 

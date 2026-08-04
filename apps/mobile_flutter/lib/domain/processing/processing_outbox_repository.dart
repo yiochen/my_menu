@@ -8,12 +8,20 @@ import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
 import 'package:uuid/uuid.dart';
 
 part 'processing_outbox_server_state.dart';
-
 class ProcessingOutboxRepository {
   ProcessingOutboxRepository(this._database);
-
   final db.AppDatabase _database;
 
+  Future<bool> cancelBeforeUpload(String requestId) =>
+      ProcessingOutboxServerState(this).cancelBeforeUpload(requestId);
+  Future<void> restartCanceledCover(
+    String requestId,
+    Map<String, Object?> payload,
+  ) =>
+      ProcessingOutboxServerState(this).restartCanceledCover(
+        requestId,
+        payload,
+      );
   Future<List<ProcessingOutboxRequest>> listRequests() async {
     final rows = await (_database.select(_database.processingOutbox)
           ..orderBy(<OrderingTerm Function(db.$ProcessingOutboxTable)>[
@@ -104,25 +112,35 @@ class ProcessingOutboxRepository {
         );
   }
 
-  Future<bool> cancelBeforeUpload(String requestId) async {
-    final int changed = await (_database.update(_database.processingOutbox)
-          ..where(
-            (db.ProcessingOutbox table) =>
-                table.id.equals(requestId) &
-                (table.deliveryState.equals(
-                      ProcessingDeliveryState.waitingForConsent.name,
-                    ) |
-                    table.deliveryState.equals(
-                      ProcessingDeliveryState.pendingUpload.name,
-                    )),
-          ))
-        .write(
-      db.ProcessingOutboxCompanion(
-        deliveryState: Value<String>(ProcessingDeliveryState.canceled.name),
-        updatedAt: Value<DateTime>(DateTime.now()),
-      ),
-    );
-    return changed == 1;
+  Future<bool> enqueueCoverGeneration({
+    required String requestId,
+    required String dishId,
+    required Map<String, Object?> payload,
+    required DateTime now,
+  }) async {
+    final bool isAccepted =
+        await ProcessingConsentRepository(_database).currentDecision() ==
+            ProcessingConsentDecision.accepted;
+    if (!isAccepted) {
+      return false;
+    }
+    await _database.into(_database.processingOutbox).insert(
+          db.ProcessingOutboxCompanion.insert(
+            id: requestId,
+            requestKind: ProcessingRequestKind.coverGeneration.databaseValue,
+            subjectId: dishId,
+            payloadJson: jsonEncode(payload),
+            deliveryState: ProcessingDeliveryState.pendingUpload.name,
+            adoptionState: ProcessingAdoptionState.awaitingProposal.name,
+            idempotencyKey: Value<String>(requestId),
+            privacyNoticeVersion: const Value<String?>(
+              ProcessingPrivacyNotice.currentVersion,
+            ),
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+    return true;
   }
 
   Future<void> retryCaptureGrouping({

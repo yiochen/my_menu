@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'package:mymenu/domain/sync/my_menu_state.dart';
-import 'package:mymenu/features/capture/add_idea_sheet.dart';
+import 'package:mymenu/features/capture/capture_add_idea.dart';
 import 'package:mymenu/features/capture/capture_outcome_frame.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
-import 'package:mymenu/shared/widgets/local_write_feedback.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
 class CaptureOfflineView extends StatelessWidget {
@@ -161,12 +160,6 @@ class CapturePermissionView extends StatelessWidget {
   }
 
   Future<void> _addIdea(BuildContext context) async {
-    final AddIdeaIntent? intent = await showAddIdeaSheet(context);
-    if (intent != null && context.mounted) {
-      await runLocalWriteWithFeedback(
-        context,
-        () => state.addIdea(intent.title, note: intent.note),
-      );
-    }
+    await captureAddIdea(context, state);
   }
 }

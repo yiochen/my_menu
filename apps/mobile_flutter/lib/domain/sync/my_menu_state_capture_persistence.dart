@@ -214,6 +214,7 @@ extension MyMenuStateCapturePersistence on MyMenuState {
         .toList(growable: false);
     _processingRequests =
         await repositories.processingOutboxRepository.listRequests();
+    _generatedCovers = await repositories.coverRepository.listAll();
     _notifyChanged();
   }
 

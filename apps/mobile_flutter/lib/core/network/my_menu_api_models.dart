@@ -167,7 +167,6 @@ class ApiSourcePhoto {
     this.captureId,
     this.cookingOccasionId,
     this.capturedAt,
-    this.note,
     this.confidenceLabel,
   });
 
@@ -176,7 +175,6 @@ class ApiSourcePhoto {
   final String? captureId;
   final String? cookingOccasionId;
   final DateTime? capturedAt;
-  final String? note;
   final String? confidenceLabel;
 }
 

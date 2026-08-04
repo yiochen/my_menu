@@ -135,6 +135,10 @@ class CaptureCorrectionRepository {
           'failureReason': item.failureReason,
         },
     };
+    final Set<String> previousDishIds = items
+        .map((db.CaptureItemRow item) => item.appliedDishId)
+        .whereType<String>()
+        .toSet();
 
     Future<void> apply() async {
       if (type == CaptureCorrectionType.split ||
@@ -172,6 +176,33 @@ class CaptureCorrectionRepository {
       await ProcessingOutboxRepository(_database).supersedeCaptureGrouping(
         batchId,
       );
+      final CoverRepository covers = CoverRepository(_database);
+      for (final String previousDishId in previousDishIds) {
+        await covers.restartAutomaticCoverIfPending(
+          dishId: previousDishId,
+          now: now,
+        );
+      }
+      if (type == CaptureCorrectionType.split ||
+          type == CaptureCorrectionType.assignSplit) {
+        final List<String> newSourceIds = await (_database.select(
+          _database.sourcePhotos,
+        )..where(
+                (db.SourcePhotos table) => table.dishId.equals(targetDishId),
+              ))
+            .get()
+            .then(
+              (List<db.SourcePhotoRow> rows) => rows
+                  .map((db.SourcePhotoRow row) => row.id)
+                  .take(3)
+                  .toList(growable: false),
+            );
+        await covers.enqueueAutomaticCover(
+          dishId: targetDishId,
+          sourceIds: newSourceIds,
+          now: now,
+        );
+      }
     }
 
     if (insideTransaction) {

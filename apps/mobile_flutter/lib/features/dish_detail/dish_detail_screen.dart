@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:mymenu/app/app.dart';
+import 'package:mymenu/domain/covers/generated_cover.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
@@ -66,6 +67,19 @@ class _DishDetailScreenState extends State<DishDetailScreen>
                 sliver: SliverList.list(
                   children: <Widget>[
                     DishDetailHero(dish: dish),
+                    if (state.unacknowledgedAutomaticCoverForDish(dish.id)
+                        case final GeneratedCover automaticCover) ...<Widget>[
+                      const SizedBox(height: 12),
+                      _AutomaticCoverNotice(
+                        cover: automaticCover,
+                        onUndo: () => state.undoAutomaticCover(
+                          automaticCover.id,
+                        ),
+                        onDismiss: () => state.acknowledgeAutomaticCover(
+                          automaticCover.id,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     PrimaryPillButton(
                       key: const ValueKey<String>('cook_again_button'),
@@ -181,6 +195,36 @@ class _DishDetailScreenState extends State<DishDetailScreen>
       ),
     );
   }
+}
+
+class _AutomaticCoverNotice extends StatelessWidget {
+  const _AutomaticCoverNotice({
+    required this.cover,
+    required this.onUndo,
+    required this.onDismiss,
+  });
+
+  final GeneratedCover cover;
+  final VoidCallback onUndo;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) => WarmCard(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: <Widget>[
+            const Icon(Icons.auto_awesome, color: MyMenuColors.orange),
+            const SizedBox(width: 10),
+            const Expanded(child: Text('Your AI-improved cover is ready.')),
+            TextButton(onPressed: onUndo, child: const Text('Undo')),
+            IconButton(
+              tooltip: 'Dismiss',
+              onPressed: onDismiss,
+              icon: const Icon(Icons.close),
+            ),
+          ],
+        ),
+      );
 }
 
 class _DetailPage extends StatelessWidget {

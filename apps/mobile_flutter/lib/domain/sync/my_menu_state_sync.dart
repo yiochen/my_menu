@@ -50,6 +50,7 @@ extension MyMenuStateSync on MyMenuState {
       await repositories.syncRepository.processPendingOperations();
       await repositories.syncRepository.processPendingAiJobs();
       await repositories.syncRepository.processPendingCaptures();
+      await repositories.syncRepository.processPendingCovers();
       await _reloadFromRepositories();
       if (!_hasLocalWorkWaitingForSync()) {
         try {
@@ -139,7 +140,8 @@ extension MyMenuStateSync on MyMenuState {
       MyMenuState._captureSyncPollInterval,
       (_) {
         if (!_hasUnresolvedCaptures() &&
-            !_aiJobs.any((AiJob job) => job.status.isActive)) {
+            !_aiJobs.any((AiJob job) => job.status.isActive) &&
+            !_hasActiveProcessingRequest()) {
           _stopCaptureSyncPolling();
           return;
         }
@@ -182,6 +184,14 @@ extension MyMenuStateSync on MyMenuState {
         ) ||
         _aiJobs.any((AiJob job) => job.pendingAction != null);
   }
+
+  bool _hasActiveProcessingRequest() => _processingRequests.any(
+        (ProcessingOutboxRequest request) => <ProcessingDeliveryState>{
+          ProcessingDeliveryState.pendingUpload,
+          ProcessingDeliveryState.uploading,
+          ProcessingDeliveryState.submitted,
+        }.contains(request.deliveryState),
+      );
 
   bool _hasUnresolvedCaptures() {
     return _captureItems.any((CaptureItem item) {

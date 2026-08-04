@@ -1,48 +1,31 @@
 import 'package:flutter/material.dart';
 
+import 'package:mymenu/domain/covers/generated_cover.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
+import 'package:mymenu/shared/widgets/app_image.dart';
 import 'package:mymenu/shared/widgets/dish_artwork.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
-class ImproveCoverSelection extends StatefulWidget {
+class ImproveCoverSelection extends StatelessWidget {
   const ImproveCoverSelection({
     required this.dish,
-    required this.selectedSources,
-    required this.initialDirection,
-    required this.onDirectionChanged,
+    required this.selectedSourceIds,
+    required this.treatment,
     required this.onToggleSource,
+    required this.onTreatmentChanged,
     required this.onGenerate,
     required this.onClose,
     super.key,
   });
 
   final Dish dish;
-  final Set<int> selectedSources;
-  final String initialDirection;
-  final ValueChanged<String> onDirectionChanged;
-  final ValueChanged<int> onToggleSource;
-  final VoidCallback onGenerate;
+  final Set<String> selectedSourceIds;
+  final CoverTreatment treatment;
+  final ValueChanged<String> onToggleSource;
+  final ValueChanged<CoverTreatment> onTreatmentChanged;
+  final VoidCallback? onGenerate;
   final VoidCallback onClose;
-
-  @override
-  State<ImproveCoverSelection> createState() => _ImproveCoverSelectionState();
-}
-
-class _ImproveCoverSelectionState extends State<ImproveCoverSelection> {
-  late final TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.initialDirection);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,83 +38,67 @@ class _ImproveCoverSelectionState extends State<ImproveCoverSelection> {
           padding: EdgeInsets.zero,
           children: <Widget>[
             SheetTopBar(
-              title: 'Improve cover image',
+              title: 'Improve cover',
               closeOnLeft: true,
-              onClose: widget.onClose,
+              onClose: onClose,
             ),
             const SizedBox(height: 12),
             const Eyebrow('Make it menu-worthy'),
             Text(
-              'Choose source photos',
+              dish.sourcePhotos.isEmpty
+                  ? 'Create a cover from your dish'
+                  : 'Choose up to three Sources',
               style: Theme.of(context).textTheme.displaySmall,
             ),
             const SizedBox(height: 7),
             Text(
-              'MyMenu uses the real moments you select to create a new cover '
-              'image. Your originals never change.',
+              dish.sourcePhotos.isEmpty
+                  ? 'MyMenu uses the title and standalone Notes as visual context.'
+                  : 'Your originals stay unchanged. The title and all standalone Notes are also used when they help describe appearance.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            _CurrentCover(dish: widget.dish),
-            const SizedBox(height: 16),
-            Text(
-              'How should the cover feel?  Optional',
-              style: Theme.of(context).textTheme.labelLarge,
+            _CurrentCover(dish: dish),
+            if (dish.sourcePhotos.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 18),
+              Text(
+                '${selectedSourceIds.length} of ${dish.sourcePhotos.length} selected',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: dish.sourcePhotos.map((SourcePhoto source) {
+                  final String? id = source.id;
+                  if (id == null) return const SizedBox.shrink();
+                  final bool selected = selectedSourceIds.contains(id);
+                  return _SourceChoice(
+                    source: source,
+                    selected: selected,
+                    enabled: selected || selectedSourceIds.length < 3,
+                    onTap: () => onToggleSource(id),
+                  );
+                }).toList(growable: false),
+              ),
+            ],
+            const SizedBox(height: 20),
+            _TreatmentSection(
+              treatment: treatment,
+              onChanged: onTreatmentChanged,
             ),
-            const SizedBox(height: 7),
-            TextField(
-              controller: _controller,
-              onChanged: widget.onDirectionChanged,
-              minLines: 3,
-              maxLines: 3,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Describe plating, lighting, mood, or anything you want emphasized.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        'Your source photos',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      Text(
-                        '${widget.selectedSources.length} of '
-                        '${widget.dish.sourcePhotos.length} selected',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {},
-                  child: Text('Choose from ${widget.dish.sourcePhotos.length}'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            _SourcePicker(
-              dish: widget.dish,
-              selectedSources: widget.selectedSources,
-              onToggle: widget.onToggleSource,
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 18),
             const StatusStrip(
               icon: Icons.auto_awesome,
-              text: 'The result can be aspirational; sources stay documentary.',
+              text:
+                  'No freeform prompt is sent. Nonvisual Note details are ignored.',
             ),
             const SizedBox(height: 14),
             PrimaryPillButton(
+              key: const ValueKey<String>('generate_cover_button'),
               label: 'Generate new cover',
               icon: Icons.arrow_forward,
-              onPressed:
-                  widget.selectedSources.isEmpty ? null : widget.onGenerate,
+              onPressed: onGenerate,
             ),
           ],
         ),
@@ -140,33 +107,89 @@ class _ImproveCoverSelectionState extends State<ImproveCoverSelection> {
   }
 }
 
-class _SourcePicker extends StatelessWidget {
-  const _SourcePicker({
-    required this.dish,
-    required this.selectedSources,
-    required this.onToggle,
+class _TreatmentSection extends StatelessWidget {
+  const _TreatmentSection({required this.treatment, required this.onChanged});
+  final CoverTreatment treatment;
+  final ValueChanged<CoverTreatment> onChanged;
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _TreatmentPicker<CoverLook>(
+            label: 'Look',
+            values: CoverLook.values,
+            selected: treatment.look,
+            name: _lookLabel,
+            onSelected: (CoverLook look) => onChanged(CoverTreatment(
+              look: look,
+              view: treatment.view,
+              finish: treatment.finish,
+            )),
+          ),
+          const SizedBox(height: 14),
+          _TreatmentPicker<CoverView>(
+            label: 'View',
+            values: CoverView.values,
+            selected: treatment.view,
+            name: _viewLabel,
+            onSelected: (CoverView view) => onChanged(CoverTreatment(
+              look: treatment.look,
+              view: view,
+              finish: treatment.finish,
+            )),
+          ),
+          const SizedBox(height: 14),
+          _TreatmentPicker<CoverFinish>(
+            label: 'Finish',
+            values: CoverFinish.values,
+            selected: treatment.finish,
+            name: _finishLabel,
+            onSelected: (CoverFinish finish) => onChanged(CoverTreatment(
+              look: treatment.look,
+              view: treatment.view,
+              finish: finish,
+            )),
+          ),
+        ],
+      );
+}
+
+class _TreatmentPicker<T> extends StatelessWidget {
+  const _TreatmentPicker({
+    required this.label,
+    required this.values,
+    required this.selected,
+    required this.name,
+    required this.onSelected,
   });
 
-  final Dish dish;
-  final Set<int> selectedSources;
-  final ValueChanged<int> onToggle;
+  final String label;
+  final List<T> values;
+  final T selected;
+  final String Function(T) name;
+  final ValueChanged<T> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: List<Widget>.generate(
-        3,
-        (int index) => Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(right: index == 2 ? 0 : 9),
-            child: _SourceChoice(
-              dish: dish,
-              selected: selectedSources.contains(index),
-              onTap: () => onToggle(index),
-            ),
-          ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(label, style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: 7),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: values
+              .map(
+                (T value) => ChoiceChip(
+                  label: Text(name(value)),
+                  selected: value == selected,
+                  onSelected: (_) => onSelected(value),
+                ),
+              )
+              .toList(growable: false),
         ),
-      ),
+      ],
     );
   }
 }
@@ -184,11 +207,8 @@ class _CurrentCover extends StatelessWidget {
         children: <Widget>[
           ClipRRect(
             borderRadius: BorderRadius.circular(17),
-            child: SizedBox(
-              width: 76,
-              height: 76,
-              child: DishArtwork(dish: dish),
-            ),
+            child:
+                SizedBox(width: 76, height: 76, child: DishArtwork(dish: dish)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -199,10 +219,8 @@ class _CurrentCover extends StatelessWidget {
                     style: Theme.of(context).textTheme.labelSmall),
                 Text(dish.title,
                     style: Theme.of(context).textTheme.titleMedium),
-                Text(
-                  'Safe until you choose a replacement',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+                Text('Stays active until you choose a replacement',
+                    style: Theme.of(context).textTheme.bodySmall),
               ],
             ),
           ),
@@ -215,19 +233,22 @@ class _CurrentCover extends StatelessWidget {
 
 class _SourceChoice extends StatelessWidget {
   const _SourceChoice({
-    required this.dish,
+    required this.source,
     required this.selected,
+    required this.enabled,
     required this.onTap,
   });
 
-  final Dish dish;
+  final SourcePhoto source;
   final bool selected;
+  final bool enabled;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 0.9,
+    return SizedBox(
+      width: 96,
+      height: 96,
       child: Material(
         clipBehavior: Clip.antiAlias,
         color: MyMenuColors.oat,
@@ -239,11 +260,16 @@ class _SourceChoice extends StatelessWidget {
           ),
         ),
         child: InkWell(
-          onTap: onTap,
+          onTap: enabled ? onTap : null,
           child: Stack(
             fit: StackFit.expand,
             children: <Widget>[
-              DishArtwork(dish: dish),
+              Opacity(
+                opacity: enabled ? 1 : 0.45,
+                child: AppImage(
+                    imageRef: source.thumbnailUrl ?? source.url,
+                    fit: BoxFit.cover),
+              ),
               if (selected)
                 const Positioned(
                   right: 6,
@@ -261,3 +287,23 @@ class _SourceChoice extends StatelessWidget {
     );
   }
 }
+
+String _lookLabel(CoverLook value) => switch (value) {
+      CoverLook.naturalPolish => 'Natural',
+      CoverLook.brightFresh => 'Bright',
+      CoverLook.warmCozy => 'Warm',
+      CoverLook.darkRefined => 'Dark',
+    };
+
+String _viewLabel(CoverView value) => switch (value) {
+      CoverView.automatic => 'Auto',
+      CoverView.overhead => 'Overhead',
+      CoverView.angled => 'Angled',
+      CoverView.closeUp => 'Close-up',
+    };
+
+String _finishLabel(CoverFinish value) => switch (value) {
+      CoverFinish.lightTouch => 'Light touch',
+      CoverFinish.menuReady => 'Menu-ready',
+      CoverFinish.editorial => 'Editorial',
+    };

@@ -76,7 +76,6 @@ extension SourcePhotoRowMapper on db.SourcePhotoRow {
       captureId: captureId,
       cookingOccasionId: cookingOccasionId,
       capturedAt: capturedAt,
-      note: note,
       confidenceLabel: confidenceLabel,
     );
   }

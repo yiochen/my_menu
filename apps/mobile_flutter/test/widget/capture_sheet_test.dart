@@ -33,6 +33,7 @@ void main() {
                     context,
                     state,
                     _FakeCaptureMediaService(),
+                    requestAiConsent: false,
                   ),
                   child: const Text('Open capture'),
                 ),
@@ -78,6 +79,7 @@ void main() {
                     context,
                     state,
                     mediaService,
+                    requestAiConsent: false,
                   ),
                   child: const Text('Open capture'),
                 ),
@@ -275,7 +277,12 @@ class _CaptureTestApp extends StatelessWidget {
           return Scaffold(
             body: Center(
               child: FilledButton(
-                onPressed: () => showCaptureSheet(context, state, mediaService),
+                onPressed: () => showCaptureSheet(
+                  context,
+                  state,
+                  mediaService,
+                  requestAiConsent: false,
+                ),
                 child: const Text('Open capture'),
               ),
             ),

@@ -16,6 +16,7 @@ class MenuStickyHeader extends StatelessWidget {
     required this.unorganizedPhotoCount,
     required this.organizingPhotos,
     required this.onOpenPhotos,
+    required this.onOpenSettings,
     super.key,
   });
 
@@ -30,6 +31,7 @@ class MenuStickyHeader extends StatelessWidget {
   final int unorganizedPhotoCount;
   final bool organizingPhotos;
   final VoidCallback onOpenPhotos;
+  final VoidCallback onOpenSettings;
 
   bool get _isSelecting => selectedCount > 0;
 
@@ -54,6 +56,7 @@ class MenuStickyHeader extends StatelessWidget {
               unorganizedPhotoCount: unorganizedPhotoCount,
               organizingPhotos: organizingPhotos,
               onOpenPhotos: onOpenPhotos,
+              onOpenSettings: onOpenSettings,
             ),
     );
   }
@@ -68,6 +71,7 @@ class _SearchHeader extends StatelessWidget {
     required this.unorganizedPhotoCount,
     required this.organizingPhotos,
     required this.onOpenPhotos,
+    required this.onOpenSettings,
     super.key,
   });
 
@@ -78,49 +82,62 @@ class _SearchHeader extends StatelessWidget {
   final int unorganizedPhotoCount;
   final bool organizingPhotos;
   final VoidCallback onOpenPhotos;
+  final VoidCallback onOpenSettings;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: Material(
-            color: MyMenuColors.oat,
-            borderRadius: BorderRadius.circular(23),
-            child: SizedBox(
-              height: 46,
-              child: TextField(
-                key: const ValueKey<String>('menu_search_field'),
-                controller: controller,
-                onChanged: onQueryChanged,
-                textInputAction: TextInputAction.search,
-                decoration: InputDecoration(
-                  hintText: 'Search dishes, notes, ingredients',
-                  prefixIcon: const Icon(Icons.search_rounded, size: 22),
-                  suffixIcon: query.isEmpty
-                      ? null
-                      : IconButton(
-                          tooltip: 'Clear search',
-                          onPressed: onClear,
-                          icon: const Icon(Icons.close_rounded, size: 20),
-                        ),
-                  filled: false,
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12),
+    return SizedBox(
+      height: 46,
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Material(
+              color: MyMenuColors.oat,
+              borderRadius: BorderRadius.circular(23),
+              child: SizedBox(
+                height: 46,
+                child: TextField(
+                  key: const ValueKey<String>('menu_search_field'),
+                  controller: controller,
+                  onChanged: onQueryChanged,
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    hintText: 'Search dishes, notes, ingredients',
+                    prefixIcon: const Icon(Icons.search_rounded, size: 22),
+                    suffixIcon: query.isEmpty
+                        ? null
+                        : IconButton(
+                            tooltip: 'Clear search',
+                            onPressed: onClear,
+                            icon: const Icon(Icons.close_rounded, size: 20),
+                          ),
+                    filled: false,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        const SizedBox(width: 9),
-        PhotosEntryButton(
-          unorganizedCount: unorganizedPhotoCount,
-          organizing: organizingPhotos,
-          onPressed: onOpenPhotos,
-        ),
-      ],
+          const SizedBox(width: 9),
+          PhotosEntryButton(
+            unorganizedCount: unorganizedPhotoCount,
+            organizing: organizingPhotos,
+            onPressed: onOpenPhotos,
+          ),
+          const SizedBox(width: 5),
+          IconButton(
+            key: const ValueKey<String>('ai_settings_button'),
+            tooltip: 'AI settings',
+            onPressed: onOpenSettings,
+            icon: const Icon(Icons.settings_outlined),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints.tightFor(width: 42, height: 46),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -14,6 +14,7 @@ import 'package:mymenu/features/menu/menu_empty_states.dart';
 import 'package:mymenu/features/menu/menu_exit_transition.dart';
 import 'package:mymenu/features/menu/menu_grid_card.dart';
 import 'package:mymenu/features/menu/menu_sticky_header.dart';
+import 'package:mymenu/features/processing/ai_settings_sheet.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
@@ -191,6 +192,7 @@ class _MenuScreenState extends State<MenuScreen> {
                 unorganizedPhotoCount: state.unorganizedPhotoCount,
                 organizingPhotos: state.isOrganizingPhotos,
                 onOpenPhotos: widget.onOpenPhotos,
+                onOpenSettings: () => showAiSettingsSheet(context, state),
               ),
               if (state.dishes.isNotEmpty && !_isSelecting) ...<Widget>[
                 const SizedBox(height: 7),
