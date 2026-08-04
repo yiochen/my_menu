@@ -63,7 +63,7 @@ extension SyncRepositoryCaptures on SyncRepository {
         final List<db.CaptureItemRow> captures =
             await _activeItemsForBatch(request.subjectId);
         final Map<String, String> processingAssets =
-            await _prepareProcessingAssets(request.id, captures);
+            await _prepareProcessingAssets(captures);
         final ApiProcessingJob job = await _apiClient
             .createProcessingJob(
               operation: request.kind.databaseValue,

@@ -11,11 +11,13 @@ void main() {
     WidgetTester tester,
   ) async {
     const String capturedPhoto = '/captures/clam-noodle.jpg';
+    const String preview = '/previews/clam-noodle.jpg';
     final Dish dish = Dish(
       id: 'user-dish',
       title: 'Clam Noodle Dish',
       description: '',
       heroImageUrl: capturedPhoto,
+      heroPreviewUrl: preview,
       category: 'Pasta',
       prepMinutes: 0,
       difficulty: 'Not set',
@@ -76,6 +78,9 @@ void main() {
       title: 'Menu Dish',
       description: '',
       heroImageUrl: '/captures/menu-dish.jpg',
+      heroPreviewUrl: '/previews/menu-dish.jpg',
+      heroThumbnailUrl: '/thumbnails/menu-dish.jpg',
+      heroPlaceholderUrl: '/placeholders/menu-dish.jpg',
       category: 'Dinner',
       prepMinutes: 20,
       difficulty: 'Easy',
@@ -102,6 +107,14 @@ void main() {
     expect(
       tester.widget<AppImage>(find.byType(AppImage)).resizeForDisplay,
       isTrue,
+    );
+    expect(
+      tester.widget<AppImage>(find.byType(AppImage)).imageRef,
+      '/thumbnails/menu-dish.jpg',
+    );
+    expect(
+      tester.widget<AppImage>(find.byType(AppImage)).placeholderImageRef,
+      '/placeholders/menu-dish.jpg',
     );
   });
 }

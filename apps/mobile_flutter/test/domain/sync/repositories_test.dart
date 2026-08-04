@@ -7,6 +7,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/core/database/app_database.dart';
 import 'package:mymenu/core/files/dish_image_cache.dart';
+import 'package:mymenu/core/files/image_derivative_store.dart';
 import 'package:mymenu/core/network/my_menu_api_client.dart';
 import 'package:mymenu/core/network/network_status_monitor.dart';
 import 'package:mymenu/domain/ai/ai_job.dart';
@@ -154,6 +155,99 @@ void main() {
       expect(await database.select(database.plannedMeals).get(), isEmpty);
     });
 
+    test('production preparation backfills and reuses local previews',
+        () async {
+      final Directory supportDirectory = await Directory.systemTemp.createTemp(
+        'mymenu_preview_backfill_',
+      );
+      addTearDown(() => supportDirectory.delete(recursive: true));
+      final File original = File('${supportDirectory.path}/original.jpg');
+      await original.writeAsBytes(<int>[9, 8, 7]);
+      final List<({int width, int height, int quality})> compressionCalls =
+          <({int width, int height, int quality})>[];
+      repositories = AppRepositories(
+        database: database,
+        apiClient: FakeMyMenuApiClient(),
+        imageDerivativeStore: ImageDerivativeStore(
+          directoryProvider: () async => supportDirectory,
+          compressor: ({
+            required String sourcePath,
+            required String targetPath,
+            required int maxWidth,
+            required int maxHeight,
+            required int quality,
+          }) async {
+            compressionCalls.add(
+              (width: maxWidth, height: maxHeight, quality: quality),
+            );
+            await File(targetPath).writeAsBytes(<int>[1, 2, 3]);
+            return targetPath;
+          },
+        ),
+      );
+      await database.into(database.captureItems).insert(
+            CaptureItemsCompanion.insert(
+              id: 'existing-capture',
+              kind: CaptureItemKind.photo.name,
+              status: CaptureItemStatus.applied.name,
+              createdAt: DateTime.utc(2026, 8, 3),
+              localMediaRef: Value<String?>(original.path),
+              appliedDishId: const Value<String?>('existing-dish'),
+            ),
+          );
+      await repositories.dishRepository.createDish(
+        Dish(
+          id: 'existing-dish',
+          title: 'Existing Dish',
+          description: '',
+          heroImageUrl: original.path,
+          category: 'Captured',
+          prepMinutes: 0,
+          difficulty: 'Not set',
+          madeCount: 1,
+          lastMadeLabel: 'Today',
+          ingredients: const <String>[],
+          recipeSteps: const <String>[],
+          notes: const <DishNote>[],
+          sourcePhotos: <SourcePhoto>[
+            SourcePhoto(
+              url: original.path,
+              capturedLabel: 'Today',
+              captureId: 'existing-capture',
+            ),
+          ],
+        ),
+      );
+
+      await repositories.prepareLocalData();
+      await repositories.prepareLocalData();
+
+      final CaptureItemRow capture =
+          (await database.select(database.captureItems).get()).single;
+      final SourcePhotoRow source =
+          (await database.select(database.sourcePhotos).get()).single;
+      final Dish dish = (await repositories.dishRepository.listDishes()).single;
+      expect(compressionCalls, <({int width, int height, int quality})>[
+        (width: 1600, height: 1600, quality: 85),
+        (width: 640, height: 640, quality: 82),
+        (width: 64, height: 64, quality: 55),
+      ]);
+      expect(capture.localPreviewRef, isNotNull);
+      expect(capture.localThumbnailRef, isNotNull);
+      expect(capture.localPlaceholderRef, isNotNull);
+      expect(source.previewUrl, capture.localPreviewRef);
+      expect(source.thumbnailUrl, capture.localThumbnailRef);
+      expect(source.placeholderUrl, capture.localPlaceholderRef);
+      expect(dish.heroPreviewUrl, capture.localPreviewRef);
+      expect(dish.heroThumbnailUrl, capture.localThumbnailRef);
+      expect(dish.heroPlaceholderUrl, capture.localPlaceholderRef);
+      expect(dish.cardImageUrl, capture.localThumbnailRef);
+      expect(dish.cardPlaceholderUrl, capture.localPlaceholderRef);
+      expect(File(capture.localPreviewRef!).existsSync(), isTrue);
+      expect(File(capture.localThumbnailRef!).existsSync(), isTrue);
+      expect(File(capture.localPlaceholderRef!).existsSync(), isTrue);
+    });
+
     test('empty local menu and plan stay empty after bootstrap restart',
         () async {
       final Directory temp =
@@ -294,7 +388,40 @@ void main() {
               .toList(growable: false);
 
       expect(migratedIds, expectedIds);
-      expect(migratedDatabase.schemaVersion, 13);
+      expect(migratedDatabase.schemaVersion, 15);
+    });
+
+    test('schema 13 migrates existing media rows with progressive previews',
+        () async {
+      final Directory temp =
+          await Directory.systemTemp.createTemp('mymenu_preview_migration_');
+      addTearDown(() => temp.delete(recursive: true));
+      final File databaseFile = File('${temp.path}/mymenu.sqlite');
+      final AppDatabase current =
+          AppDatabase.forTesting(NativeDatabase(databaseFile));
+      await current.select(current.dishes).get();
+      await current.close();
+      sqlite.sqlite3.open(databaseFile.path)
+        ..execute('ALTER TABLE dishes DROP COLUMN hero_preview_url')
+        ..execute('ALTER TABLE dishes DROP COLUMN hero_thumbnail_url')
+        ..execute('ALTER TABLE dishes DROP COLUMN hero_placeholder_url')
+        ..execute('ALTER TABLE source_photos DROP COLUMN preview_url')
+        ..execute('ALTER TABLE source_photos DROP COLUMN thumbnail_url')
+        ..execute('ALTER TABLE source_photos DROP COLUMN placeholder_url')
+        ..execute('ALTER TABLE capture_items DROP COLUMN local_preview_ref')
+        ..execute('ALTER TABLE capture_items DROP COLUMN local_thumbnail_ref')
+        ..execute('ALTER TABLE capture_items DROP COLUMN local_placeholder_ref')
+        ..execute('PRAGMA user_version = 13')
+        ..close();
+
+      final AppDatabase migrated =
+          AppDatabase.forTesting(NativeDatabase(databaseFile));
+      addTearDown(migrated.close);
+
+      expect(await migrated.select(migrated.dishes).get(), isEmpty);
+      expect(await migrated.select(migrated.sourcePhotos).get(), isEmpty);
+      expect(await migrated.select(migrated.captureItems).get(), isEmpty);
+      expect(migrated.schemaVersion, 15);
     });
 
     test('sync caches local dish web images once', () async {
@@ -664,11 +791,24 @@ void main() {
         directoryProvider: () async => supportDirectory,
         downloader: (_) async => <int>[1, 2, 3, 4],
       );
+      final ImageDerivativeStore derivativeStore = ImageDerivativeStore(
+        directoryProvider: () async => supportDirectory,
+        compressor: ({
+          required String sourcePath,
+          required String targetPath,
+          required int maxWidth,
+          required int maxHeight,
+          required int quality,
+        }) async {
+          return (await File(sourcePath).copy(targetPath)).path;
+        },
+      );
       final _RecordingApiClient apiClient = _RecordingApiClient();
       repositories = AppRepositories(
         database: database,
         apiClient: apiClient,
         dishImageCache: cache,
+        imageDerivativeStore: derivativeStore,
       );
       await repositories.seedIfNeeded();
       const String dishId = 'dish_salmon';
@@ -679,6 +819,11 @@ void main() {
       final File captureFile =
           File('${captureDirectory.path}/owned_source.jpg');
       await captureFile.writeAsBytes(<int>[5, 6, 7]);
+      final ImageDerivativeSet capturePreviews =
+          await derivativeStore.ensureSet(
+        key: 'capture_$captureId',
+        sourcePath: captureFile.path,
+      );
       final SourcePhotoRow source = await (database.select(
         database.sourcePhotos,
       )
@@ -710,6 +855,11 @@ void main() {
               status: CaptureItemStatus.applied.name,
               createdAt: now,
               localMediaRef: Value<String?>(captureFile.path),
+              localPreviewRef: Value<String?>(capturePreviews.processingRef),
+              localThumbnailRef: Value<String?>(capturePreviews.cardRef),
+              localPlaceholderRef: Value<String?>(
+                capturePreviews.placeholderRef,
+              ),
               appliedDishId: const Value<String?>(dishId),
             ),
           );
@@ -809,6 +959,9 @@ void main() {
         isEmpty,
       );
       expect(captureFile.existsSync(), isFalse);
+      for (final String preview in capturePreviews.refs.whereType<String>()) {
+        expect(File(preview).existsSync(), isFalse);
+      }
       expect(File(cachedSource).existsSync(), isFalse);
       expect(
         (await repositories.dishRepository.listDishes())
@@ -1117,6 +1270,49 @@ void main() {
       expect(apiClient.processingJobCreationCount, 1);
       expect(request.deliveryState, ProcessingDeliveryState.acknowledged);
       expect(feedItems.single.remoteMediaRef, isNull);
+    });
+
+    test('processing upload reuses and retains the persisted preview',
+        () async {
+      final Directory supportDirectory = await Directory.systemTemp.createTemp(
+        'mymenu_preview_upload_',
+      );
+      addTearDown(() => supportDirectory.delete(recursive: true));
+      final File photo = await _temporaryPhoto('persisted-preview');
+      final _ReconnectApiClient apiClient = _ReconnectApiClient()
+        ..isOnline = true;
+      repositories = AppRepositories(
+        database: database,
+        apiClient: apiClient,
+        imageDerivativeStore: ImageDerivativeStore(
+          directoryProvider: () async => supportDirectory,
+          compressor: ({
+            required String sourcePath,
+            required String targetPath,
+            required int maxWidth,
+            required int maxHeight,
+            required int quality,
+          }) async {
+            await File(targetPath).writeAsBytes(<int>[1, 2, 3, 4]);
+            return targetPath;
+          },
+        ),
+      );
+
+      await repositories.captureRepository.createPhotoCaptures(
+        <String>[photo.path],
+      );
+      final CaptureItem before =
+          (await repositories.captureRepository.listFeedItems()).single;
+      await repositories.syncRepository.processPendingCaptures();
+
+      expect(before.localPreviewRef, isNotNull);
+      expect(before.localThumbnailRef, isNotNull);
+      expect(before.localPlaceholderRef, isNotNull);
+      expect(apiClient.uploadedLocalPaths, <String>[before.localPreviewRef!]);
+      expect(File(before.localPreviewRef!).existsSync(), isTrue);
+      expect(File(before.localThumbnailRef!).existsSync(), isTrue);
+      expect(File(before.localPlaceholderRef!).existsSync(), isTrue);
     });
 
     test('sync repository does nothing when no captures are pending', () async {
@@ -1704,6 +1900,56 @@ void main() {
       expect(await repositories.dishRepository.listDishes(), isEmpty);
     });
 
+    test('synced capture deletion removes every local image tier', () async {
+      final Directory supportDirectory = await Directory.systemTemp.createTemp(
+        'mymenu_synced_capture_deletion_',
+      );
+      addTearDown(() => supportDirectory.delete(recursive: true));
+      final File original = File('${supportDirectory.path}/original.jpg');
+      await original.writeAsBytes(<int>[0xff, 0xd8, 0xff, 0xd9]);
+      final ImageDerivativeStore derivativeStore = ImageDerivativeStore(
+        directoryProvider: () async => supportDirectory,
+        compressor: ({
+          required String sourcePath,
+          required String targetPath,
+          required int maxWidth,
+          required int maxHeight,
+          required int quality,
+        }) async {
+          return (await File(sourcePath).copy(targetPath)).path;
+        },
+      );
+      final ImageDerivativeSet previews = await derivativeStore.ensureSet(
+        key: 'capture_synced_delete',
+        sourcePath: original.path,
+      );
+      await database.into(database.captureItems).insert(
+            CaptureItemsCompanion.insert(
+              id: 'synced_delete',
+              kind: CaptureItemKind.photo.name,
+              status: CaptureItemStatus.uploaded.name,
+              createdAt: DateTime.utc(2026, 8, 3),
+              localMediaRef: Value<String?>(original.path),
+              localPreviewRef: Value<String?>(previews.processingRef),
+              localThumbnailRef: Value<String?>(previews.cardRef),
+              localPlaceholderRef: Value<String?>(previews.placeholderRef),
+            ),
+          );
+      repositories = AppRepositories(
+        database: database,
+        apiClient: _CaptureDeletionSyncApiClient(),
+        imageDerivativeStore: derivativeStore,
+      );
+
+      await repositories.syncRepository.pullCaptureSync();
+
+      expect(await database.select(database.captureItems).get(), isEmpty);
+      expect(original.existsSync(), isFalse);
+      for (final String preview in previews.refs.whereType<String>()) {
+        expect(File(preview).existsSync(), isFalse);
+      }
+    });
+
     test('late result cannot resurrect a locally deleted photo or dish',
         () async {
       final DateTime now = DateTime.utc(2026, 6, 20, 12);
@@ -2043,6 +2289,7 @@ class _OfflineApiClient extends FakeMyMenuApiClient {
 class _ReconnectApiClient extends FakeMyMenuApiClient {
   bool isOnline = false;
   final List<String> uploadedAssetIds = <String>[];
+  final List<String> uploadedLocalPaths = <String>[];
 
   @override
   Future<ApiProcessingJob> createProcessingJob({
@@ -2072,6 +2319,7 @@ class _ReconnectApiClient extends FakeMyMenuApiClient {
     required String localPath,
   }) async {
     uploadedAssetIds.add(target.assetId);
+    uploadedLocalPaths.add(localPath);
     await super.uploadProcessingAsset(target: target, localPath: localPath);
   }
 }
@@ -2404,6 +2652,27 @@ class _DeleteThenHydrationFailureApiClient extends FakeMyMenuApiClient {
   @override
   Future<List<ApiDish>> getDishes(List<String> ids) {
     throw StateError('Dish hydration failed.');
+  }
+}
+
+class _CaptureDeletionSyncApiClient extends FakeMyMenuApiClient {
+  @override
+  Future<ApiSyncPull> pullSync({
+    required int afterCursor,
+    required int limit,
+  }) async {
+    return const ApiSyncPull(
+      cursor: 1,
+      hasMore: false,
+      requiresBootstrap: false,
+      events: <ApiSyncEvent>[
+        ApiSyncEvent(
+          cursor: 1,
+          type: 'capture.deleted',
+          entityIds: <String, String>{'captureId': 'synced_delete'},
+        ),
+      ],
+    );
   }
 }
 

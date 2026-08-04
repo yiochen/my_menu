@@ -93,6 +93,34 @@ void main() {
     expect(find.byType(FoodCoverPlaceholder), findsOneWidget);
   });
 
+  testWidgets('shows a pixelated tiny image while the card image loads', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: SizedBox(
+          width: 100,
+          height: 80,
+          child: AppImage(
+            imageRef: '/thumbnails/dish.jpg',
+            placeholderImageRef: '/placeholders/dish.jpg',
+          ),
+        ),
+      ),
+    );
+
+    final Image placeholder = tester.widget<Image>(
+      find.byWidgetPredicate(
+        (Widget widget) =>
+            widget is Image &&
+            widget.image is FileImage &&
+            (widget.image as FileImage).file.path.contains('/placeholders/'),
+      ),
+    );
+    expect(placeholder.filterQuality, FilterQuality.none);
+    expect(find.byType(FoodCoverPlaceholder), findsNothing);
+  });
+
   testWidgets('unreadable real media uses the food cover placeholder', (
     WidgetTester tester,
   ) async {

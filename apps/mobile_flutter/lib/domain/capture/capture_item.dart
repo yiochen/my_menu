@@ -25,6 +25,9 @@ class CaptureItem {
     this.batchId,
     this.ordinal = 0,
     this.localMediaRef,
+    this.localPreviewRef,
+    this.localThumbnailRef,
+    this.localPlaceholderRef,
     this.remoteMediaRef,
     this.text,
     this.capturedAt,
@@ -41,6 +44,9 @@ class CaptureItem {
   final String? batchId;
   final int ordinal;
   final String? localMediaRef;
+  final String? localPreviewRef;
+  final String? localThumbnailRef;
+  final String? localPlaceholderRef;
   final String? remoteMediaRef;
   final String? text;
   final DateTime? capturedAt;

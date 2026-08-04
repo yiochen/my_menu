@@ -1,10 +1,15 @@
 part of 'repositories.dart';
 
 class DishRepository {
-  DishRepository(this._database, this._dishImageCache);
+  DishRepository(
+    this._database,
+    this._dishImageCache,
+    this._imageDerivativeStore,
+  );
 
   final db.AppDatabase _database;
   final DishImageCache _dishImageCache;
+  final ImageDerivativeStore _imageDerivativeStore;
 
   Future<void> _seedIfEmpty() async {
     final int existingCount =
@@ -236,6 +241,25 @@ class DishRepository {
         ...sourceRows.map((db.SourcePhotoRow row) => row.url),
       ],
     );
+    await _imageDerivativeStore.remove(
+      refs: <String?>[
+        ...dishRows.map((db.DishRow row) => row.heroPreviewUrl),
+        ...dishRows.map((db.DishRow row) => row.heroThumbnailUrl),
+        ...dishRows.map((db.DishRow row) => row.heroPlaceholderUrl),
+        ...sourceRows.map((db.SourcePhotoRow row) => row.previewUrl),
+        ...sourceRows.map((db.SourcePhotoRow row) => row.thumbnailUrl),
+        ...sourceRows.map((db.SourcePhotoRow row) => row.placeholderUrl),
+        ...captureRows.map(
+          (db.CaptureItemRow row) => row.localPreviewRef,
+        ),
+        ...captureRows.map(
+          (db.CaptureItemRow row) => row.localThumbnailRef,
+        ),
+        ...captureRows.map(
+          (db.CaptureItemRow row) => row.localPlaceholderRef,
+        ),
+      ],
+    );
     await _deleteOwnedCaptureFiles(
       captureRows.map((db.CaptureItemRow row) => row.localMediaRef),
     );
@@ -332,6 +356,9 @@ class DishRepository {
           id: '${dish.id}_source_$index',
           dishId: dish.id,
           url: photo.url,
+          previewUrl: Value<String?>(photo.previewUrl),
+          thumbnailUrl: Value<String?>(photo.thumbnailUrl),
+          placeholderUrl: Value<String?>(photo.placeholderUrl),
           capturedLabel: photo.capturedLabel,
           captureId: Value<String?>(photo.captureId),
           cookingOccasionId: Value<String?>(photo.cookingOccasionId),

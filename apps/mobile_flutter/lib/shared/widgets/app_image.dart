@@ -10,6 +10,7 @@ class AppImage extends StatelessWidget {
     this.width,
     this.height,
     this.resizeForDisplay = false,
+    this.placeholderImageRef,
     super.key,
   });
 
@@ -18,6 +19,7 @@ class AppImage extends StatelessWidget {
   final double? width;
   final double? height;
   final bool resizeForDisplay;
+  final String? placeholderImageRef;
 
   static const double _decodeWidthMultiplier = 1.25;
   static const int _maximumDecodeWidth = 2048;
@@ -44,6 +46,10 @@ class AppImage extends StatelessWidget {
   }
 
   Widget _image(ImageProvider<Object> provider) {
+    final String progressiveRef = placeholderImageRef?.trim() ?? '';
+    final ImageProvider<Object>? progressiveProvider = progressiveRef.isEmpty
+        ? null
+        : AppImageResolver.providerFor(progressiveRef);
     return Image(
       image: provider,
       fit: fit,
@@ -59,8 +65,22 @@ class AppImage extends StatelessWidget {
         if (wasSynchronouslyLoaded || frame != null) {
           return child;
         }
-        return _placeholder();
+        return _loadingPlaceholder(progressiveProvider);
       },
+      errorBuilder: (_, __, ___) => _loadingPlaceholder(progressiveProvider),
+    );
+  }
+
+  Widget _loadingPlaceholder(ImageProvider<Object>? provider) {
+    if (provider == null) {
+      return _placeholder();
+    }
+    return Image(
+      image: provider,
+      fit: fit,
+      width: width,
+      height: height,
+      filterQuality: FilterQuality.none,
       errorBuilder: (_, __, ___) => _placeholder(),
     );
   }

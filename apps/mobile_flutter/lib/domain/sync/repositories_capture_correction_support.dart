@@ -60,12 +60,18 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
     required List<db.CaptureItemRow> items,
   }) async {
     final String heroImageUrl = _photoRef(items.first) ?? '';
+    final String? heroPreviewUrl = items.first.localPreviewRef;
+    final String? heroThumbnailUrl = items.first.localThumbnailRef;
+    final String? heroPlaceholderUrl = items.first.localPlaceholderRef;
     await _database.into(_database.dishes).insert(
           db.DishesCompanion.insert(
             id: id,
             title: title,
             description: 'Created from selected capture photos.',
             heroImageUrl: heroImageUrl,
+            heroPreviewUrl: Value<String?>(heroPreviewUrl),
+            heroThumbnailUrl: Value<String?>(heroThumbnailUrl),
+            heroPlaceholderUrl: Value<String?>(heroPlaceholderUrl),
             category: 'Captured',
             prepMinutes: 0,
             difficulty: 'Not set',
@@ -143,6 +149,9 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
                 id: '${item.id}_source',
                 dishId: targetDishId,
                 url: photoRef,
+                previewUrl: Value<String?>(item.localPreviewRef),
+                thumbnailUrl: Value<String?>(item.localThumbnailRef),
+                placeholderUrl: Value<String?>(item.localPlaceholderRef),
                 capturedLabel: 'Today',
                 captureId: Value<String?>(item.id),
                 capturedAt: Value<DateTime?>(item.capturedAt),
@@ -242,11 +251,26 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
           dish.heroImageUrl.isEmpty || removedCurrentHero
               ? sources.firstOrNull?.url ?? ''
               : dish.heroImageUrl;
+      final String? heroPreviewUrl =
+          dish.heroImageUrl.isEmpty || removedCurrentHero
+              ? sources.firstOrNull?.previewUrl
+              : dish.heroPreviewUrl;
+      final String? heroThumbnailUrl =
+          dish.heroImageUrl.isEmpty || removedCurrentHero
+              ? sources.firstOrNull?.thumbnailUrl
+              : dish.heroThumbnailUrl;
+      final String? heroPlaceholderUrl =
+          dish.heroImageUrl.isEmpty || removedCurrentHero
+              ? sources.firstOrNull?.placeholderUrl
+              : dish.heroPlaceholderUrl;
       await (_database.update(_database.dishes)
             ..where((db.Dishes table) => table.id.equals(dishId)))
           .write(
         db.DishesCompanion(
           heroImageUrl: Value<String>(heroImageUrl),
+          heroPreviewUrl: Value<String?>(heroPreviewUrl),
+          heroThumbnailUrl: Value<String?>(heroThumbnailUrl),
+          heroPlaceholderUrl: Value<String?>(heroPlaceholderUrl),
           madeCount: Value<int>(madeCount),
           lastMadeLabel: Value<String>(
             madeCount == 0 ? 'Not cooked yet' : dish.lastMadeLabel,

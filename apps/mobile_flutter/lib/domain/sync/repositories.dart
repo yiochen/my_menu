@@ -5,9 +5,9 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:mymenu/core/database/app_database.dart' as db;
 import 'package:mymenu/core/files/dish_image_cache.dart';
+import 'package:mymenu/core/files/image_derivative_store.dart';
 import 'package:mymenu/core/network/my_menu_api_client.dart';
 import 'package:mymenu/domain/ai/ai_job.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
@@ -45,6 +45,7 @@ part 'repositories_capture_routing_contract.dart';
 part 'repositories_capture_processing_support.dart';
 part 'repositories_dish_hydration.dart';
 part 'repositories_support.dart';
+part 'repositories_media_previews.dart';
 part 'repositories_sync.dart';
 part 'repositories_sync_capture_adoption.dart';
 
@@ -63,16 +64,27 @@ class AppRepositories {
     this.captureControlRequestTimeout = const Duration(seconds: 5),
     this.seedSampleDataOnPrepare = false,
     DishImageCache? dishImageCache,
+    ImageDerivativeStore? imageDerivativeStore,
   }) {
     final DishImageCache resolvedImageCache =
         dishImageCache ?? DishImageCache();
-    dishRepository = DishRepository(database, resolvedImageCache);
+    final ImageDerivativeStore resolvedDerivativeStore =
+        imageDerivativeStore ?? ImageDerivativeStore();
+    _prepareImagePreviewsOnBootstrap = imageDerivativeStore != null ||
+        Platform.environment['FLUTTER_TEST'] != 'true';
+    _imageDerivativeStore = resolvedDerivativeStore;
+    dishRepository = DishRepository(
+      database,
+      resolvedImageCache,
+      resolvedDerivativeStore,
+    );
     planRepository = PlanRepository(database);
     processingConsentRepository = ProcessingConsentRepository(database);
     processingOutboxRepository = ProcessingOutboxRepository(database);
     captureRepository = CaptureRepository(
       database,
       processingOutboxRepository,
+      resolvedDerivativeStore,
     );
     captureCorrectionRepository = CaptureCorrectionRepository(database);
     aiJobRepository = AiJobRepository(database);
@@ -81,6 +93,7 @@ class AppRepositories {
       apiClient,
       controlRequestTimeout: captureControlRequestTimeout,
       dishImageCache: resolvedImageCache,
+      imageDerivativeStore: resolvedDerivativeStore,
     );
   }
 
@@ -89,6 +102,8 @@ class AppRepositories {
   final Duration captureControlRequestTimeout;
   @visibleForTesting
   final bool seedSampleDataOnPrepare;
+  late final ImageDerivativeStore _imageDerivativeStore;
+  late final bool _prepareImagePreviewsOnBootstrap;
   late final DishRepository dishRepository;
   late final PlanRepository planRepository;
   late final CaptureRepository captureRepository;
@@ -128,6 +143,9 @@ class AppRepositories {
       await seedIfNeeded();
     }
     await _removeBundledMockImageRefs();
+    if (_prepareImagePreviewsOnBootstrap) {
+      await _prepareImagePreviews();
+    }
     await database.into(database.localSettings).insertOnConflictUpdate(
           db.LocalSettingsCompanion.insert(
             key: db.localSeedDataInitializedKey,
@@ -161,6 +179,9 @@ class AppRepositories {
           .write(
         db.DishesCompanion(
           heroImageUrl: Value<String>(replacement?.url ?? ''),
+          heroPreviewUrl: Value<String?>(replacement?.previewUrl),
+          heroThumbnailUrl: Value<String?>(replacement?.thumbnailUrl),
+          heroPlaceholderUrl: Value<String?>(replacement?.placeholderUrl),
         ),
       );
     }
@@ -173,13 +194,16 @@ class SyncRepository {
     this._apiClient, {
     required Duration controlRequestTimeout,
     required DishImageCache dishImageCache,
+    required ImageDerivativeStore imageDerivativeStore,
   })  : _controlRequestTimeout = controlRequestTimeout,
-        _dishImageCache = dishImageCache;
+        _dishImageCache = dishImageCache,
+        _imageDerivativeStore = imageDerivativeStore;
 
   final db.AppDatabase _database;
   final MyMenuApiClient _apiClient;
   final Duration _controlRequestTimeout;
   final DishImageCache _dishImageCache;
+  final ImageDerivativeStore _imageDerivativeStore;
   static const String _captureSyncCursorKey = 'capture_sync_cursor';
 
   Future<void> processPendingOperations() async {
