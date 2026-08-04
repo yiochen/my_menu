@@ -6,9 +6,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/core/database/app_database.dart';
 import 'package:mymenu/core/network/my_menu_api_client.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
+import 'package:mymenu/domain/covers/cover_repository.dart';
 import 'package:mymenu/domain/covers/generated_cover.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/processing/processing_outbox.dart';
+import 'package:mymenu/domain/processing/processing_outbox_repository.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/domain/sync/repositories.dart';
 
@@ -48,21 +50,26 @@ void main() {
       expect(requests, hasLength(1));
       expect(requests.single.kind, ProcessingRequestKind.coverGeneration);
       expect(requests.single.subjectId, dishes.single.id);
-      expect(requests.single.payload, <String, Object?>{
+      final Map<String, Object?> payload =
+          Map<String, Object?>.from(requests.single.payload);
+      final List<Object?> notes = payload.remove('notes')! as List<Object?>;
+      final Map<String, Object?> note =
+          Map<String, Object?>.from(notes.single! as Map<String, Object?>);
+      expect(note['body'], 'Serve with lime and scallions.');
+      expect(note['position'], 0);
+      expect(DateTime.tryParse(note['createdAt']! as String) != null, isTrue);
+      expect(DateTime.tryParse(note['updatedAt']! as String) != null, isTrue);
+      expect(payload, <String, Object?>{
         'dishTitle': 'Charred Corn Ramen',
         'sourceIds': <String>[],
-        'notes': <Map<String, Object?>>[
-          <String, Object?>{
-            'body': 'Serve with lime and scallions.',
-            'position': 0,
-          },
-        ],
         'treatment': <String, Object?>{
           'look': 'natural_polish',
           'view': 'auto',
           'finish': 'menu_ready',
         },
         'origin': 'automatic',
+        'automaticCaptureBatchId': null,
+        'automaticCaptureOrdinal': null,
         'contractVersion': 'cover-generation-v1',
         'coverSnapshot': <String, Object?>{
           'image': '',
@@ -234,9 +241,13 @@ void main() {
     expect(request.kind, ProcessingRequestKind.coverGeneration);
     expect(request.payload['origin'], 'manual');
     expect(request.payload['sourceIds'], <String>[selectedSourceId]);
-    expect(request.payload['notes'], <Map<String, Object?>>[
-      <String, Object?>{'body': 'Add charred corn.', 'position': 0},
-    ]);
+    final List<Object?> notes = request.payload['notes']! as List<Object?>;
+    final Map<String, Object?> note =
+        Map<String, Object?>.from(notes.single! as Map<String, Object?>);
+    expect(note['body'], 'Add charred corn.');
+    expect(note['position'], 0);
+    expect(DateTime.tryParse(note['createdAt']! as String) != null, isTrue);
+    expect(DateTime.tryParse(note['updatedAt']! as String) != null, isTrue);
     expect(request.payload['treatment'], treatment.toJson());
   });
 
@@ -318,6 +329,369 @@ void main() {
           )
           .adoptionState,
       ProcessingAdoptionState.adopted,
+    );
+  });
+
+  test('automatic Cover order uses the Dish earliest Source position',
+      () async {
+    final Directory temp =
+        await Directory.systemTemp.createTemp('mymenu_cover_order_');
+    addTearDown(() => temp.delete(recursive: true));
+    final File sourceFile = File('${temp.path}/source.jpg')
+      ..writeAsBytesSync(<int>[1]);
+    final AppDatabase database =
+        AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final AppRepositories repositories = AppRepositories(
+      database: database,
+      apiClient: FakeMyMenuApiClient(),
+    );
+    await repositories.processingConsentRepository.acceptCurrentNotice();
+    final DateTime capturedAt = DateTime.utc(2026, 8, 4, 15);
+    await database.into(database.captureBatches).insert(
+          CaptureBatchesCompanion.insert(
+            id: 'batch-order',
+            status: 'completed',
+            createdAt: capturedAt,
+            updatedAt: capturedAt,
+          ),
+        );
+    for (final (String id, int ordinal) in <(String, int)>[
+      ('capture-first', 0),
+      ('capture-selected', 4),
+    ]) {
+      await database.into(database.captureItems).insert(
+            CaptureItemsCompanion.insert(
+              id: id,
+              batchId: const Value<String?>('batch-order'),
+              ordinal: Value<int>(ordinal),
+              kind: 'photo',
+              status: 'organized',
+              createdAt: capturedAt,
+            ),
+          );
+    }
+    await repositories.dishRepository.createDish(
+      _dish('dish-source-order').copyWith(
+        sourcePhotos: <SourcePhoto>[
+          SourcePhoto(
+            id: 'source-first',
+            captureId: 'capture-first',
+            url: sourceFile.path,
+            previewUrl: sourceFile.path,
+            capturedLabel: 'Today',
+          ),
+          SourcePhoto(
+            id: 'source-selected',
+            captureId: 'capture-selected',
+            url: sourceFile.path,
+            previewUrl: sourceFile.path,
+            capturedLabel: 'Today',
+          ),
+        ],
+      ),
+    );
+
+    await repositories.coverRepository.enqueueAutomaticCover(
+      dishId: 'dish-source-order',
+      sourceIds: const <String>['source-selected'],
+      now: capturedAt,
+    );
+
+    final ProcessingOutboxRequest request =
+        (await repositories.processingOutboxRepository.listRequests()).single;
+    expect(request.payload['sourceIds'], <String>['source-selected']);
+    expect(request.payload['automaticCaptureBatchId'], 'batch-order');
+    expect(request.payload['automaticCaptureOrdinal'], 0);
+  });
+
+  test('manual generation supersedes one in-flight automatic request',
+      () async {
+    final AppDatabase database =
+        AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final AppRepositories repositories = AppRepositories(
+      database: database,
+      apiClient: FakeMyMenuApiClient(),
+    );
+    await repositories.processingConsentRepository.acceptCurrentNotice();
+    await repositories.dishRepository.createDish(_dish('dish-supersede'));
+    final MyMenuState state = MyMenuState(repositories: repositories);
+    addTearDown(state.dispose);
+    await state.initialized;
+    expect(await state.enqueueAutomaticCoverForDish('dish-supersede'), isTrue);
+
+    expect(
+      await state.startManualCoverGeneration(
+        dishId: 'dish-supersede',
+        selectedSourceIds: const <String>[],
+        treatment: const CoverTreatment(
+          look: CoverLook.brightFresh,
+          view: CoverView.overhead,
+          finish: CoverFinish.lightTouch,
+        ),
+      ),
+      isTrue,
+    );
+
+    await Future<void>.delayed(Duration.zero);
+    final List<ProcessingOutboxRequest> requests =
+        await repositories.processingOutboxRepository.listRequests();
+    expect(requests, hasLength(1));
+    expect(requests.single.payload['origin'], CoverOrigin.manual.name);
+    expect(
+      requests.single.payload['treatment'],
+      const CoverTreatment(
+        look: CoverLook.brightFresh,
+        view: CoverView.overhead,
+        finish: CoverFinish.lightTouch,
+      ).toJson(),
+    );
+    await state.refreshFromServer();
+  });
+
+  test('replaying the same automatic delivery preserves its original Undo',
+      () async {
+    final AppDatabase database =
+        AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final AppRepositories repositories = AppRepositories(
+      database: database,
+      apiClient: FakeMyMenuApiClient(),
+    );
+    await repositories.dishRepository.createDish(_dish('dish-idempotent'));
+
+    for (final String path in <String>['/tmp/first.jpg', '/tmp/replayed.jpg']) {
+      await repositories.coverRepository.storeDeliveredCover(
+        id: 'cover-idempotent',
+        dishId: 'dish-idempotent',
+        localPath: path,
+        origin: CoverOrigin.automatic,
+        grounding: CoverGrounding.context,
+        selectedSourceIds: const <String>[],
+        treatment: CoverTreatment.defaults,
+        proposalId: 'proposal-idempotent',
+        createdAt: DateTime.utc(2026, 8, 4, 16),
+      );
+    }
+
+    await repositories.coverRepository.undoAutomatic('cover-idempotent');
+    final Dish dish = (await repositories.dishRepository.listDishes()).single;
+    expect(dish.heroImageUrl, '/tmp/current.jpg');
+    expect(
+      await repositories.coverRepository.listForDish('dish-idempotent'),
+      hasLength(1),
+    );
+  });
+
+  test('automatic generation skips a Dish whose Source is unavailable',
+      () async {
+    final AppDatabase database =
+        AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final AppRepositories repositories = AppRepositories(
+      database: database,
+      apiClient: FakeMyMenuApiClient(),
+    );
+    await repositories.processingConsentRepository.acceptCurrentNotice();
+    await repositories.dishRepository.createDish(
+      _dish('dish-unusable').copyWith(
+        sourcePhotos: const <SourcePhoto>[
+          SourcePhoto(
+            id: 'missing-source',
+            url: '/path/that/does/not/exist.jpg',
+            capturedLabel: 'Today',
+          ),
+        ],
+      ),
+    );
+
+    expect(
+      await repositories.coverRepository.enqueueAutomaticCover(
+        dishId: 'dish-unusable',
+        sourceIds: const <String>['missing-source'],
+        now: DateTime.utc(2026, 8, 4, 17),
+      ),
+      isFalse,
+    );
+    expect(
+      await repositories.processingOutboxRepository.listRequests(),
+      isEmpty,
+    );
+  });
+
+  test('a source-less Dish gets one automatic opportunity with first Sources',
+      () async {
+    final Directory temp =
+        await Directory.systemTemp.createTemp('mymenu_first_sources_');
+    addTearDown(() => temp.delete(recursive: true));
+    final File photo = File('${temp.path}/first.jpg')
+      ..writeAsBytesSync(<int>[0xff, 0xd8, 0xff, 0xd9]);
+    final AppDatabase database =
+        AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final AppRepositories repositories = AppRepositories(
+      database: database,
+      apiClient: FakeMyMenuApiClient(),
+    );
+    await repositories.processingConsentRepository.acceptCurrentNotice();
+    await repositories.dishRepository.createDish(_dish('dish-first-source'));
+    final MyMenuState state = MyMenuState(repositories: repositories);
+    addTearDown(state.dispose);
+    await state.initialized;
+
+    await state.addPhotoCaptures(
+      <Object>[photo.path],
+      targetDishId: 'dish-first-source',
+    );
+
+    final ProcessingOutboxRequest request =
+        (await repositories.processingOutboxRepository.listRequests()).single;
+    expect(request.kind, ProcessingRequestKind.coverGeneration);
+    expect(request.subjectId, 'dish-first-source');
+    expect(request.payload['sourceIds'], hasLength(1));
+  });
+
+  test('deleting generated history also deletes its downloaded result payload',
+      () async {
+    final AppDatabase database =
+        AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final AppRepositories repositories = AppRepositories(
+      database: database,
+      apiClient: FakeMyMenuApiClient(),
+    );
+    await repositories.processingConsentRepository.acceptCurrentNotice();
+    await repositories.dishRepository.createDish(_dish('dish-delete-cover'));
+    await repositories.processingOutboxRepository.enqueueCoverGeneration(
+      requestId: 'cover-delete',
+      dishId: 'dish-delete-cover',
+      payload: const <String, Object?>{'origin': 'manual'},
+      now: DateTime.utc(2026, 8, 4, 18),
+    );
+    await repositories.processingOutboxRepository.storeResult(
+      requestId: 'cover-delete',
+      result: const <String, Object?>{'imageBase64': 'sensitive-output'},
+      schemaVersion: 'cover-generation-result-v1',
+    );
+    await repositories.coverRepository.storeDeliveredCover(
+      id: 'cover-delete',
+      dishId: 'dish-delete-cover',
+      localPath: '/tmp/deleted-cover.jpg',
+      origin: CoverOrigin.manual,
+      grounding: CoverGrounding.context,
+      selectedSourceIds: const <String>[],
+      treatment: CoverTreatment.defaults,
+      proposalId: 'proposal-delete',
+      createdAt: DateTime.utc(2026, 8, 4, 18),
+    );
+
+    await repositories.coverRepository.deleteGenerated('cover-delete');
+
+    expect(
+      await repositories.coverRepository.listForDish('dish-delete-cover'),
+      isEmpty,
+    );
+    expect(
+      await repositories.processingOutboxRepository.listRequests(),
+      isEmpty,
+    );
+  });
+
+  test('consent withdrawal clears a queued manual restart', () async {
+    final AppDatabase database =
+        AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final AppRepositories repositories = AppRepositories(
+      database: database,
+      apiClient: FakeMyMenuApiClient(),
+    );
+    await repositories.processingConsentRepository.acceptCurrentNotice();
+    await repositories.dishRepository.createDish(_dish('dish-no-resurrect'));
+    final MyMenuState state = MyMenuState(repositories: repositories);
+    addTearDown(state.dispose);
+    await state.initialized;
+    await state.enqueueAutomaticCoverForDish('dish-no-resurrect');
+    await state.startManualCoverGeneration(
+      dishId: 'dish-no-resurrect',
+      selectedSourceIds: const <String>[],
+      treatment: CoverTreatment.defaults,
+    );
+
+    await state.disableAiProcessing();
+
+    final ProcessingOutboxRequest canceled =
+        (await repositories.processingOutboxRepository.listRequests()).single;
+    expect(canceled.deliveryState, ProcessingDeliveryState.canceled);
+    expect(canceled.payload, isNot(contains('restartAfterCancel')));
+    await repositories.syncRepository.processPendingCovers();
+    expect(
+      await repositories.processingOutboxRepository.listRequests(),
+      isEmpty,
+    );
+  });
+
+  test('an immediate correction Undo replaces a queued restart payload',
+      () async {
+    final Directory temp =
+        await Directory.systemTemp.createTemp('mymenu_cover_restart_');
+    addTearDown(() => temp.delete(recursive: true));
+    final File first = File('${temp.path}/first.jpg')
+      ..writeAsBytesSync(<int>[1]);
+    final File second = File('${temp.path}/second.jpg')
+      ..writeAsBytesSync(<int>[2]);
+    final AppDatabase database =
+        AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final AppRepositories repositories = AppRepositories(
+      database: database,
+      apiClient: FakeMyMenuApiClient(),
+    );
+    await repositories.processingConsentRepository.acceptCurrentNotice();
+    await repositories.dishRepository.createDish(
+      _dish('dish-restored').copyWith(
+        sourcePhotos: <SourcePhoto>[
+          SourcePhoto(id: 'source-a', url: first.path, capturedLabel: 'Today'),
+          SourcePhoto(id: 'source-b', url: second.path, capturedLabel: 'Today'),
+        ],
+      ),
+    );
+    await repositories.dishRepository.createDish(_dish('dish-split'));
+    await repositories.coverRepository.enqueueAutomaticCover(
+      dishId: 'dish-restored',
+      sourceIds: const <String>['source-a', 'source-b'],
+      now: DateTime.utc(2026, 8, 4, 19),
+    );
+    await (database.update(database.sourcePhotos)
+          ..where((SourcePhotos table) => table.id.equals('source-b')))
+        .write(
+      const SourcePhotosCompanion(dishId: Value<String>('dish-split')),
+    );
+    await repositories.coverRepository.restartAutomaticCoverIfPending(
+      dishId: 'dish-restored',
+      now: DateTime.utc(2026, 8, 4, 19, 1),
+    );
+    await (database.update(database.sourcePhotos)
+          ..where((SourcePhotos table) => table.id.equals('source-b')))
+        .write(
+      const SourcePhotosCompanion(dishId: Value<String>('dish-restored')),
+    );
+
+    expect(
+      await repositories.coverRepository.restartAutomaticCoverIfPending(
+        dishId: 'dish-restored',
+        now: DateTime.utc(2026, 8, 4, 19, 2),
+      ),
+      isTrue,
+    );
+
+    final ProcessingOutboxRequest request =
+        (await repositories.processingOutboxRepository.listRequests()).single;
+    expect(request.deliveryState, ProcessingDeliveryState.canceled);
+    expect(request.payload['restartAfterCancel'], isTrue);
+    expect(
+      request.payload['sourceIds'],
+      containsAll(<String>['source-a', 'source-b']),
     );
   });
 }

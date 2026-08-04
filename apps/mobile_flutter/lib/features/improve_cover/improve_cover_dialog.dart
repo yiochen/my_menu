@@ -47,6 +47,7 @@ class _ImproveCoverFlowState extends State<ImproveCoverFlow> {
   late ImproveCoverStep _step;
   final Set<String> _selectedSourceIds = <String>{};
   CoverTreatment _treatment = CoverTreatment.defaults;
+  int? _coverAllowanceRemaining;
 
   Dish get _dish => widget.state.dishById(widget.dishId);
   GeneratedCover? get _proposal =>
@@ -64,6 +65,7 @@ class _ImproveCoverFlowState extends State<ImproveCoverFlow> {
     );
     if (_proposal != null) _step = ImproveCoverStep.result;
     widget.state.addListener(_stateChanged);
+    unawaited(_loadAllowance());
   }
 
   @override
@@ -97,6 +99,7 @@ class _ImproveCoverFlowState extends State<ImproveCoverFlow> {
           onToggleSource: _toggleSource,
           onGenerate: _canGenerate ? _startGeneration : null,
           onClose: () => Navigator.pop(context),
+          coverAllowanceRemaining: _coverAllowanceRemaining,
         ),
       ImproveCoverStep.generating => ImproveCoverGenerating(
           dish: _dish,
@@ -117,7 +120,13 @@ class _ImproveCoverFlowState extends State<ImproveCoverFlow> {
   }
 
   bool get _canGenerate =>
-      _dish.sourcePhotos.isEmpty || _selectedSourceIds.isNotEmpty;
+      _coverAllowanceRemaining != 0 &&
+      (_dish.sourcePhotos.isEmpty || _selectedSourceIds.isNotEmpty);
+
+  Future<void> _loadAllowance() async {
+    final int? remaining = await widget.state.remainingCoverAllowance();
+    if (mounted) setState(() => _coverAllowanceRemaining = remaining);
+  }
 
   void _stateChanged() {
     if (!mounted) return;

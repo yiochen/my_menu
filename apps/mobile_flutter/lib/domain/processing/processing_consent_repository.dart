@@ -102,24 +102,15 @@ class ProcessingConsentRepository {
         updatedAt: Value<DateTime>(now),
       ),
     );
-    await (_database.update(_database.processingOutbox)
-          ..where(
-            (db.ProcessingOutbox table) =>
-                table.requestKind.equals(
-                  ProcessingRequestKind.coverGeneration.databaseValue,
-                ) &
-                table.deliveryState.isNotIn(<String>[
-                  ProcessingDeliveryState.acknowledged.name,
-                  ProcessingDeliveryState.failed.name,
-                  ProcessingDeliveryState.expired.name,
-                  ProcessingDeliveryState.canceled.name,
-                ]),
-          ))
-        .write(
-      db.ProcessingOutboxCompanion(
-        deliveryState: Value<String>(ProcessingDeliveryState.canceled.name),
-        updatedAt: Value<DateTime>(now),
-      ),
+    await _database.customStatement(
+      "UPDATE processing_outbox SET delivery_state = 'canceled', "
+      r"payload_json = json_remove(payload_json, '$.restartAfterCancel'), "
+      'updated_at = ? WHERE request_kind = ? '
+      "AND delivery_state NOT IN ('acknowledged', 'failed', 'expired')",
+      <Object?>[
+        now.millisecondsSinceEpoch ~/ 1000,
+        ProcessingRequestKind.coverGeneration.databaseValue,
+      ],
     );
   }
 }

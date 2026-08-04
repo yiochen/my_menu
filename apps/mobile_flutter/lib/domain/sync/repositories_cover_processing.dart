@@ -4,7 +4,29 @@ extension SyncRepositoryCovers on SyncRepository {
   Future<void> processPendingCovers() async {
     final ProcessingOutboxRepository outbox =
         ProcessingOutboxRepository(_database);
-    final List<ProcessingOutboxRequest> requests = await outbox.listRequests();
+    final List<ProcessingOutboxRequest> requests = await outbox.listRequests()
+      ..sort((ProcessingOutboxRequest left, ProcessingOutboxRequest right) {
+        final bool leftManual =
+            left.payload['origin'] == CoverOrigin.manual.name;
+        final bool rightManual =
+            right.payload['origin'] == CoverOrigin.manual.name;
+        if (leftManual != rightManual) return leftManual ? -1 : 1;
+        final String? leftBatch =
+            left.payload['automaticCaptureBatchId'] as String?;
+        final String? rightBatch =
+            right.payload['automaticCaptureBatchId'] as String?;
+        if (!leftManual && leftBatch != null && leftBatch == rightBatch) {
+          final int leftOrdinal =
+              left.payload['automaticCaptureOrdinal'] as int? ?? 1 << 30;
+          final int rightOrdinal =
+              right.payload['automaticCaptureOrdinal'] as int? ?? 1 << 30;
+          final int byOrdinal = leftOrdinal.compareTo(rightOrdinal);
+          if (byOrdinal != 0) return byOrdinal;
+        }
+        final int byCreatedAt = left.createdAt.compareTo(right.createdAt);
+        return byCreatedAt != 0 ? byCreatedAt : left.id.compareTo(right.id);
+      });
+    bool automaticChainWaiting = false;
     for (final ProcessingOutboxRequest request in requests) {
       if (request.kind != ProcessingRequestKind.coverGeneration) {
         continue;
@@ -20,7 +42,22 @@ extension SyncRepositoryCovers on SyncRepository {
       }.contains(request.deliveryState)) {
         continue;
       }
+      final bool automatic =
+          request.payload['origin'] == CoverOrigin.automatic.name;
+      if (automatic && automaticChainWaiting) continue;
       await _resumeCoverGeneration(outbox, request);
+      if (automatic) {
+        final ProcessingOutboxRequest? current = await outbox.requestForSubject(
+          kind: request.kind,
+          subjectId: request.subjectId,
+        );
+        automaticChainWaiting = current != null &&
+            <ProcessingDeliveryState>{
+              ProcessingDeliveryState.pendingUpload,
+              ProcessingDeliveryState.uploading,
+              ProcessingDeliveryState.submitted,
+            }.contains(current.deliveryState);
+      }
     }
   }
 
@@ -56,7 +93,19 @@ extension SyncRepositoryCovers on SyncRepository {
           kind: request.kind,
           subjectId: request.subjectId,
         ))!;
-        await _uploadCoverAssets(outbox, request, job, assets);
+        if (request.deliveryState == ProcessingDeliveryState.canceled) {
+          await _cancelCoverJob(outbox, request);
+          return;
+        }
+        if (!await _uploadCoverAssets(outbox, request, job, assets)) return;
+        request = (await outbox.requestForSubject(
+          kind: request.kind,
+          subjectId: request.subjectId,
+        ))!;
+        if (request.deliveryState == ProcessingDeliveryState.canceled) {
+          await _cancelCoverJob(outbox, request);
+          return;
+        }
         await _apiClient
             .submitProcessingJob(
               jobId: job.id,
@@ -99,26 +148,41 @@ extension SyncRepositoryCovers on SyncRepository {
           .downloadProcessingResult(jobId: job.id)
           .timeout(_controlRequestTimeout);
       _validateCoverResult(request, result, job.resultSchemaVersion);
-      if (!await _coverSourcesStillBelongToDish(request)) {
-        await _apiClient.cancelProcessingJob(jobId: job.id);
-        await outbox.markFailed(request.id, failureCode: 'source_set_changed');
-        return;
+      final GeneratedCover? existing =
+          await CoverRepository(_database).findById(request.id);
+      if (existing == null) {
+        if (!await _coverSourcesStillBelongToDish(request)) {
+          await _apiClient.cancelProcessingJob(jobId: job.id);
+          await outbox.markFailed(
+            request.id,
+            failureCode: 'source_set_changed',
+          );
+          return;
+        }
+        if (!await _automaticCoverSnapshotStillCurrent(request)) {
+          await _apiClient.cancelProcessingJob(jobId: job.id);
+          await outbox.markFailed(request.id, failureCode: 'cover_changed');
+          return;
+        }
+        final String localPath = await _materializeGeneratedCover(
+          request,
+          result,
+        );
+        await _database.transaction(() async {
+          await _storeDeliveredCover(request, result, localPath);
+          await outbox.storeResult(
+            requestId: request.id,
+            result: result,
+            schemaVersion: job.resultSchemaVersion,
+          );
+        });
+      } else {
+        await outbox.storeResult(
+          requestId: request.id,
+          result: result,
+          schemaVersion: job.resultSchemaVersion,
+        );
       }
-      if (!await _automaticCoverSnapshotStillCurrent(request)) {
-        await _apiClient.cancelProcessingJob(jobId: job.id);
-        await outbox.markFailed(request.id, failureCode: 'cover_changed');
-        return;
-      }
-      final String localPath = await _materializeGeneratedCover(
-        request,
-        result,
-      );
-      await _storeDeliveredCover(request, result, localPath);
-      await outbox.storeResult(
-        requestId: request.id,
-        result: result,
-        schemaVersion: job.resultSchemaVersion,
-      );
       await _apiClient
           .acknowledgeProcessingJob(jobId: job.id)
           .timeout(_controlRequestTimeout);
@@ -184,13 +248,22 @@ extension SyncRepositoryCovers on SyncRepository {
     return assets;
   }
 
-  Future<void> _uploadCoverAssets(
+  Future<bool> _uploadCoverAssets(
     ProcessingOutboxRepository outbox,
     ProcessingOutboxRequest request,
     ApiProcessingJob job,
     Map<String, String> assets,
   ) async {
     for (final ApiProcessingUploadTarget target in job.uploadTargets) {
+      final ProcessingOutboxRequest? current = await outbox.requestForSubject(
+        kind: request.kind,
+        subjectId: request.subjectId,
+      );
+      if (current == null) return false;
+      if (current.deliveryState == ProcessingDeliveryState.canceled) {
+        await _cancelCoverJob(outbox, current);
+        return false;
+      }
       if (request.uploadedAssetIds.contains(target.assetId)) {
         continue;
       }
@@ -202,6 +275,7 @@ extension SyncRepositoryCovers on SyncRepository {
       await _apiClient.uploadProcessingAsset(target: target, localPath: path);
       await outbox.markAssetUploaded(request.id, target.assetId);
     }
+    return true;
   }
 
   Map<String, Object?> _coverProcessingInput(ProcessingOutboxRequest request) {

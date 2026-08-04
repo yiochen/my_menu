@@ -119,6 +119,10 @@ extension MyMenuStateCapturePersistence on MyMenuState {
       return null;
     }
 
+    final bool firstSourcesForDish = targetDishId != null &&
+        _dishes.any(
+          (Dish dish) => dish.id == targetDishId && dish.sourcePhotos.isEmpty,
+        );
     final CaptureBatch? batch =
         await repositories.captureRepository.createPhotoBatch(
       capturedMedia,
@@ -133,6 +137,27 @@ extension MyMenuStateCapturePersistence on MyMenuState {
     await _reloadFromRepositories();
     if (targetDishId == null) {
       unawaited(_syncCaptures());
+    } else if (firstSourcesForDish) {
+      final Set<String> captureIds =
+          batch.items.map((CaptureItem item) => item.id).toSet();
+      final Dish dish = dishById(targetDishId);
+      final bool enqueued =
+          await repositories.coverRepository.enqueueAutomaticCover(
+        dishId: targetDishId,
+        sourceIds: dish.sourcePhotos
+            .where(
+              (SourcePhoto source) => captureIds.contains(source.captureId),
+            )
+            .map((SourcePhoto source) => source.id)
+            .whereType<String>()
+            .take(3)
+            .toList(growable: false),
+        now: batch.createdAt,
+      );
+      if (enqueued) {
+        await _reloadFromRepositories();
+        _startCaptureSyncPollingWindow();
+      }
     }
     return batch;
   }

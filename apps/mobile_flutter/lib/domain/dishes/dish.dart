@@ -102,22 +102,30 @@ class DishNote {
     required this.dishId,
     required this.body,
     required this.position,
+    this.createdAt,
+    this.updatedAt,
   });
 
   final String id;
   final String dishId;
   final String body;
   final int position;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   DishNote copyWith({
     String? body,
     int? position,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) {
     return DishNote(
       id: id,
       dishId: dishId,
       body: body ?? this.body,
       position: position ?? this.position,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

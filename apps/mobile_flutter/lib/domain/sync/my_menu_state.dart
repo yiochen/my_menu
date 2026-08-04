@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer' as developer;
 
 import 'package:drift/drift.dart';
@@ -119,6 +120,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
       _pendingCaptureBatchDeletions = <String, _PendingCaptureBatchDeletion>{};
   StreamSubscription<void>? _networkStatusSubscription;
   Future<void>? _activeCaptureRefresh;
+  Future<void>? _activeCaptureSync;
   bool _isSyncingCaptures = false;
   Timer? _captureSyncTimer;
   DateTime? _captureSyncPollingDeadline;
@@ -286,25 +288,6 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
       return;
     }
     _dishes = nextDishes;
-    notifyListeners();
-  }
-
-  void improveCover(String dishId, String prompt) {
-    _dishes = _dishes.map((Dish dish) {
-      if (dish.id != dishId || dish.sourcePhotos.isEmpty) {
-        return dish;
-      }
-
-      final int index =
-          prompt.trim().isEmpty ? 0 : prompt.length % dish.sourcePhotos.length;
-      final SourcePhoto source = dish.sourcePhotos[index];
-      return dish.copyWith(
-        heroImageUrl: source.url,
-        heroPreviewUrl: source.previewUrl ?? '',
-        heroThumbnailUrl: source.thumbnailUrl ?? '',
-        heroPlaceholderUrl: source.placeholderUrl ?? '',
-      );
-    }).toList(growable: false);
     notifyListeners();
   }
 

@@ -73,9 +73,31 @@ async function dispatch(
       return await finishJob(client, userId, body, "acknowledged");
     case "cancel":
       return await finishJob(client, userId, body, "canceled");
+    case "allowances":
+      return await allowances(client, userId);
     default:
       return json({ error: "invalid_action" }, 400);
   }
+}
+
+async function allowances(client: any, userId: string) {
+  const { data, error } = await client.from("ai_usage_records")
+    .select("operation,units,outcome")
+    .eq("user_id", userId)
+    .gte("created_at", new Date(Date.now() - 30 * 86_400_000).toISOString());
+  if (error != null) throw error;
+  const used = (operation: string) =>
+    (data ?? [])
+      .filter((row: JsonRecord) => row.operation === operation)
+      .reduce(
+        (total: number, row: JsonRecord) =>
+          total + (row.outcome === "reserved" ? 1 : Number(row.units ?? 0)),
+        0,
+      );
+  return json({
+    organizationRemaining: Math.max(0, 10 - used("capture_grouping")),
+    coverRemaining: Math.max(0, 10 - used("cover_generation")),
+  });
 }
 
 async function createJob(client: any, userId: string, body: JsonRecord) {

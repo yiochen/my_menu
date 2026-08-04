@@ -111,18 +111,34 @@ extension SyncRepositoryCoverDelivery on SyncRepository {
       try {
         await _apiClient.cancelProcessingJob(jobId: request.serverJobId!);
       } on Object catch (error) {
-        if (!_isProcessingJobNotFound(error) && _isConnectivityError(error)) {
-          return;
-        }
+        if (!_isProcessingJobNotFound(error)) return;
       }
       await outbox.clearServerJob(request.id);
     }
     await _deleteProcessingAssets(request.id);
     if (request.payload['restartAfterCancel'] == true) {
+      final bool consentAccepted =
+          await ProcessingConsentRepository(_database).currentDecision() ==
+              ProcessingConsentDecision.accepted;
+      final bool dishExists = await (_database.select(_database.dishes)
+            ..where(
+              (db.Dishes table) => table.id.equals(request.subjectId),
+            ))
+          .getSingleOrNull()
+          .then((db.DishRow? row) => row != null);
+      final bool automaticAllowed =
+          request.payload['origin'] != CoverOrigin.automatic.name ||
+              await CoverRepository(_database).automaticGenerationEnabled();
+      if (!consentAccepted || !dishExists || !automaticAllowed) {
+        await outbox.deleteRequest(request.id);
+        return;
+      }
       final Map<String, Object?> payload = Map<String, Object?>.from(
         request.payload,
       )..remove('restartAfterCancel');
       await outbox.restartCanceledCover(request.id, payload);
+    } else {
+      await outbox.deleteRequest(request.id);
     }
   }
 }

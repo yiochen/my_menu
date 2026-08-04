@@ -460,6 +460,7 @@ function routingDraft(title: string) {
     description: "",
     labels: [],
     visibleIngredients: [],
+    coverSourceCaptureIds: [],
   };
 }
 

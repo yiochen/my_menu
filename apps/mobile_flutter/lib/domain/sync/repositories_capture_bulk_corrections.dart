@@ -73,13 +73,19 @@ extension CaptureCorrectionRepositoryBulk on CaptureCorrectionRepository {
       throw StateError('One or more organization changes cannot be undone.');
     }
     final List<CaptureCorrection> undone = <CaptureCorrection>[];
+    final List<String> deletedCoverPaths = <String>[];
     await _database.transaction(() async {
       for (final db.CaptureCorrectionRow row in rows) {
         undone.add(
-          await _undoCorrection(row, insideTransaction: true),
+          await _undoCorrection(
+            row,
+            insideTransaction: true,
+            deletedCoverPaths: deletedCoverPaths,
+          ),
         );
       }
     });
+    await _deleteCoverPaths(deletedCoverPaths);
     return undone;
   }
 }

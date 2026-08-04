@@ -10,6 +10,7 @@ import 'package:mymenu/features/dish_detail/cook_again_sheet.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_content.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_hero.dart';
 import 'package:mymenu/features/dish_detail/recipe_section_editor.dart';
+import 'package:mymenu/features/improve_cover/improve_cover_dialog.dart';
 import 'package:mymenu/features/photos/photos_route.dart';
 import 'package:mymenu/features/photos/photos_screen.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
@@ -55,51 +56,8 @@ class _DishDetailScreenState extends State<DishDetailScreen>
         horizontalPadding: 0,
         child: NestedScrollView(
           key: const ValueKey<String>('dish_detail_scroll_view'),
-          headerSliverBuilder: (BuildContext context, bool innerScrolled) {
-            return <Widget>[
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(
-                  horizontal,
-                  mediaQuery.padding.top + 14,
-                  horizontal,
-                  0,
-                ),
-                sliver: SliverList.list(
-                  children: <Widget>[
-                    DishDetailHero(dish: dish),
-                    if (state.unacknowledgedAutomaticCoverForDish(dish.id)
-                        case final GeneratedCover automaticCover) ...<Widget>[
-                      const SizedBox(height: 12),
-                      _AutomaticCoverNotice(
-                        cover: automaticCover,
-                        onUndo: () => state.undoAutomaticCover(
-                          automaticCover.id,
-                        ),
-                        onDismiss: () => state.acknowledgeAutomaticCover(
-                          automaticCover.id,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    PrimaryPillButton(
-                      key: const ValueKey<String>('cook_again_button'),
-                      label: 'Cook again',
-                      icon: Icons.play_arrow_rounded,
-                      onPressed: () => showCookAgainSheet(
-                        context,
-                        state,
-                        dish,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _Metrics(dish: dish),
-                    const SizedBox(height: 12),
-                    _DetailTabs(controller: _tabController),
-                  ],
-                ),
-              ),
-            ];
-          },
+          headerSliverBuilder: (BuildContext context, bool innerScrolled) =>
+              _headerSlivers(context, state, dish, mediaQuery, horizontal),
           body: TabBarView(
             key: const ValueKey<String>('dish_detail_page_view'),
             controller: _tabController,
@@ -133,6 +91,58 @@ class _DishDetailScreenState extends State<DishDetailScreen>
         ),
       ),
     );
+  }
+
+  List<Widget> _headerSlivers(
+    BuildContext context,
+    MyMenuState state,
+    Dish dish,
+    MediaQueryData mediaQuery,
+    double horizontal,
+  ) {
+    final GeneratedCover? automaticCover =
+        state.unacknowledgedAutomaticCoverForDish(dish.id);
+    return <Widget>[
+      SliverPadding(
+        padding: EdgeInsets.fromLTRB(
+          horizontal,
+          mediaQuery.padding.top + 14,
+          horizontal,
+          0,
+        ),
+        sliver: SliverList.list(
+          children: <Widget>[
+            DishDetailHero(dish: dish),
+            if (automaticCover != null) ...<Widget>[
+              const SizedBox(height: 12),
+              _AutomaticCoverNotice(
+                cover: automaticCover,
+                onUndo: () => state.undoAutomaticCover(automaticCover.id),
+                onDismiss: () =>
+                    state.acknowledgeAutomaticCover(automaticCover.id),
+              ),
+            ],
+            if (state.proposedCoverForDish(dish.id) != null) ...<Widget>[
+              const SizedBox(height: 12),
+              _CoverProposalNotice(
+                onReview: () => showImproveCoverDialog(context, state, dish.id),
+              ),
+            ],
+            const SizedBox(height: 16),
+            PrimaryPillButton(
+              key: const ValueKey<String>('cook_again_button'),
+              label: 'Cook again',
+              icon: Icons.play_arrow_rounded,
+              onPressed: () => showCookAgainSheet(context, state, dish),
+            ),
+            const SizedBox(height: 12),
+            _Metrics(dish: dish),
+            const SizedBox(height: 12),
+            _DetailTabs(controller: _tabController),
+          ],
+        ),
+      ),
+    ];
   }
 
   Future<void> _addPhoto(
@@ -222,6 +232,26 @@ class _AutomaticCoverNotice extends StatelessWidget {
               onPressed: onDismiss,
               icon: const Icon(Icons.close),
             ),
+          ],
+        ),
+      );
+}
+
+class _CoverProposalNotice extends StatelessWidget {
+  const _CoverProposalNotice({required this.onReview});
+
+  final VoidCallback onReview;
+
+  @override
+  Widget build(BuildContext context) => WarmCard(
+        key: const ValueKey<String>('cover_proposal_ready_notice'),
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: <Widget>[
+            const Icon(Icons.auto_awesome, color: MyMenuColors.orange),
+            const SizedBox(width: 10),
+            const Expanded(child: Text('Your improved cover is ready.')),
+            TextButton(onPressed: onReview, child: const Text('Review')),
           ],
         ),
       );

@@ -38,7 +38,11 @@ select is((select status::text from public.internal_submit_processing_job(
     '00000000-0000-4000-8000-000000000257'),
   jsonb_build_object(
     'dishTitle','Idea Curry','sources','[]'::jsonb,
-    'notes',jsonb_build_array(jsonb_build_object('body','Golden sauce','position',0)),
+    'notes',jsonb_build_array(jsonb_build_object(
+      'body','Golden sauce','position',0,
+      'createdAt','2026-08-04T00:00:00Z',
+      'updatedAt','2026-08-04T00:00:00Z'
+    )),
     'treatment',jsonb_build_object('look','natural_polish','view','auto','finish','menu_ready'),
     'origin','manual','contractVersion','cover-generation-v1'
   )

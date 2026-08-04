@@ -225,7 +225,12 @@ Deno.test("guest idea cover uses the bounded contract and charges on acknowledge
     input: {
       dishTitle: "Golden curry",
       sources: [],
-      notes: [{ body: "Glossy golden sauce", position: 0 }],
+      notes: [{
+        body: "Glossy golden sauce",
+        position: 0,
+        createdAt: "2026-08-04T00:00:00Z",
+        updatedAt: "2026-08-04T00:00:00Z",
+      }],
       treatment: {
         look: "warm_cozy",
         view: "auto",
@@ -261,6 +266,14 @@ Deno.test("guest idea cover uses the bounded contract and charges on acknowledge
   const after = await usageFor(admin, session.userId, idempotencyKey);
   assertEquals(after.units, 1);
   assertEquals(after.outcome, "succeeded");
+  const allowance = await post(session.headers, "processing-jobs", {
+    action: "allowances",
+  });
+  assertEquals(allowance.status, 200);
+  assertEquals(
+    objectValue(await jsonBody(allowance)).coverRemaining,
+    9,
+  );
 });
 
 async function usageFor(client: any, userId: string, idempotencyKey: string) {

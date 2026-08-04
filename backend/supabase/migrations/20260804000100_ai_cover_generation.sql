@@ -179,10 +179,12 @@ begin
   end loop;
   for v_note in select value from jsonb_array_elements(p_input->'notes') loop
     if jsonb_typeof(v_note) <> 'object'
-      or v_note - array['body','position'] <> '{}'::jsonb
+      or v_note - array['body','position','createdAt','updatedAt'] <> '{}'::jsonb
       or jsonb_typeof(v_note->'body') <> 'string'
       or length(v_note->>'body') > 10000
-      or jsonb_typeof(v_note->'position') <> 'number' then
+      or jsonb_typeof(v_note->'position') <> 'number'
+      or jsonb_typeof(v_note->'createdAt') <> 'string'
+      or jsonb_typeof(v_note->'updatedAt') <> 'string' then
       raise exception 'Invalid cover generation input';
     end if;
   end loop;

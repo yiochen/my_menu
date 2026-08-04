@@ -98,6 +98,10 @@ extension SyncRepositoryCaptureRoutingContract on SyncRepository {
         if (draft is! Map<String, Object?> ||
             draft['title'] is! String ||
             (draft['title']! as String).trim().isEmpty ||
+            draft['coverSourceCaptureIds'] is! List<Object?> ||
+            (draft['coverSourceCaptureIds']! as List<Object?>)
+                .any((Object? id) => id is! String || !ids.contains(id)) ||
+            (draft['coverSourceCaptureIds']! as List<Object?>).length > 3 ||
             rawOutcome['localDishId'] != null ||
             rawUncertainty.isNotEmpty) {
           throw const FormatException('Invalid new-dish route.');

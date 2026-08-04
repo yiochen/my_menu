@@ -17,13 +17,15 @@ Future<bool> captureAddIdea(BuildContext context, MyMenuState state) async {
     },
   );
   if (!added || dishId == null) return added;
+  final bool needsConsent =
+      state.processingConsentDecision == ProcessingConsentDecision.notDecided;
   ProcessingConsentDecision decision = state.processingConsentDecision;
-  if (decision == ProcessingConsentDecision.notDecided) {
+  if (needsConsent) {
     decision = await state.requestProcessingConsent(
       trigger: ProcessingConsentTrigger.improveCover,
     );
   }
-  if (decision == ProcessingConsentDecision.accepted) {
+  if (needsConsent && decision == ProcessingConsentDecision.accepted) {
     await state.enqueueAutomaticCoverForDish(dishId!);
   }
   return added;

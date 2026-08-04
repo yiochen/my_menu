@@ -12,6 +12,13 @@ mixin FakeProcessingApi on MyMenuApiClient {
     _interruptProcessingUpload = true;
   }
 
+  @override
+  Future<ApiProcessingAllowances> getProcessingAllowances() async =>
+      const ApiProcessingAllowances(
+        organizationRemaining: 10,
+        coverRemaining: 10,
+      );
+
   bool hasPayloadForProcessingJob(String jobId) {
     final _FakeProcessingRecord? record = _processingJobs[jobId];
     return record?.input != null || record?.result != null;
@@ -134,6 +141,9 @@ mixin FakeProcessingApi on MyMenuApiClient {
                 'description': 'Deterministic capture routing proposal.',
                 'labels': <String>[],
                 'visibleIngredients': <String>[],
+                'coverSourceCaptureIds': capture['kind'] == 'photo'
+                    ? <String>[capture['id']! as String]
+                    : <String>[],
               },
             },
             'evidence': <String>['Deterministic local provider'],

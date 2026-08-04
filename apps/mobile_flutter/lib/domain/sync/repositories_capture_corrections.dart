@@ -249,7 +249,9 @@ class CaptureCorrectionRepository {
   Future<CaptureCorrection> _undoCorrection(
     db.CaptureCorrectionRow row, {
     bool insideTransaction = false,
+    List<String>? deletedCoverPaths,
   }) async {
+    final List<String> coverPaths = deletedCoverPaths ?? <String>[];
     final CaptureCorrection correction = _correctionFromRow(row);
     final List<db.CaptureItemRow> items =
         await (_database.select(_database.captureItems)
@@ -303,8 +305,45 @@ class CaptureCorrectionRepository {
         ),
         removedRefsByDish: removedRefsByDish,
       );
+      for (final String dishId in correction.previousDishIds.values.toSet()) {
+        await CoverRepository(_database).restartAutomaticCoverIfPending(
+          dishId: dishId,
+          now: now,
+        );
+      }
       if (await _shouldDeleteAutoCreatedDish(correction)) {
         final String createdDishId = correction.targetDishId;
+        final List<db.GeneratedCoverRow> covers =
+            await (_database.select(_database.generatedCovers)
+                  ..where(
+                    (db.GeneratedCovers table) =>
+                        table.dishId.equals(createdDishId),
+                  ))
+                .get();
+        for (final db.GeneratedCoverRow cover in covers) {
+          coverPaths.addAll(<String>[
+            cover.localPath,
+            if (cover.previewPath != null) cover.previewPath!,
+            if (cover.thumbnailPath != null) cover.thumbnailPath!,
+            if (cover.placeholderPath != null) cover.placeholderPath!,
+          ]);
+        }
+        await _database.customStatement(
+          "UPDATE processing_outbox SET delivery_state = 'canceled', "
+          r"payload_json = json_remove(payload_json, '$.restartAfterCancel'), "
+          'updated_at = ? WHERE request_kind = ? AND subject_id = ?',
+          <Object?>[
+            now.millisecondsSinceEpoch ~/ 1000,
+            ProcessingRequestKind.coverGeneration.databaseValue,
+            createdDishId,
+          ],
+        );
+        await (_database.delete(_database.generatedCovers)
+              ..where(
+                (db.GeneratedCovers table) =>
+                    table.dishId.equals(createdDishId),
+              ))
+            .go();
         await (_database.delete(_database.sourcePhotos)
               ..where(
                 (db.SourcePhotos table) => table.dishId.equals(createdDishId),
@@ -336,6 +375,9 @@ class CaptureCorrectionRepository {
     } else {
       await _database.transaction(apply);
     }
+    if (!insideTransaction) {
+      await _deleteCoverPaths(coverPaths);
+    }
     return _correctionFromRow(
       await (_database.select(_database.captureCorrections)
             ..where(
@@ -343,5 +385,12 @@ class CaptureCorrectionRepository {
             ))
           .getSingle(),
     );
+  }
+
+  Future<void> _deleteCoverPaths(Iterable<String> paths) async {
+    for (final String path in paths.toSet()) {
+      final File file = File(path);
+      if (file.existsSync()) file.deleteSync();
+    }
   }
 }

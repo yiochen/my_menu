@@ -32,6 +32,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 part 'repositories_dishes.dart';
+part 'repositories_dish_inserts.dart';
 part 'repositories_dish_deletion.dart';
 part 'repositories_ai.dart';
 part 'repositories_planning.dart';

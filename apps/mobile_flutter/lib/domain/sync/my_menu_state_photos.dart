@@ -35,6 +35,7 @@ extension MyMenuStatePhotos on MyMenuState {
         .captureCorrectionRepository
         .undoCorrections(correctionIds);
     await _reloadFromRepositories();
+    _startCaptureSyncPollingWindow();
     return corrections;
   }
 

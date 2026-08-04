@@ -93,6 +93,9 @@ extension CoverRepositorySelection on CoverRepository {
       await (_database.delete(_database.generatedCovers)
             ..where((db.GeneratedCovers table) => table.id.equals(coverId)))
           .go();
+      await (_database.delete(_database.processingOutbox)
+            ..where((db.ProcessingOutbox table) => table.id.equals(coverId)))
+          .go();
     });
     for (final String path in <String>{
       cover.localPath,

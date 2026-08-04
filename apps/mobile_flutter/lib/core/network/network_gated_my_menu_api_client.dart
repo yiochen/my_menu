@@ -12,6 +12,11 @@ class NetworkGatedMyMenuApiClient extends MyMenuApiClient {
   }
 
   @override
+  Future<ApiProcessingAllowances> getProcessingAllowances() {
+    return _online(_delegate.getProcessingAllowances);
+  }
+
+  @override
   Future<ApiProcessingJob> createProcessingJob({
     required String operation,
     required String idempotencyKey,

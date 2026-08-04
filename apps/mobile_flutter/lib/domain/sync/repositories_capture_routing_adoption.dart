@@ -163,14 +163,18 @@ extension SyncRepositoryCaptureRoutingAdoption on SyncRepository {
               createdDishId: dishId,
               now: now,
             );
-            await CoverRepository(_database).enqueueAutomaticCover(
-              dishId: dishId,
-              sourceIds: items
-                  .take(3)
-                  .map((db.CaptureItemRow item) => '${item.id}_source')
-                  .toList(growable: false),
-              now: now,
-            );
+            final List<String> coverCaptureIds =
+                (draft['coverSourceCaptureIds']! as List<Object?>)
+                    .cast<String>();
+            if (coverCaptureIds.isNotEmpty) {
+              await CoverRepository(_database).enqueueAutomaticCover(
+                dishId: dishId,
+                sourceIds: coverCaptureIds
+                    .map((String captureId) => '${captureId}_source')
+                    .toList(growable: false),
+                now: now,
+              );
+            }
           case 'unresolved':
             final db.CaptureItemRow item = items.single;
             final List<String> uncertainty =

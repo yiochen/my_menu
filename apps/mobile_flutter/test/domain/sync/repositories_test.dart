@@ -2104,7 +2104,7 @@ void main() {
       final Dish afterFirstDelete =
           (await repositories.dishRepository.listDishes())
               .singleWhere((Dish dish) => dish.id == 'dish_direct');
-      expect(afterFirstDelete.heroImageUrl, '/tmp/direct-two.jpg');
+      expect(afterFirstDelete.heroImageUrl, isEmpty);
       expect(afterFirstDelete.madeCount, 1);
 
       await repositories.captureRepository.deleteCapture(batch.items[1].id);

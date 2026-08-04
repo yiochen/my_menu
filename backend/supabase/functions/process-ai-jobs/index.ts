@@ -222,6 +222,8 @@ async function processCoverJob(
     return {
       body: stringField(note, "body"),
       position: numberField(note, "position"),
+      createdAt: stringField(note, "createdAt"),
+      updatedAt: stringField(note, "updatedAt"),
     };
   });
   const treatment = recordValue(input.treatment);
@@ -229,8 +231,10 @@ async function processCoverJob(
     Deno.env.get("AI_IMAGE_PROVIDER") ?? Deno.env.get("AI_PROVIDER") ?? "fake",
     Deno.env.get("AI_IMAGE_MODEL") ?? "gemini-2.5-flash-image",
   );
+  const origin = stringField(input, "origin");
   const generated = await provider.generate({
     dishTitle: stringField(input, "dishTitle"),
+    origin: origin === "automatic" ? "automatic" : "manual",
     notes,
     treatment: {
       look: stringField(treatment, "look"),

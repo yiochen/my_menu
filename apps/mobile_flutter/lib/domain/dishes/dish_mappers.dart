@@ -60,6 +60,8 @@ extension DishNoteRowMapper on db.DishNoteRow {
       dishId: dishId,
       body: body,
       position: position,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
     );
   }
 }

@@ -102,6 +102,12 @@ extension MyMenuStateCovers on MyMenuState {
                 table.subjectId.equals(dishId),
           ))
         .getSingleOrNull();
+    final Map<String, Object?> payload = _coverPayload(
+      dish,
+      sourceIds: normalizedSourceIds,
+      treatment: treatment,
+      origin: CoverOrigin.manual,
+    );
     if (existing != null) {
       final ProcessingDeliveryState state =
           ProcessingDeliveryState.values.byName(existing.deliveryState);
@@ -111,7 +117,31 @@ extension MyMenuStateCovers on MyMenuState {
         ProcessingDeliveryState.expired,
         ProcessingDeliveryState.canceled,
       }.contains(state)) {
-        return false;
+        final Object? decoded = jsonDecode(existing.payloadJson);
+        if (decoded is! Map<String, dynamic> ||
+            decoded['origin'] != CoverOrigin.automatic.name) {
+          return false;
+        }
+        await (repositories.database.update(
+          repositories.database.processingOutbox,
+        )..where(
+                (db.ProcessingOutbox table) => table.id.equals(existing.id),
+              ))
+            .write(
+          db.ProcessingOutboxCompanion(
+            payloadJson: Value<String>(
+              jsonEncode(<String, Object?>{
+                ...payload,
+                'restartAfterCancel': true,
+              }),
+            ),
+            deliveryState: Value<String>(ProcessingDeliveryState.canceled.name),
+            updatedAt: Value<DateTime>(DateTime.now()),
+          ),
+        );
+        await _reloadFromRepositories();
+        _startCaptureSyncPollingWindow();
+        return true;
       }
       await (repositories.database
               .delete(repositories.database.processingOutbox)
@@ -124,12 +154,7 @@ extension MyMenuStateCovers on MyMenuState {
         await repositories.processingOutboxRepository.enqueueCoverGeneration(
       requestId: const Uuid().v4(),
       dishId: dishId,
-      payload: _coverPayload(
-        dish,
-        sourceIds: normalizedSourceIds,
-        treatment: treatment,
-        origin: CoverOrigin.manual,
-      ),
+      payload: payload,
       now: DateTime.now(),
     );
     if (enqueued) {
@@ -177,12 +202,24 @@ extension MyMenuStateCovers on MyMenuState {
   Future<bool> automaticCoverGenerationEnabled() async =>
       await _repositories?.coverRepository.automaticGenerationEnabled() ?? true;
 
+  Future<int?> remainingCoverAllowance() async {
+    try {
+      return (await _repositories?.apiClient.getProcessingAllowances())
+          ?.coverRemaining;
+    } on Object {
+      return null;
+    }
+  }
+
   Future<void> setAutomaticCoverGenerationEnabled(
       {required bool enabled}) async {
     await _repositories?.coverRepository.setAutomaticGenerationEnabled(
       enabled: enabled,
     );
-    if (_repositories != null) await _reloadFromRepositories();
+    if (_repositories != null) {
+      await _reloadFromRepositories();
+      _startCaptureSyncPollingWindow();
+    }
   }
 }
 
@@ -192,6 +229,7 @@ Map<String, Object?> _coverPayload(
   required CoverTreatment treatment,
   required CoverOrigin origin,
 }) {
+  final DateTime fallbackTimestamp = dish.createdAt ?? DateTime.now();
   return <String, Object?>{
     'dishTitle': dish.title,
     'sourceIds': sourceIds,
@@ -200,6 +238,11 @@ Map<String, Object?> _coverPayload(
           (DishNote note) => <String, Object?>{
             'body': note.body,
             'position': note.position,
+            'createdAt':
+                (note.createdAt ?? fallbackTimestamp).toUtc().toIso8601String(),
+            'updatedAt': (note.updatedAt ?? note.createdAt ?? fallbackTimestamp)
+                .toUtc()
+                .toIso8601String(),
           },
         )
         .toList(growable: false),

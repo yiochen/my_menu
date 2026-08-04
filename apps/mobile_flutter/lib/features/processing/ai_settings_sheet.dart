@@ -23,6 +23,7 @@ class _AiSettingsSheet extends StatefulWidget {
 
 class _AiSettingsSheetState extends State<_AiSettingsSheet> {
   bool? _automatic;
+  int? _coverAllowanceRemaining;
 
   @override
   void initState() {
@@ -32,7 +33,13 @@ class _AiSettingsSheetState extends State<_AiSettingsSheet> {
 
   Future<void> _load() async {
     final bool enabled = await widget.state.automaticCoverGenerationEnabled();
-    if (mounted) setState(() => _automatic = enabled);
+    final int? remaining = await widget.state.remainingCoverAllowance();
+    if (mounted) {
+      setState(() {
+        _automatic = enabled;
+        _coverAllowanceRemaining = remaining;
+      });
+    }
   }
 
   @override
@@ -77,6 +84,16 @@ class _AiSettingsSheetState extends State<_AiSettingsSheet> {
               ),
               subtitle: const Text(
                 'Organization and cover generation have separate free allowances.',
+              ),
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.image_outlined),
+              title: const Text('Cover allowance'),
+              subtitle: Text(
+                _coverAllowanceRemaining == null
+                    ? 'Remaining allowance unavailable offline'
+                    : '$_coverAllowanceRemaining of 10 remaining in the last 30 days',
               ),
             ),
             if (widget.state.processingConsentDecision ==

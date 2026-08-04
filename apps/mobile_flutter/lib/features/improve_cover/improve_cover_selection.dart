@@ -16,6 +16,7 @@ class ImproveCoverSelection extends StatelessWidget {
     required this.onTreatmentChanged,
     required this.onGenerate,
     required this.onClose,
+    required this.coverAllowanceRemaining,
     super.key,
   });
 
@@ -26,6 +27,7 @@ class ImproveCoverSelection extends StatelessWidget {
   final ValueChanged<CoverTreatment> onTreatmentChanged;
   final VoidCallback? onGenerate;
   final VoidCallback onClose;
+  final int? coverAllowanceRemaining;
 
   @override
   Widget build(BuildContext context) {
@@ -88,6 +90,13 @@ class ImproveCoverSelection extends StatelessWidget {
               onChanged: onTreatmentChanged,
             ),
             const SizedBox(height: 18),
+            StatusStrip(
+              icon: Icons.image_outlined,
+              text: coverAllowanceRemaining == null
+                  ? 'Cover allowance unavailable offline'
+                  : '$coverAllowanceRemaining of 10 Cover generations remaining',
+            ),
+            const SizedBox(height: 10),
             const StatusStrip(
               icon: Icons.auto_awesome,
               text:

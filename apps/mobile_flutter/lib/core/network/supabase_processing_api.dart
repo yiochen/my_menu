@@ -11,6 +11,19 @@ mixin SupabaseProcessingApi on MyMenuApiClient {
   );
 
   @override
+  Future<ApiProcessingAllowances> getProcessingAllowances() async {
+    await _ensureSession();
+    final Map<String, Object?> response = await _invokeJson(
+      'processing-jobs',
+      <String, Object?>{'action': 'allowances'},
+    );
+    return ApiProcessingAllowances(
+      organizationRemaining: apiIntValue(response, 'organizationRemaining'),
+      coverRemaining: apiIntValue(response, 'coverRemaining'),
+    );
+  }
+
+  @override
   Future<ApiProcessingJob> createProcessingJob({
     required String operation,
     required String idempotencyKey,

@@ -9,6 +9,7 @@ import 'package:mymenu/domain/processing/processing_outbox_repository.dart';
 import 'package:uuid/uuid.dart';
 
 part 'cover_repository_selection.dart';
+part 'cover_repository_automatic.dart';
 
 const String automaticCoversSettingKey = 'automatic_ai_covers_enabled';
 
@@ -39,9 +40,10 @@ class CoverRepository {
       if (!enabled) {
         await _database.customStatement(
           "UPDATE processing_outbox SET delivery_state = 'canceled', "
+          r"payload_json = json_remove(payload_json, '$.restartAfterCancel'), "
           'updated_at = ? WHERE request_kind = ? '
           r"AND json_extract(payload_json, '$.origin') = 'automatic' "
-          "AND delivery_state NOT IN ('acknowledged', 'failed', 'expired', 'canceled')",
+          "AND delivery_state NOT IN ('acknowledged', 'failed', 'expired')",
           <Object?>[
             DateTime.now().millisecondsSinceEpoch ~/ 1000,
             ProcessingRequestKind.coverGeneration.databaseValue,
@@ -59,9 +61,16 @@ class CoverRepository {
     if (!await automaticGenerationEnabled()) {
       return false;
     }
-    final Map<String, Object?> payload = await _automaticPayload(
+    final List<String> usableSourceIds = await _usableAutomaticSourceIds(
       dishId: dishId,
       sourceIds: sourceIds,
+    );
+    if (sourceIds.isNotEmpty && usableSourceIds.isEmpty) {
+      return false;
+    }
+    final Map<String, Object?> payload = await _automaticPayload(
+      dishId: dishId,
+      sourceIds: usableSourceIds,
     );
     return ProcessingOutboxRepository(_database).enqueueCoverGeneration(
       requestId: const Uuid().v4(),
@@ -69,95 +78,6 @@ class CoverRepository {
       payload: payload,
       now: now,
     );
-  }
-
-  Future<bool> restartAutomaticCoverIfPending({
-    required String dishId,
-    required DateTime now,
-  }) async {
-    final db.ProcessingOutboxRow? existing = await (_database.select(
-      _database.processingOutbox,
-    )..where(
-            (db.ProcessingOutbox table) =>
-                table.requestKind.equals(
-                  ProcessingRequestKind.coverGeneration.databaseValue,
-                ) &
-                table.subjectId.equals(dishId),
-          ))
-        .getSingleOrNull();
-    if (existing == null) return false;
-    final Object? decoded = jsonDecode(existing.payloadJson);
-    if (decoded is! Map<String, dynamic> ||
-        decoded['origin'] != CoverOrigin.automatic.name ||
-        <String>{'acknowledged', 'failed', 'expired', 'canceled'}
-            .contains(existing.deliveryState)) {
-      return false;
-    }
-    final List<String> sourceIds = await (_database.select(
-      _database.sourcePhotos,
-    )..where((db.SourcePhotos table) => table.dishId.equals(dishId)))
-        .get()
-        .then(
-          (List<db.SourcePhotoRow> rows) =>
-              rows.map((db.SourcePhotoRow row) => row.id).take(3).toList(),
-        );
-    final Map<String, Object?> payload = await _automaticPayload(
-      dishId: dishId,
-      sourceIds: sourceIds,
-    );
-    payload['restartAfterCancel'] = true;
-    await (_database.update(_database.processingOutbox)
-          ..where((db.ProcessingOutbox table) => table.id.equals(existing.id)))
-        .write(
-      db.ProcessingOutboxCompanion(
-        payloadJson: Value<String>(jsonEncode(payload)),
-        deliveryState: Value<String>(ProcessingDeliveryState.canceled.name),
-        updatedAt: Value<DateTime>(now),
-      ),
-    );
-    return true;
-  }
-
-  Future<Map<String, Object?>> _automaticPayload({
-    required String dishId,
-    required List<String> sourceIds,
-  }) async {
-    final db.DishRow dish = await (_database.select(_database.dishes)
-          ..where((db.Dishes table) => table.id.equals(dishId)))
-        .getSingle();
-    final List<db.DishNoteRow> notes = await (_database.select(
-      _database.dishNotes,
-    )
-          ..where(
-            (db.DishNotes table) =>
-                table.dishId.equals(dishId) & table.deletedAt.isNull(),
-          )
-          ..orderBy(<OrderingTerm Function(db.$DishNotesTable)>[
-            (db.$DishNotesTable table) => OrderingTerm.asc(table.position),
-            (db.$DishNotesTable table) => OrderingTerm.asc(table.createdAt),
-          ]))
-        .get();
-    return <String, Object?>{
-      'dishTitle': dish.title,
-      'sourceIds': sourceIds.take(3).toList(growable: false),
-      'notes': notes
-          .map(
-            (db.DishNoteRow note) => <String, Object?>{
-              'body': note.body,
-              'position': note.position,
-            },
-          )
-          .toList(growable: false),
-      'treatment': CoverTreatment.defaults.toJson(),
-      'origin': CoverOrigin.automatic.name,
-      'contractVersion': 'cover-generation-v1',
-      'coverSnapshot': <String, Object?>{
-        'image': dish.heroImageUrl,
-        'preview': dish.heroPreviewUrl,
-        'thumbnail': dish.heroThumbnailUrl,
-        'placeholder': dish.heroPlaceholderUrl,
-      },
-    };
   }
 
   Future<List<GeneratedCover>> listForDish(String dishId) async {
@@ -184,6 +104,14 @@ class CoverRepository {
     return rows.map(_fromRow).toList(growable: false);
   }
 
+  Future<GeneratedCover?> findById(String coverId) async {
+    final db.GeneratedCoverRow? row = await (_database.select(
+      _database.generatedCovers,
+    )..where((db.GeneratedCovers table) => table.id.equals(coverId)))
+        .getSingleOrNull();
+    return row == null ? null : _fromRow(row);
+  }
+
   Future<void> storeDeliveredCover({
     required String id,
     required String dishId,
@@ -200,6 +128,11 @@ class CoverRepository {
     String? placeholderPath,
   }) async {
     await _database.transaction(() async {
+      final db.GeneratedCoverRow? existing = await (_database.select(
+        _database.generatedCovers,
+      )..where((db.GeneratedCovers table) => table.id.equals(id)))
+          .getSingleOrNull();
+      if (existing != null) return;
       String? previousCoverJson;
       if (origin == CoverOrigin.manual) {
         await (_database.update(_database.generatedCovers)

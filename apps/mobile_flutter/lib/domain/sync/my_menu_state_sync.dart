@@ -41,10 +41,25 @@ extension MyMenuStateSync on MyMenuState {
   }
 
   Future<void> _syncCaptures() async {
-    final AppRepositories? repositories = _repositories;
-    if (repositories == null || _isSyncingCaptures) {
+    final Future<void>? activeSync = _activeCaptureSync;
+    if (activeSync != null) {
+      await activeSync;
       return;
     }
+    final AppRepositories? repositories = _repositories;
+    if (repositories == null) {
+      return;
+    }
+    final Future<void> sync = _runCaptureSync(repositories);
+    _activeCaptureSync = sync;
+    try {
+      await sync;
+    } finally {
+      if (identical(_activeCaptureSync, sync)) _activeCaptureSync = null;
+    }
+  }
+
+  Future<void> _runCaptureSync(AppRepositories repositories) async {
     _isSyncingCaptures = true;
     try {
       await repositories.syncRepository.processPendingOperations();
@@ -113,12 +128,16 @@ extension MyMenuStateSync on MyMenuState {
     if (_repositories == null) {
       return;
     }
-    if (_processingConsentDecision != ProcessingConsentDecision.accepted) {
+    final bool hasCancellation = _hasCoverCancellationWaiting();
+    if (_processingConsentDecision != ProcessingConsentDecision.accepted &&
+        !hasCancellation) {
       _stopCaptureSyncPolling();
       return;
     }
     final bool hasUnresolvedWork = _hasUnresolvedCaptures() ||
-        _aiJobs.any((AiJob job) => job.status.isActive);
+        _aiJobs.any((AiJob job) => job.status.isActive) ||
+        _hasActiveProcessingRequest() ||
+        hasCancellation;
     if (!hasUnresolvedWork) {
       _stopCaptureSyncPolling();
       return;
@@ -141,7 +160,8 @@ extension MyMenuStateSync on MyMenuState {
       (_) {
         if (!_hasUnresolvedCaptures() &&
             !_aiJobs.any((AiJob job) => job.status.isActive) &&
-            !_hasActiveProcessingRequest()) {
+            !_hasActiveProcessingRequest() &&
+            !_hasCoverCancellationWaiting()) {
           _stopCaptureSyncPolling();
           return;
         }
@@ -170,6 +190,9 @@ extension MyMenuStateSync on MyMenuState {
   }
 
   bool _hasLocalWorkWaitingForSync() {
+    if (_hasCoverCancellationWaiting()) {
+      return true;
+    }
     if (_processingConsentDecision != ProcessingConsentDecision.accepted) {
       return false;
     }
@@ -184,6 +207,12 @@ extension MyMenuStateSync on MyMenuState {
         ) ||
         _aiJobs.any((AiJob job) => job.pendingAction != null);
   }
+
+  bool _hasCoverCancellationWaiting() => _processingRequests.any(
+        (ProcessingOutboxRequest request) =>
+            request.kind == ProcessingRequestKind.coverGeneration &&
+            request.deliveryState == ProcessingDeliveryState.canceled,
+      );
 
   bool _hasActiveProcessingRequest() => _processingRequests.any(
         (ProcessingOutboxRequest request) => <ProcessingDeliveryState>{

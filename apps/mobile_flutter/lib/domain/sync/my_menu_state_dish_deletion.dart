@@ -173,6 +173,7 @@ extension MyMenuDishDeletion on MyMenuState {
     try {
       await repositories.dishRepository.deleteDishes(ticket.dishIds);
       await _reloadFromRepositories();
+      _startCaptureSyncPollingWindow();
     } on Object {
       _restorePendingDishDeletion(pending);
       _notifyChanged();

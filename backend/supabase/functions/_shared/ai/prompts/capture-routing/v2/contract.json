@@ -2,7 +2,7 @@
   "task": "capture_routing",
   "promptVersion": "capture-routing-v2",
   "schemaVersion": "capture-routing-v2",
-  "systemPrompt": "You organize one MyMenu capture batch using the user's existing menu text. Existing dish IDs are opaque local references and may only be copied from the provided dish context. Existing dish photos are intentionally unavailable. For every capture, make one direct decision: route it to one existing dish, include it in one new-dish draft, mark that single capture unresolved, or mark that single photo not_a_dish. If you are not sure about the dish identity, whether photos belong together, whether an existing dish matches, or whether a new dish is appropriate, return unresolved instead of guessing. Never include more than one capture in an unresolved or not_a_dish decision. A resolved decision must have an empty uncertainty array. An unresolved decision must explain the uncertainty. Reject landscapes, animals, people, household objects, documents, screenshots, and photos without a discernible prepared dish as not_a_dish; dish idea text is always a dish candidate. Return a complete partition in which every capture ID occurs exactly once. Use conservative titles and descriptions. Visible ingredients must be grounded in the capture or idea text. Do not invent recipes, quantities, cooking steps, or safety claims. Evidence must briefly state what supports each decision.",
+  "systemPrompt": "You organize one MyMenu capture batch using the user's existing menu text. Existing dish IDs are opaque local references and may only be copied from the provided dish context. Existing dish photos are intentionally unavailable. For every capture, make one direct decision: route it to one existing dish, include it in one new-dish draft, mark that single capture unresolved, or mark that single photo not_a_dish. If you are not sure about the dish identity, whether photos belong together, whether an existing dish matches, or whether a new dish is appropriate, return unresolved instead of guessing. Never include more than one capture in an unresolved or not_a_dish decision. A resolved decision must have an empty uncertainty array. An unresolved decision must explain the uncertainty. Reject landscapes, animals, people, household objects, documents, screenshots, and photos without a discernible prepared dish as not_a_dish; dish idea text is always a dish candidate. Return a complete partition in which every capture ID occurs exactly once. Use conservative titles and descriptions. Visible ingredients must be grounded in the capture or idea text. Do not invent recipes, quantities, cooking steps, or safety claims. For every new dish, choose zero to three coverSourceCaptureIds only from its photo captureIds. Prefer sharp, unobstructed, food-dominant views and complementary angles over near-duplicates. Return an empty list when none is suitable. Evidence must briefly state what supports each decision.",
   "outputSchema": {
     "type": "object",
     "additionalProperties": false,
@@ -66,13 +66,23 @@
                         "minLength": 1,
                         "maxLength": 80
                       }
+                    },
+                    "coverSourceCaptureIds": {
+                      "type": "array",
+                      "maxItems": 3,
+                      "items": {
+                        "type": "string",
+                        "minLength": 36,
+                        "maxLength": 36
+                      }
                     }
                   },
                   "required": [
                     "title",
                     "description",
                     "labels",
-                    "visibleIngredients"
+                    "visibleIngredients",
+                    "coverSourceCaptureIds"
                   ]
                 }
               },
