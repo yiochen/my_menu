@@ -1,0 +1,51 @@
+{
+  "datasetVersion": "cover-generation-v1",
+  "description": "Small visual-quality regression set for source-grounded and idea-only AI Covers.",
+  "minimumScore": 4,
+  "minimumConfidence": 0.9,
+  "cases": [
+    {
+      "id": "source-grounded-oatmeal",
+      "name": "source-grounded oatmeal remains recognizable and menu-ready",
+      "dishTitle": "Banana Blueberry Oatmeal",
+      "origin": "automatic",
+      "fixture": "../../everyday-dishes/v1/images/banana-blueberry-oatmeal.jpg",
+      "notes": [
+        "Keep the banana slices, blueberries, peanut butter, and cinnamon visible."
+      ],
+      "treatment": {
+        "look": "natural_polish",
+        "view": "angled",
+        "finish": "menu_ready"
+      },
+      "expectedAppearance": [
+        "oatmeal served in a bowl",
+        "banana slices",
+        "blueberries",
+        "a peanut butter topping",
+        "cinnamon"
+      ]
+    },
+    {
+      "id": "idea-charred-corn-ramen",
+      "name": "idea-only ramen becomes a cautious plausible food cover",
+      "dishTitle": "Charred Corn Ramen",
+      "origin": "automatic",
+      "fixture": null,
+      "notes": [
+        "Use a clear broth with charred corn, sliced scallions, and a lime wedge."
+      ],
+      "treatment": {
+        "look": "bright_fresh",
+        "view": "angled",
+        "finish": "editorial"
+      },
+      "expectedAppearance": [
+        "ramen noodles in broth",
+        "charred corn",
+        "sliced scallions",
+        "a lime wedge"
+      ]
+    }
+  ]
+}

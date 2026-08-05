@@ -148,9 +148,9 @@ supabase db reset --yes
 echo "Running Supabase database tests..."
 supabase test db supabase/tests
 
-echo "Running deterministic AI grouping evals..."
+echo "Running deterministic AI evals..."
 deno test --allow-env --allow-net --allow-read --allow-sys \
-  supabase/evals/batch_grouping_eval_test.ts
+  supabase/evals
 
 if find "$EDGE_TEST_DIR" -type f \( -name '*_test.ts' -o -name '*.test.ts' \) 2>/dev/null | grep -q .; then
   echo "Serving Supabase Edge Functions..."

@@ -229,7 +229,7 @@ async function processCoverJob(
   const treatment = recordValue(input.treatment);
   const provider = createCoverProvider(
     Deno.env.get("AI_IMAGE_PROVIDER") ?? Deno.env.get("AI_PROVIDER") ?? "fake",
-    Deno.env.get("AI_IMAGE_MODEL") ?? "gemini-2.5-flash-image",
+    Deno.env.get("AI_IMAGE_MODEL") ?? "gemini-3.1-flash-image",
   );
   const origin = stringField(input, "origin");
   const generated = await provider.generate({

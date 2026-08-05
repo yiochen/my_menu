@@ -204,7 +204,7 @@ class GoogleCoverProvider implements CoverProvider {
     sourceImageParts: Array<Record<string, unknown>>,
   ) {
     const validationModel = Deno.env.get("AI_IMAGE_VALIDATION_MODEL") ??
-      "gemini-2.5-flash";
+      Deno.env.get("AI_MODEL") ?? "gemini-3.6-flash";
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${
         encodeURIComponent(validationModel)
@@ -275,7 +275,7 @@ class GoogleCoverProvider implements CoverProvider {
     sourceImageParts: Array<Record<string, unknown>>,
   ): Promise<CoverProviderResult["validation"]> {
     const validationModel = Deno.env.get("AI_IMAGE_VALIDATION_MODEL") ??
-      "gemini-2.5-flash";
+      Deno.env.get("AI_MODEL") ?? "gemini-3.6-flash";
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${
         encodeURIComponent(validationModel)
