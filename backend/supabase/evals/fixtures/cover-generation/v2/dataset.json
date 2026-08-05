@@ -21,11 +21,19 @@
         "cooked leafy greens",
         "a warm brown savory sauce"
       ],
+      "expectedComposition": [
+        "the serving bowl is centered in the frame",
+        "the complete bowl is visible with balanced margins",
+        "the dish is the clear hero of a polished restaurant-menu photograph",
+        "the simple tabletop or backdrop has no decorative props",
+        "chopsticks or other utensils do not cross over the bowl or food"
+      ],
       "expectedCleanup": [
         "used tissues",
         "printed paper or placemat",
         "discarded shells or scraps",
         "unrelated fruit",
+        "all stains, sauce marks, or food residue on the serving bowl",
         "table clutter"
       ],
       "expectedServingWare": "a visibly different, unstained, clean ceramic noodle bowl",
