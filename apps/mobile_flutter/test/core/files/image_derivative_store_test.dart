@@ -26,6 +26,8 @@ void main() {
           required int maxHeight,
           required int quality,
         }) async {
+          expect(targetPath, endsWith('.jpg'));
+          expect(targetPath, isNot(endsWith('.jpg.part')));
           calls.add((width: maxWidth, height: maxHeight, quality: quality));
           await File(targetPath).writeAsBytes(<int>[1, 2, 3, 4]);
           return targetPath;
@@ -54,7 +56,9 @@ void main() {
       ]);
       expect(first, endsWith('menu_media/previews/v1/capture_source.jpg'));
       expect(await File(first!).readAsBytes(), <int>[1, 2, 3, 4]);
-      expect(File('$first.part').existsSync(), isFalse);
+      expect(
+          File('${first.substring(0, first.length - 4)}.part.jpg').existsSync(),
+          isFalse);
     });
 
     test('creates reusable processing, card, and tiny placeholder tiers',
@@ -122,7 +126,7 @@ void main() {
       );
       expect(
         File(
-          '${supportDirectory.path}/menu_media/previews/v1/failed.jpg.part',
+          '${supportDirectory.path}/menu_media/previews/v1/failed.part.jpg',
         ).existsSync(),
         isFalse,
       );
@@ -151,7 +155,9 @@ void main() {
         key: 'removed',
         sourcePath: source.path,
       ))!;
-      final File partial = File('$kept.part');
+      final File partial = File(
+        '${kept.substring(0, kept.length - 4)}.part.jpg',
+      );
       await partial.writeAsBytes(<int>[5]);
 
       await store.cleanup(referencedRefs: <String>[kept]);

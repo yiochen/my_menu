@@ -138,6 +138,7 @@ class ImageDerivativeStore {
           continue;
         }
         await _deleteIfPresent(file);
+        await _deleteIfPresent(_stagingFileFor(file));
         await _deleteIfPresent(File('${file.path}.part'));
       }
     } on Object {
@@ -160,7 +161,8 @@ class ImageDerivativeStore {
         if (entity is! File) {
           continue;
         }
-        if (entity.path.endsWith('.part') ||
+        if ((entity.path.endsWith('.part') ||
+                entity.path.endsWith('.part.jpg')) ||
             !referenced.contains(entity.absolute.path)) {
           await _deleteIfPresent(entity);
         }
@@ -190,7 +192,7 @@ class ImageDerivativeStore {
     if (await _isValid(target)) {
       return target.path;
     }
-    final File partial = File('${target.path}.part');
+    final File partial = _stagingFileFor(target);
     await _deleteIfPresent(partial);
     try {
       final String? compressedPath = await _compressor(
@@ -231,6 +233,17 @@ class ImageDerivativeStore {
     if (file.existsSync()) {
       await file.delete();
     }
+  }
+
+  File _stagingFileFor(File target) {
+    final int extensionIndex = target.path.lastIndexOf('.');
+    if (extensionIndex < 0) {
+      return File('${target.path}.part');
+    }
+    return File(
+      '${target.path.substring(0, extensionIndex)}.part'
+      '${target.path.substring(extensionIndex)}',
+    );
   }
 
   String _safeKey(String key) {
