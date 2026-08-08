@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000"
+  viewBox="0 0 1600 1000">
+  <rect width="1600" height="1000" fill="#fafaf8" />
+  <rect x="96" y="72" width="1408" height="856" rx="18" fill="none"
+    stroke="#c7c8c5" stroke-width="3" stroke-dasharray="14 12" />
+  <path d="M96 220 H1504" fill="none" stroke="#d9dad7" stroke-width="3" />
+  <path d="M800 92 V908" fill="none" stroke="#d9dad7" stroke-width="3"
+    stroke-dasharray="11 13" />
+  <circle cx="800" cy="220" r="7" fill="#7c817e" />
+  <g fill="none" stroke="#d2d4d1" stroke-width="2.5">
+    <path d="M96 928 L800 220 L1504 928" />
+    <path d="M330 928 L800 220 L1270 928" />
+    <path d="M510 928 L800 220 L1090 928" />
+  </g>
+  <g fill="none" stroke="#e0e1de" stroke-width="2.5">
+    <path d="M640 460 H960" />
+    <path d="M530 590 H1070" />
+    <path d="M390 760 H1210" />
+    <path d="M230 900 H1370" />
+  </g>
+  <g fill="none" stroke="#555b58" stroke-width="6" stroke-linejoin="round">
+    <path d="M500 430 L1100 430 L920 320 L680 320 Z" />
+    <path d="M500 430 V720 L1100 720 V430" />
+    <path d="M680 320 V540 L920 540 V320" />
+    <path d="M500 720 L680 540 M1100 720 L920 540" />
+  </g>
+  <ellipse cx="800" cy="632" rx="238" ry="86" fill="#7c817e" fill-opacity="0.06"
+    stroke="#7c817e" stroke-width="5" stroke-dasharray="15 11" />
+  <circle cx="800" cy="632" r="8" fill="#555b58" />
+  <g fill="none" stroke="#aeb1ae" stroke-width="4" stroke-linecap="round">
+    <path d="M132 190 V132 H190" />
+    <path d="M1410 132 H1468 V190" />
+    <path d="M132 810 V868 H190" />
+    <path d="M1410 868 H1468 V810" />
+  </g>
+</svg>
