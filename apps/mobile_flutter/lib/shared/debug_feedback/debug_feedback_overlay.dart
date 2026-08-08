@@ -27,7 +27,6 @@ class DebugFeedbackOverlay extends StatefulWidget {
 
 class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
   final GlobalKey _contentKey = GlobalKey();
-  final TextEditingController _commentController = TextEditingController();
   List<DebugFeedbackCandidate> _candidates = const <DebugFeedbackCandidate>[];
   int _candidateIndex = 0;
   String? _notice;
@@ -54,7 +53,6 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
   @override
   void dispose() {
     widget.controller.removeListener(_controllerChanged);
-    _commentController.dispose();
     super.dispose();
   }
 
@@ -98,7 +96,6 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
             candidate: selection,
             candidateIndex: _candidateIndex,
             candidateCount: _candidates.length,
-            controller: _commentController,
             onMoreSpecific: _candidateIndex > 0 ? _moreSpecific : null,
             onBroader:
                 _candidateIndex + 1 < _candidates.length ? _broader : null,
@@ -196,19 +193,18 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
   void _clearSelection() {
     _candidates = const <DebugFeedbackCandidate>[];
     _candidateIndex = 0;
-    _commentController.clear();
   }
 
-  void _saveComment() {
+  void _saveComment(String comment) {
     final DebugFeedbackCandidate? selection = _selection;
-    if (selection == null || _commentController.text.trim().isEmpty) {
+    if (selection == null || comment.trim().isEmpty) {
       return;
     }
     widget.controller.add(
       target: selection.snapshot.withSourceLocation(
         widget.sourceReader.read(selection.element),
       ),
-      comment: _commentController.text,
+      comment: comment,
     );
     setState(() {
       _notice = 'Feedback saved. Tap another element.';

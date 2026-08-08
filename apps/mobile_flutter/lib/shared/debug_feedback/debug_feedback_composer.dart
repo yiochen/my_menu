@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:mymenu/shared/debug_feedback/debug_feedback_models.dart';
 
-class DebugFeedbackComposer extends StatelessWidget {
+class DebugFeedbackComposer extends StatefulWidget {
   const DebugFeedbackComposer({
     required this.candidate,
     required this.candidateIndex,
     required this.candidateCount,
-    required this.controller,
     required this.onMoreSpecific,
     required this.onBroader,
     required this.onCancel,
@@ -17,11 +16,27 @@ class DebugFeedbackComposer extends StatelessWidget {
   final DebugFeedbackCandidate candidate;
   final int candidateIndex;
   final int candidateCount;
-  final TextEditingController controller;
   final VoidCallback? onMoreSpecific;
   final VoidCallback? onBroader;
   final VoidCallback onCancel;
-  final VoidCallback onSave;
+  final ValueChanged<String> onSave;
+
+  @override
+  State<DebugFeedbackComposer> createState() => _DebugFeedbackComposerState();
+}
+
+class _DebugFeedbackComposerState extends State<DebugFeedbackComposer> {
+  String _comment = '';
+
+  bool get _canSave => _comment.trim().isNotEmpty;
+
+  void _commentChanged(String value) {
+    final bool couldSave = _canSave;
+    _comment = value;
+    if (couldSave != _canSave) {
+      setState(() {});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,20 +58,20 @@ class DebugFeedbackComposer extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               _TargetChooser(
-                candidate: candidate,
-                candidateIndex: candidateIndex,
-                candidateCount: candidateCount,
-                onMoreSpecific: onMoreSpecific,
-                onBroader: onBroader,
+                candidate: widget.candidate,
+                candidateIndex: widget.candidateIndex,
+                candidateCount: widget.candidateCount,
+                onMoreSpecific: widget.onMoreSpecific,
+                onBroader: widget.onBroader,
               ),
               const SizedBox(height: 10),
               TextField(
                 key: const ValueKey<String>('debug_feedback_comment'),
-                controller: controller,
                 autofocus: true,
                 minLines: 2,
                 maxLines: 5,
                 textInputAction: TextInputAction.newline,
+                onChanged: _commentChanged,
                 decoration: const InputDecoration(
                   hintText: 'What should change?',
                   border: OutlineInputBorder(),
@@ -69,22 +84,15 @@ class DebugFeedbackComposer extends StatelessWidget {
                   TextButton(
                     key:
                         const ValueKey<String>('debug_feedback_cancel_comment'),
-                    onPressed: onCancel,
+                    onPressed: widget.onCancel,
                     child: const Text('Cancel'),
                   ),
                   const SizedBox(width: 8),
-                  ListenableBuilder(
-                    listenable: controller,
-                    builder: (BuildContext context, Widget? child) {
-                      return FilledButton.icon(
-                        key: const ValueKey<String>(
-                            'debug_feedback_save_comment'),
-                        onPressed:
-                            controller.text.trim().isEmpty ? null : onSave,
-                        icon: const Icon(Icons.add_comment_rounded),
-                        label: const Text('Save comment'),
-                      );
-                    },
+                  FilledButton.icon(
+                    key: const ValueKey<String>('debug_feedback_save_comment'),
+                    onPressed: _canSave ? () => widget.onSave(_comment) : null,
+                    icon: const Icon(Icons.add_comment_rounded),
+                    label: const Text('Save comment'),
                   ),
                 ],
               ),

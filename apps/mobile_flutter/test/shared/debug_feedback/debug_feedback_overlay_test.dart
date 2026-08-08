@@ -81,6 +81,53 @@ void main() {
     expect(find.textContaining('SizedBox'), findsNothing);
     expect(find.textContaining('Column'), findsNothing);
   });
+
+  testWidgets('deleted comment text stays deleted across a parent rebuild', (
+    WidgetTester tester,
+  ) async {
+    final DebugFeedbackController controller = DebugFeedbackController();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(_FeedbackTestApp(controller: controller));
+    controller.startCollecting();
+    await tester.pump();
+    await tester.tapAt(
+      tester.getCenter(
+        find.byKey(const ValueKey<String>('feedback_test_action')),
+      ),
+    );
+    await tester.pump();
+
+    final Finder commentField =
+        find.byKey(const ValueKey<String>('debug_feedback_comment'));
+    await tester.enterText(commentField, 'Keep this old suffix');
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'Keep this',
+        selection: TextSelection.collapsed(offset: 9),
+      ),
+    );
+    await tester.pump();
+
+    await tester.pumpWidget(_FeedbackTestApp(controller: controller));
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'Keep this replacement',
+        selection: TextSelection.collapsed(offset: 21),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Keep this replacement'), findsOneWidget);
+    expect(find.textContaining('old suffix'), findsNothing);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('debug_feedback_save_comment')),
+    );
+    await tester.pump();
+
+    expect(controller.entries.single.comment, 'Keep this replacement');
+  });
 }
 
 class _FeedbackTestApp extends StatelessWidget {
