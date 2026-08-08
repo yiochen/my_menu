@@ -44,6 +44,7 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
       targetDishId: targetDishId,
     );
     await _reloadFromRepositories();
+    _startCaptureSyncPollingWindow();
     return correction;
   }
 

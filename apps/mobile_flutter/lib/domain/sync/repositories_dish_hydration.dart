@@ -111,7 +111,6 @@ extension SyncRepositoryDishHydration on SyncRepository {
           captureId: photo.captureId,
           cookingOccasionId: photo.cookingOccasionId,
           capturedAt: photo.capturedAt,
-          note: photo.note,
           confidenceLabel: photo.confidenceLabel,
         ),
       );
@@ -162,7 +161,6 @@ extension SyncRepositoryDishHydration on SyncRepository {
                   photo.cookingOccasionId,
                 ),
                 capturedAt: Value<DateTime?>(photo.capturedAt),
-                note: Value<String?>(photo.note),
                 confidenceLabel: Value<String?>(photo.confidenceLabel),
               ),
             );

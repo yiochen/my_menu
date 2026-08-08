@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
@@ -16,6 +17,8 @@ import 'package:mymenu/domain/capture/capture_item.dart' as capture_domain;
 import 'package:mymenu/domain/capture/capture_mappers.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
 import 'package:mymenu/domain/capture/review_item.dart';
+import 'package:mymenu/domain/covers/cover_repository.dart';
+import 'package:mymenu/domain/covers/generated_cover.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/dishes/dish_mappers.dart';
 import 'package:mymenu/domain/dishes/seeded_dishes.dart';
@@ -29,6 +32,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 part 'repositories_dishes.dart';
+part 'repositories_dish_inserts.dart';
 part 'repositories_dish_deletion.dart';
 part 'repositories_ai.dart';
 part 'repositories_planning.dart';
@@ -43,7 +47,10 @@ part 'repositories_capture_sync.dart';
 part 'repositories_capture_routing_adoption.dart';
 part 'repositories_capture_routing_contract.dart';
 part 'repositories_capture_processing_support.dart';
+part 'repositories_cover_processing.dart';
+part 'repositories_cover_processing_delivery.dart';
 part 'repositories_dish_hydration.dart';
+part 'repositories_dish_notes_query.dart';
 part 'repositories_support.dart';
 part 'repositories_media_previews.dart';
 part 'repositories_sync.dart';
@@ -78,6 +85,7 @@ class AppRepositories {
       resolvedImageCache,
       resolvedDerivativeStore,
     );
+    coverRepository = CoverRepository(database);
     planRepository = PlanRepository(database);
     processingConsentRepository = ProcessingConsentRepository(database);
     processingOutboxRepository = ProcessingOutboxRepository(database);
@@ -105,6 +113,7 @@ class AppRepositories {
   late final ImageDerivativeStore _imageDerivativeStore;
   late final bool _prepareImagePreviewsOnBootstrap;
   late final DishRepository dishRepository;
+  late final CoverRepository coverRepository;
   late final PlanRepository planRepository;
   late final CaptureRepository captureRepository;
   late final ProcessingOutboxRepository processingOutboxRepository;

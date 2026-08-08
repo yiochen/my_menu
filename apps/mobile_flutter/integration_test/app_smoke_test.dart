@@ -30,8 +30,6 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('capture_fab')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Not now'));
-    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.text('Add Idea'),
       120,
@@ -53,6 +51,8 @@ void main() {
       scrollable: find.byType(Scrollable).last,
     );
     await tester.tap(find.text('Save idea'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Not now'));
     await tester.pumpAndSettle();
 
     expect(find.text('Add an idea'), findsNothing);

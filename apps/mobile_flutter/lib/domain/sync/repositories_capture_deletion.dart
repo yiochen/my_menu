@@ -246,18 +246,14 @@ extension CaptureRepositoryDeletion on CaptureRepository {
                   ..limit(1))
                 .getSingleOrNull() !=
             null;
-    final String heroImageUrl = removedRefs.contains(dish.heroImageUrl)
-        ? sources.firstOrNull?.url ?? ''
-        : dish.heroImageUrl;
-    final String? heroPreviewUrl = removedRefs.contains(dish.heroImageUrl)
-        ? sources.firstOrNull?.previewUrl
-        : dish.heroPreviewUrl;
-    final String? heroThumbnailUrl = removedRefs.contains(dish.heroImageUrl)
-        ? sources.firstOrNull?.thumbnailUrl
-        : dish.heroThumbnailUrl;
-    final String? heroPlaceholderUrl = removedRefs.contains(dish.heroImageUrl)
-        ? sources.firstOrNull?.placeholderUrl
-        : dish.heroPlaceholderUrl;
+    final bool removedCurrentCover = removedRefs.contains(dish.heroImageUrl);
+    final String heroImageUrl = removedCurrentCover ? '' : dish.heroImageUrl;
+    final String? heroPreviewUrl =
+        removedCurrentCover ? null : dish.heroPreviewUrl;
+    final String? heroThumbnailUrl =
+        removedCurrentCover ? null : dish.heroThumbnailUrl;
+    final String? heroPlaceholderUrl =
+        removedCurrentCover ? null : dish.heroPlaceholderUrl;
     final int madeCount = sources.isEmpty
         ? 0
         : batchStillPresent

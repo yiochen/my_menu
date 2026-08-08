@@ -120,7 +120,10 @@ void main() {
 
     final ProcessingOutboxRequest completed =
         (await restartedRepositories.processingOutboxRepository.listRequests())
-            .single;
+            .singleWhere(
+      (ProcessingOutboxRequest request) =>
+          request.kind == ProcessingRequestKind.captureGrouping,
+    );
     expect(completed.idempotencyKey, interrupted.idempotencyKey);
     expect(completed.serverJobId, interrupted.serverJobId);
     expect(completed.deliveryState, ProcessingDeliveryState.acknowledged);
@@ -203,7 +206,11 @@ void main() {
       ProcessingConsentDecision.notDecided,
     );
     final ProcessingOutboxRequest request =
-        (await repositories.processingOutboxRepository.listRequests()).single;
+        (await repositories.processingOutboxRepository.listRequests())
+            .singleWhere(
+      (ProcessingOutboxRequest request) =>
+          request.kind == ProcessingRequestKind.captureGrouping,
+    );
     expect(
       request.deliveryState,
       ProcessingDeliveryState.waitingForConsent,
@@ -465,7 +472,11 @@ void main() {
 
     expect(api.processingJobCreationCount, 1);
     final ProcessingOutboxRequest request =
-        (await repositories.processingOutboxRepository.listRequests()).single;
+        (await repositories.processingOutboxRepository.listRequests())
+            .singleWhere(
+      (ProcessingOutboxRequest request) =>
+          request.kind == ProcessingRequestKind.captureGrouping,
+    );
     expect(request.deliveryState, ProcessingDeliveryState.acknowledged);
     expect(
       request.privacyNoticeVersion,

@@ -1,5 +1,6 @@
 enum ProcessingRequestKind {
-  captureGrouping('capture_grouping');
+  captureGrouping('capture_grouping'),
+  coverGeneration('cover_generation');
 
   const ProcessingRequestKind(this.databaseValue);
 

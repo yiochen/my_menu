@@ -17,6 +17,7 @@ export interface RoutingDishDraft {
   description: string;
   labels: string[];
   visibleIngredients: string[];
+  coverSourceCaptureIds: string[];
 }
 
 export type RoutingOutcome =
@@ -151,6 +152,11 @@ export function validateAndCanonicalizeRouting(
               12,
               80,
             ),
+            coverSourceCaptureIds: coverSourceIds(
+              draft.coverSourceCaptureIds,
+              captureIds,
+              captureById,
+            ),
           },
         };
         break;
@@ -199,6 +205,29 @@ export function validateAndCanonicalizeRouting(
       captureById.get(right.captureIds[0])!.ordinal,
   );
   return { decisions };
+}
+
+function coverSourceIds(
+  value: unknown,
+  decisionCaptureIds: string[],
+  captureById: Map<string, GroupingCaptureInput>,
+) {
+  const ids = stringArray(value, "draft.coverSourceCaptureIds");
+  if (ids.length > 3 || ids.length !== new Set(ids).size) {
+    throw new Error(
+      "draft.coverSourceCaptureIds must contain up to 3 unique IDs",
+    );
+  }
+  for (const id of ids) {
+    if (
+      !decisionCaptureIds.includes(id) || captureById.get(id)?.kind !== "photo"
+    ) {
+      throw new Error(
+        "Cover Sources must be photos from the new Dish decision",
+      );
+    }
+  }
+  return ids;
 }
 
 function requireResolved(uncertainty: string[], index: number) {

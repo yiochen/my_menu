@@ -55,7 +55,6 @@ class DishRepository {
             (db.DishNotes table) => OrderingTerm.asc(table.createdAt),
           ]))
         .get();
-
     final Map<String, List<SourcePhoto>> sourcesByDishId =
         <String, List<SourcePhoto>>{};
     for (final db.SourcePhotoRow row in sourceRows) {
@@ -144,6 +143,12 @@ class DishRepository {
       _database.dishNotes,
     )..where((db.DishNotes table) => table.dishId.isIn(ids)))
         .get();
+    final List<db.GeneratedCoverRow> generatedCoverRows =
+        await (_database.select(_database.generatedCovers)
+              ..where(
+                (db.GeneratedCovers table) => table.dishId.isIn(ids),
+              ))
+            .get();
     final List<db.CaptureItemRow> captureRows = await (_database.select(
       _database.captureItems,
     )..where((db.CaptureItems table) => table.appliedDishId.isIn(ids)))
@@ -190,6 +195,21 @@ class DishRepository {
       await (_database.delete(_database.plannedMeals)
             ..where((db.PlannedMeals table) => table.dishId.isIn(ids)))
           .go();
+      for (final String dishId in ids) {
+        await _database.customStatement(
+          "UPDATE processing_outbox SET delivery_state = 'canceled', "
+          r"payload_json = json_remove(payload_json, '$.restartAfterCancel'), "
+          'updated_at = ? WHERE request_kind = ? AND subject_id = ?',
+          <Object?>[
+            DateTime.now().millisecondsSinceEpoch ~/ 1000,
+            ProcessingRequestKind.coverGeneration.databaseValue,
+            dishId,
+          ],
+        );
+      }
+      await (_database.delete(_database.generatedCovers)
+            ..where((db.GeneratedCovers table) => table.dishId.isIn(ids)))
+          .go();
       await (_database.delete(_database.captureItems)
             ..where((db.CaptureItems table) => table.appliedDishId.isIn(ids)))
           .go();
@@ -225,6 +245,18 @@ class DishRepository {
             .go();
       }
     });
+
+    for (final db.GeneratedCoverRow cover in generatedCoverRows) {
+      for (final String path in <String>{
+        cover.localPath,
+        if (cover.previewPath != null) cover.previewPath!,
+        if (cover.thumbnailPath != null) cover.thumbnailPath!,
+        if (cover.placeholderPath != null) cover.placeholderPath!,
+      }) {
+        final File file = File(path);
+        if (file.existsSync()) file.deleteSync();
+      }
+    }
 
     await _dishImageCache.remove(
       cacheKeys: <String>[
@@ -328,60 +360,5 @@ class DishRepository {
     await (_database.update(_database.dishes)
           ..where((db.Dishes table) => table.id.equals(dishId)))
         .write(patch);
-  }
-
-  void _insertNotes(Batch batch, Dish dish) {
-    final DateTime now = DateTime.now();
-    for (final DishNote note in dish.notes) {
-      batch.insert(
-        _database.dishNotes,
-        db.DishNotesCompanion.insert(
-          id: note.id,
-          dishId: note.dishId,
-          body: note.body,
-          position: note.position,
-          createdAt: now,
-          updatedAt: now,
-        ),
-      );
-    }
-  }
-
-  void _insertSourcePhotos(Batch batch, Dish dish) {
-    for (int index = 0; index < dish.sourcePhotos.length; index += 1) {
-      final SourcePhoto photo = dish.sourcePhotos[index];
-      batch.insert(
-        _database.sourcePhotos,
-        db.SourcePhotosCompanion.insert(
-          id: '${dish.id}_source_$index',
-          dishId: dish.id,
-          url: photo.url,
-          previewUrl: Value<String?>(photo.previewUrl),
-          thumbnailUrl: Value<String?>(photo.thumbnailUrl),
-          placeholderUrl: Value<String?>(photo.placeholderUrl),
-          capturedLabel: photo.capturedLabel,
-          captureId: Value<String?>(photo.captureId),
-          cookingOccasionId: Value<String?>(photo.cookingOccasionId),
-          capturedAt: Value<DateTime?>(photo.capturedAt),
-          note: Value<String?>(photo.note),
-          confidenceLabel: Value<String?>(photo.confidenceLabel),
-        ),
-      );
-    }
-  }
-
-  Future<List<DishNote>> _notesFor(String dishId) async {
-    final List<db.DishNoteRow> rows =
-        await (_database.select(_database.dishNotes)
-              ..where(
-                (db.DishNotes table) =>
-                    table.dishId.equals(dishId) & table.deletedAt.isNull(),
-              )
-              ..orderBy(<OrderingTerm Function(db.$DishNotesTable)>[
-                (db.DishNotes table) => OrderingTerm.asc(table.position),
-                (db.DishNotes table) => OrderingTerm.asc(table.createdAt),
-              ]))
-            .get();
-    return rows.map((db.DishNoteRow row) => row.toDomain()).toList();
   }
 }

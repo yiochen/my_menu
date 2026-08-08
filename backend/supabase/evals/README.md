@@ -1,4 +1,6 @@
-# Batch grouping evals
+# AI evals
+
+## Batch grouping
 
 Run the deterministic contract and fake-provider evals:
 
@@ -37,3 +39,55 @@ The test checks exact capture partitioning plus tolerant, dish-relevant title
 terms for positive cases. Negative cases require every expected capture ID to be
 rejected with a non-empty visual reason. The run prints decisions and token
 usage for review without printing credentials.
+
+## Cover generation
+
+Run the deterministic fake-provider integrity check:
+
+```sh
+deno test --allow-env --allow-net --allow-read --allow-sys \
+  backend/supabase/evals/cover_generation_eval_test.ts
+```
+
+Run the two opt-in Gemini cover cases and save inspectable images locally:
+
+```sh
+set -a
+source ~/dev/my_menu/.env
+set +a
+
+RUN_GEMINI_COVER_EVALS=1 \
+COVER_EVAL_OUTPUT_DIR=backend/supabase/evals/output \
+deno test --allow-env --allow-net --allow-read --allow-write --allow-sys \
+  backend/supabase/evals/cover_generation_eval_test.ts
+```
+
+The versioned `fixtures/cover-generation/v1/dataset.json` manifest covers one
+source-grounded Dish and one idea-only Dish. Each live case must pass image
+decoding and dimensions, production semantic validation at 0.9 confidence, and
+an independent visual-quality rubric. The rubric requires scores of at least 4/5
+for recognizability, realism, composition, grounding, and expected visual
+appearance, with no text, logos, watermarks, people, or body parts.
+
+The `v2` dataset adds three metadata-stripped, user-provided food photos. It
+evaluates removal of named table distractions, preservation of visible food, and
+replacement of weak or disposable serving ware. Select it, or one case within
+it, with:
+
+```sh
+COVER_EVAL_DATASET_VERSION=v2 \
+COVER_EVAL_CASE_ID=user-source-stir-fried-udon \
+RUN_GEMINI_COVER_EVALS=1 \
+COVER_EVAL_OUTPUT_DIR=backend/supabase/evals/output/user-v2 \
+deno test --allow-env --allow-net --allow-read --allow-write --allow-sys \
+  backend/supabase/evals/cover_generation_eval_test.ts
+```
+
+To re-run only the independent judge against previously saved candidates without
+paying for another image generation, replace `COVER_EVAL_OUTPUT_DIR` with
+`COVER_EVAL_CANDIDATE_DIR` pointing at the existing output directory.
+
+Generated images and JSON verdicts are written under the ignored `evals/output/`
+directory. The v1 fixtures are synthetic; the v2 fixtures are user-provided.
+Both sets are intentionally small, so a pass is a regression signal rather than
+a broad quality claim.

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:mymenu/domain/dishes/dish.dart';
-import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/app_image.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
@@ -55,14 +54,11 @@ class DishHistoryContent extends StatelessWidget {
         for (int index = 0; index < occasions.length; index += 1) ...<Widget>[
           _InstantPhotoPost(
             occasion: occasions[index],
-            notes: _notesForOccasion(dish, occasions[index], index),
             clockwise: index.isOdd,
           ),
           const SizedBox(height: 18),
         ],
-        for (int index = occasions.length;
-            index < dish.notes.length;
-            index += 1) ...<Widget>[
+        for (int index = 0; index < dish.notes.length; index += 1) ...<Widget>[
           _BulletinNote(note: dish.notes[index]),
           const SizedBox(height: 18),
         ],
@@ -103,12 +99,10 @@ class _JournalActions extends StatelessWidget {
 class _InstantPhotoPost extends StatelessWidget {
   const _InstantPhotoPost({
     required this.occasion,
-    required this.notes,
     required this.clockwise,
   });
 
   final _CookingOccasion occasion;
-  final List<String> notes;
   final bool clockwise;
 
   @override
@@ -167,15 +161,6 @@ class _InstantPhotoPost extends StatelessWidget {
               _dateLabel(context, occasion),
               style: Theme.of(context).textTheme.bodySmall,
             ),
-            for (final String note in notes) ...<Widget>[
-              const SizedBox(height: 7),
-              Text(
-                note,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: MyMenuColors.ink,
-                    ),
-              ),
-            ],
           ],
         ),
       ),
@@ -193,6 +178,7 @@ class _BulletinNote extends StatelessWidget {
     return Transform.rotate(
       angle: 0.01,
       child: Container(
+        key: ValueKey<String>('dish_note_${note.id}'),
         width: double.infinity,
         margin: const EdgeInsets.symmetric(horizontal: 22),
         padding: const EdgeInsets.all(18),
@@ -248,22 +234,6 @@ List<_CookingOccasion> _occasionsFor(Dish dish) {
       return rightDate.compareTo(leftDate);
     });
   return occasions;
-}
-
-List<String> _notesForOccasion(
-  Dish dish,
-  _CookingOccasion occasion,
-  int index,
-) {
-  final Set<String> notes = occasion.photos
-      .map((SourcePhoto photo) => photo.note?.trim())
-      .whereType<String>()
-      .where((String note) => note.isNotEmpty)
-      .toSet();
-  if (index < dish.notes.length) {
-    notes.add(dish.notes[index].body);
-  }
-  return notes.toList(growable: false);
 }
 
 String _dateLabel(BuildContext context, _CookingOccasion occasion) {

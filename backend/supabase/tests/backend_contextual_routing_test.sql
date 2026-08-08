@@ -38,7 +38,7 @@ select is(
       '00000000-0000-4000-8000-000000000157',
       'capture-grouping-input-v2',
       'capture-grouping-result-v2',
-      '2026-08-04',
+      '2026-08-04-cover-v1',
       '[]'::jsonb
     )
   ),

@@ -85,9 +85,13 @@ class ProcessingConsentRepository {
   Future<void> _holdPendingRequests(DateTime now) async {
     await (_database.update(_database.processingOutbox)
           ..where(
-            (db.ProcessingOutbox table) => table.deliveryState.equals(
-              ProcessingDeliveryState.pendingUpload.name,
-            ),
+            (db.ProcessingOutbox table) =>
+                table.requestKind.equals(
+                  ProcessingRequestKind.captureGrouping.databaseValue,
+                ) &
+                table.deliveryState.equals(
+                  ProcessingDeliveryState.pendingUpload.name,
+                ),
           ))
         .write(
       db.ProcessingOutboxCompanion(
@@ -97,6 +101,16 @@ class ProcessingConsentRepository {
         privacyNoticeVersion: const Value<String?>(null),
         updatedAt: Value<DateTime>(now),
       ),
+    );
+    await _database.customStatement(
+      "UPDATE processing_outbox SET delivery_state = 'canceled', "
+      r"payload_json = json_remove(payload_json, '$.restartAfterCancel'), "
+      'updated_at = ? WHERE request_kind = ? '
+      "AND delivery_state NOT IN ('acknowledged', 'failed', 'expired')",
+      <Object?>[
+        now.millisecondsSinceEpoch ~/ 1000,
+        ProcessingRequestKind.coverGeneration.databaseValue,
+      ],
     );
   }
 }

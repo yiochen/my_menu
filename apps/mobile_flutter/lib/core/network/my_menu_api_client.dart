@@ -22,6 +22,10 @@ part 'supabase_read_api.dart';
 part 'supabase_my_menu_api_helpers.dart';
 
 abstract class MyMenuApiClient with AiJobApiDefaults {
+  Future<ApiProcessingAllowances> getProcessingAllowances() {
+    throw UnimplementedError('Processing allowances are not implemented.');
+  }
+
   Future<ApiProcessingJob> createProcessingJob({
     required String operation,
     required String idempotencyKey,

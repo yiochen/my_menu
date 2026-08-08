@@ -145,7 +145,7 @@ async function loadImages(
   const { data, error } = await adminClient
     .from("dish_images")
     .select(
-      "id, dish_id, capture_id, cooking_occasion_id, kind, storage_bucket, storage_path, note, confidence_label, captured_at, created_at",
+      "id, dish_id, capture_id, cooking_occasion_id, kind, storage_bucket, storage_path, confidence_label, captured_at, created_at",
     )
     .eq("user_id", userId)
     .in("dish_id", dishIds)
@@ -214,7 +214,6 @@ async function sourcePhotoDtos(
       capturedAt: optionalStringValue(row, "captured_at"),
       captureId: optionalStringValue(row, "capture_id"),
       cookingOccasionId: optionalStringValue(row, "cooking_occasion_id"),
-      note: optionalStringValue(row, "note"),
       confidenceLabel: optionalStringValue(row, "confidence_label"),
     });
   }

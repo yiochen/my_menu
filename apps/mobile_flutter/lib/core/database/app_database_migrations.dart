@@ -1,5 +1,13 @@
 part of 'app_database.dart';
 
+Future<void> _migrateStandaloneNotesV16(AppDatabase database) async {
+  final Set<String> columns = await _tableColumns(database, 'source_photos');
+  if (columns.contains('note')) {
+    await database
+        .customStatement('ALTER TABLE source_photos DROP COLUMN note');
+  }
+}
+
 Future<void> _migrateProgressivePreviewsV15(
   AppDatabase database,
   Migrator migrator,

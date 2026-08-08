@@ -53,7 +53,6 @@ Dish _dishFromPhotoReview(ReviewItem item, String dishId) {
       SourcePhoto(
         url: item.imageRef!,
         capturedLabel: 'Today',
-        note: item.summary,
         confidenceLabel: item.confidenceLabel,
       ),
     ],

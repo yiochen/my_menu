@@ -2,7 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'package:mymenu/domain/covers/generated_cover.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
+import 'package:mymenu/domain/processing/processing_consent_prompt.dart';
+import 'package:mymenu/domain/processing/processing_outbox.dart';
+import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/improve_cover/improve_cover_result.dart';
 import 'package:mymenu/features/improve_cover/improve_cover_selection.dart';
@@ -15,24 +19,11 @@ Future<void> showImproveCoverDialog(
   MyMenuState state,
   String dishId,
 ) {
-  const String scenario = String.fromEnvironment(
-    'MY_MENU_COVER_SCENARIO',
-    defaultValue: 'success',
-  );
-  final ImproveCoverStep initialStep = switch (scenario) {
-    'offline' => ImproveCoverStep.offline,
-    'error' => ImproveCoverStep.error,
-    _ => ImproveCoverStep.selection,
-  };
   return showModalBottomSheet<void>(
     context: context,
     useSafeArea: true,
     isScrollControlled: true,
-    builder: (_) => ImproveCoverFlow(
-      state: state,
-      dishId: dishId,
-      initialStep: initialStep,
-    ),
+    builder: (_) => ImproveCoverFlow(state: state, dishId: dishId),
   );
 }
 
@@ -54,38 +45,65 @@ class ImproveCoverFlow extends StatefulWidget {
 
 class _ImproveCoverFlowState extends State<ImproveCoverFlow> {
   late ImproveCoverStep _step;
-  final Set<int> _selectedSources = <int>{0, 1, 2};
-  String _direction =
-      'Make the salmon glossy, use a darker table, and keep the bowl simple.';
+  final Set<String> _selectedSourceIds = <String>{};
+  CoverTreatment _treatment = CoverTreatment.defaults;
+  int? _coverAllowanceRemaining;
 
   Dish get _dish => widget.state.dishById(widget.dishId);
+  GeneratedCover? get _proposal =>
+      widget.state.proposedCoverForDish(widget.dishId);
 
   @override
   void initState() {
     super.initState();
     _step = widget.initialStep;
+    _selectedSourceIds.addAll(
+      _dish.sourcePhotos
+          .map((SourcePhoto source) => source.id)
+          .whereType<String>()
+          .take(3),
+    );
+    if (_proposal != null) _step = ImproveCoverStep.result;
+    widget.state.addListener(_stateChanged);
+    unawaited(_loadAllowance());
+  }
+
+  @override
+  void dispose() {
+    widget.state.removeListener(_stateChanged);
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final GeneratedCover? proposal = _proposal;
+    if (proposal != null && _step != ImproveCoverStep.selection) {
+      return ImproveCoverResult(
+        dish: _dish,
+        proposal: proposal,
+        onUseCover: () => _useCover(proposal),
+        onTryAnother: () => setState(() => _step = ImproveCoverStep.selection),
+        onKeepCurrent: () => _keepCurrent(proposal),
+      );
+    }
     return switch (_step) {
-      ImproveCoverStep.selection => ImproveCoverSelection(
+      ImproveCoverStep.selection ||
+      ImproveCoverStep.result =>
+        ImproveCoverSelection(
           dish: _dish,
-          selectedSources: _selectedSources,
-          initialDirection: _direction,
-          onDirectionChanged: (String value) => _direction = value,
+          selectedSourceIds: _selectedSourceIds,
+          treatment: _treatment,
+          onTreatmentChanged: (CoverTreatment value) {
+            setState(() => _treatment = value);
+          },
           onToggleSource: _toggleSource,
-          onGenerate: _startGeneration,
+          onGenerate: _canGenerate ? _startGeneration : null,
           onClose: () => Navigator.pop(context),
+          coverAllowanceRemaining: _coverAllowanceRemaining,
         ),
       ImproveCoverStep.generating => ImproveCoverGenerating(
           dish: _dish,
           onClose: () => Navigator.pop(context),
-        ),
-      ImproveCoverStep.result => ImproveCoverResult(
-          dish: _dish,
-          onUseCover: _useCover,
-          onKeepCurrent: () => Navigator.pop(context),
         ),
       ImproveCoverStep.offline => ImproveCoverOffline(
           dish: _dish,
@@ -94,39 +112,81 @@ class _ImproveCoverFlowState extends State<ImproveCoverFlow> {
         ),
       ImproveCoverStep.error => ImproveCoverError(
           dish: _dish,
-          selectedCount: _selectedSources.length,
+          selectedCount: _selectedSourceIds.length,
           onClose: () => Navigator.pop(context),
           onRetry: _startGeneration,
         ),
     };
   }
 
-  void _toggleSource(int index) {
+  bool get _canGenerate =>
+      _coverAllowanceRemaining != 0 &&
+      (_dish.sourcePhotos.isEmpty || _selectedSourceIds.isNotEmpty);
+
+  Future<void> _loadAllowance() async {
+    final int? remaining = await widget.state.remainingCoverAllowance();
+    if (mounted) setState(() => _coverAllowanceRemaining = remaining);
+  }
+
+  void _stateChanged() {
+    if (!mounted) return;
+    final ProcessingOutboxRequest? request = _coverRequest;
     setState(() {
-      if (_selectedSources.contains(index)) {
-        _selectedSources.remove(index);
-      } else {
-        _selectedSources.add(index);
+      if (_proposal != null) {
+        _step = ImproveCoverStep.result;
+      } else if (request?.deliveryState == ProcessingDeliveryState.failed ||
+          request?.deliveryState == ProcessingDeliveryState.expired) {
+        _step = ImproveCoverStep.error;
       }
     });
   }
 
-  void _startGeneration() {
-    if (_selectedSources.isEmpty) {
-      return;
+  ProcessingOutboxRequest? get _coverRequest {
+    for (final ProcessingOutboxRequest request
+        in widget.state.processingRequests.reversed) {
+      if (request.kind == ProcessingRequestKind.coverGeneration &&
+          request.subjectId == widget.dishId) {
+        return request;
+      }
     }
-    setState(() => _step = ImproveCoverStep.generating);
-    unawaited(
-      Future<void>.delayed(const Duration(milliseconds: 900), () {
-        if (mounted && _step == ImproveCoverStep.generating) {
-          setState(() => _step = ImproveCoverStep.result);
-        }
-      }),
-    );
+    return null;
   }
 
-  void _useCover() {
-    widget.state.improveCover(widget.dishId, _direction);
-    Navigator.pop(context);
+  void _toggleSource(String id) {
+    setState(() {
+      if (_selectedSourceIds.contains(id)) {
+        _selectedSourceIds.remove(id);
+      } else if (_selectedSourceIds.length < 3) {
+        _selectedSourceIds.add(id);
+      }
+    });
+  }
+
+  Future<void> _startGeneration() async {
+    if (!_canGenerate) return;
+    final ProcessingConsentDecision decision =
+        await widget.state.requestProcessingConsent(
+      trigger: ProcessingConsentTrigger.improveCover,
+    );
+    if (!mounted || decision != ProcessingConsentDecision.accepted) return;
+    final bool enqueued = await widget.state.startManualCoverGeneration(
+      dishId: widget.dishId,
+      selectedSourceIds: _selectedSourceIds.toList(growable: false),
+      treatment: _treatment,
+    );
+    if (!mounted) return;
+    setState(() {
+      _step = enqueued ? ImproveCoverStep.generating : ImproveCoverStep.error;
+    });
+  }
+
+  Future<void> _useCover(GeneratedCover proposal) async {
+    await widget.state.acceptCoverProposal(proposal.id);
+    if (mounted) Navigator.pop(context);
+  }
+
+  Future<void> _keepCurrent(GeneratedCover proposal) async {
+    await widget.state.keepCurrentCover(proposal.id);
+    if (mounted) Navigator.pop(context);
   }
 }

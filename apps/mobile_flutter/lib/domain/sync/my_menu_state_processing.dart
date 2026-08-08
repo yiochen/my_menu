@@ -68,6 +68,10 @@ extension MyMenuStateProcessing on MyMenuState {
     }
     _processingConsentDecision = ProcessingConsentDecision.declined;
     _notifyChanged();
+    if (repositories != null) {
+      await _reloadFromRepositories();
+      _startCaptureSyncPollingWindow();
+    }
   }
 
   Future<void> resetProcessingConsent() async {
@@ -77,7 +81,10 @@ extension MyMenuStateProcessing on MyMenuState {
       await repositories.processingConsentRepository.resetCurrentNotice();
     }
     _processingConsentDecision = ProcessingConsentDecision.notDecided;
-    _stopCaptureSyncPolling();
     _notifyChanged();
+    if (repositories != null) {
+      await _reloadFromRepositories();
+      _startCaptureSyncPollingWindow();
+    }
   }
 }

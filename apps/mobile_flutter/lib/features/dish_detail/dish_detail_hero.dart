@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
+import 'package:mymenu/features/improve_cover/cover_history_sheet.dart';
 import 'package:mymenu/features/improve_cover/improve_cover_dialog.dart';
 import 'package:mymenu/shared/widgets/dish_artwork.dart';
 import 'package:mymenu/shared/widgets/local_write_feedback.dart';
@@ -48,6 +49,21 @@ class DishDetailHero extends StatelessWidget {
                 icon: Icons.auto_awesome,
                 compact: true,
                 onPressed: () => showImproveCoverDialog(
+                  context,
+                  MyMenuScope.read(context),
+                  dish.id,
+                ),
+              ),
+            ),
+            Positioned(
+              right: 12,
+              top: 114,
+              child: WarmPill(
+                key: const ValueKey<String>('change_cover_button'),
+                label: 'Change cover',
+                icon: Icons.photo_library_outlined,
+                compact: true,
+                onPressed: () => showCoverHistorySheet(
                   context,
                   MyMenuScope.read(context),
                   dish.id,

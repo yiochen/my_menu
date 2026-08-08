@@ -1,6 +1,67 @@
 part of 'processing_outbox_repository.dart';
 
 extension ProcessingOutboxServerState on ProcessingOutboxRepository {
+  Future<bool> cancelBeforeUpload(String requestId) async {
+    final int changed = await (_database.update(_database.processingOutbox)
+          ..where(
+            (db.ProcessingOutbox table) =>
+                table.id.equals(requestId) &
+                (table.deliveryState.equals(
+                      ProcessingDeliveryState.waitingForConsent.name,
+                    ) |
+                    table.deliveryState.equals(
+                      ProcessingDeliveryState.pendingUpload.name,
+                    )),
+          ))
+        .write(
+      db.ProcessingOutboxCompanion(
+        deliveryState: Value<String>(ProcessingDeliveryState.canceled.name),
+        updatedAt: Value<DateTime>(DateTime.now()),
+      ),
+    );
+    return changed == 1;
+  }
+
+  Future<void> restartCanceledCover(
+    String requestId,
+    Map<String, Object?> payload,
+  ) async {
+    final DateTime now = DateTime.now();
+    await (_database.update(_database.processingOutbox)
+          ..where(
+            (db.ProcessingOutbox table) =>
+                table.id.equals(requestId) &
+                table.requestKind.equals(
+                  ProcessingRequestKind.coverGeneration.databaseValue,
+                ) &
+                table.deliveryState.equals(
+                  ProcessingDeliveryState.canceled.name,
+                ),
+          ))
+        .write(
+      db.ProcessingOutboxCompanion(
+        payloadJson: Value<String>(jsonEncode(payload)),
+        deliveryState:
+            Value<String>(ProcessingDeliveryState.pendingUpload.name),
+        adoptionState: Value<String>(
+          ProcessingAdoptionState.awaitingProposal.name,
+        ),
+        idempotencyKey: Value<String>(const Uuid().v4()),
+        privacyNoticeVersion: const Value<String?>(
+          ProcessingPrivacyNotice.currentVersion,
+        ),
+        serverJobId: const Value<String?>(null),
+        serverExpiresAt: const Value<DateTime?>(null),
+        uploadedAssetIdsJson: const Value<String>('[]'),
+        resultPayloadJson: const Value<String?>(null),
+        resultSchemaVersion: const Value<String?>(null),
+        nextRetryAt: const Value<DateTime?>(null),
+        failureCode: const Value<String?>(null),
+        updatedAt: Value<DateTime>(now),
+      ),
+    );
+  }
+
   Future<void> recordSubmittedDishIds(
     String requestId,
     Iterable<String> dishIds,

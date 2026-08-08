@@ -60,6 +60,8 @@ extension DishNoteRowMapper on db.DishNoteRow {
       dishId: dishId,
       body: body,
       position: position,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
     );
   }
 }
@@ -76,7 +78,6 @@ extension SourcePhotoRowMapper on db.SourcePhotoRow {
       captureId: captureId,
       cookingOccasionId: cookingOccasionId,
       capturedAt: capturedAt,
-      note: note,
       confidenceLabel: confidenceLabel,
     );
   }

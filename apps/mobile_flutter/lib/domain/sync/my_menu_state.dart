@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer' as developer;
 
+import 'package:drift/drift.dart';
 import 'package:flutter/widgets.dart';
+import 'package:mymenu/core/database/app_database.dart' as db;
 import 'package:mymenu/core/network/network_status_monitor.dart';
 import 'package:mymenu/domain/ai/ai_job.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
@@ -11,6 +14,7 @@ import 'package:mymenu/domain/capture/captured_media.dart';
 import 'package:mymenu/domain/capture/captured_photo.dart';
 import 'package:mymenu/domain/capture/review_item.dart';
 import 'package:mymenu/domain/capture/seeded_review_items.dart';
+import 'package:mymenu/domain/covers/generated_cover.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/dishes/seeded_dishes.dart';
 import 'package:mymenu/domain/planning/plan_dates.dart';
@@ -27,6 +31,7 @@ part 'my_menu_state_capture_persistence.dart';
 part 'my_menu_state_capture_deletion.dart';
 part 'my_menu_state_capture_corrections.dart';
 part 'my_menu_state_ai.dart';
+part 'my_menu_state_covers.dart';
 part 'my_menu_state_dishes.dart';
 part 'my_menu_state_dish_deletion.dart';
 part 'my_menu_state_planning.dart';
@@ -46,6 +51,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
         _captureItems = const <CaptureItem>[],
         _captureCorrections = const <CaptureCorrection>[],
         _aiJobs = const <AiJob>[],
+        _generatedCovers = const <GeneratedCover>[],
         _processingRequests = const <ProcessingOutboxRequest>[],
         _reviewItems = repositories == null
             ? List<ReviewItem>.of(seededReviewItems)
@@ -72,6 +78,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
     List<CaptureItem> captureItems = const <CaptureItem>[],
     List<CaptureCorrection> captureCorrections = const <CaptureCorrection>[],
     List<AiJob> aiJobs = const <AiJob>[],
+    List<GeneratedCover> generatedCovers = const <GeneratedCover>[],
     List<ProcessingOutboxRequest> processingRequests =
         const <ProcessingOutboxRequest>[],
     List<ReviewItem> reviewItems = const <ReviewItem>[],
@@ -83,6 +90,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
         _captureItems = List<CaptureItem>.of(captureItems),
         _captureCorrections = List<CaptureCorrection>.of(captureCorrections),
         _aiJobs = List<AiJob>.of(aiJobs),
+        _generatedCovers = List<GeneratedCover>.of(generatedCovers),
         _processingRequests = List<ProcessingOutboxRequest>.of(
           processingRequests,
         ),
@@ -98,6 +106,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
   List<CaptureItem> _captureItems;
   List<CaptureCorrection> _captureCorrections;
   List<AiJob> _aiJobs;
+  List<GeneratedCover> _generatedCovers;
   List<ProcessingOutboxRequest> _processingRequests;
   List<ReviewItem> _reviewItems;
   int? _extraPlanDays;
@@ -111,6 +120,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
       _pendingCaptureBatchDeletions = <String, _PendingCaptureBatchDeletion>{};
   StreamSubscription<void>? _networkStatusSubscription;
   Future<void>? _activeCaptureRefresh;
+  Future<void>? _activeCaptureSync;
   bool _isSyncingCaptures = false;
   Timer? _captureSyncTimer;
   DateTime? _captureSyncPollingDeadline;
@@ -281,25 +291,6 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
-  void improveCover(String dishId, String prompt) {
-    _dishes = _dishes.map((Dish dish) {
-      if (dish.id != dishId || dish.sourcePhotos.isEmpty) {
-        return dish;
-      }
-
-      final int index =
-          prompt.trim().isEmpty ? 0 : prompt.length % dish.sourcePhotos.length;
-      final SourcePhoto source = dish.sourcePhotos[index];
-      return dish.copyWith(
-        heroImageUrl: source.url,
-        heroPreviewUrl: source.previewUrl ?? '',
-        heroThumbnailUrl: source.thumbnailUrl ?? '',
-        heroPlaceholderUrl: source.placeholderUrl ?? '',
-      );
-    }).toList(growable: false);
-    notifyListeners();
-  }
-
   void addMockCapture(String summary) {
     final String normalized = summary.toLowerCase();
     if (normalized.contains('pho')) {
@@ -363,6 +354,15 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
       return dish.copyWith(
         madeCount: dish.madeCount + 1,
         lastMadeLabel: 'Today',
+        notes: <DishNote>[
+          ...dish.notes,
+          DishNote(
+            id: '${dish.id}_note_${DateTime.now().microsecondsSinceEpoch}',
+            dishId: dish.id,
+            body: note,
+            position: dish.notes.length,
+          ),
+        ],
         sourcePhotos: <SourcePhoto>[
           SourcePhoto(
             url: imageRef ??
@@ -370,14 +370,12 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
                     ? dish.heroImageUrl
                     : dish.sourcePhotos.first.url),
             capturedLabel: 'Today',
-            note: note,
             confidenceLabel: '86%',
           ),
           ...dish.sourcePhotos,
         ],
       );
     }).toList(growable: false);
-
     if (notify) {
       notifyListeners();
     }

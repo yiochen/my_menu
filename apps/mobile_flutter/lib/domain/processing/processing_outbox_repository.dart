@@ -8,11 +8,27 @@ import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
 import 'package:uuid/uuid.dart';
 
 part 'processing_outbox_server_state.dart';
+part 'processing_outbox_mapping.dart';
 
 class ProcessingOutboxRepository {
   ProcessingOutboxRepository(this._database);
-
   final db.AppDatabase _database;
+
+  Future<bool> cancelBeforeUpload(String requestId) =>
+      ProcessingOutboxServerState(this).cancelBeforeUpload(requestId);
+  Future<void> restartCanceledCover(
+    String requestId,
+    Map<String, Object?> payload,
+  ) =>
+      ProcessingOutboxServerState(this).restartCanceledCover(
+        requestId,
+        payload,
+      );
+  Future<void> deleteRequest(String requestId) async {
+    await (_database.delete(_database.processingOutbox)
+          ..where((db.ProcessingOutbox table) => table.id.equals(requestId)))
+        .go();
+  }
 
   Future<List<ProcessingOutboxRequest>> listRequests() async {
     final rows = await (_database.select(_database.processingOutbox)
@@ -104,25 +120,35 @@ class ProcessingOutboxRepository {
         );
   }
 
-  Future<bool> cancelBeforeUpload(String requestId) async {
-    final int changed = await (_database.update(_database.processingOutbox)
-          ..where(
-            (db.ProcessingOutbox table) =>
-                table.id.equals(requestId) &
-                (table.deliveryState.equals(
-                      ProcessingDeliveryState.waitingForConsent.name,
-                    ) |
-                    table.deliveryState.equals(
-                      ProcessingDeliveryState.pendingUpload.name,
-                    )),
-          ))
-        .write(
-      db.ProcessingOutboxCompanion(
-        deliveryState: Value<String>(ProcessingDeliveryState.canceled.name),
-        updatedAt: Value<DateTime>(DateTime.now()),
-      ),
-    );
-    return changed == 1;
+  Future<bool> enqueueCoverGeneration({
+    required String requestId,
+    required String dishId,
+    required Map<String, Object?> payload,
+    required DateTime now,
+  }) async {
+    final bool isAccepted =
+        await ProcessingConsentRepository(_database).currentDecision() ==
+            ProcessingConsentDecision.accepted;
+    if (!isAccepted) {
+      return false;
+    }
+    await _database.into(_database.processingOutbox).insert(
+          db.ProcessingOutboxCompanion.insert(
+            id: requestId,
+            requestKind: ProcessingRequestKind.coverGeneration.databaseValue,
+            subjectId: dishId,
+            payloadJson: jsonEncode(payload),
+            deliveryState: ProcessingDeliveryState.pendingUpload.name,
+            adoptionState: ProcessingAdoptionState.awaitingProposal.name,
+            idempotencyKey: Value<String>(requestId),
+            privacyNoticeVersion: const Value<String?>(
+              ProcessingPrivacyNotice.currentVersion,
+            ),
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+    return true;
   }
 
   Future<void> retryCaptureGrouping({
@@ -335,48 +361,4 @@ class ProcessingOutboxRepository {
       ),
     );
   }
-}
-
-ProcessingOutboxRequest _requestFromRow(db.ProcessingOutboxRow row) {
-  final Object? decoded = jsonDecode(row.payloadJson);
-  return ProcessingOutboxRequest(
-    id: row.id,
-    kind: ProcessingRequestKind.fromDatabase(row.requestKind),
-    subjectId: row.subjectId,
-    payload: decoded is Map<String, dynamic>
-        ? Map<String, Object?>.from(decoded)
-        : const <String, Object?>{},
-    deliveryState: ProcessingDeliveryState.values.byName(row.deliveryState),
-    adoptionState: ProcessingAdoptionState.values.byName(row.adoptionState),
-    privacyNoticeVersion: row.privacyNoticeVersion,
-    idempotencyKey: row.idempotencyKey.isEmpty ? row.id : row.idempotencyKey,
-    serverJobId: row.serverJobId,
-    serverExpiresAt: row.serverExpiresAt,
-    uploadedAssetIds: _stringSet(row.uploadedAssetIdsJson),
-    resultPayload: _jsonObject(row.resultPayloadJson),
-    resultSchemaVersion: row.resultSchemaVersion,
-    attemptCount: row.attemptCount,
-    nextRetryAt: row.nextRetryAt,
-    failureCode: row.failureCode,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  );
-}
-
-Set<String> _stringSet(String value) {
-  final Object? decoded = jsonDecode(value);
-  if (decoded is! List<Object?>) {
-    return <String>{};
-  }
-  return decoded.whereType<String>().toSet();
-}
-
-Map<String, Object?>? _jsonObject(String? value) {
-  if (value == null) {
-    return null;
-  }
-  final Object? decoded = jsonDecode(value);
-  return decoded is Map<String, dynamic>
-      ? Map<String, Object?>.from(decoded)
-      : null;
 }

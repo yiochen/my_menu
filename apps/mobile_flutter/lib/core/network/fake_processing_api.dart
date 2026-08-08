@@ -12,6 +12,13 @@ mixin FakeProcessingApi on MyMenuApiClient {
     _interruptProcessingUpload = true;
   }
 
+  @override
+  Future<ApiProcessingAllowances> getProcessingAllowances() async =>
+      const ApiProcessingAllowances(
+        organizationRemaining: 10,
+        coverRemaining: 10,
+      );
+
   bool hasPayloadForProcessingJob(String jobId) {
     final _FakeProcessingRecord? record = _processingJobs[jobId];
     return record?.input != null || record?.result != null;
@@ -93,6 +100,29 @@ mixin FakeProcessingApi on MyMenuApiClient {
     if (!record.uploadedAssetIds.containsAll(record.assetIds)) {
       throw StateError('Processing assets are not uploaded.');
     }
+    if (record.job.operation == 'cover_generation') {
+      record
+        ..input = input
+        ..result = <String, Object?>{
+          'operation': 'cover_generation',
+          'schemaVersion': record.job.resultSchemaVersion,
+          'proposalId': 'proposal-$jobId',
+          'output': <String, Object?>{
+            'contentType': 'image/png',
+            'imageBase64':
+                'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+          },
+          'validation': <String, Object?>{
+            'valid': true,
+            'confidence': 1.0,
+          },
+          'provenance': <String, Object?>{
+            'provider': 'fake',
+            'model': 'fake-cover-v1',
+          },
+        };
+      return record.job = _copyProcessingJob(record.job, status: 'succeeded');
+    }
     final List<Object?> captures = input['captures']! as List<Object?>;
     record
       ..input = input
@@ -111,6 +141,9 @@ mixin FakeProcessingApi on MyMenuApiClient {
                 'description': 'Deterministic capture routing proposal.',
                 'labels': <String>[],
                 'visibleIngredients': <String>[],
+                'coverSourceCaptureIds': capture['kind'] == 'photo'
+                    ? <String>[capture['id']! as String]
+                    : <String>[],
               },
             },
             'evidence': <String>['Deterministic local provider'],

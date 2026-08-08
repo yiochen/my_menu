@@ -1268,11 +1268,6 @@ class $SourcePhotosTable extends SourcePhotos
   late final GeneratedColumn<String> capturedLabel = GeneratedColumn<String>(
       'captured_label', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _noteMeta = const VerificationMeta('note');
-  @override
-  late final GeneratedColumn<String> note = GeneratedColumn<String>(
-      'note', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _confidenceLabelMeta =
       const VerificationMeta('confidenceLabel');
   @override
@@ -1306,7 +1301,6 @@ class $SourcePhotosTable extends SourcePhotos
         thumbnailUrl,
         placeholderUrl,
         capturedLabel,
-        note,
         confidenceLabel,
         captureId,
         cookingOccasionId,
@@ -1365,10 +1359,6 @@ class $SourcePhotosTable extends SourcePhotos
     } else if (isInserting) {
       context.missing(_capturedLabelMeta);
     }
-    if (data.containsKey('note')) {
-      context.handle(
-          _noteMeta, note.isAcceptableOrUnknown(data['note']!, _noteMeta));
-    }
     if (data.containsKey('confidence_label')) {
       context.handle(
           _confidenceLabelMeta,
@@ -1414,8 +1404,6 @@ class $SourcePhotosTable extends SourcePhotos
           .read(DriftSqlType.string, data['${effectivePrefix}placeholder_url']),
       capturedLabel: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}captured_label'])!,
-      note: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}note']),
       confidenceLabel: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}confidence_label']),
       captureId: attachedDatabase.typeMapping
@@ -1441,7 +1429,6 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
   final String? thumbnailUrl;
   final String? placeholderUrl;
   final String capturedLabel;
-  final String? note;
   final String? confidenceLabel;
   final String? captureId;
   final String? cookingOccasionId;
@@ -1454,7 +1441,6 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
       this.thumbnailUrl,
       this.placeholderUrl,
       required this.capturedLabel,
-      this.note,
       this.confidenceLabel,
       this.captureId,
       this.cookingOccasionId,
@@ -1475,9 +1461,6 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
       map['placeholder_url'] = Variable<String>(placeholderUrl);
     }
     map['captured_label'] = Variable<String>(capturedLabel);
-    if (!nullToAbsent || note != null) {
-      map['note'] = Variable<String>(note);
-    }
     if (!nullToAbsent || confidenceLabel != null) {
       map['confidence_label'] = Variable<String>(confidenceLabel);
     }
@@ -1508,7 +1491,6 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
           ? const Value.absent()
           : Value(placeholderUrl),
       capturedLabel: Value(capturedLabel),
-      note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       confidenceLabel: confidenceLabel == null && nullToAbsent
           ? const Value.absent()
           : Value(confidenceLabel),
@@ -1535,7 +1517,6 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
       thumbnailUrl: serializer.fromJson<String?>(json['thumbnailUrl']),
       placeholderUrl: serializer.fromJson<String?>(json['placeholderUrl']),
       capturedLabel: serializer.fromJson<String>(json['capturedLabel']),
-      note: serializer.fromJson<String?>(json['note']),
       confidenceLabel: serializer.fromJson<String?>(json['confidenceLabel']),
       captureId: serializer.fromJson<String?>(json['captureId']),
       cookingOccasionId:
@@ -1554,7 +1535,6 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
       'thumbnailUrl': serializer.toJson<String?>(thumbnailUrl),
       'placeholderUrl': serializer.toJson<String?>(placeholderUrl),
       'capturedLabel': serializer.toJson<String>(capturedLabel),
-      'note': serializer.toJson<String?>(note),
       'confidenceLabel': serializer.toJson<String?>(confidenceLabel),
       'captureId': serializer.toJson<String?>(captureId),
       'cookingOccasionId': serializer.toJson<String?>(cookingOccasionId),
@@ -1570,7 +1550,6 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
           Value<String?> thumbnailUrl = const Value.absent(),
           Value<String?> placeholderUrl = const Value.absent(),
           String? capturedLabel,
-          Value<String?> note = const Value.absent(),
           Value<String?> confidenceLabel = const Value.absent(),
           Value<String?> captureId = const Value.absent(),
           Value<String?> cookingOccasionId = const Value.absent(),
@@ -1585,7 +1564,6 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
         placeholderUrl:
             placeholderUrl.present ? placeholderUrl.value : this.placeholderUrl,
         capturedLabel: capturedLabel ?? this.capturedLabel,
-        note: note.present ? note.value : this.note,
         confidenceLabel: confidenceLabel.present
             ? confidenceLabel.value
             : this.confidenceLabel,
@@ -1611,7 +1589,6 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
       capturedLabel: data.capturedLabel.present
           ? data.capturedLabel.value
           : this.capturedLabel,
-      note: data.note.present ? data.note.value : this.note,
       confidenceLabel: data.confidenceLabel.present
           ? data.confidenceLabel.value
           : this.confidenceLabel,
@@ -1634,7 +1611,6 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
           ..write('thumbnailUrl: $thumbnailUrl, ')
           ..write('placeholderUrl: $placeholderUrl, ')
           ..write('capturedLabel: $capturedLabel, ')
-          ..write('note: $note, ')
           ..write('confidenceLabel: $confidenceLabel, ')
           ..write('captureId: $captureId, ')
           ..write('cookingOccasionId: $cookingOccasionId, ')
@@ -1652,7 +1628,6 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
       thumbnailUrl,
       placeholderUrl,
       capturedLabel,
-      note,
       confidenceLabel,
       captureId,
       cookingOccasionId,
@@ -1668,7 +1643,6 @@ class SourcePhotoRow extends DataClass implements Insertable<SourcePhotoRow> {
           other.thumbnailUrl == this.thumbnailUrl &&
           other.placeholderUrl == this.placeholderUrl &&
           other.capturedLabel == this.capturedLabel &&
-          other.note == this.note &&
           other.confidenceLabel == this.confidenceLabel &&
           other.captureId == this.captureId &&
           other.cookingOccasionId == this.cookingOccasionId &&
@@ -1683,7 +1657,6 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
   final Value<String?> thumbnailUrl;
   final Value<String?> placeholderUrl;
   final Value<String> capturedLabel;
-  final Value<String?> note;
   final Value<String?> confidenceLabel;
   final Value<String?> captureId;
   final Value<String?> cookingOccasionId;
@@ -1697,7 +1670,6 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
     this.thumbnailUrl = const Value.absent(),
     this.placeholderUrl = const Value.absent(),
     this.capturedLabel = const Value.absent(),
-    this.note = const Value.absent(),
     this.confidenceLabel = const Value.absent(),
     this.captureId = const Value.absent(),
     this.cookingOccasionId = const Value.absent(),
@@ -1712,7 +1684,6 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
     this.thumbnailUrl = const Value.absent(),
     this.placeholderUrl = const Value.absent(),
     required String capturedLabel,
-    this.note = const Value.absent(),
     this.confidenceLabel = const Value.absent(),
     this.captureId = const Value.absent(),
     this.cookingOccasionId = const Value.absent(),
@@ -1730,7 +1701,6 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
     Expression<String>? thumbnailUrl,
     Expression<String>? placeholderUrl,
     Expression<String>? capturedLabel,
-    Expression<String>? note,
     Expression<String>? confidenceLabel,
     Expression<String>? captureId,
     Expression<String>? cookingOccasionId,
@@ -1745,7 +1715,6 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
       if (thumbnailUrl != null) 'thumbnail_url': thumbnailUrl,
       if (placeholderUrl != null) 'placeholder_url': placeholderUrl,
       if (capturedLabel != null) 'captured_label': capturedLabel,
-      if (note != null) 'note': note,
       if (confidenceLabel != null) 'confidence_label': confidenceLabel,
       if (captureId != null) 'capture_id': captureId,
       if (cookingOccasionId != null) 'cooking_occasion_id': cookingOccasionId,
@@ -1762,7 +1731,6 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
       Value<String?>? thumbnailUrl,
       Value<String?>? placeholderUrl,
       Value<String>? capturedLabel,
-      Value<String?>? note,
       Value<String?>? confidenceLabel,
       Value<String?>? captureId,
       Value<String?>? cookingOccasionId,
@@ -1776,7 +1744,6 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
       thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
       placeholderUrl: placeholderUrl ?? this.placeholderUrl,
       capturedLabel: capturedLabel ?? this.capturedLabel,
-      note: note ?? this.note,
       confidenceLabel: confidenceLabel ?? this.confidenceLabel,
       captureId: captureId ?? this.captureId,
       cookingOccasionId: cookingOccasionId ?? this.cookingOccasionId,
@@ -1809,9 +1776,6 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
     if (capturedLabel.present) {
       map['captured_label'] = Variable<String>(capturedLabel.value);
     }
-    if (note.present) {
-      map['note'] = Variable<String>(note.value);
-    }
     if (confidenceLabel.present) {
       map['confidence_label'] = Variable<String>(confidenceLabel.value);
     }
@@ -1840,11 +1804,933 @@ class SourcePhotosCompanion extends UpdateCompanion<SourcePhotoRow> {
           ..write('thumbnailUrl: $thumbnailUrl, ')
           ..write('placeholderUrl: $placeholderUrl, ')
           ..write('capturedLabel: $capturedLabel, ')
-          ..write('note: $note, ')
           ..write('confidenceLabel: $confidenceLabel, ')
           ..write('captureId: $captureId, ')
           ..write('cookingOccasionId: $cookingOccasionId, ')
           ..write('capturedAt: $capturedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $GeneratedCoversTable extends GeneratedCovers
+    with TableInfo<$GeneratedCoversTable, GeneratedCoverRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GeneratedCoversTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _dishIdMeta = const VerificationMeta('dishId');
+  @override
+  late final GeneratedColumn<String> dishId = GeneratedColumn<String>(
+      'dish_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _localPathMeta =
+      const VerificationMeta('localPath');
+  @override
+  late final GeneratedColumn<String> localPath = GeneratedColumn<String>(
+      'local_path', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _previewPathMeta =
+      const VerificationMeta('previewPath');
+  @override
+  late final GeneratedColumn<String> previewPath = GeneratedColumn<String>(
+      'preview_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _thumbnailPathMeta =
+      const VerificationMeta('thumbnailPath');
+  @override
+  late final GeneratedColumn<String> thumbnailPath = GeneratedColumn<String>(
+      'thumbnail_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _placeholderPathMeta =
+      const VerificationMeta('placeholderPath');
+  @override
+  late final GeneratedColumn<String> placeholderPath = GeneratedColumn<String>(
+      'placeholder_path', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _originMeta = const VerificationMeta('origin');
+  @override
+  late final GeneratedColumn<String> origin = GeneratedColumn<String>(
+      'origin', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _groundingMeta =
+      const VerificationMeta('grounding');
+  @override
+  late final GeneratedColumn<String> grounding = GeneratedColumn<String>(
+      'grounding', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _selectedSourceIdsJsonMeta =
+      const VerificationMeta('selectedSourceIdsJson');
+  @override
+  late final GeneratedColumn<String> selectedSourceIdsJson =
+      GeneratedColumn<String>('selected_source_ids_json', aliasedName, false,
+          type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _lookMeta = const VerificationMeta('look');
+  @override
+  late final GeneratedColumn<String> look = GeneratedColumn<String>(
+      'look', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _viewMeta = const VerificationMeta('view');
+  @override
+  late final GeneratedColumn<String> view = GeneratedColumn<String>(
+      'view', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _finishMeta = const VerificationMeta('finish');
+  @override
+  late final GeneratedColumn<String> finish = GeneratedColumn<String>(
+      'finish', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _contractVersionMeta =
+      const VerificationMeta('contractVersion');
+  @override
+  late final GeneratedColumn<String> contractVersion = GeneratedColumn<String>(
+      'contract_version', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _proposalIdMeta =
+      const VerificationMeta('proposalId');
+  @override
+  late final GeneratedColumn<String> proposalId = GeneratedColumn<String>(
+      'proposal_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _stateMeta = const VerificationMeta('state');
+  @override
+  late final GeneratedColumn<String> state = GeneratedColumn<String>(
+      'state', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _automaticAcknowledgedMeta =
+      const VerificationMeta('automaticAcknowledged');
+  @override
+  late final GeneratedColumn<bool> automaticAcknowledged =
+      GeneratedColumn<bool>('automatic_acknowledged', aliasedName, false,
+          type: DriftSqlType.bool,
+          requiredDuringInsert: false,
+          defaultConstraints: GeneratedColumn.constraintIsAlways(
+              'CHECK ("automatic_acknowledged" IN (0, 1))'),
+          defaultValue: const Constant(false));
+  static const VerificationMeta _automaticUndoAvailableMeta =
+      const VerificationMeta('automaticUndoAvailable');
+  @override
+  late final GeneratedColumn<bool> automaticUndoAvailable =
+      GeneratedColumn<bool>('automatic_undo_available', aliasedName, false,
+          type: DriftSqlType.bool,
+          requiredDuringInsert: false,
+          defaultConstraints: GeneratedColumn.constraintIsAlways(
+              'CHECK ("automatic_undo_available" IN (0, 1))'),
+          defaultValue: const Constant(false));
+  static const VerificationMeta _previousCoverJsonMeta =
+      const VerificationMeta('previousCoverJson');
+  @override
+  late final GeneratedColumn<String> previousCoverJson =
+      GeneratedColumn<String>('previous_cover_json', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        dishId,
+        localPath,
+        previewPath,
+        thumbnailPath,
+        placeholderPath,
+        origin,
+        grounding,
+        selectedSourceIdsJson,
+        look,
+        view,
+        finish,
+        contractVersion,
+        proposalId,
+        state,
+        automaticAcknowledged,
+        automaticUndoAvailable,
+        previousCoverJson,
+        createdAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'generated_covers';
+  @override
+  VerificationContext validateIntegrity(Insertable<GeneratedCoverRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('dish_id')) {
+      context.handle(_dishIdMeta,
+          dishId.isAcceptableOrUnknown(data['dish_id']!, _dishIdMeta));
+    } else if (isInserting) {
+      context.missing(_dishIdMeta);
+    }
+    if (data.containsKey('local_path')) {
+      context.handle(_localPathMeta,
+          localPath.isAcceptableOrUnknown(data['local_path']!, _localPathMeta));
+    } else if (isInserting) {
+      context.missing(_localPathMeta);
+    }
+    if (data.containsKey('preview_path')) {
+      context.handle(
+          _previewPathMeta,
+          previewPath.isAcceptableOrUnknown(
+              data['preview_path']!, _previewPathMeta));
+    }
+    if (data.containsKey('thumbnail_path')) {
+      context.handle(
+          _thumbnailPathMeta,
+          thumbnailPath.isAcceptableOrUnknown(
+              data['thumbnail_path']!, _thumbnailPathMeta));
+    }
+    if (data.containsKey('placeholder_path')) {
+      context.handle(
+          _placeholderPathMeta,
+          placeholderPath.isAcceptableOrUnknown(
+              data['placeholder_path']!, _placeholderPathMeta));
+    }
+    if (data.containsKey('origin')) {
+      context.handle(_originMeta,
+          origin.isAcceptableOrUnknown(data['origin']!, _originMeta));
+    } else if (isInserting) {
+      context.missing(_originMeta);
+    }
+    if (data.containsKey('grounding')) {
+      context.handle(_groundingMeta,
+          grounding.isAcceptableOrUnknown(data['grounding']!, _groundingMeta));
+    } else if (isInserting) {
+      context.missing(_groundingMeta);
+    }
+    if (data.containsKey('selected_source_ids_json')) {
+      context.handle(
+          _selectedSourceIdsJsonMeta,
+          selectedSourceIdsJson.isAcceptableOrUnknown(
+              data['selected_source_ids_json']!, _selectedSourceIdsJsonMeta));
+    } else if (isInserting) {
+      context.missing(_selectedSourceIdsJsonMeta);
+    }
+    if (data.containsKey('look')) {
+      context.handle(
+          _lookMeta, look.isAcceptableOrUnknown(data['look']!, _lookMeta));
+    } else if (isInserting) {
+      context.missing(_lookMeta);
+    }
+    if (data.containsKey('view')) {
+      context.handle(
+          _viewMeta, view.isAcceptableOrUnknown(data['view']!, _viewMeta));
+    } else if (isInserting) {
+      context.missing(_viewMeta);
+    }
+    if (data.containsKey('finish')) {
+      context.handle(_finishMeta,
+          finish.isAcceptableOrUnknown(data['finish']!, _finishMeta));
+    } else if (isInserting) {
+      context.missing(_finishMeta);
+    }
+    if (data.containsKey('contract_version')) {
+      context.handle(
+          _contractVersionMeta,
+          contractVersion.isAcceptableOrUnknown(
+              data['contract_version']!, _contractVersionMeta));
+    } else if (isInserting) {
+      context.missing(_contractVersionMeta);
+    }
+    if (data.containsKey('proposal_id')) {
+      context.handle(
+          _proposalIdMeta,
+          proposalId.isAcceptableOrUnknown(
+              data['proposal_id']!, _proposalIdMeta));
+    } else if (isInserting) {
+      context.missing(_proposalIdMeta);
+    }
+    if (data.containsKey('state')) {
+      context.handle(
+          _stateMeta, state.isAcceptableOrUnknown(data['state']!, _stateMeta));
+    } else if (isInserting) {
+      context.missing(_stateMeta);
+    }
+    if (data.containsKey('automatic_acknowledged')) {
+      context.handle(
+          _automaticAcknowledgedMeta,
+          automaticAcknowledged.isAcceptableOrUnknown(
+              data['automatic_acknowledged']!, _automaticAcknowledgedMeta));
+    }
+    if (data.containsKey('automatic_undo_available')) {
+      context.handle(
+          _automaticUndoAvailableMeta,
+          automaticUndoAvailable.isAcceptableOrUnknown(
+              data['automatic_undo_available']!, _automaticUndoAvailableMeta));
+    }
+    if (data.containsKey('previous_cover_json')) {
+      context.handle(
+          _previousCoverJsonMeta,
+          previousCoverJson.isAcceptableOrUnknown(
+              data['previous_cover_json']!, _previousCoverJsonMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  GeneratedCoverRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GeneratedCoverRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      dishId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}dish_id'])!,
+      localPath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}local_path'])!,
+      previewPath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}preview_path']),
+      thumbnailPath: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}thumbnail_path']),
+      placeholderPath: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}placeholder_path']),
+      origin: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}origin'])!,
+      grounding: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}grounding'])!,
+      selectedSourceIdsJson: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}selected_source_ids_json'])!,
+      look: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}look'])!,
+      view: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}view'])!,
+      finish: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}finish'])!,
+      contractVersion: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}contract_version'])!,
+      proposalId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}proposal_id'])!,
+      state: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}state'])!,
+      automaticAcknowledged: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}automatic_acknowledged'])!,
+      automaticUndoAvailable: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool,
+          data['${effectivePrefix}automatic_undo_available'])!,
+      previousCoverJson: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}previous_cover_json']),
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $GeneratedCoversTable createAlias(String alias) {
+    return $GeneratedCoversTable(attachedDatabase, alias);
+  }
+}
+
+class GeneratedCoverRow extends DataClass
+    implements Insertable<GeneratedCoverRow> {
+  final String id;
+  final String dishId;
+  final String localPath;
+  final String? previewPath;
+  final String? thumbnailPath;
+  final String? placeholderPath;
+  final String origin;
+  final String grounding;
+  final String selectedSourceIdsJson;
+  final String look;
+  final String view;
+  final String finish;
+  final String contractVersion;
+  final String proposalId;
+  final String state;
+  final bool automaticAcknowledged;
+  final bool automaticUndoAvailable;
+  final String? previousCoverJson;
+  final DateTime createdAt;
+  const GeneratedCoverRow(
+      {required this.id,
+      required this.dishId,
+      required this.localPath,
+      this.previewPath,
+      this.thumbnailPath,
+      this.placeholderPath,
+      required this.origin,
+      required this.grounding,
+      required this.selectedSourceIdsJson,
+      required this.look,
+      required this.view,
+      required this.finish,
+      required this.contractVersion,
+      required this.proposalId,
+      required this.state,
+      required this.automaticAcknowledged,
+      required this.automaticUndoAvailable,
+      this.previousCoverJson,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['dish_id'] = Variable<String>(dishId);
+    map['local_path'] = Variable<String>(localPath);
+    if (!nullToAbsent || previewPath != null) {
+      map['preview_path'] = Variable<String>(previewPath);
+    }
+    if (!nullToAbsent || thumbnailPath != null) {
+      map['thumbnail_path'] = Variable<String>(thumbnailPath);
+    }
+    if (!nullToAbsent || placeholderPath != null) {
+      map['placeholder_path'] = Variable<String>(placeholderPath);
+    }
+    map['origin'] = Variable<String>(origin);
+    map['grounding'] = Variable<String>(grounding);
+    map['selected_source_ids_json'] = Variable<String>(selectedSourceIdsJson);
+    map['look'] = Variable<String>(look);
+    map['view'] = Variable<String>(view);
+    map['finish'] = Variable<String>(finish);
+    map['contract_version'] = Variable<String>(contractVersion);
+    map['proposal_id'] = Variable<String>(proposalId);
+    map['state'] = Variable<String>(state);
+    map['automatic_acknowledged'] = Variable<bool>(automaticAcknowledged);
+    map['automatic_undo_available'] = Variable<bool>(automaticUndoAvailable);
+    if (!nullToAbsent || previousCoverJson != null) {
+      map['previous_cover_json'] = Variable<String>(previousCoverJson);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  GeneratedCoversCompanion toCompanion(bool nullToAbsent) {
+    return GeneratedCoversCompanion(
+      id: Value(id),
+      dishId: Value(dishId),
+      localPath: Value(localPath),
+      previewPath: previewPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(previewPath),
+      thumbnailPath: thumbnailPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(thumbnailPath),
+      placeholderPath: placeholderPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(placeholderPath),
+      origin: Value(origin),
+      grounding: Value(grounding),
+      selectedSourceIdsJson: Value(selectedSourceIdsJson),
+      look: Value(look),
+      view: Value(view),
+      finish: Value(finish),
+      contractVersion: Value(contractVersion),
+      proposalId: Value(proposalId),
+      state: Value(state),
+      automaticAcknowledged: Value(automaticAcknowledged),
+      automaticUndoAvailable: Value(automaticUndoAvailable),
+      previousCoverJson: previousCoverJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(previousCoverJson),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory GeneratedCoverRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GeneratedCoverRow(
+      id: serializer.fromJson<String>(json['id']),
+      dishId: serializer.fromJson<String>(json['dishId']),
+      localPath: serializer.fromJson<String>(json['localPath']),
+      previewPath: serializer.fromJson<String?>(json['previewPath']),
+      thumbnailPath: serializer.fromJson<String?>(json['thumbnailPath']),
+      placeholderPath: serializer.fromJson<String?>(json['placeholderPath']),
+      origin: serializer.fromJson<String>(json['origin']),
+      grounding: serializer.fromJson<String>(json['grounding']),
+      selectedSourceIdsJson:
+          serializer.fromJson<String>(json['selectedSourceIdsJson']),
+      look: serializer.fromJson<String>(json['look']),
+      view: serializer.fromJson<String>(json['view']),
+      finish: serializer.fromJson<String>(json['finish']),
+      contractVersion: serializer.fromJson<String>(json['contractVersion']),
+      proposalId: serializer.fromJson<String>(json['proposalId']),
+      state: serializer.fromJson<String>(json['state']),
+      automaticAcknowledged:
+          serializer.fromJson<bool>(json['automaticAcknowledged']),
+      automaticUndoAvailable:
+          serializer.fromJson<bool>(json['automaticUndoAvailable']),
+      previousCoverJson:
+          serializer.fromJson<String?>(json['previousCoverJson']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'dishId': serializer.toJson<String>(dishId),
+      'localPath': serializer.toJson<String>(localPath),
+      'previewPath': serializer.toJson<String?>(previewPath),
+      'thumbnailPath': serializer.toJson<String?>(thumbnailPath),
+      'placeholderPath': serializer.toJson<String?>(placeholderPath),
+      'origin': serializer.toJson<String>(origin),
+      'grounding': serializer.toJson<String>(grounding),
+      'selectedSourceIdsJson': serializer.toJson<String>(selectedSourceIdsJson),
+      'look': serializer.toJson<String>(look),
+      'view': serializer.toJson<String>(view),
+      'finish': serializer.toJson<String>(finish),
+      'contractVersion': serializer.toJson<String>(contractVersion),
+      'proposalId': serializer.toJson<String>(proposalId),
+      'state': serializer.toJson<String>(state),
+      'automaticAcknowledged': serializer.toJson<bool>(automaticAcknowledged),
+      'automaticUndoAvailable': serializer.toJson<bool>(automaticUndoAvailable),
+      'previousCoverJson': serializer.toJson<String?>(previousCoverJson),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  GeneratedCoverRow copyWith(
+          {String? id,
+          String? dishId,
+          String? localPath,
+          Value<String?> previewPath = const Value.absent(),
+          Value<String?> thumbnailPath = const Value.absent(),
+          Value<String?> placeholderPath = const Value.absent(),
+          String? origin,
+          String? grounding,
+          String? selectedSourceIdsJson,
+          String? look,
+          String? view,
+          String? finish,
+          String? contractVersion,
+          String? proposalId,
+          String? state,
+          bool? automaticAcknowledged,
+          bool? automaticUndoAvailable,
+          Value<String?> previousCoverJson = const Value.absent(),
+          DateTime? createdAt}) =>
+      GeneratedCoverRow(
+        id: id ?? this.id,
+        dishId: dishId ?? this.dishId,
+        localPath: localPath ?? this.localPath,
+        previewPath: previewPath.present ? previewPath.value : this.previewPath,
+        thumbnailPath:
+            thumbnailPath.present ? thumbnailPath.value : this.thumbnailPath,
+        placeholderPath: placeholderPath.present
+            ? placeholderPath.value
+            : this.placeholderPath,
+        origin: origin ?? this.origin,
+        grounding: grounding ?? this.grounding,
+        selectedSourceIdsJson:
+            selectedSourceIdsJson ?? this.selectedSourceIdsJson,
+        look: look ?? this.look,
+        view: view ?? this.view,
+        finish: finish ?? this.finish,
+        contractVersion: contractVersion ?? this.contractVersion,
+        proposalId: proposalId ?? this.proposalId,
+        state: state ?? this.state,
+        automaticAcknowledged:
+            automaticAcknowledged ?? this.automaticAcknowledged,
+        automaticUndoAvailable:
+            automaticUndoAvailable ?? this.automaticUndoAvailable,
+        previousCoverJson: previousCoverJson.present
+            ? previousCoverJson.value
+            : this.previousCoverJson,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  GeneratedCoverRow copyWithCompanion(GeneratedCoversCompanion data) {
+    return GeneratedCoverRow(
+      id: data.id.present ? data.id.value : this.id,
+      dishId: data.dishId.present ? data.dishId.value : this.dishId,
+      localPath: data.localPath.present ? data.localPath.value : this.localPath,
+      previewPath:
+          data.previewPath.present ? data.previewPath.value : this.previewPath,
+      thumbnailPath: data.thumbnailPath.present
+          ? data.thumbnailPath.value
+          : this.thumbnailPath,
+      placeholderPath: data.placeholderPath.present
+          ? data.placeholderPath.value
+          : this.placeholderPath,
+      origin: data.origin.present ? data.origin.value : this.origin,
+      grounding: data.grounding.present ? data.grounding.value : this.grounding,
+      selectedSourceIdsJson: data.selectedSourceIdsJson.present
+          ? data.selectedSourceIdsJson.value
+          : this.selectedSourceIdsJson,
+      look: data.look.present ? data.look.value : this.look,
+      view: data.view.present ? data.view.value : this.view,
+      finish: data.finish.present ? data.finish.value : this.finish,
+      contractVersion: data.contractVersion.present
+          ? data.contractVersion.value
+          : this.contractVersion,
+      proposalId:
+          data.proposalId.present ? data.proposalId.value : this.proposalId,
+      state: data.state.present ? data.state.value : this.state,
+      automaticAcknowledged: data.automaticAcknowledged.present
+          ? data.automaticAcknowledged.value
+          : this.automaticAcknowledged,
+      automaticUndoAvailable: data.automaticUndoAvailable.present
+          ? data.automaticUndoAvailable.value
+          : this.automaticUndoAvailable,
+      previousCoverJson: data.previousCoverJson.present
+          ? data.previousCoverJson.value
+          : this.previousCoverJson,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GeneratedCoverRow(')
+          ..write('id: $id, ')
+          ..write('dishId: $dishId, ')
+          ..write('localPath: $localPath, ')
+          ..write('previewPath: $previewPath, ')
+          ..write('thumbnailPath: $thumbnailPath, ')
+          ..write('placeholderPath: $placeholderPath, ')
+          ..write('origin: $origin, ')
+          ..write('grounding: $grounding, ')
+          ..write('selectedSourceIdsJson: $selectedSourceIdsJson, ')
+          ..write('look: $look, ')
+          ..write('view: $view, ')
+          ..write('finish: $finish, ')
+          ..write('contractVersion: $contractVersion, ')
+          ..write('proposalId: $proposalId, ')
+          ..write('state: $state, ')
+          ..write('automaticAcknowledged: $automaticAcknowledged, ')
+          ..write('automaticUndoAvailable: $automaticUndoAvailable, ')
+          ..write('previousCoverJson: $previousCoverJson, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      dishId,
+      localPath,
+      previewPath,
+      thumbnailPath,
+      placeholderPath,
+      origin,
+      grounding,
+      selectedSourceIdsJson,
+      look,
+      view,
+      finish,
+      contractVersion,
+      proposalId,
+      state,
+      automaticAcknowledged,
+      automaticUndoAvailable,
+      previousCoverJson,
+      createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GeneratedCoverRow &&
+          other.id == this.id &&
+          other.dishId == this.dishId &&
+          other.localPath == this.localPath &&
+          other.previewPath == this.previewPath &&
+          other.thumbnailPath == this.thumbnailPath &&
+          other.placeholderPath == this.placeholderPath &&
+          other.origin == this.origin &&
+          other.grounding == this.grounding &&
+          other.selectedSourceIdsJson == this.selectedSourceIdsJson &&
+          other.look == this.look &&
+          other.view == this.view &&
+          other.finish == this.finish &&
+          other.contractVersion == this.contractVersion &&
+          other.proposalId == this.proposalId &&
+          other.state == this.state &&
+          other.automaticAcknowledged == this.automaticAcknowledged &&
+          other.automaticUndoAvailable == this.automaticUndoAvailable &&
+          other.previousCoverJson == this.previousCoverJson &&
+          other.createdAt == this.createdAt);
+}
+
+class GeneratedCoversCompanion extends UpdateCompanion<GeneratedCoverRow> {
+  final Value<String> id;
+  final Value<String> dishId;
+  final Value<String> localPath;
+  final Value<String?> previewPath;
+  final Value<String?> thumbnailPath;
+  final Value<String?> placeholderPath;
+  final Value<String> origin;
+  final Value<String> grounding;
+  final Value<String> selectedSourceIdsJson;
+  final Value<String> look;
+  final Value<String> view;
+  final Value<String> finish;
+  final Value<String> contractVersion;
+  final Value<String> proposalId;
+  final Value<String> state;
+  final Value<bool> automaticAcknowledged;
+  final Value<bool> automaticUndoAvailable;
+  final Value<String?> previousCoverJson;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const GeneratedCoversCompanion({
+    this.id = const Value.absent(),
+    this.dishId = const Value.absent(),
+    this.localPath = const Value.absent(),
+    this.previewPath = const Value.absent(),
+    this.thumbnailPath = const Value.absent(),
+    this.placeholderPath = const Value.absent(),
+    this.origin = const Value.absent(),
+    this.grounding = const Value.absent(),
+    this.selectedSourceIdsJson = const Value.absent(),
+    this.look = const Value.absent(),
+    this.view = const Value.absent(),
+    this.finish = const Value.absent(),
+    this.contractVersion = const Value.absent(),
+    this.proposalId = const Value.absent(),
+    this.state = const Value.absent(),
+    this.automaticAcknowledged = const Value.absent(),
+    this.automaticUndoAvailable = const Value.absent(),
+    this.previousCoverJson = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  GeneratedCoversCompanion.insert({
+    required String id,
+    required String dishId,
+    required String localPath,
+    this.previewPath = const Value.absent(),
+    this.thumbnailPath = const Value.absent(),
+    this.placeholderPath = const Value.absent(),
+    required String origin,
+    required String grounding,
+    required String selectedSourceIdsJson,
+    required String look,
+    required String view,
+    required String finish,
+    required String contractVersion,
+    required String proposalId,
+    required String state,
+    this.automaticAcknowledged = const Value.absent(),
+    this.automaticUndoAvailable = const Value.absent(),
+    this.previousCoverJson = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        dishId = Value(dishId),
+        localPath = Value(localPath),
+        origin = Value(origin),
+        grounding = Value(grounding),
+        selectedSourceIdsJson = Value(selectedSourceIdsJson),
+        look = Value(look),
+        view = Value(view),
+        finish = Value(finish),
+        contractVersion = Value(contractVersion),
+        proposalId = Value(proposalId),
+        state = Value(state),
+        createdAt = Value(createdAt);
+  static Insertable<GeneratedCoverRow> custom({
+    Expression<String>? id,
+    Expression<String>? dishId,
+    Expression<String>? localPath,
+    Expression<String>? previewPath,
+    Expression<String>? thumbnailPath,
+    Expression<String>? placeholderPath,
+    Expression<String>? origin,
+    Expression<String>? grounding,
+    Expression<String>? selectedSourceIdsJson,
+    Expression<String>? look,
+    Expression<String>? view,
+    Expression<String>? finish,
+    Expression<String>? contractVersion,
+    Expression<String>? proposalId,
+    Expression<String>? state,
+    Expression<bool>? automaticAcknowledged,
+    Expression<bool>? automaticUndoAvailable,
+    Expression<String>? previousCoverJson,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (dishId != null) 'dish_id': dishId,
+      if (localPath != null) 'local_path': localPath,
+      if (previewPath != null) 'preview_path': previewPath,
+      if (thumbnailPath != null) 'thumbnail_path': thumbnailPath,
+      if (placeholderPath != null) 'placeholder_path': placeholderPath,
+      if (origin != null) 'origin': origin,
+      if (grounding != null) 'grounding': grounding,
+      if (selectedSourceIdsJson != null)
+        'selected_source_ids_json': selectedSourceIdsJson,
+      if (look != null) 'look': look,
+      if (view != null) 'view': view,
+      if (finish != null) 'finish': finish,
+      if (contractVersion != null) 'contract_version': contractVersion,
+      if (proposalId != null) 'proposal_id': proposalId,
+      if (state != null) 'state': state,
+      if (automaticAcknowledged != null)
+        'automatic_acknowledged': automaticAcknowledged,
+      if (automaticUndoAvailable != null)
+        'automatic_undo_available': automaticUndoAvailable,
+      if (previousCoverJson != null) 'previous_cover_json': previousCoverJson,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  GeneratedCoversCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? dishId,
+      Value<String>? localPath,
+      Value<String?>? previewPath,
+      Value<String?>? thumbnailPath,
+      Value<String?>? placeholderPath,
+      Value<String>? origin,
+      Value<String>? grounding,
+      Value<String>? selectedSourceIdsJson,
+      Value<String>? look,
+      Value<String>? view,
+      Value<String>? finish,
+      Value<String>? contractVersion,
+      Value<String>? proposalId,
+      Value<String>? state,
+      Value<bool>? automaticAcknowledged,
+      Value<bool>? automaticUndoAvailable,
+      Value<String?>? previousCoverJson,
+      Value<DateTime>? createdAt,
+      Value<int>? rowid}) {
+    return GeneratedCoversCompanion(
+      id: id ?? this.id,
+      dishId: dishId ?? this.dishId,
+      localPath: localPath ?? this.localPath,
+      previewPath: previewPath ?? this.previewPath,
+      thumbnailPath: thumbnailPath ?? this.thumbnailPath,
+      placeholderPath: placeholderPath ?? this.placeholderPath,
+      origin: origin ?? this.origin,
+      grounding: grounding ?? this.grounding,
+      selectedSourceIdsJson:
+          selectedSourceIdsJson ?? this.selectedSourceIdsJson,
+      look: look ?? this.look,
+      view: view ?? this.view,
+      finish: finish ?? this.finish,
+      contractVersion: contractVersion ?? this.contractVersion,
+      proposalId: proposalId ?? this.proposalId,
+      state: state ?? this.state,
+      automaticAcknowledged:
+          automaticAcknowledged ?? this.automaticAcknowledged,
+      automaticUndoAvailable:
+          automaticUndoAvailable ?? this.automaticUndoAvailable,
+      previousCoverJson: previousCoverJson ?? this.previousCoverJson,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (dishId.present) {
+      map['dish_id'] = Variable<String>(dishId.value);
+    }
+    if (localPath.present) {
+      map['local_path'] = Variable<String>(localPath.value);
+    }
+    if (previewPath.present) {
+      map['preview_path'] = Variable<String>(previewPath.value);
+    }
+    if (thumbnailPath.present) {
+      map['thumbnail_path'] = Variable<String>(thumbnailPath.value);
+    }
+    if (placeholderPath.present) {
+      map['placeholder_path'] = Variable<String>(placeholderPath.value);
+    }
+    if (origin.present) {
+      map['origin'] = Variable<String>(origin.value);
+    }
+    if (grounding.present) {
+      map['grounding'] = Variable<String>(grounding.value);
+    }
+    if (selectedSourceIdsJson.present) {
+      map['selected_source_ids_json'] =
+          Variable<String>(selectedSourceIdsJson.value);
+    }
+    if (look.present) {
+      map['look'] = Variable<String>(look.value);
+    }
+    if (view.present) {
+      map['view'] = Variable<String>(view.value);
+    }
+    if (finish.present) {
+      map['finish'] = Variable<String>(finish.value);
+    }
+    if (contractVersion.present) {
+      map['contract_version'] = Variable<String>(contractVersion.value);
+    }
+    if (proposalId.present) {
+      map['proposal_id'] = Variable<String>(proposalId.value);
+    }
+    if (state.present) {
+      map['state'] = Variable<String>(state.value);
+    }
+    if (automaticAcknowledged.present) {
+      map['automatic_acknowledged'] =
+          Variable<bool>(automaticAcknowledged.value);
+    }
+    if (automaticUndoAvailable.present) {
+      map['automatic_undo_available'] =
+          Variable<bool>(automaticUndoAvailable.value);
+    }
+    if (previousCoverJson.present) {
+      map['previous_cover_json'] = Variable<String>(previousCoverJson.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GeneratedCoversCompanion(')
+          ..write('id: $id, ')
+          ..write('dishId: $dishId, ')
+          ..write('localPath: $localPath, ')
+          ..write('previewPath: $previewPath, ')
+          ..write('thumbnailPath: $thumbnailPath, ')
+          ..write('placeholderPath: $placeholderPath, ')
+          ..write('origin: $origin, ')
+          ..write('grounding: $grounding, ')
+          ..write('selectedSourceIdsJson: $selectedSourceIdsJson, ')
+          ..write('look: $look, ')
+          ..write('view: $view, ')
+          ..write('finish: $finish, ')
+          ..write('contractVersion: $contractVersion, ')
+          ..write('proposalId: $proposalId, ')
+          ..write('state: $state, ')
+          ..write('automaticAcknowledged: $automaticAcknowledged, ')
+          ..write('automaticUndoAvailable: $automaticUndoAvailable, ')
+          ..write('previousCoverJson: $previousCoverJson, ')
+          ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -7233,6 +8119,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $DishesTable dishes = $DishesTable(this);
   late final $DishNotesTable dishNotes = $DishNotesTable(this);
   late final $SourcePhotosTable sourcePhotos = $SourcePhotosTable(this);
+  late final $GeneratedCoversTable generatedCovers =
+      $GeneratedCoversTable(this);
   late final $CaptureBatchesTable captureBatches = $CaptureBatchesTable(this);
   late final $CaptureItemsTable captureItems = $CaptureItemsTable(this);
   late final $CaptureCorrectionsTable captureCorrections =
@@ -7255,6 +8143,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         dishes,
         dishNotes,
         sourcePhotos,
+        generatedCovers,
         captureBatches,
         captureItems,
         captureCorrections,
@@ -7830,7 +8719,6 @@ typedef $$SourcePhotosTableCreateCompanionBuilder = SourcePhotosCompanion
   Value<String?> thumbnailUrl,
   Value<String?> placeholderUrl,
   required String capturedLabel,
-  Value<String?> note,
   Value<String?> confidenceLabel,
   Value<String?> captureId,
   Value<String?> cookingOccasionId,
@@ -7846,7 +8734,6 @@ typedef $$SourcePhotosTableUpdateCompanionBuilder = SourcePhotosCompanion
   Value<String?> thumbnailUrl,
   Value<String?> placeholderUrl,
   Value<String> capturedLabel,
-  Value<String?> note,
   Value<String?> confidenceLabel,
   Value<String?> captureId,
   Value<String?> cookingOccasionId,
@@ -7884,9 +8771,6 @@ class $$SourcePhotosTableFilterComposer
 
   ColumnFilters<String> get capturedLabel => $composableBuilder(
       column: $table.capturedLabel, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get note => $composableBuilder(
-      column: $table.note, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get confidenceLabel => $composableBuilder(
       column: $table.confidenceLabel,
@@ -7936,9 +8820,6 @@ class $$SourcePhotosTableOrderingComposer
       column: $table.capturedLabel,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get note => $composableBuilder(
-      column: $table.note, builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<String> get confidenceLabel => $composableBuilder(
       column: $table.confidenceLabel,
       builder: (column) => ColumnOrderings(column));
@@ -7983,9 +8864,6 @@ class $$SourcePhotosTableAnnotationComposer
 
   GeneratedColumn<String> get capturedLabel => $composableBuilder(
       column: $table.capturedLabel, builder: (column) => column);
-
-  GeneratedColumn<String> get note =>
-      $composableBuilder(column: $table.note, builder: (column) => column);
 
   GeneratedColumn<String> get confidenceLabel => $composableBuilder(
       column: $table.confidenceLabel, builder: (column) => column);
@@ -8033,7 +8911,6 @@ class $$SourcePhotosTableTableManager extends RootTableManager<
             Value<String?> thumbnailUrl = const Value.absent(),
             Value<String?> placeholderUrl = const Value.absent(),
             Value<String> capturedLabel = const Value.absent(),
-            Value<String?> note = const Value.absent(),
             Value<String?> confidenceLabel = const Value.absent(),
             Value<String?> captureId = const Value.absent(),
             Value<String?> cookingOccasionId = const Value.absent(),
@@ -8048,7 +8925,6 @@ class $$SourcePhotosTableTableManager extends RootTableManager<
             thumbnailUrl: thumbnailUrl,
             placeholderUrl: placeholderUrl,
             capturedLabel: capturedLabel,
-            note: note,
             confidenceLabel: confidenceLabel,
             captureId: captureId,
             cookingOccasionId: cookingOccasionId,
@@ -8063,7 +8939,6 @@ class $$SourcePhotosTableTableManager extends RootTableManager<
             Value<String?> thumbnailUrl = const Value.absent(),
             Value<String?> placeholderUrl = const Value.absent(),
             required String capturedLabel,
-            Value<String?> note = const Value.absent(),
             Value<String?> confidenceLabel = const Value.absent(),
             Value<String?> captureId = const Value.absent(),
             Value<String?> cookingOccasionId = const Value.absent(),
@@ -8078,7 +8953,6 @@ class $$SourcePhotosTableTableManager extends RootTableManager<
             thumbnailUrl: thumbnailUrl,
             placeholderUrl: placeholderUrl,
             capturedLabel: capturedLabel,
-            note: note,
             confidenceLabel: confidenceLabel,
             captureId: captureId,
             cookingOccasionId: cookingOccasionId,
@@ -8106,6 +8980,403 @@ typedef $$SourcePhotosTableProcessedTableManager = ProcessedTableManager<
       BaseReferences<_$AppDatabase, $SourcePhotosTable, SourcePhotoRow>
     ),
     SourcePhotoRow,
+    PrefetchHooks Function()>;
+typedef $$GeneratedCoversTableCreateCompanionBuilder = GeneratedCoversCompanion
+    Function({
+  required String id,
+  required String dishId,
+  required String localPath,
+  Value<String?> previewPath,
+  Value<String?> thumbnailPath,
+  Value<String?> placeholderPath,
+  required String origin,
+  required String grounding,
+  required String selectedSourceIdsJson,
+  required String look,
+  required String view,
+  required String finish,
+  required String contractVersion,
+  required String proposalId,
+  required String state,
+  Value<bool> automaticAcknowledged,
+  Value<bool> automaticUndoAvailable,
+  Value<String?> previousCoverJson,
+  required DateTime createdAt,
+  Value<int> rowid,
+});
+typedef $$GeneratedCoversTableUpdateCompanionBuilder = GeneratedCoversCompanion
+    Function({
+  Value<String> id,
+  Value<String> dishId,
+  Value<String> localPath,
+  Value<String?> previewPath,
+  Value<String?> thumbnailPath,
+  Value<String?> placeholderPath,
+  Value<String> origin,
+  Value<String> grounding,
+  Value<String> selectedSourceIdsJson,
+  Value<String> look,
+  Value<String> view,
+  Value<String> finish,
+  Value<String> contractVersion,
+  Value<String> proposalId,
+  Value<String> state,
+  Value<bool> automaticAcknowledged,
+  Value<bool> automaticUndoAvailable,
+  Value<String?> previousCoverJson,
+  Value<DateTime> createdAt,
+  Value<int> rowid,
+});
+
+class $$GeneratedCoversTableFilterComposer
+    extends Composer<_$AppDatabase, $GeneratedCoversTable> {
+  $$GeneratedCoversTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get dishId => $composableBuilder(
+      column: $table.dishId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get localPath => $composableBuilder(
+      column: $table.localPath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get previewPath => $composableBuilder(
+      column: $table.previewPath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get thumbnailPath => $composableBuilder(
+      column: $table.thumbnailPath, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get placeholderPath => $composableBuilder(
+      column: $table.placeholderPath,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get origin => $composableBuilder(
+      column: $table.origin, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get grounding => $composableBuilder(
+      column: $table.grounding, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get selectedSourceIdsJson => $composableBuilder(
+      column: $table.selectedSourceIdsJson,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get look => $composableBuilder(
+      column: $table.look, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get view => $composableBuilder(
+      column: $table.view, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get finish => $composableBuilder(
+      column: $table.finish, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get contractVersion => $composableBuilder(
+      column: $table.contractVersion,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get proposalId => $composableBuilder(
+      column: $table.proposalId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get state => $composableBuilder(
+      column: $table.state, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get automaticAcknowledged => $composableBuilder(
+      column: $table.automaticAcknowledged,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get automaticUndoAvailable => $composableBuilder(
+      column: $table.automaticUndoAvailable,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get previousCoverJson => $composableBuilder(
+      column: $table.previousCoverJson,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$GeneratedCoversTableOrderingComposer
+    extends Composer<_$AppDatabase, $GeneratedCoversTable> {
+  $$GeneratedCoversTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get dishId => $composableBuilder(
+      column: $table.dishId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get localPath => $composableBuilder(
+      column: $table.localPath, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get previewPath => $composableBuilder(
+      column: $table.previewPath, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get thumbnailPath => $composableBuilder(
+      column: $table.thumbnailPath,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get placeholderPath => $composableBuilder(
+      column: $table.placeholderPath,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get origin => $composableBuilder(
+      column: $table.origin, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get grounding => $composableBuilder(
+      column: $table.grounding, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get selectedSourceIdsJson => $composableBuilder(
+      column: $table.selectedSourceIdsJson,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get look => $composableBuilder(
+      column: $table.look, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get view => $composableBuilder(
+      column: $table.view, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get finish => $composableBuilder(
+      column: $table.finish, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get contractVersion => $composableBuilder(
+      column: $table.contractVersion,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get proposalId => $composableBuilder(
+      column: $table.proposalId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get state => $composableBuilder(
+      column: $table.state, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get automaticAcknowledged => $composableBuilder(
+      column: $table.automaticAcknowledged,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get automaticUndoAvailable => $composableBuilder(
+      column: $table.automaticUndoAvailable,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get previousCoverJson => $composableBuilder(
+      column: $table.previousCoverJson,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$GeneratedCoversTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GeneratedCoversTable> {
+  $$GeneratedCoversTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get dishId =>
+      $composableBuilder(column: $table.dishId, builder: (column) => column);
+
+  GeneratedColumn<String> get localPath =>
+      $composableBuilder(column: $table.localPath, builder: (column) => column);
+
+  GeneratedColumn<String> get previewPath => $composableBuilder(
+      column: $table.previewPath, builder: (column) => column);
+
+  GeneratedColumn<String> get thumbnailPath => $composableBuilder(
+      column: $table.thumbnailPath, builder: (column) => column);
+
+  GeneratedColumn<String> get placeholderPath => $composableBuilder(
+      column: $table.placeholderPath, builder: (column) => column);
+
+  GeneratedColumn<String> get origin =>
+      $composableBuilder(column: $table.origin, builder: (column) => column);
+
+  GeneratedColumn<String> get grounding =>
+      $composableBuilder(column: $table.grounding, builder: (column) => column);
+
+  GeneratedColumn<String> get selectedSourceIdsJson => $composableBuilder(
+      column: $table.selectedSourceIdsJson, builder: (column) => column);
+
+  GeneratedColumn<String> get look =>
+      $composableBuilder(column: $table.look, builder: (column) => column);
+
+  GeneratedColumn<String> get view =>
+      $composableBuilder(column: $table.view, builder: (column) => column);
+
+  GeneratedColumn<String> get finish =>
+      $composableBuilder(column: $table.finish, builder: (column) => column);
+
+  GeneratedColumn<String> get contractVersion => $composableBuilder(
+      column: $table.contractVersion, builder: (column) => column);
+
+  GeneratedColumn<String> get proposalId => $composableBuilder(
+      column: $table.proposalId, builder: (column) => column);
+
+  GeneratedColumn<String> get state =>
+      $composableBuilder(column: $table.state, builder: (column) => column);
+
+  GeneratedColumn<bool> get automaticAcknowledged => $composableBuilder(
+      column: $table.automaticAcknowledged, builder: (column) => column);
+
+  GeneratedColumn<bool> get automaticUndoAvailable => $composableBuilder(
+      column: $table.automaticUndoAvailable, builder: (column) => column);
+
+  GeneratedColumn<String> get previousCoverJson => $composableBuilder(
+      column: $table.previousCoverJson, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$GeneratedCoversTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $GeneratedCoversTable,
+    GeneratedCoverRow,
+    $$GeneratedCoversTableFilterComposer,
+    $$GeneratedCoversTableOrderingComposer,
+    $$GeneratedCoversTableAnnotationComposer,
+    $$GeneratedCoversTableCreateCompanionBuilder,
+    $$GeneratedCoversTableUpdateCompanionBuilder,
+    (
+      GeneratedCoverRow,
+      BaseReferences<_$AppDatabase, $GeneratedCoversTable, GeneratedCoverRow>
+    ),
+    GeneratedCoverRow,
+    PrefetchHooks Function()> {
+  $$GeneratedCoversTableTableManager(
+      _$AppDatabase db, $GeneratedCoversTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GeneratedCoversTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GeneratedCoversTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GeneratedCoversTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> dishId = const Value.absent(),
+            Value<String> localPath = const Value.absent(),
+            Value<String?> previewPath = const Value.absent(),
+            Value<String?> thumbnailPath = const Value.absent(),
+            Value<String?> placeholderPath = const Value.absent(),
+            Value<String> origin = const Value.absent(),
+            Value<String> grounding = const Value.absent(),
+            Value<String> selectedSourceIdsJson = const Value.absent(),
+            Value<String> look = const Value.absent(),
+            Value<String> view = const Value.absent(),
+            Value<String> finish = const Value.absent(),
+            Value<String> contractVersion = const Value.absent(),
+            Value<String> proposalId = const Value.absent(),
+            Value<String> state = const Value.absent(),
+            Value<bool> automaticAcknowledged = const Value.absent(),
+            Value<bool> automaticUndoAvailable = const Value.absent(),
+            Value<String?> previousCoverJson = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              GeneratedCoversCompanion(
+            id: id,
+            dishId: dishId,
+            localPath: localPath,
+            previewPath: previewPath,
+            thumbnailPath: thumbnailPath,
+            placeholderPath: placeholderPath,
+            origin: origin,
+            grounding: grounding,
+            selectedSourceIdsJson: selectedSourceIdsJson,
+            look: look,
+            view: view,
+            finish: finish,
+            contractVersion: contractVersion,
+            proposalId: proposalId,
+            state: state,
+            automaticAcknowledged: automaticAcknowledged,
+            automaticUndoAvailable: automaticUndoAvailable,
+            previousCoverJson: previousCoverJson,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String dishId,
+            required String localPath,
+            Value<String?> previewPath = const Value.absent(),
+            Value<String?> thumbnailPath = const Value.absent(),
+            Value<String?> placeholderPath = const Value.absent(),
+            required String origin,
+            required String grounding,
+            required String selectedSourceIdsJson,
+            required String look,
+            required String view,
+            required String finish,
+            required String contractVersion,
+            required String proposalId,
+            required String state,
+            Value<bool> automaticAcknowledged = const Value.absent(),
+            Value<bool> automaticUndoAvailable = const Value.absent(),
+            Value<String?> previousCoverJson = const Value.absent(),
+            required DateTime createdAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              GeneratedCoversCompanion.insert(
+            id: id,
+            dishId: dishId,
+            localPath: localPath,
+            previewPath: previewPath,
+            thumbnailPath: thumbnailPath,
+            placeholderPath: placeholderPath,
+            origin: origin,
+            grounding: grounding,
+            selectedSourceIdsJson: selectedSourceIdsJson,
+            look: look,
+            view: view,
+            finish: finish,
+            contractVersion: contractVersion,
+            proposalId: proposalId,
+            state: state,
+            automaticAcknowledged: automaticAcknowledged,
+            automaticUndoAvailable: automaticUndoAvailable,
+            previousCoverJson: previousCoverJson,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$GeneratedCoversTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $GeneratedCoversTable,
+    GeneratedCoverRow,
+    $$GeneratedCoversTableFilterComposer,
+    $$GeneratedCoversTableOrderingComposer,
+    $$GeneratedCoversTableAnnotationComposer,
+    $$GeneratedCoversTableCreateCompanionBuilder,
+    $$GeneratedCoversTableUpdateCompanionBuilder,
+    (
+      GeneratedCoverRow,
+      BaseReferences<_$AppDatabase, $GeneratedCoversTable, GeneratedCoverRow>
+    ),
+    GeneratedCoverRow,
     PrefetchHooks Function()>;
 typedef $$CaptureBatchesTableCreateCompanionBuilder = CaptureBatchesCompanion
     Function({
@@ -10719,6 +11990,8 @@ class $AppDatabaseManager {
       $$DishNotesTableTableManager(_db, _db.dishNotes);
   $$SourcePhotosTableTableManager get sourcePhotos =>
       $$SourcePhotosTableTableManager(_db, _db.sourcePhotos);
+  $$GeneratedCoversTableTableManager get generatedCovers =>
+      $$GeneratedCoversTableTableManager(_db, _db.generatedCovers);
   $$CaptureBatchesTableTableManager get captureBatches =>
       $$CaptureBatchesTableTableManager(_db, _db.captureBatches);
   $$CaptureItemsTableTableManager get captureItems =>

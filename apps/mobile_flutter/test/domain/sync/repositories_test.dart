@@ -388,7 +388,7 @@ void main() {
               .toList(growable: false);
 
       expect(migratedIds, expectedIds);
-      expect(migratedDatabase.schemaVersion, 15);
+      expect(migratedDatabase.schemaVersion, 17);
     });
 
     test('schema 13 migrates existing media rows with progressive previews',
@@ -421,7 +421,7 @@ void main() {
       expect(await migrated.select(migrated.dishes).get(), isEmpty);
       expect(await migrated.select(migrated.sourcePhotos).get(), isEmpty);
       expect(await migrated.select(migrated.captureItems).get(), isEmpty);
-      expect(migrated.schemaVersion, 15);
+      expect(migrated.schemaVersion, 17);
     });
 
     test('sync caches local dish web images once', () async {
@@ -994,7 +994,11 @@ void main() {
       expect(feedItems.single.appliedDishId, isNotNull);
       expect(feedItems.single.remoteMediaRef, isNull);
       final ProcessingOutboxRequest request =
-          (await repositories.processingOutboxRepository.listRequests()).single;
+          (await repositories.processingOutboxRepository.listRequests())
+              .singleWhere(
+        (ProcessingOutboxRequest request) =>
+            request.kind == ProcessingRequestKind.captureGrouping,
+      );
       expect(request.deliveryState, ProcessingDeliveryState.acknowledged);
       expect(request.adoptionState, ProcessingAdoptionState.adopted);
     });
@@ -1060,7 +1064,11 @@ void main() {
       expect(feedItems.single.text, 'kimchi rice');
       expect(syncOperations, isEmpty);
       final ProcessingOutboxRequest request =
-          (await repositories.processingOutboxRepository.listRequests()).single;
+          (await repositories.processingOutboxRepository.listRequests())
+              .singleWhere(
+        (ProcessingOutboxRequest request) =>
+            request.kind == ProcessingRequestKind.captureGrouping,
+      );
       expect(request.subjectId, id);
       expect(request.payload['captureIds'], <String>[id!]);
     });
@@ -1265,7 +1273,11 @@ void main() {
       await repositories.syncRepository.processPendingCaptures();
       final feedItems = await repositories.captureRepository.listFeedItems();
       final ProcessingOutboxRequest request =
-          (await repositories.processingOutboxRepository.listRequests()).single;
+          (await repositories.processingOutboxRepository.listRequests())
+              .singleWhere(
+        (ProcessingOutboxRequest request) =>
+            request.kind == ProcessingRequestKind.captureGrouping,
+      );
 
       expect(apiClient.processingJobCreationCount, 1);
       expect(request.deliveryState, ProcessingDeliveryState.acknowledged);
@@ -1406,7 +1418,11 @@ void main() {
       final CaptureBatch recovered =
           (await repositories.captureRepository.listBatches()).single;
       final ProcessingOutboxRequest request =
-          (await repositories.processingOutboxRepository.listRequests()).single;
+          (await repositories.processingOutboxRepository.listRequests())
+              .singleWhere(
+        (ProcessingOutboxRequest request) =>
+            request.kind == ProcessingRequestKind.captureGrouping,
+      );
       expect(apiClient.processingJobCreationCount, 1);
       expect(recovered.items.single.status, CaptureItemStatus.applied);
       expect(recovered.items.single.failureReason, isNull);
@@ -1458,7 +1474,7 @@ void main() {
         (CaptureBatch batch) => batch.id == createdBatch.id,
       );
       expect(synced.isWaitingForConnection, isFalse);
-      expect(apiClient.processingJobCreationCount, 1);
+      expect(apiClient.processingJobCreationCount, 3);
       await state.refreshFromServer();
     });
 
@@ -1731,7 +1747,11 @@ void main() {
 
       final List<Dish> dishes = await repositories.dishRepository.listDishes();
       final ProcessingOutboxRequest request =
-          (await repositories.processingOutboxRepository.listRequests()).single;
+          (await repositories.processingOutboxRepository.listRequests())
+              .singleWhere(
+        (ProcessingOutboxRequest request) =>
+            request.kind == ProcessingRequestKind.captureGrouping,
+      );
 
       expect(dishes, hasLength(4));
       expect(request.deliveryState, ProcessingDeliveryState.acknowledged);
@@ -2084,7 +2104,7 @@ void main() {
       final Dish afterFirstDelete =
           (await repositories.dishRepository.listDishes())
               .singleWhere((Dish dish) => dish.id == 'dish_direct');
-      expect(afterFirstDelete.heroImageUrl, '/tmp/direct-two.jpg');
+      expect(afterFirstDelete.heroImageUrl, isEmpty);
       expect(afterFirstDelete.madeCount, 1);
 
       await repositories.captureRepository.deleteCapture(batch.items[1].id);

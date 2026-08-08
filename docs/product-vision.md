@@ -36,15 +36,15 @@ The long-term goal is to help users build their own personal restaurant: a visua
 ## Core Product Loop
 
 ```txt
-Capture dish or idea
+Capture a photo or add an idea
 ↓
-AI organizes it
+AI organizes photos; ideas become dishes directly
 ↓
 Dish is added or updated
 ↓
-User improves cover image
+AI creates an initial cover for a newly eligible dish
 ↓
-User adds notes and recipe details
+User may improve or switch the cover and add recipe details
 ↓
 User plans to cook it again
 ↓
@@ -101,6 +101,16 @@ Instead, the user-facing model is:
 
 The cover is aspirational and menu-worthy. It does not have to be an exact documentary image of one cooking session.
 
+After versioned AI consent, newly eligible dishes receive one automatic initial
+cover opportunity. Photo-based dishes ground it in selected Sources; dishes
+without Sources use the same bounded generation contract with title and Notes.
+Existing dishes do not refresh their covers automatically when another Source
+is added.
+
+Valid generated images remain in device-local Cover history so the person can
+switch back later. Cover history is separate from the Journal and is never used
+as generation input.
+
 ### Sources
 
 Sources are the real captured or imported photos of the dish.
@@ -131,6 +141,9 @@ Jan 2026 - source photo
 ### Notes
 
 Notes are first-class.
+
+Every Note belongs directly to the Dish. Notes are standalone Journal items,
+not captions or children of Source photos or cooking occasions.
 
 Users often remember important cooking details that do not belong in a formal recipe.
 
@@ -212,6 +225,7 @@ Includes:
 
 - Large cover image
 - `✨ Improve Cover` action
+- Change Cover with generated Cover history and Sources
 - Dish title and description
 - Made count
 - Last made date
@@ -236,6 +250,10 @@ Options:
 Important: the user should not need to choose whether the capture belongs to a new dish or an existing dish before capturing.
 
 The app should capture first, then organize.
+
+Add Idea is the deliberate exception: saving it creates a new local Dish and
+optional standalone Note immediately. It does not enter Photos, Unorganized, or
+Review, and it does not consume AI organization allowance.
 
 ### Review Queue
 
@@ -286,6 +304,9 @@ AI organizes it
 
 The app should behave more like Google Photos than a manual filing system.
 
+Add Idea remains a direct local save; when consent permits, its separate Cover
+job can run after the Dish is safe locally.
+
 ## AI Role
 
 AI should help with:
@@ -321,6 +342,7 @@ The app should work offline for:
 - Ingredients
 - Notes
 - Source photos
+- Generated Cover history and offline Cover switching
 - Weekly planned meals
 - Review queue
 
@@ -461,7 +483,8 @@ The core is:
 - Optional account identity for paid access and quota portability
 - Ephemeral Supabase processing jobs
 - Real AI classification
-- Real AI cover improvement
+- Automatic initial AI Covers and manual Cover improvement
+- Local generated Cover history
 - Versioned AI consent and retention disclosure
 - Basic usage metering
 - Separate account deletion and local-menu erasure flows

@@ -91,6 +91,7 @@ export class FakeRoutingProvider implements RoutingProvider {
             description: "Deterministic local routing draft.",
             labels: [],
             visibleIngredients: [],
+            coverSourceCaptureIds: capture.kind === "photo" ? [capture.id] : [],
           },
         },
         evidence: ["No exact existing-dish title match was available."],

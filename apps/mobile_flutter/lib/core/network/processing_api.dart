@@ -1,5 +1,15 @@
 part of 'my_menu_api_client.dart';
 
+class ApiProcessingAllowances {
+  const ApiProcessingAllowances({
+    required this.organizationRemaining,
+    required this.coverRemaining,
+  });
+
+  final int organizationRemaining;
+  final int coverRemaining;
+}
+
 class ApiProcessingAssetManifest {
   const ApiProcessingAssetManifest({
     required this.assetId,

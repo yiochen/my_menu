@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(33);
+SELECT plan(34);
 
 DO $$
 BEGIN
@@ -257,6 +257,17 @@ SELECT is(
   (SELECT status::text FROM public.captures WHERE id = '10000000-0000-4000-8000-000000000006'),
   'applied',
   'existing dish capture is marked applied'
+);
+
+SELECT is(
+  (
+    SELECT body
+    FROM public.dish_notes
+    WHERE dish_id = '20000000-0000-4000-8000-000000000001'
+      AND body = 'Added to an existing dish.'
+  ),
+  'Added to an existing dish.',
+  'legacy capture notes become standalone dish notes'
 );
 
 SELECT is(

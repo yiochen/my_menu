@@ -194,7 +194,6 @@ List<SourcePhoto> _sources(String url, int count) {
     (int index) => SourcePhoto(
       url: url,
       capturedLabel: labels[index % labels.length],
-      note: index == 0 ? 'Latest cooking moment.' : null,
       confidenceLabel: index == 0 ? '94%' : null,
     ),
     growable: false,

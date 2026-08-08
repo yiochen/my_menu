@@ -2,9 +2,11 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:mymenu/core/database/app_database_covers.dart';
 import 'package:mymenu/core/database/app_database_local.dart';
 import 'package:mymenu/core/database/app_database_processing.dart';
 
+export 'package:mymenu/core/database/app_database_covers.dart';
 export 'package:mymenu/core/database/app_database_local.dart';
 export 'package:mymenu/core/database/app_database_processing.dart';
 
@@ -58,7 +60,6 @@ class SourcePhotos extends Table {
   TextColumn get thumbnailUrl => text().nullable()();
   TextColumn get placeholderUrl => text().nullable()();
   TextColumn get capturedLabel => text()();
-  TextColumn get note => text().nullable()();
   TextColumn get confidenceLabel => text().nullable()();
   TextColumn get captureId => text().nullable()();
   TextColumn get cookingOccasionId => text().nullable()();
@@ -189,6 +190,7 @@ class AiJobs extends Table {
     Dishes,
     DishNotes,
     SourcePhotos,
+    GeneratedCovers,
     CaptureBatches,
     CaptureItems,
     CaptureCorrections,
@@ -208,7 +210,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 17;
 
   @override
   MigrationStrategy get migration {
@@ -382,6 +384,12 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 15) {
           await _migrateProgressivePreviewsV15(this, migrator);
+        }
+        if (from < 16) {
+          await _migrateStandaloneNotesV16(this);
+        }
+        if (from < 17) {
+          await migrator.createTable(generatedCovers);
         }
       },
     );

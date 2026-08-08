@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/app/home_capture_button.dart';
-import 'package:mymenu/domain/processing/processing_consent_prompt.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
 import 'package:mymenu/features/capture/capture_sheet.dart';
@@ -97,12 +96,6 @@ class _HomeShellState extends State<HomeShell> {
   }
 
   Future<void> _requestCapture(MyMenuState state) async {
-    await state.requestProcessingConsent(
-      trigger: ProcessingConsentTrigger.capture,
-    );
-    if (!mounted) {
-      return;
-    }
     final CaptureCompletion? completion =
         await showCaptureSheet(context, state, _captureMediaService);
     if (completion == CaptureCompletion.photosAdded && mounted) {

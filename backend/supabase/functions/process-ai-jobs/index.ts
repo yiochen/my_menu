@@ -6,6 +6,10 @@ import {
 import type { GroupingCaptureInput } from "../_shared/ai/grouping_contract.ts";
 import { createRoutingProvider } from "../_shared/ai/routing_provider.ts";
 import type { RoutingDishInput } from "../_shared/ai/routing_contract.ts";
+import {
+  type CoverSourceInput,
+  createCoverProvider,
+} from "../_shared/ai/cover_provider.ts";
 import { requireAiWorkerKey } from "../_shared/ai/worker_config.ts";
 import {
   operationalError,
@@ -120,6 +124,9 @@ async function processProcessingJob(client: any, job: JsonRecord) {
   const leaseToken = stringField(job, "lease_token");
   try {
     const input = recordValue(job.input_payload);
+    if (stringField(job, "operation") === "cover_generation") {
+      return await processCoverJob(client, job, input);
+    }
     const captures = await processingCaptures(client, jobId, input);
     if (
       stringField(job, "result_schema_version") === "capture-grouping-result-v2"
@@ -200,6 +207,128 @@ async function processProcessingJob(client: any, job: JsonRecord) {
     }
     return { processed: 0, failed: 1, jobId };
   }
+}
+
+async function processCoverJob(
+  client: any,
+  job: JsonRecord,
+  input: JsonRecord,
+) {
+  const jobId = stringField(job, "id");
+  const leaseToken = stringField(job, "lease_token");
+  const sources = await processingCoverSources(client, jobId, input);
+  const notes = arrayField(input, "notes").map((value) => {
+    const note = recordValue(value);
+    return {
+      body: stringField(note, "body"),
+      position: numberField(note, "position"),
+      createdAt: stringField(note, "createdAt"),
+      updatedAt: stringField(note, "updatedAt"),
+    };
+  });
+  const treatment = recordValue(input.treatment);
+  const provider = createCoverProvider(
+    Deno.env.get("AI_IMAGE_PROVIDER") ?? Deno.env.get("AI_PROVIDER") ?? "fake",
+    Deno.env.get("AI_IMAGE_MODEL") ?? "gemini-3.1-flash-image",
+  );
+  const origin = stringField(input, "origin");
+  const generated = await provider.generate({
+    dishTitle: stringField(input, "dishTitle"),
+    origin: origin === "automatic" ? "automatic" : "manual",
+    notes,
+    treatment: {
+      look: stringField(treatment, "look"),
+      view: stringField(treatment, "view"),
+      finish: stringField(treatment, "finish"),
+    },
+    sources,
+  });
+  if (!generated.validation.valid) {
+    throw new AiProviderFailure(
+      "cover_validation_failed",
+      "Generated cover failed validation",
+      false,
+    );
+  }
+  const result = {
+    operation: "cover_generation",
+    schemaVersion: "cover-generation-result-v1",
+    proposalId: crypto.randomUUID(),
+    output: {
+      contentType: generated.contentType,
+      imageBase64: bytesToBase64(generated.bytes),
+    },
+    validation: generated.validation,
+    provenance: generated.provenance,
+  };
+  const { error } = await client.rpc("internal_complete_processing_job", {
+    p_job_id: jobId,
+    p_lease_token: leaseToken,
+    p_result: result,
+    p_provider: generated.provenance.provider,
+    p_model: generated.provenance.model,
+    p_input_tokens: numericUsage(generated.provenance.usage, "inputTokens"),
+    p_output_tokens: numericUsage(generated.provenance.usage, "outputTokens"),
+  });
+  if (error != null) throw error;
+  operationalLog("processing_job_succeeded", {
+    jobId,
+    operation: "cover_generation",
+    model: generated.provenance.model,
+    state: "succeeded",
+  });
+  return { processed: 1, failed: 0, jobId };
+}
+
+async function processingCoverSources(
+  client: any,
+  jobId: string,
+  input: JsonRecord,
+): Promise<CoverSourceInput[]> {
+  const values = arrayField(input, "sources");
+  const { data: rows, error } = await client.from("processing_assets")
+    .select("asset_id,storage_bucket,storage_path,content_type").eq(
+      "job_id",
+      jobId,
+    );
+  if (error != null) throw error;
+  const assets = new Map<string, JsonRecord>(
+    (rows ?? []).map((row: JsonRecord) => [String(row.asset_id), row]),
+  );
+  return await Promise.all(values.map(async (value) => {
+    const source = recordValue(value);
+    const asset = assets.get(stringField(source, "assetId"));
+    if (asset == null) {
+      throw new AiProviderFailure(
+        "cover_source_unavailable",
+        "Source is unavailable",
+        false,
+      );
+    }
+    const { data, error: signedError } = await client.storage
+      .from(stringField(asset, "storage_bucket"))
+      .createSignedUrl(stringField(asset, "storage_path"), 300);
+    if (signedError != null || data?.signedUrl == null) {
+      throw new AiProviderFailure(
+        "cover_source_unavailable",
+        "Source is unavailable",
+        true,
+      );
+    }
+    return {
+      id: stringField(source, "id"),
+      contentType: stringField(asset, "content_type"),
+      signedUrl: data.signedUrl,
+    };
+  }));
+}
+
+function bytesToBase64(bytes: Uint8Array) {
+  let binary = "";
+  for (let offset = 0; offset < bytes.length; offset += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+  }
+  return btoa(binary);
 }
 
 async function processRoutingJob(
