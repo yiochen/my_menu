@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mymenu/core/debug/debug_controls.dart';
+import 'package:mymenu/features/debug/debug_feedback_panel_section.dart';
+import 'package:mymenu/shared/debug_feedback/debug_feedback_overlay.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 
 class DebugControlsOverlay extends StatefulWidget {
@@ -31,55 +33,63 @@ class _DebugControlsOverlayState extends State<DebugControlsOverlay> {
     if (!widget.enabled) {
       return widget.child;
     }
-    return AnimatedBuilder(
-      animation: widget.controller,
-      builder: (BuildContext context, _) {
-        return LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-            final Size viewport = constraints.biggest;
-            final EdgeInsets safeInsets = MediaQuery.paddingOf(context);
-            final Offset launcherPosition = _clampLauncher(
-              _launcherPosition ?? _defaultLauncher(viewport, safeInsets),
-              viewport,
-              safeInsets,
-            );
-            return Stack(
-              fit: StackFit.expand,
-              children: <Widget>[
-                widget.child,
-                if (widget.controller.panelOpen)
-                  CustomSingleChildLayout(
-                    delegate: _DebugPanelLayoutDelegate(
-                      anchor: launcherPosition,
-                      safeInsets: safeInsets,
-                      edgeInset: _edgeInset,
-                      launcherExtent: _launcherExtent,
+    return DebugFeedbackOverlay(
+      controller: widget.controller.feedback,
+      child: AnimatedBuilder(
+        animation: Listenable.merge(<Listenable>[
+          widget.controller,
+          widget.controller.feedback,
+        ]),
+        builder: (BuildContext context, _) {
+          return LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              final Size viewport = constraints.biggest;
+              final EdgeInsets safeInsets = MediaQuery.paddingOf(context);
+              final Offset launcherPosition = _clampLauncher(
+                _launcherPosition ?? _defaultLauncher(viewport, safeInsets),
+                viewport,
+                safeInsets,
+              );
+              return Stack(
+                fit: StackFit.expand,
+                children: <Widget>[
+                  widget.child,
+                  if (!widget.controller.feedback.collecting &&
+                      widget.controller.panelOpen)
+                    CustomSingleChildLayout(
+                      delegate: _DebugPanelLayoutDelegate(
+                        anchor: launcherPosition,
+                        safeInsets: safeInsets,
+                        edgeInset: _edgeInset,
+                        launcherExtent: _launcherExtent,
+                      ),
+                      child: _DebugPanel(
+                        controller: widget.controller,
+                        onResetProcessingConsent:
+                            widget.onResetProcessingConsent,
+                      ),
+                    )
+                  else if (!widget.controller.feedback.collecting)
+                    Positioned(
+                      left: launcherPosition.dx,
+                      top: launcherPosition.dy,
+                      child: _DebugLauncher(
+                        controller: widget.controller,
+                        onPanUpdate: (DragUpdateDetails details) {
+                          _moveLauncher(
+                            details.delta,
+                            viewport,
+                            safeInsets,
+                          );
+                        },
+                      ),
                     ),
-                    child: _DebugPanel(
-                      controller: widget.controller,
-                      onResetProcessingConsent: widget.onResetProcessingConsent,
-                    ),
-                  )
-                else
-                  Positioned(
-                    left: launcherPosition.dx,
-                    top: launcherPosition.dy,
-                    child: _DebugLauncher(
-                      controller: widget.controller,
-                      onPanUpdate: (DragUpdateDetails details) {
-                        _moveLauncher(
-                          details.delta,
-                          viewport,
-                          safeInsets,
-                        );
-                      },
-                    ),
-                  ),
-              ],
-            );
-          },
-        );
-      },
+                ],
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -268,6 +278,15 @@ class _DebugPanel extends StatelessWidget {
                 controller.setCameraAccessEnabled(enabled: value);
               },
             ),
+            const Divider(height: 1),
+            DebugFeedbackPanelSection(
+              controller: controller.feedback,
+              onStart: () {
+                controller.setPanelOpen(open: false);
+                controller.feedback.startCollecting();
+              },
+            ),
+            const Divider(height: 1),
             ListTile(
               key: const ValueKey<String>('debug_reset_processing_consent'),
               leading: const Icon(

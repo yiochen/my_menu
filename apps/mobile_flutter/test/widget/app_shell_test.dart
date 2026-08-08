@@ -195,6 +195,62 @@ void main() {
       });
     });
 
+    testWidgets('debug controls launch and exit UI feedback collection', (
+      WidgetTester tester,
+    ) async {
+      await runWithMockNetworkImages(() async {
+        await tester.pumpWidget(_debugTestApp());
+        await tester.pumpAndSettle();
+
+        await tester.tap(
+          find.byKey(const ValueKey<String>('debug_controls_open')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const ValueKey<String>('debug_feedback_start')),
+        );
+        await tester.pump();
+
+        expect(
+          find.byKey(const ValueKey<String>('debug_feedback_picker')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey<String>('debug_controls_open')),
+          findsNothing,
+        );
+
+        await tester.tapAt(
+          tester.getCenter(
+            find.byKey(
+              const ValueKey<String>('planned_meal_plan_today_0'),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        expect(
+          find.byKey(const ValueKey<String>('debug_feedback_composer')),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+
+        await tester.tap(
+          find.byKey(const ValueKey<String>('debug_feedback_cancel_comment')),
+        );
+        await tester.pump();
+        await tester.tap(
+          find.byKey(const ValueKey<String>('debug_feedback_done')),
+        );
+        await tester.pump();
+
+        expect(
+          find.byKey(const ValueKey<String>('debug_controls_open')),
+          findsOneWidget,
+        );
+      });
+    });
+
     testWidgets('shows the redesigned plan screen on launch', (
       WidgetTester tester,
     ) async {

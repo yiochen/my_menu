@@ -4,17 +4,21 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:mymenu/core/network/network_status_monitor.dart';
+import 'package:mymenu/shared/debug_feedback/debug_feedback_controller.dart';
+import 'package:mymenu/shared/debug_feedback/debug_feedback_models.dart';
 
 class DebugControlsSettings {
   const DebugControlsSettings({
     this.networkEnabled = true,
     this.slowAnimations = false,
     this.cameraAccessEnabled = true,
+    this.feedbackEntries = const <DebugFeedbackEntry>[],
   });
 
   final bool networkEnabled;
   final bool slowAnimations;
   final bool cameraAccessEnabled;
+  final List<DebugFeedbackEntry> feedbackEntries;
 }
 
 abstract interface class DebugControlsPersistence {
@@ -23,6 +27,8 @@ abstract interface class DebugControlsPersistence {
   Future<void> setSlowAnimations({required bool enabled});
 
   Future<void> setCameraAccessEnabled({required bool enabled});
+
+  Future<void> setFeedbackEntries(List<DebugFeedbackEntry> entries);
 }
 
 class DebugControlsBootstrap {
@@ -43,7 +49,11 @@ class DebugControlsController extends ChangeNotifier
   })  : _networkEnabled = initialSettings.networkEnabled,
         _slowAnimations = initialSettings.slowAnimations,
         _cameraAccessEnabled = initialSettings.cameraAccessEnabled,
-        _persistence = persistence {
+        _persistence = persistence,
+        feedback = DebugFeedbackController(
+          initialEntries: initialSettings.feedbackEntries,
+          persistEntries: persistence?.setFeedbackEntries,
+        ) {
     if (_slowAnimations) {
       timeDilation = 5;
     }
@@ -52,6 +62,7 @@ class DebugControlsController extends ChangeNotifier
   final StreamController<void> _networkChanges =
       StreamController<void>.broadcast();
   final DebugControlsPersistence? _persistence;
+  final DebugFeedbackController feedback;
 
   bool _networkEnabled;
   bool _slowAnimations;
@@ -127,6 +138,7 @@ class DebugControlsController extends ChangeNotifier
     if (_slowAnimations) {
       timeDilation = 1;
     }
+    feedback.dispose();
     unawaited(_networkChanges.close());
     super.dispose();
   }
