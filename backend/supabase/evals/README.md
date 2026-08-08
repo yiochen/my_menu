@@ -87,13 +87,6 @@ To re-run only the independent judge against previously saved candidates without
 paying for another image generation, replace `COVER_EVAL_OUTPUT_DIR` with
 `COVER_EVAL_CANDIDATE_DIR` pointing at the existing output directory.
 
-Set `COVER_EVAL_USE_COMPOSITION_GUIDE=1` to append the shared synthetic
-`guides/v1/restaurant-menu-perspective-16x10.png` reference after all food
-Sources. The provider labels it as composition-only, excludes it from food
-grounding validation, and tells the model that it overrides the treatment view.
-The eval additionally requires a 16:10 output, scores camera-perspective and
-placement adherence, and rejects visible wireframe or grid artifacts.
-
 Generated images and JSON verdicts are written under the ignored `evals/output/`
 directory. The v1 fixtures are synthetic; the v2 fixtures are user-provided.
 Both sets are intentionally small, so a pass is a regression signal rather than
