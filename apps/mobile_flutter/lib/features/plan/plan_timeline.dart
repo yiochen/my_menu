@@ -9,7 +9,7 @@ import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/plan/plan_dish_dialog.dart';
 import 'package:mymenu/features/plan/plan_theme.dart';
 import 'package:mymenu/shared/drag_drop/drag_drop_board.dart';
-import 'package:mymenu/shared/widgets/app_image.dart';
+import 'package:mymenu/shared/widgets/dish_artwork.dart';
 
 part 'plan_timeline_day_chrome.dart';
 part 'plan_timeline_drag_drop_ui.dart';

@@ -26,6 +26,10 @@ class MyMenuScope extends InheritedNotifier<MyMenuState> {
     return scope!.notifier!;
   }
 
+  static MyMenuState? maybeOf(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<MyMenuScope>()?.notifier;
+  }
+
   static MyMenuState read(BuildContext context) {
     final InheritedElement? element =
         context.getElementForInheritedWidgetOfExactType<MyMenuScope>();

@@ -44,11 +44,15 @@ class ImproveCoverResult extends StatelessWidget {
                         child: DishArtwork(dish: dish))),
                 const SizedBox(width: 10),
                 Expanded(
-                    child: _CoverOption(
-                        label: 'Proposed cover',
-                        selected: true,
-                        child: AppImage(
-                            imageRef: proposal.localPath, fit: BoxFit.cover))),
+                  child: _CoverOption(
+                    label: 'Proposed cover',
+                    selected: true,
+                    child: AppImage(
+                      imageRef: proposal.localPath,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),

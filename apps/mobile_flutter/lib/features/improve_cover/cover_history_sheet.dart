@@ -134,7 +134,10 @@ class _CoverTile extends StatelessWidget {
                     child: SizedBox(
                       width: 142,
                       height: 142,
-                      child: AppImage(imageRef: imageRef, fit: BoxFit.cover),
+                      child: AppImage(
+                        imageRef: imageRef,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                   if (onDelete != null)

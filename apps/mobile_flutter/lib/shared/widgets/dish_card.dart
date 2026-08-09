@@ -4,7 +4,7 @@ import 'package:mymenu/app/app.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_screen.dart';
-import 'package:mymenu/shared/widgets/app_image.dart';
+import 'package:mymenu/shared/widgets/dish_artwork.dart';
 import 'package:mymenu/shared/widgets/local_write_feedback.dart';
 
 class DishCard extends StatelessWidget {
@@ -34,10 +34,7 @@ class DishCard extends StatelessWidget {
               children: <Widget>[
                 AspectRatio(
                   aspectRatio: 16 / 10,
-                  child: AppImage(
-                    imageRef: dish.heroImageUrl,
-                    fit: BoxFit.cover,
-                  ),
+                  child: DishArtwork(dish: dish, resizeForDisplay: true),
                 ),
                 Positioned(
                   top: 10,

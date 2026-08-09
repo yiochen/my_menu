@@ -109,11 +109,10 @@ class _DishRowSurface extends StatelessWidget {
             children: <Widget>[
               ClipRRect(
                 borderRadius: BorderRadius.circular(tokens.dishThumbRadius),
-                child: AppImage(
-                  imageRef: dish.heroImageUrl,
+                child: SizedBox(
                   width: tokens.dishThumbWidth,
                   height: tokens.dishThumbHeight,
-                  fit: BoxFit.cover,
+                  child: DishArtwork(dish: dish, resizeForDisplay: true),
                 ),
               ),
               SizedBox(width: tokens.dishContentGap),
