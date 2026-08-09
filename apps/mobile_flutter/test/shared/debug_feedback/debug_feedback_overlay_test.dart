@@ -26,6 +26,10 @@ void main() {
       find.byKey(const ValueKey<String>('debug_feedback_composer')),
       findsOneWidget,
     );
+    expect(
+      find.byKey(const ValueKey<String>('debug_feedback_highlight')),
+      findsOneWidget,
+    );
     expect(controller.collecting, isFalse);
     expect(find.text('Continue action'), findsOneWidget);
     expect(find.textContaining('Padding'), findsNothing);
@@ -59,6 +63,54 @@ void main() {
       find.byKey(const ValueKey<String>('debug_feedback_composer')),
       findsNothing,
     );
+    expect(controller.collecting, isTrue);
+  });
+
+  testWidgets('retargets with a background tap and updates the highlight', (
+    WidgetTester tester,
+  ) async {
+    final DebugFeedbackController controller = DebugFeedbackController();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(_FeedbackTestApp(controller: controller));
+    controller.startCollecting();
+    await tester.pump();
+    await tester.tapAt(
+      tester.getCenter(
+        find.byKey(const ValueKey<String>('feedback_test_action')),
+      ),
+    );
+    await tester.pump();
+
+    final Finder highlight =
+        find.byKey(const ValueKey<String>('debug_feedback_highlight'));
+    final CustomPainter initialPainter =
+        tester.widget<CustomPaint>(highlight).painter!;
+    await tester.enterText(
+      find.byKey(const ValueKey<String>('debug_feedback_comment')),
+      'Update the alternate action.',
+    );
+    await tester.pump();
+
+    await tester.tapAt(
+      tester.getCenter(
+        find.byKey(const ValueKey<String>('feedback_test_alternate')),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Alternate action'), findsOneWidget);
+    expect(find.text('Update the alternate action.'), findsOneWidget);
+    final CustomPainter updatedPainter =
+        tester.widget<CustomPaint>(highlight).painter!;
+    expect(updatedPainter.shouldRepaint(initialPainter), isTrue);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('debug_feedback_save_comment')),
+    );
+    await tester.pump();
+
+    expect(controller.entries.single.target.id, 'detail.alternate');
     expect(controller.collecting, isTrue);
   });
 
@@ -143,17 +195,33 @@ class _FeedbackTestApp extends StatelessWidget {
       home: DebugFeedbackOverlay(
         controller: controller,
         child: const Scaffold(
-          body: Center(
+          body: Align(
+            alignment: Alignment.topCenter,
             child: Padding(
-              padding: EdgeInsets.all(24),
-              child: FeedbackTarget(
-                id: 'detail.continue',
-                label: 'Continue action',
-                child: FilledButton(
-                  key: ValueKey<String>('feedback_test_action'),
-                  onPressed: _noOp,
-                  child: Text('Continue'),
-                ),
+              padding: EdgeInsets.only(top: 120),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  FeedbackTarget(
+                    id: 'detail.continue',
+                    label: 'Continue action',
+                    child: FilledButton(
+                      key: ValueKey<String>('feedback_test_action'),
+                      onPressed: _noOp,
+                      child: Text('Continue'),
+                    ),
+                  ),
+                  SizedBox(height: 32),
+                  FeedbackTarget(
+                    id: 'detail.alternate',
+                    label: 'Alternate action',
+                    child: FilledButton(
+                      key: ValueKey<String>('feedback_test_alternate'),
+                      onPressed: _noOp,
+                      child: Text('Alternate'),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

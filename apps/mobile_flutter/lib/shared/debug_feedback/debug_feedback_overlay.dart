@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:mymenu/shared/debug_feedback/debug_feedback_composer.dart';
 import 'package:mymenu/shared/debug_feedback/debug_feedback_controller.dart';
 import 'package:mymenu/shared/debug_feedback/debug_feedback_models.dart';
 import 'package:mymenu/shared/debug_feedback/debug_feedback_source_reader.dart';
 import 'package:mymenu/shared/debug_feedback/debug_feedback_target_finder.dart';
+import 'package:mymenu/shared/debug_feedback/feedback_target.dart';
 
 class DebugFeedbackOverlay extends StatefulWidget {
   const DebugFeedbackOverlay({
@@ -27,13 +27,7 @@ class DebugFeedbackOverlay extends StatefulWidget {
 
 class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
   final GlobalKey _contentKey = GlobalKey();
-  List<DebugFeedbackCandidate> _candidates = const <DebugFeedbackCandidate>[];
-  int _candidateIndex = 0;
   String? _notice;
-
-  DebugFeedbackCandidate? get _selection => _candidates.isEmpty
-      ? null
-      : _candidates[_candidateIndex.clamp(0, _candidates.length - 1)];
 
   @override
   void initState() {
@@ -57,9 +51,7 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
   }
 
   void _controllerChanged() {
-    if (!widget.controller.collecting && _candidates.isNotEmpty) {
-      setState(_clearSelection);
-    } else if (mounted) {
+    if (mounted) {
       setState(() {});
     }
   }
@@ -67,32 +59,27 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
   @override
   Widget build(BuildContext context) {
     if (!widget.controller.collecting) {
-      return widget.child;
+      return _buildContent();
     }
-    final DebugFeedbackCandidate? selection = _selection;
     return Stack(
       fit: StackFit.expand,
       children: <Widget>[
         IgnorePointer(
-          key: _contentKey,
-          child: widget.child,
+          child: _buildContent(),
         ),
-        if (selection == null)
-          GestureDetector(
-            key: const ValueKey<String>('debug_feedback_picker'),
-            behavior: HitTestBehavior.opaque,
-            onTapUp: _selectAt,
-          ),
-        IgnorePointer(
-          child: CustomPaint(
-            painter: _FeedbackHighlightPainter(selection?.bounds),
-          ),
+        GestureDetector(
+          key: const ValueKey<String>('debug_feedback_picker'),
+          behavior: HitTestBehavior.opaque,
+          onTapUp: _selectAt,
         ),
         _buildToolbar(context),
-        if (_notice != null && selection == null)
-          _FeedbackNotice(message: _notice!),
+        if (_notice != null) _FeedbackNotice(message: _notice!),
       ],
     );
+  }
+
+  Widget _buildContent() {
+    return RepaintBoundary(key: _contentKey, child: widget.child);
   }
 
   Widget _buildToolbar(BuildContext context) {
@@ -112,12 +99,10 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
               const SizedBox(width: 8),
               const Icon(Icons.ads_click_rounded, color: Colors.white),
               const SizedBox(width: 8),
-              Expanded(
+              const Expanded(
                 child: Text(
-                  _selection == null
-                      ? 'Tap an interface element'
-                      : 'Comment on selection',
-                  style: const TextStyle(color: Colors.white),
+                  'Tap an interface element',
+                  style: TextStyle(color: Colors.white),
                 ),
               ),
               if (count > 0)
@@ -149,12 +134,13 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
 
   Future<void> _selectAt(TapUpDetails details) async {
     final RenderObject? root = _contentKey.currentContext?.findRenderObject();
-    if (root is! RenderIgnorePointer || root.child == null) {
+    if (root == null) {
       return;
     }
+    final RenderObject contentRoot = root;
     final List<DebugFeedbackCandidate> candidates = widget.targetFinder.find(
       position: details.globalPosition,
-      root: root.child!,
+      root: contentRoot,
     );
     if (candidates.isEmpty) {
       setState(() => _notice = 'No meaningful element at that point');
@@ -172,8 +158,6 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
         .toList(growable: false);
     final Future<_DebugFeedbackDraft?> route = showGeneralDialog(
       context: candidates[initialIndex].element,
-      barrierDismissible: true,
-      barrierLabel: 'Cancel feedback comment',
       barrierColor: Colors.black26,
       transitionDuration: const Duration(milliseconds: 120),
       pageBuilder: (
@@ -185,6 +169,9 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
           candidates: candidates,
           sourceLocations: sourceLocations,
           initialIndex: initialIndex,
+          contentRoot: contentRoot,
+          targetFinder: widget.targetFinder,
+          sourceReader: widget.sourceReader,
         );
       },
     );
@@ -205,11 +192,6 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
     setState(() {
       _notice = draft == null ? null : 'Feedback saved. Tap another element.';
     });
-  }
-
-  void _clearSelection() {
-    _candidates = const <DebugFeedbackCandidate>[];
-    _candidateIndex = 0;
   }
 
   Future<void> _copyFeedback(BuildContext context) async {
@@ -242,11 +224,17 @@ class _DebugFeedbackCommentRoute extends StatefulWidget {
     required this.candidates,
     required this.sourceLocations,
     required this.initialIndex,
+    required this.contentRoot,
+    required this.targetFinder,
+    required this.sourceReader,
   });
 
   final List<DebugFeedbackCandidate> candidates;
   final List<String?> sourceLocations;
   final int initialIndex;
+  final RenderObject contentRoot;
+  final DebugFeedbackTargetFinder targetFinder;
+  final DebugFeedbackSourceReader sourceReader;
 
   @override
   State<_DebugFeedbackCommentRoute> createState() =>
@@ -255,38 +243,84 @@ class _DebugFeedbackCommentRoute extends StatefulWidget {
 
 class _DebugFeedbackCommentRouteState
     extends State<_DebugFeedbackCommentRoute> {
+  late List<DebugFeedbackCandidate> _candidates = widget.candidates;
+  late List<String?> _sourceLocations = widget.sourceLocations;
   late int _candidateIndex = widget.initialIndex;
+  String? _notice;
 
-  DebugFeedbackCandidate get _candidate => widget.candidates[_candidateIndex];
+  DebugFeedbackCandidate get _candidate => _candidates[_candidateIndex];
+
+  void _retarget(TapUpDetails details) {
+    if (!widget.contentRoot.attached) {
+      setState(() => _notice = 'Unable to inspect the interface right now');
+      return;
+    }
+    final List<DebugFeedbackCandidate> candidates = widget.targetFinder.find(
+      position: details.globalPosition,
+      root: widget.contentRoot,
+    );
+    if (candidates.isEmpty) {
+      setState(() => _notice = 'No meaningful element at that point');
+      return;
+    }
+    final int explicitIndex = candidates.indexWhere(
+      (DebugFeedbackCandidate candidate) => candidate.explicit,
+    );
+    setState(() {
+      _candidates = candidates;
+      _sourceLocations = candidates
+          .map(
+            (DebugFeedbackCandidate candidate) =>
+                widget.sourceReader.read(candidate.element),
+          )
+          .toList(growable: false);
+      _candidateIndex = explicitIndex < 0 ? 0 : explicitIndex;
+      _notice = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: <Widget>[
-        DebugFeedbackComposer(
-          candidate: _candidate,
-          candidateIndex: _candidateIndex,
-          candidateCount: widget.candidates.length,
-          onMoreSpecific: _candidateIndex > 0
-              ? () => setState(() => _candidateIndex -= 1)
-              : null,
-          onBroader: _candidateIndex + 1 < widget.candidates.length
-              ? () => setState(() => _candidateIndex += 1)
-              : null,
-          onCancel: () => Navigator.pop(context),
-          onSave: (String comment) {
-            Navigator.pop(
-              context,
-              _DebugFeedbackDraft(
-                candidate: _candidate,
-                comment: comment,
-                sourceLocation: widget.sourceLocations[_candidateIndex],
-              ),
-            );
-          },
-        ),
-      ],
+    return ExcludeFromFeedback(
+      child: Stack(
+        fit: StackFit.expand,
+        children: <Widget>[
+          IgnorePointer(
+            child: CustomPaint(
+              key: const ValueKey<String>('debug_feedback_highlight'),
+              painter: _FeedbackHighlightPainter(_candidate.bounds),
+            ),
+          ),
+          GestureDetector(
+            key: const ValueKey<String>('debug_feedback_retarget_picker'),
+            behavior: HitTestBehavior.opaque,
+            onTapUp: _retarget,
+          ),
+          if (_notice != null) _FeedbackNotice(message: _notice!),
+          DebugFeedbackComposer(
+            candidate: _candidate,
+            candidateIndex: _candidateIndex,
+            candidateCount: _candidates.length,
+            onMoreSpecific: _candidateIndex > 0
+                ? () => setState(() => _candidateIndex -= 1)
+                : null,
+            onBroader: _candidateIndex + 1 < _candidates.length
+                ? () => setState(() => _candidateIndex += 1)
+                : null,
+            onCancel: () => Navigator.pop(context),
+            onSave: (String comment) {
+              Navigator.pop(
+                context,
+                _DebugFeedbackDraft(
+                  candidate: _candidate,
+                  comment: comment,
+                  sourceLocation: _sourceLocations[_candidateIndex],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }
