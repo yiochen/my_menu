@@ -8,6 +8,20 @@ extension MyMenuStateCovers on MyMenuState {
       .where((GeneratedCover cover) => cover.dishId == dishId)
       .toList(growable: false);
 
+  bool isCoverGenerationActiveForDish(String dishId) {
+    return _processingRequests.any(
+      (ProcessingOutboxRequest request) =>
+          request.kind == ProcessingRequestKind.coverGeneration &&
+          request.subjectId == dishId &&
+          <ProcessingDeliveryState>{
+            ProcessingDeliveryState.pendingUpload,
+            ProcessingDeliveryState.uploading,
+            ProcessingDeliveryState.submitted,
+            ProcessingDeliveryState.downloading,
+          }.contains(request.deliveryState),
+    );
+  }
+
   GeneratedCover? proposedCoverForDish(String dishId) {
     for (final GeneratedCover cover in coverHistoryForDish(dishId)) {
       if (cover.state == GeneratedCoverState.proposed) {
