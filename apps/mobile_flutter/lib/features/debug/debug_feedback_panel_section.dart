@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mymenu/shared/debug_feedback/debug_feedback_controller.dart';
 
-class DebugFeedbackPanelSection extends StatelessWidget {
+class DebugFeedbackPanelSection extends StatefulWidget {
   const DebugFeedbackPanelSection({
     required this.controller,
     required this.onStart,
@@ -13,8 +13,16 @@ class DebugFeedbackPanelSection extends StatelessWidget {
   final VoidCallback onStart;
 
   @override
+  State<DebugFeedbackPanelSection> createState() =>
+      _DebugFeedbackPanelSectionState();
+}
+
+class _DebugFeedbackPanelSectionState extends State<DebugFeedbackPanelSection> {
+  bool _confirmingClear = false;
+
+  @override
   Widget build(BuildContext context) {
-    final int count = controller.entries.length;
+    final int count = widget.controller.entries.length;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
@@ -24,7 +32,7 @@ class DebugFeedbackPanelSection extends StatelessWidget {
           title: const Text('Collect UI feedback'),
           subtitle: const Text('Tap meaningful interface elements'),
           dense: true,
-          onTap: onStart,
+          onTap: widget.onStart,
         ),
         if (count > 0)
           ListTile(
@@ -37,12 +45,48 @@ class DebugFeedbackPanelSection extends StatelessWidget {
               button: true,
               child: IconButton(
                 key: const ValueKey<String>('debug_feedback_clear'),
-                onPressed: () => _confirmClear(context),
+                onPressed: _confirmingClear
+                    ? null
+                    : () => setState(() => _confirmingClear = true),
                 icon: const Icon(Icons.delete_outline_rounded),
               ),
             ),
             dense: true,
             onTap: () => _copy(context),
+          ),
+        if (_confirmingClear && count > 0)
+          Padding(
+            key: const ValueKey<String>(
+              'debug_feedback_clear_confirmation',
+            ),
+            padding: const EdgeInsets.fromLTRB(16, 0, 10, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                const Text('Clear all saved feedback?'),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    TextButton(
+                      key: const ValueKey<String>(
+                        'debug_feedback_cancel_clear',
+                      ),
+                      onPressed: () => setState(() => _confirmingClear = false),
+                      child: const Text('Cancel'),
+                    ),
+                    const SizedBox(width: 6),
+                    FilledButton(
+                      key: const ValueKey<String>(
+                        'debug_feedback_confirm_clear',
+                      ),
+                      onPressed: _clear,
+                      child: const Text('Clear'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
       ],
     );
@@ -50,7 +94,7 @@ class DebugFeedbackPanelSection extends StatelessWidget {
 
   Future<void> _copy(BuildContext context) async {
     await Clipboard.setData(
-      ClipboardData(text: controller.buildAgentPrompt()),
+      ClipboardData(text: widget.controller.buildAgentPrompt()),
     );
     if (!context.mounted) {
       return;
@@ -60,31 +104,8 @@ class DebugFeedbackPanelSection extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmClear(BuildContext context) async {
-    final bool shouldClear = await showDialog<bool>(
-          context: context,
-          builder: (BuildContext dialogContext) {
-            return AlertDialog(
-              title: const Text('Clear all feedback?'),
-              content: const Text(
-                'This removes every saved comment from this debug session.',
-              ),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext, false),
-                  child: const Text('Cancel'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.pop(dialogContext, true),
-                  child: const Text('Clear'),
-                ),
-              ],
-            );
-          },
-        ) ??
-        false;
-    if (shouldClear) {
-      controller.clear();
-    }
+  void _clear() {
+    setState(() => _confirmingClear = false);
+    widget.controller.clear();
   }
 }

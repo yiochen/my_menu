@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:mymenu/shared/debug_feedback/debug_feedback_composer.dart';
 import 'package:mymenu/shared/debug_feedback/debug_feedback_controller.dart';
 import 'package:mymenu/shared/debug_feedback/debug_feedback_models.dart';
+import 'package:mymenu/shared/debug_feedback/debug_feedback_overlay_widgets.dart';
 import 'package:mymenu/shared/debug_feedback/debug_feedback_source_reader.dart';
 import 'package:mymenu/shared/debug_feedback/debug_feedback_target_finder.dart';
 import 'package:mymenu/shared/debug_feedback/feedback_target.dart';
@@ -73,7 +74,7 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
           onTapUp: _selectAt,
         ),
         _buildToolbar(context),
-        if (_notice != null) _FeedbackNotice(message: _notice!),
+        if (_notice != null) DebugFeedbackNotice(message: _notice!),
       ],
     );
   }
@@ -156,7 +157,7 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
               widget.sourceReader.read(candidate.element),
         )
         .toList(growable: false);
-    final Future<_DebugFeedbackDraft?> route = showGeneralDialog(
+    final Future<_DebugFeedbackRouteResult?> route = showGeneralDialog(
       context: candidates[initialIndex].element,
       barrierColor: Colors.black26,
       transitionDuration: const Duration(milliseconds: 120),
@@ -176,10 +177,11 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
       },
     );
     widget.controller.stopCollecting();
-    final _DebugFeedbackDraft? draft = await route;
+    final _DebugFeedbackRouteResult? result = await route;
     if (!mounted) {
       return;
     }
+    final _DebugFeedbackDraft? draft = result?.draft;
     if (draft != null) {
       widget.controller.add(
         target: draft.candidate.snapshot.withSourceLocation(
@@ -187,6 +189,10 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
         ),
         comment: draft.comment,
       );
+    }
+    if (result?.finishCollection ?? false) {
+      setState(() => _notice = null);
+      return;
     }
     widget.controller.startCollecting();
     setState(() {
@@ -217,6 +223,16 @@ class _DebugFeedbackDraft {
   final DebugFeedbackCandidate candidate;
   final String comment;
   final String? sourceLocation;
+}
+
+class _DebugFeedbackRouteResult {
+  const _DebugFeedbackRouteResult({
+    this.draft,
+    this.finishCollection = false,
+  });
+
+  final _DebugFeedbackDraft? draft;
+  final bool finishCollection;
 }
 
 class _DebugFeedbackCommentRoute extends StatefulWidget {
@@ -285,18 +301,13 @@ class _DebugFeedbackCommentRouteState
       child: Stack(
         fit: StackFit.expand,
         children: <Widget>[
-          IgnorePointer(
-            child: CustomPaint(
-              key: const ValueKey<String>('debug_feedback_highlight'),
-              painter: _FeedbackHighlightPainter(_candidate.bounds),
-            ),
-          ),
+          DebugFeedbackHighlight(bounds: _candidate.bounds),
           GestureDetector(
             key: const ValueKey<String>('debug_feedback_retarget_picker'),
             behavior: HitTestBehavior.opaque,
             onTapUp: _retarget,
           ),
-          if (_notice != null) _FeedbackNotice(message: _notice!),
+          if (_notice != null) DebugFeedbackNotice(message: _notice!),
           DebugFeedbackComposer(
             candidate: _candidate,
             candidateIndex: _candidateIndex,
@@ -307,72 +318,28 @@ class _DebugFeedbackCommentRouteState
             onBroader: _candidateIndex + 1 < _candidates.length
                 ? () => setState(() => _candidateIndex += 1)
                 : null,
-            onCancel: () => Navigator.pop(context),
+            onCancel: () => Navigator.pop(
+              context,
+              const _DebugFeedbackRouteResult(),
+            ),
+            onDone: () => Navigator.pop(
+              context,
+              const _DebugFeedbackRouteResult(finishCollection: true),
+            ),
             onSave: (String comment) {
               Navigator.pop(
                 context,
-                _DebugFeedbackDraft(
-                  candidate: _candidate,
-                  comment: comment,
-                  sourceLocation: _sourceLocations[_candidateIndex],
+                _DebugFeedbackRouteResult(
+                  draft: _DebugFeedbackDraft(
+                    candidate: _candidate,
+                    comment: comment,
+                    sourceLocation: _sourceLocations[_candidateIndex],
+                  ),
                 ),
               );
             },
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _FeedbackHighlightPainter extends CustomPainter {
-  const _FeedbackHighlightPainter(this.bounds);
-
-  final Rect? bounds;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Rect? target = bounds;
-    if (target == null || target.isEmpty) {
-      return;
-    }
-    canvas.drawRect(
-      target.inflate(2),
-      Paint()
-        ..color = const Color(0xFFFF7A00)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_FeedbackHighlightPainter oldDelegate) {
-    return bounds != oldDelegate.bounds;
-  }
-}
-
-class _FeedbackNotice extends StatelessWidget {
-  const _FeedbackNotice({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      left: 32,
-      right: 32,
-      top: MediaQuery.paddingOf(context).top + 82,
-      child: Material(
-        color: Colors.black87,
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Text(
-            message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white),
-          ),
-        ),
       ),
     );
   }

@@ -9,6 +9,7 @@ class DebugFeedbackComposer extends StatefulWidget {
     required this.onMoreSpecific,
     required this.onBroader,
     required this.onCancel,
+    required this.onDone,
     required this.onSave,
     super.key,
   });
@@ -19,6 +20,7 @@ class DebugFeedbackComposer extends StatefulWidget {
   final VoidCallback? onMoreSpecific;
   final VoidCallback? onBroader;
   final VoidCallback onCancel;
+  final VoidCallback onDone;
   final ValueChanged<String> onSave;
 
   @override
@@ -75,6 +77,7 @@ class _DebugFeedbackComposerState extends State<DebugFeedbackComposer> {
                 candidateCount: widget.candidateCount,
                 onMoreSpecific: widget.onMoreSpecific,
                 onBroader: widget.onBroader,
+                onDone: widget.onDone,
               ),
               const SizedBox(height: 10),
               TextField(
@@ -125,6 +128,7 @@ class _TargetChooser extends StatelessWidget {
     required this.candidateCount,
     required this.onMoreSpecific,
     required this.onBroader,
+    required this.onDone,
   });
 
   final DebugFeedbackCandidate candidate;
@@ -132,6 +136,7 @@ class _TargetChooser extends StatelessWidget {
   final int candidateCount;
   final VoidCallback? onMoreSpecific;
   final VoidCallback? onBroader;
+  final VoidCallback onDone;
 
   @override
   Widget build(BuildContext context) {
@@ -173,6 +178,16 @@ class _TargetChooser extends StatelessWidget {
           child: IconButton(
             onPressed: onBroader,
             icon: const Icon(Icons.arrow_upward_rounded),
+          ),
+        ),
+        Semantics(
+          label: 'Finish feedback collection',
+          button: true,
+          child: IconButton(
+            key: const ValueKey<String>('debug_feedback_finish_collection'),
+            tooltip: 'Finish feedback collection',
+            onPressed: onDone,
+            icon: const Icon(Icons.close_rounded),
           ),
         ),
       ],

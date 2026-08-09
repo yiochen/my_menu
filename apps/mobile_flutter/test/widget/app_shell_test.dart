@@ -195,7 +195,7 @@ void main() {
       });
     });
 
-    testWidgets('debug controls launch and exit UI feedback collection', (
+    testWidgets('debug controls save, exit, and clear UI feedback', (
       WidgetTester tester,
     ) async {
       await runWithMockNetworkImages(() async {
@@ -235,10 +235,19 @@ void main() {
         );
         expect(tester.takeException(), isNull);
 
-        await tester.tap(
-          find.byKey(const ValueKey<String>('debug_feedback_cancel_comment')),
+        await tester.enterText(
+          find.byKey(const ValueKey<String>('debug_feedback_comment')),
+          'Make this meal card quieter.',
         );
         await tester.pump();
+        await tester.tap(
+          find.byKey(const ValueKey<String>('debug_feedback_save_comment')),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const ValueKey<String>('debug_feedback_composer')),
+          findsNothing,
+        );
         await tester.tap(
           find.byKey(const ValueKey<String>('debug_feedback_done')),
         );
@@ -248,6 +257,31 @@ void main() {
           find.byKey(const ValueKey<String>('debug_controls_open')),
           findsOneWidget,
         );
+        await tester.tap(
+          find.byKey(const ValueKey<String>('debug_controls_open')),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('1 comment'), findsOneWidget);
+
+        await tester.tap(
+          find.byKey(const ValueKey<String>('debug_feedback_clear')),
+        );
+        await tester.pump();
+        expect(
+          find.byKey(
+            const ValueKey<String>('debug_feedback_clear_confirmation'),
+          ),
+          findsOneWidget,
+        );
+        await tester.tap(
+          find.byKey(
+            const ValueKey<String>('debug_feedback_confirm_clear'),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('1 comment'), findsNothing);
+        expect(tester.takeException(), isNull);
       });
     });
 

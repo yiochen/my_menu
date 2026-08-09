@@ -114,6 +114,40 @@ void main() {
     expect(controller.collecting, isTrue);
   });
 
+  testWidgets('finishes collection from the active comment route', (
+    WidgetTester tester,
+  ) async {
+    final DebugFeedbackController controller = DebugFeedbackController();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(_FeedbackTestApp(controller: controller));
+    controller.startCollecting();
+    await tester.pump();
+    await tester.tapAt(
+      tester.getCenter(
+        find.byKey(const ValueKey<String>('feedback_test_action')),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(
+      find.byKey(
+        const ValueKey<String>('debug_feedback_finish_collection'),
+      ),
+    );
+    await tester.pump();
+
+    expect(controller.collecting, isFalse);
+    expect(
+      find.byKey(const ValueKey<String>('debug_feedback_composer')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('debug_feedback_picker')),
+      findsNothing,
+    );
+  });
+
   testWidgets('does not expose structural widgets as target choices', (
     WidgetTester tester,
   ) async {
