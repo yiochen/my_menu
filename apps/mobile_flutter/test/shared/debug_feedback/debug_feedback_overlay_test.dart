@@ -26,6 +26,7 @@ void main() {
       find.byKey(const ValueKey<String>('debug_feedback_composer')),
       findsOneWidget,
     );
+    expect(controller.collecting, isFalse);
     expect(find.text('Continue action'), findsOneWidget);
     expect(find.textContaining('Padding'), findsNothing);
 
@@ -58,6 +59,7 @@ void main() {
       find.byKey(const ValueKey<String>('debug_feedback_composer')),
       findsNothing,
     );
+    expect(controller.collecting, isTrue);
   });
 
   testWidgets('does not expose structural widgets as target choices', (

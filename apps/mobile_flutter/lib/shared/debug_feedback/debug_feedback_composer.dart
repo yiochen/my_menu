@@ -26,15 +26,27 @@ class DebugFeedbackComposer extends StatefulWidget {
 }
 
 class _DebugFeedbackComposerState extends State<DebugFeedbackComposer> {
-  String _comment = '';
+  late final TextEditingController _commentController;
+  bool _canSave = false;
 
-  bool get _canSave => _comment.trim().isNotEmpty;
+  @override
+  void initState() {
+    super.initState();
+    _commentController = TextEditingController()..addListener(_commentChanged);
+  }
 
-  void _commentChanged(String value) {
-    final bool couldSave = _canSave;
-    _comment = value;
-    if (couldSave != _canSave) {
-      setState(() {});
+  @override
+  void dispose() {
+    _commentController
+      ..removeListener(_commentChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _commentChanged() {
+    final bool canSave = _commentController.text.trim().isNotEmpty;
+    if (_canSave != canSave) {
+      setState(() => _canSave = canSave);
     }
   }
 
@@ -67,11 +79,11 @@ class _DebugFeedbackComposerState extends State<DebugFeedbackComposer> {
               const SizedBox(height: 10),
               TextField(
                 key: const ValueKey<String>('debug_feedback_comment'),
+                controller: _commentController,
                 autofocus: true,
                 minLines: 2,
                 maxLines: 5,
                 textInputAction: TextInputAction.newline,
-                onChanged: _commentChanged,
                 decoration: const InputDecoration(
                   hintText: 'What should change?',
                   border: OutlineInputBorder(),
@@ -90,7 +102,9 @@ class _DebugFeedbackComposerState extends State<DebugFeedbackComposer> {
                   const SizedBox(width: 8),
                   FilledButton.icon(
                     key: const ValueKey<String>('debug_feedback_save_comment'),
-                    onPressed: _canSave ? () => widget.onSave(_comment) : null,
+                    onPressed: _canSave
+                        ? () => widget.onSave(_commentController.text)
+                        : null,
                     icon: const Icon(Icons.add_comment_rounded),
                     label: const Text('Save comment'),
                   ),

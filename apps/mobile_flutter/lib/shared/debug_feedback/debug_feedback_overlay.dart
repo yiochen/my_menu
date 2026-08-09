@@ -91,17 +91,6 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
         _buildToolbar(context),
         if (_notice != null && selection == null)
           _FeedbackNotice(message: _notice!),
-        if (selection != null)
-          DebugFeedbackComposer(
-            candidate: selection,
-            candidateIndex: _candidateIndex,
-            candidateCount: _candidates.length,
-            onMoreSpecific: _candidateIndex > 0 ? _moreSpecific : null,
-            onBroader:
-                _candidateIndex + 1 < _candidates.length ? _broader : null,
-            onCancel: _clearSelectedTarget,
-            onSave: _saveComment,
-          ),
       ],
     );
   }
@@ -158,7 +147,7 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
     );
   }
 
-  void _selectAt(TapUpDetails details) {
+  Future<void> _selectAt(TapUpDetails details) async {
     final RenderObject? root = _contentKey.currentContext?.findRenderObject();
     if (root is! RenderIgnorePointer || root.child == null) {
       return;
@@ -167,49 +156,60 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
       position: details.globalPosition,
       root: root.child!,
     );
-    setState(() {
-      _candidates = candidates;
-      final int explicitIndex = candidates.indexWhere(
-        (DebugFeedbackCandidate candidate) => candidate.explicit,
+    if (candidates.isEmpty) {
+      setState(() => _notice = 'No meaningful element at that point');
+      return;
+    }
+    final int explicitIndex = candidates.indexWhere(
+      (DebugFeedbackCandidate candidate) => candidate.explicit,
+    );
+    final int initialIndex = explicitIndex < 0 ? 0 : explicitIndex;
+    final List<String?> sourceLocations = candidates
+        .map(
+          (DebugFeedbackCandidate candidate) =>
+              widget.sourceReader.read(candidate.element),
+        )
+        .toList(growable: false);
+    final Future<_DebugFeedbackDraft?> route = showGeneralDialog(
+      context: candidates[initialIndex].element,
+      barrierDismissible: true,
+      barrierLabel: 'Cancel feedback comment',
+      barrierColor: Colors.black26,
+      transitionDuration: const Duration(milliseconds: 120),
+      pageBuilder: (
+        BuildContext context,
+        Animation<double> animation,
+        Animation<double> secondaryAnimation,
+      ) {
+        return _DebugFeedbackCommentRoute(
+          candidates: candidates,
+          sourceLocations: sourceLocations,
+          initialIndex: initialIndex,
+        );
+      },
+    );
+    widget.controller.stopCollecting();
+    final _DebugFeedbackDraft? draft = await route;
+    if (!mounted) {
+      return;
+    }
+    if (draft != null) {
+      widget.controller.add(
+        target: draft.candidate.snapshot.withSourceLocation(
+          draft.sourceLocation,
+        ),
+        comment: draft.comment,
       );
-      _candidateIndex = explicitIndex < 0 ? 0 : explicitIndex;
-      _notice =
-          candidates.isEmpty ? 'No meaningful element at that point' : null;
+    }
+    widget.controller.startCollecting();
+    setState(() {
+      _notice = draft == null ? null : 'Feedback saved. Tap another element.';
     });
-  }
-
-  void _moreSpecific() {
-    setState(() => _candidateIndex -= 1);
-  }
-
-  void _broader() {
-    setState(() => _candidateIndex += 1);
-  }
-
-  void _clearSelectedTarget() {
-    setState(_clearSelection);
   }
 
   void _clearSelection() {
     _candidates = const <DebugFeedbackCandidate>[];
     _candidateIndex = 0;
-  }
-
-  void _saveComment(String comment) {
-    final DebugFeedbackCandidate? selection = _selection;
-    if (selection == null || comment.trim().isEmpty) {
-      return;
-    }
-    widget.controller.add(
-      target: selection.snapshot.withSourceLocation(
-        widget.sourceReader.read(selection.element),
-      ),
-      comment: comment,
-    );
-    setState(() {
-      _notice = 'Feedback saved. Tap another element.';
-      _clearSelection();
-    });
   }
 
   Future<void> _copyFeedback(BuildContext context) async {
@@ -221,6 +221,72 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
     }
     ScaffoldMessenger.maybeOf(context)?.showSnackBar(
       const SnackBar(content: Text('Feedback prompt copied')),
+    );
+  }
+}
+
+class _DebugFeedbackDraft {
+  const _DebugFeedbackDraft({
+    required this.candidate,
+    required this.comment,
+    required this.sourceLocation,
+  });
+
+  final DebugFeedbackCandidate candidate;
+  final String comment;
+  final String? sourceLocation;
+}
+
+class _DebugFeedbackCommentRoute extends StatefulWidget {
+  const _DebugFeedbackCommentRoute({
+    required this.candidates,
+    required this.sourceLocations,
+    required this.initialIndex,
+  });
+
+  final List<DebugFeedbackCandidate> candidates;
+  final List<String?> sourceLocations;
+  final int initialIndex;
+
+  @override
+  State<_DebugFeedbackCommentRoute> createState() =>
+      _DebugFeedbackCommentRouteState();
+}
+
+class _DebugFeedbackCommentRouteState
+    extends State<_DebugFeedbackCommentRoute> {
+  late int _candidateIndex = widget.initialIndex;
+
+  DebugFeedbackCandidate get _candidate => widget.candidates[_candidateIndex];
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: <Widget>[
+        DebugFeedbackComposer(
+          candidate: _candidate,
+          candidateIndex: _candidateIndex,
+          candidateCount: widget.candidates.length,
+          onMoreSpecific: _candidateIndex > 0
+              ? () => setState(() => _candidateIndex -= 1)
+              : null,
+          onBroader: _candidateIndex + 1 < widget.candidates.length
+              ? () => setState(() => _candidateIndex += 1)
+              : null,
+          onCancel: () => Navigator.pop(context),
+          onSave: (String comment) {
+            Navigator.pop(
+              context,
+              _DebugFeedbackDraft(
+                candidate: _candidate,
+                comment: comment,
+                sourceLocation: widget.sourceLocations[_candidateIndex],
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 }
