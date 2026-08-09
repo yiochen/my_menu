@@ -17,6 +17,7 @@ For Flutter work under `apps/mobile_flutter/`:
 # Flutter Learnings
 
 - When saving from a dialog or route, return the user's intent from the route first, then apply state changes after the route completes. Keep input controllers owned by the widget subtree that builds the input so route teardown cannot rebuild disposed objects.
+- Put focusable modal UI on a Navigator route or its Overlay instead of in an app-shell Stack outside the Navigator. This preserves the expected FocusScope, Overlay, and platform text-input lifecycle; diagnose keyboard issues on a real IME using the full editing value, including selection and composing range.
 
 # Supabase Backend
 
