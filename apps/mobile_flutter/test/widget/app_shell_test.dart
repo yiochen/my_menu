@@ -195,6 +195,96 @@ void main() {
       });
     });
 
+    testWidgets('debug controls save, exit, and clear UI feedback', (
+      WidgetTester tester,
+    ) async {
+      await runWithMockNetworkImages(() async {
+        await tester.pumpWidget(_debugTestApp());
+        await tester.pumpAndSettle();
+
+        await tester.tap(
+          find.byKey(const ValueKey<String>('debug_controls_open')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const ValueKey<String>('debug_feedback_start')),
+        );
+        await tester.pump();
+
+        expect(
+          find.byKey(const ValueKey<String>('debug_feedback_picker')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey<String>('debug_controls_open')),
+          findsNothing,
+        );
+
+        await tester.tapAt(
+          tester.getCenter(
+            find.byKey(
+              const ValueKey<String>('planned_meal_plan_today_0'),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        expect(
+          find.byKey(const ValueKey<String>('debug_feedback_composer')),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+
+        await tester.enterText(
+          find.byKey(const ValueKey<String>('debug_feedback_comment')),
+          'Make this meal card quieter.',
+        );
+        await tester.pump();
+        await tester.tap(
+          find.byKey(const ValueKey<String>('debug_feedback_save_comment')),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const ValueKey<String>('debug_feedback_composer')),
+          findsNothing,
+        );
+        await tester.tap(
+          find.byKey(const ValueKey<String>('debug_feedback_done')),
+        );
+        await tester.pump();
+
+        expect(
+          find.byKey(const ValueKey<String>('debug_controls_open')),
+          findsOneWidget,
+        );
+        await tester.tap(
+          find.byKey(const ValueKey<String>('debug_controls_open')),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('1 comment'), findsOneWidget);
+
+        await tester.tap(
+          find.byKey(const ValueKey<String>('debug_feedback_clear')),
+        );
+        await tester.pump();
+        expect(
+          find.byKey(
+            const ValueKey<String>('debug_feedback_clear_confirmation'),
+          ),
+          findsOneWidget,
+        );
+        await tester.tap(
+          find.byKey(
+            const ValueKey<String>('debug_feedback_confirm_clear'),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('1 comment'), findsNothing);
+        expect(tester.takeException(), isNull);
+      });
+    });
+
     testWidgets('shows the redesigned plan screen on launch', (
       WidgetTester tester,
     ) async {

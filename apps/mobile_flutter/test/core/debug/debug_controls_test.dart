@@ -7,6 +7,7 @@ import 'package:mymenu/core/debug/shared_preferences_debug_controls.dart';
 import 'package:mymenu/core/network/my_menu_api_client.dart';
 import 'package:mymenu/core/network/network_gated_my_menu_api_client.dart';
 import 'package:mymenu/core/network/network_status_monitor.dart';
+import 'package:mymenu/shared/debug_feedback/debug_feedback_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -84,5 +85,37 @@ void main() {
     addTearDown(reloadedController.dispose);
 
     expect(reloadedController.networkEnabled, isTrue);
+  });
+
+  test('feedback survives controller recreation', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final SharedPreferencesDebugControls storedControls =
+        await SharedPreferencesDebugControls.load();
+    await storedControls.setFeedbackEntries(
+      <DebugFeedbackEntry>[
+        DebugFeedbackEntry(
+          target: const DebugFeedbackTargetSnapshot(
+            id: 'screen.action',
+            label: 'Screen action',
+            widgetType: 'TextButton',
+            widgetPath: <String>['Screen', 'TextButton'],
+          ),
+          comment: 'Use a quieter style.',
+          createdAt: DateTime.utc(2026, 8, 8),
+        ),
+      ],
+    );
+
+    final SharedPreferencesDebugControls reloadedControls =
+        await SharedPreferencesDebugControls.load();
+    final DebugControlsController controller = DebugControlsController(
+      initialSettings: reloadedControls.settings,
+      persistence: reloadedControls,
+    );
+    addTearDown(controller.dispose);
+
+    expect(controller.feedback.entries, hasLength(1));
+    expect(controller.feedback.entries.single.target.id, 'screen.action');
+    expect(controller.feedback.entries.single.comment, 'Use a quieter style.');
   });
 }
