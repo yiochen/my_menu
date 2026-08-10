@@ -1,6 +1,37 @@
 part of 'my_menu_state.dart';
 
 extension MyMenuDishEdits on MyMenuState {
+  Future<void> updateDishDetails(
+    String dishId, {
+    required String title,
+    required String description,
+  }) async {
+    final String trimmedTitle = title.trim();
+    if (trimmedTitle.isEmpty) {
+      throw ArgumentError.value(title, 'title', 'Dish title cannot be blank.');
+    }
+    final String trimmedDescription = description.trim();
+    final AppRepositories? repositories = _repositories;
+    if (repositories != null) {
+      await repositories.dishRepository.updateDetails(
+        dishId,
+        title: trimmedTitle,
+        description: trimmedDescription,
+      );
+      await _reloadFromRepositories();
+      return;
+    }
+    _dishes = _dishes.map((Dish dish) {
+      return dish.id == dishId
+          ? dish.copyWith(
+              title: trimmedTitle,
+              description: trimmedDescription,
+            )
+          : dish;
+    }).toList(growable: false);
+    _notifyChanged();
+  }
+
   Future<void> resolveReviewToDish(String reviewId, String dishId) async {
     final ReviewItem item =
         _reviewItems.firstWhere((ReviewItem review) => review.id == reviewId);

@@ -341,7 +341,10 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Cook again'), findsOneWidget);
-        expect(find.text('Cover image'), findsNothing);
+        expect(
+          find.byKey(const ValueKey<String>('cover_image_button')),
+          findsOneWidget,
+        );
         final Finder detailScroll = find.byKey(
           const ValueKey<String>('dish_detail_scroll_view'),
         );

@@ -12,6 +12,7 @@ part 'cover_repository_selection.dart';
 part 'cover_repository_automatic.dart';
 
 const String automaticCoversSettingKey = 'automatic_ai_covers_enabled';
+const String lastManualCoverTreatmentSettingKey = 'last_manual_cover_treatment';
 
 class CoverRepository {
   CoverRepository(this._database);
@@ -51,6 +52,43 @@ class CoverRepository {
         );
       }
     });
+  }
+
+  Future<CoverTreatment?> lastManualTreatment() async {
+    final db.LocalSettingRow? row = await (_database.select(
+      _database.localSettings,
+    )..where(
+            (db.LocalSettings table) =>
+                table.key.equals(lastManualCoverTreatmentSettingKey),
+          ))
+        .getSingleOrNull();
+    if (row == null) return null;
+    try {
+      final Object? decoded = jsonDecode(row.value);
+      if (decoded is! Map<String, dynamic>) return null;
+      return CoverTreatment(
+        look: CoverLook.values.firstWhere(
+          (CoverLook value) => value.apiValue == decoded['look'],
+        ),
+        view: CoverView.values.firstWhere(
+          (CoverView value) => value.apiValue == decoded['view'],
+        ),
+        finish: CoverFinish.values.firstWhere(
+          (CoverFinish value) => value.apiValue == decoded['finish'],
+        ),
+      );
+    } on Object {
+      return null;
+    }
+  }
+
+  Future<void> rememberManualTreatment(CoverTreatment treatment) {
+    return _database.into(_database.localSettings).insertOnConflictUpdate(
+          db.LocalSettingsCompanion.insert(
+            key: lastManualCoverTreatmentSettingKey,
+            value: jsonEncode(treatment.toJson()),
+          ),
+        );
   }
 
   Future<bool> enqueueAutomaticCover({
@@ -156,19 +194,19 @@ class CoverRepository {
           'thumbnail': dish.heroThumbnailUrl,
           'placeholder': dish.heroPlaceholderUrl,
         });
-        await (_database.update(_database.generatedCovers)
-              ..where(
-                (db.GeneratedCovers table) =>
-                    table.dishId.equals(dishId) &
-                    table.state.equals(GeneratedCoverState.current.name),
-              ))
-            .write(
-          db.GeneratedCoversCompanion(
-            state: Value<String>(GeneratedCoverState.history.name),
-            automaticUndoAvailable: const Value<bool>(false),
-          ),
-        );
       }
+      await (_database.update(_database.generatedCovers)
+            ..where(
+              (db.GeneratedCovers table) =>
+                  table.dishId.equals(dishId) &
+                  table.state.equals(GeneratedCoverState.current.name),
+            ))
+          .write(
+        db.GeneratedCoversCompanion(
+          state: Value<String>(GeneratedCoverState.history.name),
+          automaticUndoAvailable: const Value<bool>(false),
+        ),
+      );
       await _database.into(_database.generatedCovers).insertOnConflictUpdate(
             db.GeneratedCoversCompanion.insert(
               id: id,
@@ -185,27 +223,23 @@ class CoverRepository {
               finish: treatment.finish.apiValue,
               contractVersion: contractVersion,
               proposalId: proposalId,
-              state: origin == CoverOrigin.manual
-                  ? GeneratedCoverState.proposed.name
-                  : GeneratedCoverState.current.name,
+              state: GeneratedCoverState.current.name,
               automaticUndoAvailable:
                   Value<bool>(origin == CoverOrigin.automatic),
               previousCoverJson: Value<String?>(previousCoverJson),
               createdAt: createdAt,
             ),
           );
-      if (origin == CoverOrigin.automatic) {
-        await (_database.update(_database.dishes)
-              ..where((db.Dishes table) => table.id.equals(dishId)))
-            .write(
-          db.DishesCompanion(
-            heroImageUrl: Value<String>(localPath),
-            heroPreviewUrl: Value<String?>(previewPath),
-            heroThumbnailUrl: Value<String?>(thumbnailPath),
-            heroPlaceholderUrl: Value<String?>(placeholderPath),
-          ),
-        );
-      }
+      await (_database.update(_database.dishes)
+            ..where((db.Dishes table) => table.id.equals(dishId)))
+          .write(
+        db.DishesCompanion(
+          heroImageUrl: Value<String>(localPath),
+          heroPreviewUrl: Value<String?>(previewPath),
+          heroThumbnailUrl: Value<String?>(thumbnailPath),
+          heroPlaceholderUrl: Value<String?>(placeholderPath),
+        ),
+      );
     });
   }
 

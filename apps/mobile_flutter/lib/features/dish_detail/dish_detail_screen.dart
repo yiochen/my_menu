@@ -10,7 +10,6 @@ import 'package:mymenu/features/dish_detail/cook_again_sheet.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_content.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_hero.dart';
 import 'package:mymenu/features/dish_detail/recipe_section_editor.dart';
-import 'package:mymenu/features/improve_cover/improve_cover_dialog.dart';
 import 'package:mymenu/features/photos/photos_route.dart';
 import 'package:mymenu/features/photos/photos_screen.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
@@ -122,12 +121,6 @@ class _DishDetailScreenState extends State<DishDetailScreen>
                     state.acknowledgeAutomaticCover(automaticCover.id),
               ),
             ],
-            if (state.proposedCoverForDish(dish.id) != null) ...<Widget>[
-              const SizedBox(height: 12),
-              _CoverProposalNotice(
-                onReview: () => showImproveCoverDialog(context, state, dish.id),
-              ),
-            ],
             const SizedBox(height: 16),
             PrimaryPillButton(
               key: const ValueKey<String>('cook_again_button'),
@@ -232,26 +225,6 @@ class _AutomaticCoverNotice extends StatelessWidget {
               onPressed: onDismiss,
               icon: const Icon(Icons.close),
             ),
-          ],
-        ),
-      );
-}
-
-class _CoverProposalNotice extends StatelessWidget {
-  const _CoverProposalNotice({required this.onReview});
-
-  final VoidCallback onReview;
-
-  @override
-  Widget build(BuildContext context) => WarmCard(
-        key: const ValueKey<String>('cover_proposal_ready_notice'),
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: <Widget>[
-            const Icon(Icons.auto_awesome, color: MyMenuColors.orange),
-            const SizedBox(width: 10),
-            const Expanded(child: Text('Your improved cover is ready.')),
-            TextButton(onPressed: onReview, child: const Text('Review')),
           ],
         ),
       );

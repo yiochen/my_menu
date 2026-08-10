@@ -85,7 +85,7 @@ void main() {
     },
   );
 
-  test('a delivered manual Cover waits as one durable proposal', () async {
+  test('a delivered manual Cover is applied and retained in history', () async {
     final AppDatabase database =
         AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(database.close);
@@ -107,20 +107,19 @@ void main() {
       createdAt: DateTime.utc(2026, 8, 4, 12),
     );
 
-    final Dish unchanged =
+    final Dish changed =
         (await repositories.dishRepository.listDishes()).single;
     final List<GeneratedCover> history =
         await repositories.coverRepository.listForDish('dish-manual');
 
-    expect(unchanged.heroImageUrl, '/tmp/current.jpg');
+    expect(changed.heroImageUrl, '/tmp/generated-cover.jpg');
     expect(history, hasLength(1));
-    expect(history.single.state, GeneratedCoverState.proposed);
+    expect(history.single.state, GeneratedCoverState.current);
     expect(history.single.localPath, '/tmp/generated-cover.jpg');
     expect(history.single.proposalId, 'proposal-1');
   });
 
-  test('accepting a Proposed Cover changes the Cover and retains history',
-      () async {
+  test('a later manual Cover archives the previous generated Cover', () async {
     final AppDatabase database =
         AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(database.close);
@@ -130,25 +129,66 @@ void main() {
     );
     await repositories.dishRepository.createDish(_dish('dish-accept'));
     await repositories.coverRepository.storeDeliveredCover(
-      id: 'cover-accepted',
+      id: 'cover-first',
       dishId: 'dish-accept',
-      localPath: '/tmp/accepted.jpg',
+      localPath: '/tmp/first.jpg',
       origin: CoverOrigin.manual,
       grounding: CoverGrounding.context,
       selectedSourceIds: const <String>[],
       treatment: CoverTreatment.defaults,
-      proposalId: 'proposal-accepted',
+      proposalId: 'proposal-first',
       createdAt: DateTime.utc(2026, 8, 4, 13),
     );
-
-    await repositories.coverRepository.acceptProposal('cover-accepted');
+    await repositories.coverRepository.storeDeliveredCover(
+      id: 'cover-second',
+      dishId: 'dish-accept',
+      localPath: '/tmp/second.jpg',
+      origin: CoverOrigin.manual,
+      grounding: CoverGrounding.context,
+      selectedSourceIds: const <String>[],
+      treatment: CoverTreatment.defaults,
+      proposalId: 'proposal-second',
+      createdAt: DateTime.utc(2026, 8, 4, 13, 1),
+    );
 
     final Dish changed =
         (await repositories.dishRepository.listDishes()).single;
-    final GeneratedCover retained =
-        (await repositories.coverRepository.listForDish('dish-accept')).single;
-    expect(changed.heroImageUrl, '/tmp/accepted.jpg');
-    expect(retained.state, GeneratedCoverState.current);
+    final List<GeneratedCover> retained =
+        await repositories.coverRepository.listForDish('dish-accept');
+    expect(changed.heroImageUrl, '/tmp/second.jpg');
+    expect(retained, hasLength(2));
+    expect(
+      retained
+          .singleWhere((GeneratedCover cover) => cover.id == 'cover-first')
+          .state,
+      GeneratedCoverState.history,
+    );
+    expect(
+      retained
+          .singleWhere((GeneratedCover cover) => cover.id == 'cover-second')
+          .state,
+      GeneratedCoverState.current,
+    );
+  });
+
+  test('the last manual treatment is persisted and restored', () async {
+    final AppDatabase database =
+        AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final CoverRepository repository = CoverRepository(database);
+    const CoverTreatment treatment = CoverTreatment(
+      look: CoverLook.darkRefined,
+      view: CoverView.closeUp,
+      finish: CoverFinish.editorial,
+    );
+
+    expect(await repository.lastManualTreatment(), equals(null));
+    await repository.rememberManualTreatment(treatment);
+
+    final CoverTreatment? restored = await repository.lastManualTreatment();
+    expect(restored?.look, treatment.look);
+    expect(restored?.view, treatment.view);
+    expect(restored?.finish, treatment.finish);
   });
 
   test('an automatic Cover is adopted, undoable, and retained after Undo',
@@ -249,6 +289,10 @@ void main() {
     expect(DateTime.tryParse(note['createdAt']! as String) != null, isTrue);
     expect(DateTime.tryParse(note['updatedAt']! as String) != null, isTrue);
     expect(request.payload['treatment'], treatment.toJson());
+    final CoverTreatment? remembered = await state.lastManualCoverTreatment();
+    expect(remembered?.look, treatment.look);
+    expect(remembered?.view, treatment.view);
+    expect(remembered?.finish, treatment.finish);
   });
 
   test(

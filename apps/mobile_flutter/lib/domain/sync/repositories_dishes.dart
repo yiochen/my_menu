@@ -117,6 +117,25 @@ class DishRepository {
     );
   }
 
+  Future<void> updateDetails(
+    String dishId, {
+    required String title,
+    required String description,
+  }) async {
+    final String trimmedTitle = title.trim();
+    if (trimmedTitle.isEmpty) {
+      throw ArgumentError.value(title, 'title', 'Dish title cannot be blank.');
+    }
+    await (_database.update(_database.dishes)
+          ..where((db.Dishes table) => table.id.equals(dishId)))
+        .write(
+      db.DishesCompanion(
+        title: Value<String>(trimmedTitle),
+        description: Value<String>(description.trim()),
+      ),
+    );
+  }
+
   Future<void> deleteDishes(Iterable<String> dishIds) {
     return deleteLocalDishes(dishIds);
   }

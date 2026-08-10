@@ -66,6 +66,7 @@ flutter:
 
   assets:
     - assets/placeholders/food-cover.png
+    - assets/cover_treatments/
 
   shaders:
     - assets/shaders/cover_generation.frag
