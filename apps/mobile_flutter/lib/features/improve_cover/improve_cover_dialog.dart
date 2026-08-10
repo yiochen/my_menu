@@ -5,12 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:mymenu/domain/covers/generated_cover.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/processing/processing_consent_prompt.dart';
-import 'package:mymenu/domain/processing/processing_outbox.dart';
 import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
 import 'package:mymenu/domain/sync/my_menu_state.dart';
-import 'package:mymenu/features/improve_cover/improve_cover_result.dart';
+import 'package:mymenu/features/improve_cover/cover_history_sheet.dart';
 import 'package:mymenu/features/improve_cover/improve_cover_selection.dart';
 import 'package:mymenu/features/improve_cover/improve_cover_status.dart';
+import 'package:mymenu/shared/theme/my_menu_theme.dart';
+import 'package:mymenu/shared/widgets/warm_components.dart';
 
 enum ImproveCoverStep { selection, generating, result, offline, error }
 
@@ -19,11 +20,11 @@ Future<void> showImproveCoverDialog(
   MyMenuState state,
   String dishId,
 ) {
-  return showModalBottomSheet<void>(
-    context: context,
-    useSafeArea: true,
-    isScrollControlled: true,
-    builder: (_) => ImproveCoverFlow(state: state, dishId: dishId),
+  return Navigator.of(context).push<void>(
+    MaterialPageRoute<void>(
+      fullscreenDialog: true,
+      builder: (_) => ImproveCoverFlow(state: state, dishId: dishId),
+    ),
   );
 }
 
@@ -47,64 +48,55 @@ class _ImproveCoverFlowState extends State<ImproveCoverFlow> {
   late ImproveCoverStep _step;
   final Set<String> _selectedSourceIds = <String>{};
   CoverTreatment _treatment = CoverTreatment.defaults;
+  bool _hasRememberedTreatment = false;
   int? _coverAllowanceRemaining;
 
   Dish get _dish => widget.state.dishById(widget.dishId);
-  GeneratedCover? get _proposal =>
-      widget.state.proposedCoverForDish(widget.dishId);
 
   @override
   void initState() {
     super.initState();
-    _step = widget.initialStep;
+    _step = switch (widget.initialStep) {
+      ImproveCoverStep.generating ||
+      ImproveCoverStep.result =>
+        ImproveCoverStep.selection,
+      ImproveCoverStep.selection ||
+      ImproveCoverStep.offline ||
+      ImproveCoverStep.error =>
+        widget.initialStep,
+    };
     _selectedSourceIds.addAll(
       _dish.sourcePhotos
           .map((SourcePhoto source) => source.id)
           .whereType<String>()
           .take(3),
     );
-    if (_proposal != null) _step = ImproveCoverStep.result;
-    widget.state.addListener(_stateChanged);
+    unawaited(_loadLastTreatment());
     unawaited(_loadAllowance());
   }
 
   @override
-  void dispose() {
-    widget.state.removeListener(_stateChanged);
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final GeneratedCover? proposal = _proposal;
-    if (proposal != null && _step != ImproveCoverStep.selection) {
-      return ImproveCoverResult(
-        dish: _dish,
-        proposal: proposal,
-        onUseCover: () => _useCover(proposal),
-        onTryAnother: () => setState(() => _step = ImproveCoverStep.selection),
-        onKeepCurrent: () => _keepCurrent(proposal),
-      );
-    }
     return switch (_step) {
-      ImproveCoverStep.selection ||
-      ImproveCoverStep.result =>
-        ImproveCoverSelection(
+      ImproveCoverStep.selection || ImproveCoverStep.result => _CoverImagePage(
+          state: widget.state,
           dish: _dish,
-          selectedSourceIds: _selectedSourceIds,
-          treatment: _treatment,
-          onTreatmentChanged: (CoverTreatment value) {
-            setState(() => _treatment = value);
-          },
-          onToggleSource: _toggleSource,
-          onGenerate: _canGenerate ? _startGeneration : null,
+          aiSelection: ImproveCoverSelection(
+            dish: _dish,
+            selectedSourceIds: _selectedSourceIds,
+            treatment: _treatment,
+            autoScrollToTreatment: _hasRememberedTreatment,
+            onTreatmentChanged: (CoverTreatment value) {
+              setState(() => _treatment = value);
+            },
+            onToggleSource: _toggleSource,
+            onGenerate: _canGenerate ? _startGeneration : null,
+            coverAllowanceRemaining: _coverAllowanceRemaining,
+            horizontalPadding: MyMenuUnits.pageHorizontal(context),
+          ),
           onClose: () => Navigator.pop(context),
-          coverAllowanceRemaining: _coverAllowanceRemaining,
         ),
-      ImproveCoverStep.generating => ImproveCoverGenerating(
-          dish: _dish,
-          onClose: () => Navigator.pop(context),
-        ),
+      ImproveCoverStep.generating => throw StateError('Unreachable step'),
       ImproveCoverStep.offline => ImproveCoverOffline(
           dish: _dish,
           onClose: () => Navigator.pop(context),
@@ -128,28 +120,14 @@ class _ImproveCoverFlowState extends State<ImproveCoverFlow> {
     if (mounted) setState(() => _coverAllowanceRemaining = remaining);
   }
 
-  void _stateChanged() {
-    if (!mounted) return;
-    final ProcessingOutboxRequest? request = _coverRequest;
+  Future<void> _loadLastTreatment() async {
+    final CoverTreatment? remembered =
+        await widget.state.lastManualCoverTreatment();
+    if (!mounted || remembered == null) return;
     setState(() {
-      if (_proposal != null) {
-        _step = ImproveCoverStep.result;
-      } else if (request?.deliveryState == ProcessingDeliveryState.failed ||
-          request?.deliveryState == ProcessingDeliveryState.expired) {
-        _step = ImproveCoverStep.error;
-      }
+      _treatment = remembered;
+      _hasRememberedTreatment = true;
     });
-  }
-
-  ProcessingOutboxRequest? get _coverRequest {
-    for (final ProcessingOutboxRequest request
-        in widget.state.processingRequests.reversed) {
-      if (request.kind == ProcessingRequestKind.coverGeneration &&
-          request.subjectId == widget.dishId) {
-        return request;
-      }
-    }
-    return null;
   }
 
   void _toggleSource(String id) {
@@ -175,18 +153,91 @@ class _ImproveCoverFlowState extends State<ImproveCoverFlow> {
       treatment: _treatment,
     );
     if (!mounted) return;
-    setState(() {
-      _step = enqueued ? ImproveCoverStep.generating : ImproveCoverStep.error;
-    });
+    if (enqueued) {
+      Navigator.pop(context);
+    } else {
+      setState(() => _step = ImproveCoverStep.error);
+    }
   }
+}
 
-  Future<void> _useCover(GeneratedCover proposal) async {
-    await widget.state.acceptCoverProposal(proposal.id);
-    if (mounted) Navigator.pop(context);
-  }
+class _CoverImagePage extends StatelessWidget {
+  const _CoverImagePage({
+    required this.state,
+    required this.dish,
+    required this.aiSelection,
+    required this.onClose,
+  });
 
-  Future<void> _keepCurrent(GeneratedCover proposal) async {
-    await widget.state.keepCurrentCover(proposal.id);
-    if (mounted) Navigator.pop(context);
+  final MyMenuState state;
+  final Dish dish;
+  final Widget aiSelection;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final double horizontal = MyMenuUnits.pageHorizontal(context);
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: MyMenuColors.cream,
+        body: WarmPage(
+          includeBottomChromeSpace: false,
+          horizontalPadding: 0,
+          topPadding: 0,
+          bottomPadding: 0,
+          child: SafeArea(
+            child: Column(
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.fromLTRB(horizontal, 8, horizontal, 0),
+                  child: SheetTopBar(
+                    key: const ValueKey<String>(
+                      'improve_cover_sticky_header',
+                    ),
+                    title: 'Cover image',
+                    closeOnLeft: true,
+                    onClose: onClose,
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontal),
+                  child: const TabBar(
+                    key: ValueKey<String>('cover_mode_tabs'),
+                    labelColor: MyMenuColors.ink,
+                    unselectedLabelColor: MyMenuColors.softInk,
+                    indicatorColor: MyMenuColors.orange,
+                    dividerColor: MyMenuColors.line,
+                    tabs: <Widget>[
+                      Tab(
+                        key: ValueKey<String>('cover_ai_tab'),
+                        text: 'AI generation',
+                      ),
+                      Tab(
+                        key: ValueKey<String>('cover_existing_tab'),
+                        text: 'Use existing',
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: TabBarView(
+                    children: <Widget>[
+                      aiSelection,
+                      CoverHistorySelection(
+                        state: state,
+                        dishId: dish.id,
+                        horizontalPadding: horizontal,
+                        onDone: onClose,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

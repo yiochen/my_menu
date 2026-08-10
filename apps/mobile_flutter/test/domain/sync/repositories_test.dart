@@ -527,10 +527,16 @@ void main() {
         ingredients: const <String>['Noodles|8 oz', 'Gochujang|2 tbsp'],
         recipeSteps: const <String>['Boil noodles.', 'Toss with sauce.'],
       );
+      await repositories.dishRepository.updateDetails(
+        dish.id,
+        title: '  Weeknight Gochujang Noodles  ',
+        description: '  A human-written description.  ',
+      );
 
       final Dish saved = (await repositories.dishRepository.listDishes())
           .singleWhere((Dish item) => item.id == dish.id);
-      expect(saved.title, 'Gochujang Noodles');
+      expect(saved.title, 'Weeknight Gochujang Noodles');
+      expect(saved.description, 'A human-written description.');
       expect(saved.notes.single.body, 'Try sesame and scallions.');
       expect(saved.isFavorite, isTrue);
       expect(saved.ingredients, <String>['Noodles|8 oz', 'Gochujang|2 tbsp']);

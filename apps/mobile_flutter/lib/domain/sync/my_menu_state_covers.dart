@@ -42,6 +42,11 @@ extension MyMenuStateCovers on MyMenuState {
     return null;
   }
 
+  Future<CoverTreatment?> lastManualCoverTreatment() async {
+    await _repositoryBootstrap;
+    return _repositories?.coverRepository.lastManualTreatment();
+  }
+
   Future<bool> enqueueAutomaticCoverForDish(String dishId) async {
     await _repositoryBootstrap;
     final AppRepositories? repositories = _repositories;
@@ -154,6 +159,7 @@ extension MyMenuStateCovers on MyMenuState {
           ),
         );
         await _reloadFromRepositories();
+        await repositories.coverRepository.rememberManualTreatment(treatment);
         _startCaptureSyncPollingWindow();
         return true;
       }
@@ -172,6 +178,7 @@ extension MyMenuStateCovers on MyMenuState {
       now: DateTime.now(),
     );
     if (enqueued) {
+      await repositories.coverRepository.rememberManualTreatment(treatment);
       await _reloadFromRepositories();
       _startCaptureSyncPollingWindow();
     }

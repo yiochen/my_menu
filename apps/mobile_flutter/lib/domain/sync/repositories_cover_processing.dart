@@ -187,9 +187,7 @@ extension SyncRepositoryCovers on SyncRepository {
           .acknowledgeProcessingJob(jobId: job.id)
           .timeout(_controlRequestTimeout);
       await outbox.markAcknowledged(request.id);
-      if (request.payload['origin'] == CoverOrigin.automatic.name) {
-        await outbox.markAdopted(request.id);
-      }
+      await outbox.markAdopted(request.id);
       await _deleteProcessingAssets(request.id);
     } on Object catch (error) {
       if (_isConnectivityError(error)) {
