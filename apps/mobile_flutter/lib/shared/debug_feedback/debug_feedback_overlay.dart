@@ -29,6 +29,7 @@ class DebugFeedbackOverlay extends StatefulWidget {
 class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
   final GlobalKey _contentKey = GlobalKey();
   String? _notice;
+  bool _toolbarAtTop = false;
 
   @override
   void initState() {
@@ -85,11 +86,14 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
 
   Widget _buildToolbar(BuildContext context) {
     final int count = widget.controller.entries.length;
+    final EdgeInsets safePadding = MediaQuery.paddingOf(context);
     return Positioned(
       left: 12,
-      top: MediaQuery.paddingOf(context).top + 10,
+      top: _toolbarAtTop ? safePadding.top + 10 : null,
       right: 12,
+      bottom: _toolbarAtTop ? null : safePadding.bottom + 10,
       child: Material(
+        key: const ValueKey<String>('debug_feedback_toolbar'),
         color: Theme.of(context).colorScheme.inverseSurface,
         elevation: 8,
         borderRadius: BorderRadius.circular(16),
@@ -121,6 +125,24 @@ class _DebugFeedbackOverlayState extends State<DebugFeedbackOverlay> {
                     color: Colors.white,
                   ),
                 ),
+              Semantics(
+                label: _toolbarAtTop
+                    ? 'Move feedback toolbar to bottom'
+                    : 'Move feedback toolbar to top',
+                button: true,
+                child: IconButton(
+                  key: const ValueKey<String>('debug_feedback_move_toolbar'),
+                  onPressed: () {
+                    setState(() => _toolbarAtTop = !_toolbarAtTop);
+                  },
+                  icon: Icon(
+                    _toolbarAtTop
+                        ? Icons.vertical_align_bottom_rounded
+                        : Icons.vertical_align_top_rounded,
+                  ),
+                  color: Colors.white,
+                ),
+              ),
               TextButton(
                 key: const ValueKey<String>('debug_feedback_done'),
                 onPressed: widget.controller.stopCollecting,

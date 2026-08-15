@@ -18,19 +18,18 @@ Future<void> showPlanPickerSheet(
   MyMenuState state, {
   required DateTime date,
 }) async {
-  final String? dishId = await showModalBottomSheet<String>(
+  final Set<String>? dishIds = await showModalBottomSheet<Set<String>>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
     builder: (_) => _PlanPickerSheet(state: state, date: date),
   );
-  if (dishId != null && context.mounted) {
+  if (dishIds != null && context.mounted) {
     await runLocalWriteWithFeedback(
       context,
-      () => state.addPlannedMeal(
+      () => state.replacePlannedDishesForDay(
         dayKeyForDate(date),
-        dishId,
-        label: 'Dinner',
+        dishIds,
       ),
     );
   }
@@ -47,8 +46,17 @@ class _PlanPickerSheet extends StatefulWidget {
 }
 
 class _PlanPickerSheetState extends State<_PlanPickerSheet> {
-  String? _selectedDishId = 'dish_salmon';
+  late final Set<String> _selectedDishIds;
   String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDishIds = widget.state
+        .plannedMealsForDay(dayKeyForDate(widget.date))
+        .map((PlannedMeal meal) => meal.dishId)
+        .toSet();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,12 +87,12 @@ class _PlanPickerSheetState extends State<_PlanPickerSheet> {
                     '${_months[widget.date.month - 1]} ${widget.date.day}',
                   ),
                   Text(
-                    'Add another dish',
+                    'Choose dishes',
                     style: Theme.of(context).textTheme.displaySmall,
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Choose one more from your personal menu.',
+                    'Select everything you want to cook that day.',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -100,6 +108,8 @@ class _PlanPickerSheetState extends State<_PlanPickerSheet> {
               ),
             ),
             const SizedBox(height: 12),
+            _selectionSummary(context),
+            const SizedBox(height: 4),
             const Row(
               children: <Widget>[
                 WarmPill(label: 'Suggested', selected: true),
@@ -118,17 +128,22 @@ class _PlanPickerSheetState extends State<_PlanPickerSheet> {
                   final Dish dish = dishes[index];
                   return _DishChoice(
                     dish: dish,
-                    selected: dish.id == _selectedDishId,
-                    onTap: () => setState(() => _selectedDishId = dish.id),
+                    selected: _selectedDishIds.contains(dish.id),
+                    onTap: () => setState(() {
+                      if (!_selectedDishIds.add(dish.id)) {
+                        _selectedDishIds.remove(dish.id);
+                      }
+                    }),
                   );
                 },
               ),
             ),
             const SizedBox(height: 10),
             PrimaryPillButton(
-              label: 'Add to ${_weekdays[widget.date.weekday - 1]}',
-              icon: Icons.arrow_forward,
-              onPressed: _selectedDishId == null ? null : _save,
+              key: const ValueKey<String>('plan_save_dishes'),
+              label: 'Save ${_weekdays[widget.date.weekday - 1]}',
+              icon: Icons.check_rounded,
+              onPressed: _save,
             ),
           ],
         ),
@@ -137,7 +152,27 @@ class _PlanPickerSheetState extends State<_PlanPickerSheet> {
   }
 
   void _save() {
-    Navigator.pop(context, _selectedDishId);
+    Navigator.pop(context, Set<String>.unmodifiable(_selectedDishIds));
+  }
+
+  Widget _selectionSummary(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Text(
+          '${_selectedDishIds.length} selected',
+          key: const ValueKey<String>('plan_selected_dish_count'),
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const Spacer(),
+        TextButton(
+          key: const ValueKey<String>('plan_clear_all_dishes'),
+          onPressed: _selectedDishIds.isEmpty
+              ? null
+              : () => setState(_selectedDishIds.clear),
+          child: const Text('Clear all'),
+        ),
+      ],
+    );
   }
 }
 
@@ -154,48 +189,55 @@ class _DishChoice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: selected ? MyMenuColors.orangeSoft : Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(
-          color: selected ? MyMenuColors.orange : MyMenuColors.line,
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: Material(
+        color: selected ? MyMenuColors.orangeSoft : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(
+            color: selected ? MyMenuColors.orange : MyMenuColors.line,
+          ),
         ),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Row(
-            children: <Widget>[
-              ClipRRect(
-                borderRadius: BorderRadius.circular(17),
-                child: SizedBox(
-                  width: 54,
-                  height: 54,
-                  child: DishArtwork(dish: dish),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              children: <Widget>[
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(17),
+                  child: SizedBox(
+                    width: 54,
+                    height: 54,
+                    child: DishArtwork(dish: dish),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(dish.title,
-                        style: Theme.of(context).textTheme.titleMedium),
-                    Text(
-                      '${dish.prepMinutes} min · Made ${dish.madeCount} times',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        dish.title,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      Text(
+                        '${dish.prepMinutes} min · '
+                        'Made ${dish.madeCount} times',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Icon(
-                selected ? Icons.radio_button_checked : Icons.radio_button_off,
-                color: selected ? MyMenuColors.orange : MyMenuColors.softInk,
-              ),
-            ],
+                Icon(
+                  selected ? Icons.check_circle : Icons.circle_outlined,
+                  color: selected ? MyMenuColors.orange : MyMenuColors.softInk,
+                ),
+              ],
+            ),
           ),
         ),
       ),

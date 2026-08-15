@@ -96,6 +96,9 @@ extension SyncRepositoryDishHydration on SyncRepository {
   }
 
   Future<void> _upsertDish(ApiDish apiDish) async {
+    final db.DishRow? existing = await (_database.select(_database.dishes)
+          ..where((db.Dishes table) => table.id.equals(apiDish.id)))
+        .getSingleOrNull();
     final List<SourcePhoto> sourcePhotos = <SourcePhoto>[];
     for (final ApiSourcePhoto photo in apiDish.sourcePhotos) {
       final ({String original, ImageDerivativeSet? previews}) media =
@@ -135,7 +138,7 @@ extension SyncRepositoryDishHydration on SyncRepository {
       heroPreviewUrl: cachedCoverPreviews?.processingRef,
       heroThumbnailUrl: cachedCoverPreviews?.cardRef,
       heroPlaceholderUrl: cachedCoverPreviews?.placeholderRef,
-    );
+    ).copyWith(openedAt: existing?.openedAt);
     await _database.transaction(() async {
       await _database.into(_database.dishes).insertOnConflictUpdate(
             dish.toCompanion(),

@@ -415,7 +415,7 @@ void main() {
                 body: SizedBox(
                   width: 180,
                   height: 300,
-                  child: MenuGridCard(dish: dish),
+                  child: MenuGridCard(dish: dish, showNewBadge: true),
                 ),
               ),
             ),

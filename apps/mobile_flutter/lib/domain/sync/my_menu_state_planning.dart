@@ -25,6 +25,40 @@ extension MyMenuStatePlanning on MyMenuState {
     await _replacePlan(nextPlan);
   }
 
+  Future<void> replacePlannedDishesForDay(
+    String dayKey,
+    Iterable<String> dishIds, {
+    String label = 'Dinner',
+  }) async {
+    final Set<String> validDishIds = dishes.map((Dish dish) => dish.id).toSet();
+    final List<String> selectedDishIds =
+        dishIds.where(validDishIds.contains).toSet().toList(growable: false);
+    final List<PlannedMeal> existingForDay =
+        _plan.where((PlannedMeal meal) => meal.dayKey == dayKey).toList();
+    final Map<String, PlannedMeal> existingByDishId = <String, PlannedMeal>{
+      for (final PlannedMeal meal in existingForDay) meal.dishId: meal,
+    };
+    final List<PlannedMeal> replacements = selectedDishIds.map((String dishId) {
+      return existingByDishId[dishId] ??
+          PlannedMeal(
+            id: const Uuid().v4(),
+            dayKey: dayKey,
+            dishId: dishId,
+            label: label,
+          );
+    }).toList(growable: false);
+    final int firstDayIndex =
+        _plan.indexWhere((PlannedMeal meal) => meal.dayKey == dayKey);
+    final List<PlannedMeal> nextPlan = _plan
+        .where((PlannedMeal meal) => meal.dayKey != dayKey)
+        .toList(growable: true);
+    nextPlan.insertAll(
+      firstDayIndex == -1 ? nextPlan.length : firstDayIndex,
+      replacements,
+    );
+    await _replacePlan(nextPlan);
+  }
+
   Future<void> savePlannedMeal({
     required String dayKey,
     required String dishId,

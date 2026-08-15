@@ -15,6 +15,7 @@ class Dish {
     required this.sourcePhotos,
     this.isFavorite = false,
     this.createdAt,
+    this.openedAt,
     this.heroPreviewUrl,
     this.heroThumbnailUrl,
     this.heroPlaceholderUrl,
@@ -38,6 +39,9 @@ class Dish {
   final List<SourcePhoto> sourcePhotos;
   final bool isFavorite;
   final DateTime? createdAt;
+  final DateTime? openedAt;
+
+  bool get isNew => createdAt != null && openedAt == null;
 
   String get cardImageUrl {
     final String thumbnail = heroThumbnailUrl?.trim() ?? '';
@@ -72,6 +76,7 @@ class Dish {
     List<SourcePhoto>? sourcePhotos,
     bool? isFavorite,
     DateTime? createdAt,
+    DateTime? openedAt,
   }) {
     return Dish(
       id: id ?? this.id,
@@ -92,6 +97,7 @@ class Dish {
       sourcePhotos: sourcePhotos ?? this.sourcePhotos,
       isFavorite: isFavorite ?? this.isFavorite,
       createdAt: createdAt ?? this.createdAt,
+      openedAt: openedAt ?? this.openedAt,
     );
   }
 }

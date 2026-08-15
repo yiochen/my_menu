@@ -59,6 +59,64 @@ void main() {
       expect(plannedMeals.last.label, 'Dinner');
     });
 
+    test('replaces all dishes for a day and preserves other days', () async {
+      const String editedDay = '2026-08-11';
+      const String otherDay = '2026-08-12';
+      final MyMenuState state = MyMenuState.forTesting(
+        dishes: <Dish>[seededDishes.first, seededDishes[1], seededDishes[2]],
+        plan: const <PlannedMeal>[
+          PlannedMeal(
+            id: 'existing',
+            dayKey: editedDay,
+            dishId: 'dish_salmon',
+            label: 'Lunch',
+          ),
+          PlannedMeal(
+            id: 'other',
+            dayKey: otherDay,
+            dishId: 'dish_katsu',
+          ),
+        ],
+      );
+      addTearDown(state.dispose);
+
+      await state.replacePlannedDishesForDay(
+        editedDay,
+        const <String>{'dish_salmon', 'dish_linguine'},
+      );
+
+      final List<PlannedMeal> edited = state.plannedMealsForDay(editedDay);
+      expect(edited.map((PlannedMeal meal) => meal.dishId), <String>[
+        'dish_salmon',
+        'dish_linguine',
+      ]);
+      expect(edited.first.id, 'existing');
+      expect(edited.first.label, 'Lunch');
+      expect(state.plannedMealsForDay(otherDay).single.id, 'other');
+
+      await state.replacePlannedDishesForDay(editedDay, const <String>{});
+      expect(state.plannedMealsForDay(editedDay), isEmpty);
+      expect(state.plannedMealsForDay(otherDay).single.id, 'other');
+    });
+
+    test('opening a newly created dish clears its new status', () async {
+      final Dish newDish = seededDishes.first.copyWith(
+        createdAt: DateTime.utc(2026, 8, 11),
+      );
+      final MyMenuState state = MyMenuState.forTesting(
+        dishes: <Dish>[newDish],
+      );
+      addTearDown(state.dispose);
+
+      expect(state.dishes.single.isNew, isTrue);
+
+      final DateTime openedAt = DateTime.utc(2026, 8, 11, 8);
+      await state.markDishOpened(newDish.id, openedAt: openedAt);
+
+      expect(state.dishes.single.isNew, isFalse);
+      expect(state.dishes.single.openedAt, openedAt);
+    });
+
     test('adding a next day extends the plan timeline by one date', () {
       final MyMenuState state = MyMenuState();
 

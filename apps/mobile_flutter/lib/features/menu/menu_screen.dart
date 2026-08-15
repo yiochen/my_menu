@@ -278,6 +278,7 @@ class _MenuScreenState extends State<MenuScreen> {
                   dish: dish,
                   selected: _selectedDishIds.contains(dish.id),
                   selectionMode: _isSelecting,
+                  showNewBadge: _filter == MenuCollectionFilter.recent,
                   onTap: () => _handleDishTap(context, dish),
                   onLongPress: () => _startSelection(dish.id),
                   onSelect: () => _toggleSelection(dish.id),

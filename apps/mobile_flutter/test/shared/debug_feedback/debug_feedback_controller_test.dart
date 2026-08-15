@@ -15,10 +15,8 @@ void main() {
     sourceLocation: 'lib/features/detail/action_panel.dart:42',
   );
 
-  test('builds a generic self-contained agent prompt', () {
-    final DebugFeedbackController controller = DebugFeedbackController(
-      promptBuilder: const DebugFeedbackPromptBuilder(appRevision: 'abc123'),
-    );
+  test('builds feedback-only clipboard text', () {
+    final DebugFeedbackController controller = DebugFeedbackController();
     addTearDown(controller.dispose);
 
     controller.add(
@@ -28,14 +26,35 @@ void main() {
     );
 
     final String prompt = controller.buildAgentPrompt();
-    expect(prompt, contains('# UI feedback implementation task'));
-    expect(prompt, contains('Read the repository instructions'));
+    expect(prompt, startsWith('## Feedback 1'));
     expect(prompt, contains('Target: detail.primary_action'));
     expect(prompt, contains('ActionPanel > FilledButton'));
     expect(prompt, contains('Visible text: Continue'));
     expect(prompt, contains('Make this action less prominent.'));
-    expect(prompt, contains('App revision: abc123'));
-    expect(prompt, isNot(contains('MyMenu')));
+    expect(prompt, isNot(contains('UI feedback implementation task')));
+    expect(prompt, isNot(contains('Before editing:')));
+    expect(prompt, isNot(contains('Implementation guidance:')));
+    expect(prompt, isNot(contains('After implementation:')));
+    expect(prompt, isNot(contains('App revision:')));
+  });
+
+  test('separates multiple feedback entries without a preamble', () {
+    const DebugFeedbackPromptBuilder builder = DebugFeedbackPromptBuilder();
+    final String prompt = builder.build(<DebugFeedbackEntry>[
+      DebugFeedbackEntry(
+        target: target,
+        comment: 'First comment.',
+        createdAt: DateTime.utc(2026, 8, 8),
+      ),
+      DebugFeedbackEntry(
+        target: target,
+        comment: 'Second comment.',
+        createdAt: DateTime.utc(2026, 8, 9),
+      ),
+    ]);
+
+    expect(prompt, startsWith('## Feedback 1'));
+    expect(prompt, contains('\n\n## Feedback 2'));
   });
 
   test('persists additions and clearing', () async {

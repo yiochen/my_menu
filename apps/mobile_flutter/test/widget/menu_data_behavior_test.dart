@@ -90,6 +90,46 @@ void main() {
     ]);
   });
 
+  testWidgets('new badge is recent-only and clears after opening with a Hero', (
+    WidgetTester tester,
+  ) async {
+    final Dish newDish = seededDishes.first.copyWith(
+      createdAt: DateTime.utc(2026, 8, 11),
+    );
+    final MyMenuState state = MyMenuState.forTesting(
+      dishes: <Dish>[newDish, seededDishes.last],
+    );
+    addTearDown(state.dispose);
+    await _pumpMenu(tester, state);
+
+    final Finder badge = find.byKey(
+      ValueKey<String>('menu_new_label_${newDish.id}'),
+    );
+    expect(badge, findsNothing);
+
+    await tester.tap(find.text('Recently added'));
+    await tester.pumpAndSettle();
+    expect(badge, findsOneWidget);
+
+    final Hero cardHero = tester.widget<Hero>(
+      find.byKey(ValueKey<String>('menu_artwork_hero_${newDish.id}')),
+    );
+    await tester.tap(
+      find.byKey(ValueKey<String>('menu_dish_${newDish.id}')),
+    );
+    await tester.pumpAndSettle();
+
+    final Hero detailHero = tester.widget<Hero>(
+      find.byKey(ValueKey<String>('dish_detail_artwork_hero_${newDish.id}')),
+    );
+    expect(detailHero.tag, cardHero.tag);
+    expect(state.dishById(newDish.id).isNew, isFalse);
+
+    tester.state<NavigatorState>(find.byType(Navigator)).pop();
+    await tester.pumpAndSettle();
+    expect(badge, findsNothing);
+  });
+
   testWidgets('active capture stays out of the dish grid', (
     WidgetTester tester,
   ) async {

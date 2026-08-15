@@ -388,7 +388,7 @@ void main() {
               .toList(growable: false);
 
       expect(migratedIds, expectedIds);
-      expect(migratedDatabase.schemaVersion, 17);
+      expect(migratedDatabase.schemaVersion, 18);
     });
 
     test('schema 13 migrates existing media rows with progressive previews',
@@ -421,7 +421,33 @@ void main() {
       expect(await migrated.select(migrated.dishes).get(), isEmpty);
       expect(await migrated.select(migrated.sourcePhotos).get(), isEmpty);
       expect(await migrated.select(migrated.captureItems).get(), isEmpty);
-      expect(migrated.schemaVersion, 17);
+      expect(migrated.schemaVersion, 18);
+    });
+
+    test('schema 17 adds durable dish-opened state', () async {
+      final Directory temp =
+          await Directory.systemTemp.createTemp('mymenu_opened_migration_');
+      addTearDown(() => temp.delete(recursive: true));
+      final File databaseFile = File('${temp.path}/mymenu.sqlite');
+      final AppDatabase current =
+          AppDatabase.forTesting(NativeDatabase(databaseFile));
+      await current.select(current.dishes).get();
+      await current.close();
+      sqlite.sqlite3.open(databaseFile.path)
+        ..execute('ALTER TABLE dishes DROP COLUMN opened_at')
+        ..execute('PRAGMA user_version = 17')
+        ..close();
+
+      final AppDatabase migrated =
+          AppDatabase.forTesting(NativeDatabase(databaseFile));
+      addTearDown(migrated.close);
+
+      final Set<String> columns =
+          (await migrated.customSelect('PRAGMA table_info(dishes)').get())
+              .map((QueryRow row) => row.read<String>('name'))
+              .toSet();
+      expect(columns, contains('opened_at'));
+      expect(migrated.schemaVersion, 18);
     });
 
     test('sync caches local dish web images once', () async {
@@ -522,6 +548,8 @@ void main() {
 
       await repositories.dishRepository.createDish(dish);
       await repositories.dishRepository.setFavorite(dish.id, isFavorite: true);
+      final DateTime openedAt = DateTime.utc(2026, 8, 11, 8);
+      await repositories.dishRepository.markOpened(dish.id, openedAt);
       await repositories.dishRepository.updateSections(
         dish.id,
         ingredients: const <String>['Noodles|8 oz', 'Gochujang|2 tbsp'],
@@ -539,6 +567,8 @@ void main() {
       expect(saved.description, 'A human-written description.');
       expect(saved.notes.single.body, 'Try sesame and scallions.');
       expect(saved.isFavorite, isTrue);
+      expect(saved.openedAt?.toUtc(), openedAt);
+      expect(saved.isNew, isFalse);
       expect(saved.ingredients, <String>['Noodles|8 oz', 'Gochujang|2 tbsp']);
       expect(saved.recipeSteps, <String>['Boil noodles.', 'Toss with sauce.']);
       expect(await database.select(database.syncOperations).get(), isEmpty);

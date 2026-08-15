@@ -7,6 +7,8 @@ import 'package:mymenu/shared/widgets/app_image.dart';
 import 'package:mymenu/shared/widgets/cover_generation_effect.dart';
 import 'package:mymenu/shared/widgets/food_cover_placeholder.dart';
 
+String dishArtworkHeroTag(String dishId) => 'dish_artwork_$dishId';
+
 class DishArtwork extends StatelessWidget {
   const DishArtwork({
     required this.dish,
