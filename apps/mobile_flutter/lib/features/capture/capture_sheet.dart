@@ -3,12 +3,11 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/domain/processing/processing_consent_prompt.dart';
 import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/capture/camera_batch_sheet.dart';
 import 'package:mymenu/features/capture/capture_add_idea.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';

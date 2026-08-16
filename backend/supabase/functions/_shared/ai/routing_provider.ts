@@ -3,6 +3,7 @@ import { createGoogleGenerativeAI } from "npm:@ai-sdk/google@4.0.24";
 import { jsonSchema } from "npm:@ai-sdk/provider-utils@5.0.12";
 import type { GroupingCaptureInput } from "./grouping_contract.ts";
 import { AiProviderFailure } from "./grouping_provider.ts";
+import { buildRoutingContent } from "./routing_content.ts";
 import {
   captureRoutingContract,
   type CaptureRoutingOutput,
@@ -120,42 +121,7 @@ export class GoogleRoutingProvider implements RoutingProvider {
   ): Promise<RoutingProviderResult> {
     try {
       const google = createGoogleGenerativeAI({ apiKey: this.apiKey });
-      const content: Array<Record<string, unknown>> = [{
-        type: "text",
-        text: JSON.stringify({ existingDishes: dishes }),
-      }];
-      for (const capture of captures) {
-        content.push({
-          type: "text",
-          text: JSON.stringify({
-            captureId: capture.id,
-            ordinal: capture.ordinal,
-            kind: capture.kind,
-            capturedLocalDate: capture.capturedLocalDate,
-            ...(capture.kind === "idea"
-              ? { ideaText: capture.ideaText ?? "" }
-              : {}),
-          }),
-        });
-        if (capture.kind === "photo") {
-          if (
-            capture.media == null ||
-            !["image/jpeg", "image/png"].includes(capture.media.contentType)
-          ) {
-            throw new AiProviderFailure(
-              "capture_media_invalid",
-              `Photo ${capture.id} must use a reduced JPEG or PNG processing asset`,
-              false,
-            );
-          }
-          content.push({
-            type: "file",
-            data: new URL(capture.media.signedUrl),
-            mediaType: capture.media.contentType,
-            filename: capture.media.filename,
-          });
-        }
-      }
+      const content = await buildRoutingContent(captures, dishes);
       const result = await generateText({
         model: google(this.model),
         system: captureRoutingContract.systemPrompt,

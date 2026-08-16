@@ -144,7 +144,8 @@ class PhotoDetailScreen extends StatelessWidget {
                     ),
                     child: const Text('Dismiss suggestion'),
                   ),
-                if (photo.state == CapturedPhotoState.failed)
+                if (photo.state == CapturedPhotoState.failed ||
+                    photo.organizationAllowanceExhausted)
                   TextButton.icon(
                     key: const ValueKey<String>('photo_retry'),
                     onPressed: () => Navigator.pop(
@@ -152,7 +153,11 @@ class PhotoDetailScreen extends StatelessWidget {
                       const PhotoDetailIntent(PhotoDetailAction.retry),
                     ),
                     icon: const Icon(Icons.refresh_rounded),
-                    label: const Text('Try organizing again'),
+                    label: Text(
+                      photo.organizationAllowanceExhausted
+                          ? 'Try AI organization again'
+                          : 'Try organizing again',
+                    ),
                   ),
               ],
             ),
@@ -227,12 +232,12 @@ class _StatusSummary extends StatelessWidget {
     final String description = switch (photo.state) {
       CapturedPhotoState.review => photo.reviewItem?.summary ??
           'MyMenu needs your help placing this photo.',
-      CapturedPhotoState.failed =>
-        'The photo is safe here. You can organize it yourself or try again.',
+      CapturedPhotoState.failed => photoFailureDescription(photo),
       CapturedPhotoState.organizing =>
         'Ready to use now. MyMenu is quietly looking for the right dish.',
-      CapturedPhotoState.unorganized =>
-        'This photo is ready whenever you want to place it in a dish.',
+      CapturedPhotoState.unorganized => photo.organizationAllowanceExhausted
+          ? photoOrganizationAllowanceDescription
+          : 'This photo is ready whenever you want to place it in a dish.',
       CapturedPhotoState.notADish =>
         'MyMenu did not find a prepared dish. You can still organize it manually.',
       CapturedPhotoState.organized =>
@@ -251,4 +256,42 @@ class _StatusSummary extends StatelessWidget {
       ),
     );
   }
+}
+
+String photoFailureDescription(CapturedPhoto photo) {
+  final String? reason = photo.item.failureReason?.trim();
+  final bool isDisplaySafe = reason != null &&
+      reason.isNotEmpty &&
+      !reason.contains('_') &&
+      !reason.startsWith('http');
+  if (isDisplaySafe) {
+    return '$reason Your photo is safe. You can organize it yourself or try '
+        'again.';
+  }
+  return 'AI organization could not finish. Your photo is safe. You can '
+      'organize it yourself or try again.';
+}
+
+const String photoOrganizationAllowanceDescription =
+    'You’ve used all 10 free AI organizations available in the last 30 days. '
+    'This photo remains unorganized and is safe on this device. Organize it '
+    'yourself now, or try AI organization again when your allowance refreshes.';
+
+void showPhotoRetryOutcome(BuildContext context, CapturedPhoto photo) {
+  if (photo.state != CapturedPhotoState.failed &&
+      !photo.organizationAllowanceExhausted) {
+    return;
+  }
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        content: Text(
+          photo.organizationAllowanceExhausted
+              ? photoOrganizationAllowanceDescription
+              : photoFailureDescription(photo),
+          key: const ValueKey<String>('photo_retry_outcome_message'),
+        ),
+      ),
+    );
 }

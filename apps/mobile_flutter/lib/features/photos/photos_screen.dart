@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/domain/capture/capture_correction.dart';
 import 'package:mymenu/domain/capture/captured_photo.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_screen.dart';
 import 'package:mymenu/features/photos/photo_date_groups.dart';
 import 'package:mymenu/features/photos/photo_detail_screen.dart';
@@ -319,6 +319,14 @@ class _PhotosScreenState extends State<PhotosScreen> {
       case PhotoDetailAction.retry:
         if (photo.batchId != null) {
           await state.retryCaptureBatch(photo.batchId!);
+          if (!mounted) return;
+          showPhotoRetryOutcome(
+            context,
+            state.photos.firstWhere(
+              (CapturedPhoto candidate) => candidate.id == photo.id,
+              orElse: () => photo,
+            ),
+          );
         }
       case PhotoDetailAction.undo:
         if (photo.batchId != null) {

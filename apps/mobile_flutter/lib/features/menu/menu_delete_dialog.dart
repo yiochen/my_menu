@@ -94,7 +94,7 @@ class _MenuDeleteConfirmation extends StatelessWidget {
             const _DeletionScope(),
             const SizedBox(height: 12),
             Text(
-              'This happens locally first and syncs to your other devices. '
+              'This permanently removes the selected items from this device. '
               'You can undo briefly.',
               style: Theme.of(context).textTheme.bodySmall,
             ),

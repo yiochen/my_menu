@@ -1,12 +1,16 @@
 import { generateText, Output, uploadFile } from "npm:ai@7.0.37";
 import { createGoogleGenerativeAI } from "npm:@ai-sdk/google@4.0.24";
 import { jsonSchema } from "npm:@ai-sdk/provider-utils@5.0.12";
+import { loadCaptureMediaBytes } from "./capture_media.ts";
 import {
   batchGroupingContract,
   type BatchGroupingOutput,
   type GroupingCaptureInput,
   validateAndCanonicalizeGrouping,
 } from "./grouping_contract.ts";
+import { AiProviderFailure } from "./provider_failure.ts";
+
+export { AiProviderFailure } from "./provider_failure.ts";
 
 export interface GroupingProviderResult {
   output: BatchGroupingOutput;
@@ -22,18 +26,6 @@ export interface GroupingProvider {
   readonly provider: string;
   readonly model: string;
   group(captures: GroupingCaptureInput[]): Promise<GroupingProviderResult>;
-}
-
-export class AiProviderFailure extends Error {
-  constructor(
-    readonly code: string,
-    message: string,
-    readonly retryable: boolean,
-    options?: ErrorOptions,
-  ) {
-    super(message, options);
-    this.name = "AiProviderFailure";
-  }
 }
 
 export function createGroupingProvider(
@@ -162,15 +154,12 @@ export class GoogleGroupingProvider implements GroupingProvider {
             );
           }
 
+          const bytes = await loadCaptureMediaBytes(capture);
+
           if (
             capture.media.contentType === "image/heic" ||
             capture.media.contentType === "image/heif"
           ) {
-            const bytes = capture.media.loadBytes == null
-              ? new Uint8Array(
-                await (await fetch(capture.media.signedUrl)).arrayBuffer(),
-              )
-              : await capture.media.loadBytes();
             const uploaded = await uploadFile({
               api: google,
               data: bytes,
@@ -186,7 +175,7 @@ export class GoogleGroupingProvider implements GroupingProvider {
           } else {
             content.push({
               type: "file",
-              data: new URL(capture.media.signedUrl),
+              data: bytes,
               mediaType: capture.media.contentType,
               filename: capture.media.filename,
             });

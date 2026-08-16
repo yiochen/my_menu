@@ -4,15 +4,15 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/core/database/app_database.dart';
-import 'package:mymenu/core/network/my_menu_api_client.dart';
+import 'package:mymenu/core/network/processing_api_client.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
 import 'package:mymenu/domain/covers/cover_repository.dart';
 import 'package:mymenu/domain/covers/generated_cover.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
+import 'package:mymenu/domain/menu/app_repositories.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/domain/processing/processing_outbox.dart';
 import 'package:mymenu/domain/processing/processing_outbox_repository.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
-import 'package:mymenu/domain/sync/repositories.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -26,7 +26,7 @@ void main() {
       addTearDown(database.close);
       final AppRepositories repositories = AppRepositories(
         database: database,
-        apiClient: FakeMyMenuApiClient(),
+        processingApiClient: FakeProcessingApiClient(),
       );
       await repositories.processingConsentRepository.acceptCurrentNotice();
       final MyMenuState state = MyMenuState(repositories: repositories);
@@ -91,7 +91,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.dishRepository.createDish(_dish('dish-manual'));
 
@@ -125,7 +125,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.dishRepository.createDish(_dish('dish-accept'));
     await repositories.coverRepository.storeDeliveredCover(
@@ -198,7 +198,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.dishRepository.createDish(_dish('dish-auto'));
 
@@ -238,7 +238,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.processingConsentRepository.acceptCurrentNotice();
     await repositories.dishRepository.createDish(
@@ -301,10 +301,10 @@ void main() {
     final AppDatabase database =
         AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(database.close);
-    final FakeMyMenuApiClient api = FakeMyMenuApiClient();
+    final FakeProcessingApiClient api = FakeProcessingApiClient();
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: api,
+      processingApiClient: api,
     );
     await repositories.processingConsentRepository.acceptCurrentNotice();
     final MyMenuState state = MyMenuState(repositories: repositories);
@@ -312,7 +312,7 @@ void main() {
     await state.initialized;
     await state.addIdea('sesame udon');
 
-    await repositories.syncRepository.processPendingCovers();
+    await repositories.processingCoordinator.processPendingCovers();
 
     final Dish dish = (await repositories.dishRepository.listDishes()).single;
     final GeneratedCover cover =
@@ -327,6 +327,44 @@ void main() {
     expect(api.hasPayloadForProcessingJob(request.serverJobId!), isFalse);
   });
 
+  test('Cover adoption resumes after the server acknowledgement commits',
+      () async {
+    final AppDatabase database =
+        AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final FakeProcessingApiClient api = FakeProcessingApiClient()
+      ..interruptNextAcknowledgementAfterCommit();
+    final AppRepositories repositories = AppRepositories(
+      database: database,
+      processingApiClient: api,
+    );
+    await repositories.processingConsentRepository.acceptCurrentNotice();
+    final MyMenuState state = MyMenuState(repositories: repositories);
+    addTearDown(state.dispose);
+    await state.initialized;
+    await state.addIdea('sesame udon');
+
+    await repositories.processingCoordinator.processPendingCovers();
+    ProcessingOutboxRequest request =
+        (await repositories.processingOutboxRepository.listRequests()).single;
+    expect(request.deliveryState, ProcessingDeliveryState.submitted);
+    expect(
+      request.adoptionState,
+      ProcessingAdoptionState.readyForAdoption,
+    );
+    expect(
+      await repositories.coverRepository.listForDish(request.subjectId),
+      hasLength(1),
+    );
+
+    await repositories.processingCoordinator.processPendingCovers();
+
+    request =
+        (await repositories.processingOutboxRepository.listRequests()).single;
+    expect(request.deliveryState, ProcessingDeliveryState.acknowledged);
+    expect(request.adoptionState, ProcessingAdoptionState.adopted);
+  });
+
   test('a newly grouped photo Dish starts a separate automatic Cover job',
       () async {
     final Directory temp =
@@ -339,7 +377,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.processingConsentRepository.acceptCurrentNotice();
     await repositories.captureRepository.createPhotoBatch(
@@ -353,7 +391,7 @@ void main() {
       ],
     );
 
-    await repositories.syncRepository.processPendingCaptures();
+    await repositories.processingCoordinator.processPendingCaptures();
 
     final Dish dish = (await repositories.dishRepository.listDishes()).single;
     final List<ProcessingOutboxRequest> requests =
@@ -388,7 +426,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.processingConsentRepository.acceptCurrentNotice();
     final DateTime capturedAt = DateTime.utc(2026, 8, 4, 15);
@@ -456,7 +494,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.processingConsentRepository.acceptCurrentNotice();
     await repositories.dishRepository.createDish(_dish('dish-supersede'));
@@ -491,7 +529,7 @@ void main() {
         finish: CoverFinish.lightTouch,
       ).toJson(),
     );
-    await state.refreshFromServer();
+    await state.resumeProcessing();
   });
 
   test('replaying the same automatic delivery preserves its original Undo',
@@ -501,7 +539,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.dishRepository.createDish(_dish('dish-idempotent'));
 
@@ -535,7 +573,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.processingConsentRepository.acceptCurrentNotice();
     await repositories.dishRepository.createDish(
@@ -576,7 +614,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.processingConsentRepository.acceptCurrentNotice();
     await repositories.dishRepository.createDish(_dish('dish-first-source'));
@@ -603,7 +641,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.processingConsentRepository.acceptCurrentNotice();
     await repositories.dishRepository.createDish(_dish('dish-delete-cover'));
@@ -648,7 +686,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.processingConsentRepository.acceptCurrentNotice();
     await repositories.dishRepository.createDish(_dish('dish-no-resurrect'));
@@ -668,7 +706,7 @@ void main() {
         (await repositories.processingOutboxRepository.listRequests()).single;
     expect(canceled.deliveryState, ProcessingDeliveryState.canceled);
     expect(canceled.payload, isNot(contains('restartAfterCancel')));
-    await repositories.syncRepository.processPendingCovers();
+    await repositories.processingCoordinator.processPendingCovers();
     expect(
       await repositories.processingOutboxRepository.listRequests(),
       isEmpty,
@@ -689,7 +727,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.processingConsentRepository.acceptCurrentNotice();
     await repositories.dishRepository.createDish(

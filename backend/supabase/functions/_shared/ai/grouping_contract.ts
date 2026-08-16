@@ -20,7 +20,7 @@ export interface GroupingCaptureInput {
   capturedLocalDate: string | null;
   media?: {
     contentType: string;
-    signedUrl: string;
+    signedUrl?: string;
     filename: string;
     loadBytes?: () => Promise<Uint8Array>;
   };

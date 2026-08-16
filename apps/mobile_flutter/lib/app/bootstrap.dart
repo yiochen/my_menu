@@ -3,7 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/core/debug/debug_controls.dart';
 import 'package:mymenu/core/debug/shared_preferences_debug_controls.dart';
-import 'package:mymenu/core/network/my_menu_api_client.dart';
+import 'package:mymenu/core/network/processing_api_client.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> bootstrap() async {
@@ -17,10 +17,10 @@ Future<void> bootstrap() async {
       persistence: controls,
     );
   }
-  if (SupabaseApiConfig.shouldUseSupabase) {
+  if (ProcessingApiConfig.shouldUseSupabase) {
     await Supabase.initialize(
-      url: SupabaseApiConfig.url,
-      publishableKey: SupabaseApiConfig.anonKey,
+      url: ProcessingApiConfig.url,
+      publishableKey: ProcessingApiConfig.anonKey,
     );
   }
   runApp(MyMenuApp(debugControlsBootstrap: debugControlsBootstrap));

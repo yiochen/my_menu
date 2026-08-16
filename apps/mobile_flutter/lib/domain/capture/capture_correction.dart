@@ -2,7 +2,7 @@ import 'package:mymenu/domain/capture/capture_item.dart';
 
 enum CaptureCorrectionType { move, split, assign, assignSplit, autoAssign }
 
-enum CaptureCorrectionStatus { pending, synced, failed, undone }
+enum CaptureCorrectionStatus { applied, failed, undone }
 
 class CaptureCorrection {
   const CaptureCorrection({
@@ -40,7 +40,5 @@ class CaptureCorrection {
   final DateTime? undoneAt;
 
   bool get isUserAuthored => type != CaptureCorrectionType.autoAssign;
-  bool get canUndo =>
-      status == CaptureCorrectionStatus.pending ||
-      status == CaptureCorrectionStatus.synced;
+  bool get canUndo => status == CaptureCorrectionStatus.applied;
 }

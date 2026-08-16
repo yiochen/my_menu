@@ -919,15 +919,9 @@ class $DishNotesTable extends DishNotes
   late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
       'updated_at', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
-  static const VerificationMeta _deletedAtMeta =
-      const VerificationMeta('deletedAt');
-  @override
-  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
-      'deleted_at', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, dishId, body, position, createdAt, updatedAt, deletedAt];
+      [id, dishId, body, position, createdAt, updatedAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -973,10 +967,6 @@ class $DishNotesTable extends DishNotes
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
-    if (data.containsKey('deleted_at')) {
-      context.handle(_deletedAtMeta,
-          deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta));
-    }
     return context;
   }
 
@@ -998,8 +988,6 @@ class $DishNotesTable extends DishNotes
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
-      deletedAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}deleted_at']),
     );
   }
 
@@ -1016,15 +1004,13 @@ class DishNoteRow extends DataClass implements Insertable<DishNoteRow> {
   final int position;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final DateTime? deletedAt;
   const DishNoteRow(
       {required this.id,
       required this.dishId,
       required this.body,
       required this.position,
       required this.createdAt,
-      required this.updatedAt,
-      this.deletedAt});
+      required this.updatedAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -1034,9 +1020,6 @@ class DishNoteRow extends DataClass implements Insertable<DishNoteRow> {
     map['position'] = Variable<int>(position);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
-    if (!nullToAbsent || deletedAt != null) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt);
-    }
     return map;
   }
 
@@ -1048,9 +1031,6 @@ class DishNoteRow extends DataClass implements Insertable<DishNoteRow> {
       position: Value(position),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
-      deletedAt: deletedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(deletedAt),
     );
   }
 
@@ -1064,7 +1044,6 @@ class DishNoteRow extends DataClass implements Insertable<DishNoteRow> {
       position: serializer.fromJson<int>(json['position']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
   @override
@@ -1077,7 +1056,6 @@ class DishNoteRow extends DataClass implements Insertable<DishNoteRow> {
       'position': serializer.toJson<int>(position),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
-      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
 
@@ -1087,8 +1065,7 @@ class DishNoteRow extends DataClass implements Insertable<DishNoteRow> {
           String? body,
           int? position,
           DateTime? createdAt,
-          DateTime? updatedAt,
-          Value<DateTime?> deletedAt = const Value.absent()}) =>
+          DateTime? updatedAt}) =>
       DishNoteRow(
         id: id ?? this.id,
         dishId: dishId ?? this.dishId,
@@ -1096,7 +1073,6 @@ class DishNoteRow extends DataClass implements Insertable<DishNoteRow> {
         position: position ?? this.position,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
-        deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
       );
   DishNoteRow copyWithCompanion(DishNotesCompanion data) {
     return DishNoteRow(
@@ -1106,7 +1082,6 @@ class DishNoteRow extends DataClass implements Insertable<DishNoteRow> {
       position: data.position.present ? data.position.value : this.position,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
   }
 
@@ -1118,15 +1093,14 @@ class DishNoteRow extends DataClass implements Insertable<DishNoteRow> {
           ..write('body: $body, ')
           ..write('position: $position, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
-          ..write('deletedAt: $deletedAt')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode =>
-      Object.hash(id, dishId, body, position, createdAt, updatedAt, deletedAt);
+      Object.hash(id, dishId, body, position, createdAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1136,8 +1110,7 @@ class DishNoteRow extends DataClass implements Insertable<DishNoteRow> {
           other.body == this.body &&
           other.position == this.position &&
           other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt &&
-          other.deletedAt == this.deletedAt);
+          other.updatedAt == this.updatedAt);
 }
 
 class DishNotesCompanion extends UpdateCompanion<DishNoteRow> {
@@ -1147,7 +1120,6 @@ class DishNotesCompanion extends UpdateCompanion<DishNoteRow> {
   final Value<int> position;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
-  final Value<DateTime?> deletedAt;
   final Value<int> rowid;
   const DishNotesCompanion({
     this.id = const Value.absent(),
@@ -1156,7 +1128,6 @@ class DishNotesCompanion extends UpdateCompanion<DishNoteRow> {
     this.position = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
-    this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DishNotesCompanion.insert({
@@ -1166,7 +1137,6 @@ class DishNotesCompanion extends UpdateCompanion<DishNoteRow> {
     required int position,
     required DateTime createdAt,
     required DateTime updatedAt,
-    this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         dishId = Value(dishId),
@@ -1181,7 +1151,6 @@ class DishNotesCompanion extends UpdateCompanion<DishNoteRow> {
     Expression<int>? position,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
-    Expression<DateTime>? deletedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1191,7 +1160,6 @@ class DishNotesCompanion extends UpdateCompanion<DishNoteRow> {
       if (position != null) 'position': position,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
-      if (deletedAt != null) 'deleted_at': deletedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1203,7 +1171,6 @@ class DishNotesCompanion extends UpdateCompanion<DishNoteRow> {
       Value<int>? position,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
-      Value<DateTime?>? deletedAt,
       Value<int>? rowid}) {
     return DishNotesCompanion(
       id: id ?? this.id,
@@ -1212,7 +1179,6 @@ class DishNotesCompanion extends UpdateCompanion<DishNoteRow> {
       position: position ?? this.position,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      deletedAt: deletedAt ?? this.deletedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1238,9 +1204,6 @@ class DishNotesCompanion extends UpdateCompanion<DishNoteRow> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
-    if (deletedAt.present) {
-      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
-    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1256,7 +1219,6 @@ class DishNotesCompanion extends UpdateCompanion<DishNoteRow> {
           ..write('position: $position, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('deletedAt: $deletedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3157,12 +3119,6 @@ class $CaptureItemsTable extends CaptureItems
   late final GeneratedColumn<String> localPlaceholderRef =
       GeneratedColumn<String>('local_placeholder_ref', aliasedName, true,
           type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _remoteMediaRefMeta =
-      const VerificationMeta('remoteMediaRef');
-  @override
-  late final GeneratedColumn<String> remoteMediaRef = GeneratedColumn<String>(
-      'remote_media_ref', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _ideaTextMeta =
       const VerificationMeta('ideaText');
   @override
@@ -3211,7 +3167,6 @@ class $CaptureItemsTable extends CaptureItems
         localPreviewRef,
         localThumbnailRef,
         localPlaceholderRef,
-        remoteMediaRef,
         ideaText,
         capturedAt,
         capturedLocalDate,
@@ -3284,12 +3239,6 @@ class $CaptureItemsTable extends CaptureItems
           localPlaceholderRef.isAcceptableOrUnknown(
               data['local_placeholder_ref']!, _localPlaceholderRefMeta));
     }
-    if (data.containsKey('remote_media_ref')) {
-      context.handle(
-          _remoteMediaRefMeta,
-          remoteMediaRef.isAcceptableOrUnknown(
-              data['remote_media_ref']!, _remoteMediaRefMeta));
-    }
     if (data.containsKey('idea_text')) {
       context.handle(_ideaTextMeta,
           ideaText.isAcceptableOrUnknown(data['idea_text']!, _ideaTextMeta));
@@ -3353,8 +3302,6 @@ class $CaptureItemsTable extends CaptureItems
           DriftSqlType.string, data['${effectivePrefix}local_thumbnail_ref']),
       localPlaceholderRef: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}local_placeholder_ref']),
-      remoteMediaRef: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}remote_media_ref']),
       ideaText: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}idea_text']),
       capturedAt: attachedDatabase.typeMapping
@@ -3387,7 +3334,6 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
   final String? localPreviewRef;
   final String? localThumbnailRef;
   final String? localPlaceholderRef;
-  final String? remoteMediaRef;
   final String? ideaText;
   final DateTime? capturedAt;
   final String? capturedLocalDate;
@@ -3405,7 +3351,6 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
       this.localPreviewRef,
       this.localThumbnailRef,
       this.localPlaceholderRef,
-      this.remoteMediaRef,
       this.ideaText,
       this.capturedAt,
       this.capturedLocalDate,
@@ -3434,9 +3379,6 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
     }
     if (!nullToAbsent || localPlaceholderRef != null) {
       map['local_placeholder_ref'] = Variable<String>(localPlaceholderRef);
-    }
-    if (!nullToAbsent || remoteMediaRef != null) {
-      map['remote_media_ref'] = Variable<String>(remoteMediaRef);
     }
     if (!nullToAbsent || ideaText != null) {
       map['idea_text'] = Variable<String>(ideaText);
@@ -3481,9 +3423,6 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
       localPlaceholderRef: localPlaceholderRef == null && nullToAbsent
           ? const Value.absent()
           : Value(localPlaceholderRef),
-      remoteMediaRef: remoteMediaRef == null && nullToAbsent
-          ? const Value.absent()
-          : Value(remoteMediaRef),
       ideaText: ideaText == null && nullToAbsent
           ? const Value.absent()
           : Value(ideaText),
@@ -3521,7 +3460,6 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
           serializer.fromJson<String?>(json['localThumbnailRef']),
       localPlaceholderRef:
           serializer.fromJson<String?>(json['localPlaceholderRef']),
-      remoteMediaRef: serializer.fromJson<String?>(json['remoteMediaRef']),
       ideaText: serializer.fromJson<String?>(json['ideaText']),
       capturedAt: serializer.fromJson<DateTime?>(json['capturedAt']),
       capturedLocalDate:
@@ -3546,7 +3484,6 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
       'localPreviewRef': serializer.toJson<String?>(localPreviewRef),
       'localThumbnailRef': serializer.toJson<String?>(localThumbnailRef),
       'localPlaceholderRef': serializer.toJson<String?>(localPlaceholderRef),
-      'remoteMediaRef': serializer.toJson<String?>(remoteMediaRef),
       'ideaText': serializer.toJson<String?>(ideaText),
       'capturedAt': serializer.toJson<DateTime?>(capturedAt),
       'capturedLocalDate': serializer.toJson<String?>(capturedLocalDate),
@@ -3567,7 +3504,6 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
           Value<String?> localPreviewRef = const Value.absent(),
           Value<String?> localThumbnailRef = const Value.absent(),
           Value<String?> localPlaceholderRef = const Value.absent(),
-          Value<String?> remoteMediaRef = const Value.absent(),
           Value<String?> ideaText = const Value.absent(),
           Value<DateTime?> capturedAt = const Value.absent(),
           Value<String?> capturedLocalDate = const Value.absent(),
@@ -3592,8 +3528,6 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
         localPlaceholderRef: localPlaceholderRef.present
             ? localPlaceholderRef.value
             : this.localPlaceholderRef,
-        remoteMediaRef:
-            remoteMediaRef.present ? remoteMediaRef.value : this.remoteMediaRef,
         ideaText: ideaText.present ? ideaText.value : this.ideaText,
         capturedAt: capturedAt.present ? capturedAt.value : this.capturedAt,
         capturedLocalDate: capturedLocalDate.present
@@ -3627,9 +3561,6 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
       localPlaceholderRef: data.localPlaceholderRef.present
           ? data.localPlaceholderRef.value
           : this.localPlaceholderRef,
-      remoteMediaRef: data.remoteMediaRef.present
-          ? data.remoteMediaRef.value
-          : this.remoteMediaRef,
       ideaText: data.ideaText.present ? data.ideaText.value : this.ideaText,
       capturedAt:
           data.capturedAt.present ? data.capturedAt.value : this.capturedAt,
@@ -3661,7 +3592,6 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
           ..write('localPreviewRef: $localPreviewRef, ')
           ..write('localThumbnailRef: $localThumbnailRef, ')
           ..write('localPlaceholderRef: $localPlaceholderRef, ')
-          ..write('remoteMediaRef: $remoteMediaRef, ')
           ..write('ideaText: $ideaText, ')
           ..write('capturedAt: $capturedAt, ')
           ..write('capturedLocalDate: $capturedLocalDate, ')
@@ -3684,7 +3614,6 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
       localPreviewRef,
       localThumbnailRef,
       localPlaceholderRef,
-      remoteMediaRef,
       ideaText,
       capturedAt,
       capturedLocalDate,
@@ -3705,7 +3634,6 @@ class CaptureItemRow extends DataClass implements Insertable<CaptureItemRow> {
           other.localPreviewRef == this.localPreviewRef &&
           other.localThumbnailRef == this.localThumbnailRef &&
           other.localPlaceholderRef == this.localPlaceholderRef &&
-          other.remoteMediaRef == this.remoteMediaRef &&
           other.ideaText == this.ideaText &&
           other.capturedAt == this.capturedAt &&
           other.capturedLocalDate == this.capturedLocalDate &&
@@ -3725,7 +3653,6 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
   final Value<String?> localPreviewRef;
   final Value<String?> localThumbnailRef;
   final Value<String?> localPlaceholderRef;
-  final Value<String?> remoteMediaRef;
   final Value<String?> ideaText;
   final Value<DateTime?> capturedAt;
   final Value<String?> capturedLocalDate;
@@ -3744,7 +3671,6 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
     this.localPreviewRef = const Value.absent(),
     this.localThumbnailRef = const Value.absent(),
     this.localPlaceholderRef = const Value.absent(),
-    this.remoteMediaRef = const Value.absent(),
     this.ideaText = const Value.absent(),
     this.capturedAt = const Value.absent(),
     this.capturedLocalDate = const Value.absent(),
@@ -3764,7 +3690,6 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
     this.localPreviewRef = const Value.absent(),
     this.localThumbnailRef = const Value.absent(),
     this.localPlaceholderRef = const Value.absent(),
-    this.remoteMediaRef = const Value.absent(),
     this.ideaText = const Value.absent(),
     this.capturedAt = const Value.absent(),
     this.capturedLocalDate = const Value.absent(),
@@ -3787,7 +3712,6 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
     Expression<String>? localPreviewRef,
     Expression<String>? localThumbnailRef,
     Expression<String>? localPlaceholderRef,
-    Expression<String>? remoteMediaRef,
     Expression<String>? ideaText,
     Expression<DateTime>? capturedAt,
     Expression<String>? capturedLocalDate,
@@ -3808,7 +3732,6 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
       if (localThumbnailRef != null) 'local_thumbnail_ref': localThumbnailRef,
       if (localPlaceholderRef != null)
         'local_placeholder_ref': localPlaceholderRef,
-      if (remoteMediaRef != null) 'remote_media_ref': remoteMediaRef,
       if (ideaText != null) 'idea_text': ideaText,
       if (capturedAt != null) 'captured_at': capturedAt,
       if (capturedLocalDate != null) 'captured_local_date': capturedLocalDate,
@@ -3830,7 +3753,6 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
       Value<String?>? localPreviewRef,
       Value<String?>? localThumbnailRef,
       Value<String?>? localPlaceholderRef,
-      Value<String?>? remoteMediaRef,
       Value<String?>? ideaText,
       Value<DateTime?>? capturedAt,
       Value<String?>? capturedLocalDate,
@@ -3849,7 +3771,6 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
       localPreviewRef: localPreviewRef ?? this.localPreviewRef,
       localThumbnailRef: localThumbnailRef ?? this.localThumbnailRef,
       localPlaceholderRef: localPlaceholderRef ?? this.localPlaceholderRef,
-      remoteMediaRef: remoteMediaRef ?? this.remoteMediaRef,
       ideaText: ideaText ?? this.ideaText,
       capturedAt: capturedAt ?? this.capturedAt,
       capturedLocalDate: capturedLocalDate ?? this.capturedLocalDate,
@@ -3894,9 +3815,6 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
       map['local_placeholder_ref'] =
           Variable<String>(localPlaceholderRef.value);
     }
-    if (remoteMediaRef.present) {
-      map['remote_media_ref'] = Variable<String>(remoteMediaRef.value);
-    }
     if (ideaText.present) {
       map['idea_text'] = Variable<String>(ideaText.value);
     }
@@ -3934,7 +3852,6 @@ class CaptureItemsCompanion extends UpdateCompanion<CaptureItemRow> {
           ..write('localPreviewRef: $localPreviewRef, ')
           ..write('localThumbnailRef: $localThumbnailRef, ')
           ..write('localPlaceholderRef: $localPlaceholderRef, ')
-          ..write('remoteMediaRef: $remoteMediaRef, ')
           ..write('ideaText: $ideaText, ')
           ..write('capturedAt: $capturedAt, ')
           ..write('capturedLocalDate: $capturedLocalDate, ')
@@ -5231,598 +5148,6 @@ class ReviewItemsCompanion extends UpdateCompanion<ReviewItemRow> {
   }
 }
 
-class $SyncOperationsTable extends SyncOperations
-    with TableInfo<$SyncOperationsTable, SyncOperationRow> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $SyncOperationsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-      'id', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _entityMeta = const VerificationMeta('entity');
-  @override
-  late final GeneratedColumn<String> entity = GeneratedColumn<String>(
-      'entity', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _entityIdMeta =
-      const VerificationMeta('entityId');
-  @override
-  late final GeneratedColumn<String> entityId = GeneratedColumn<String>(
-      'entity_id', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _operationTypeMeta =
-      const VerificationMeta('operationType');
-  @override
-  late final GeneratedColumn<String> operationType = GeneratedColumn<String>(
-      'operation_type', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _payloadJsonMeta =
-      const VerificationMeta('payloadJson');
-  @override
-  late final GeneratedColumn<String> payloadJson = GeneratedColumn<String>(
-      'payload_json', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _createdAtMeta =
-      const VerificationMeta('createdAt');
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-      'created_at', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
-  static const VerificationMeta _completedAtMeta =
-      const VerificationMeta('completedAt');
-  @override
-  late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
-      'completed_at', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  @override
-  List<GeneratedColumn> get $columns => [
-        id,
-        entity,
-        entityId,
-        operationType,
-        payloadJson,
-        createdAt,
-        completedAt
-      ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'sync_operations';
-  @override
-  VerificationContext validateIntegrity(Insertable<SyncOperationRow> instance,
-      {bool isInserting = false}) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('entity')) {
-      context.handle(_entityMeta,
-          entity.isAcceptableOrUnknown(data['entity']!, _entityMeta));
-    } else if (isInserting) {
-      context.missing(_entityMeta);
-    }
-    if (data.containsKey('entity_id')) {
-      context.handle(_entityIdMeta,
-          entityId.isAcceptableOrUnknown(data['entity_id']!, _entityIdMeta));
-    } else if (isInserting) {
-      context.missing(_entityIdMeta);
-    }
-    if (data.containsKey('operation_type')) {
-      context.handle(
-          _operationTypeMeta,
-          operationType.isAcceptableOrUnknown(
-              data['operation_type']!, _operationTypeMeta));
-    } else if (isInserting) {
-      context.missing(_operationTypeMeta);
-    }
-    if (data.containsKey('payload_json')) {
-      context.handle(
-          _payloadJsonMeta,
-          payloadJson.isAcceptableOrUnknown(
-              data['payload_json']!, _payloadJsonMeta));
-    } else if (isInserting) {
-      context.missing(_payloadJsonMeta);
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(_createdAtMeta,
-          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
-    } else if (isInserting) {
-      context.missing(_createdAtMeta);
-    }
-    if (data.containsKey('completed_at')) {
-      context.handle(
-          _completedAtMeta,
-          completedAt.isAcceptableOrUnknown(
-              data['completed_at']!, _completedAtMeta));
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  SyncOperationRow map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return SyncOperationRow(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
-      entity: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}entity'])!,
-      entityId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}entity_id'])!,
-      operationType: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}operation_type'])!,
-      payloadJson: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}payload_json'])!,
-      createdAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
-      completedAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}completed_at']),
-    );
-  }
-
-  @override
-  $SyncOperationsTable createAlias(String alias) {
-    return $SyncOperationsTable(attachedDatabase, alias);
-  }
-}
-
-class SyncOperationRow extends DataClass
-    implements Insertable<SyncOperationRow> {
-  final String id;
-  final String entity;
-  final String entityId;
-  final String operationType;
-  final String payloadJson;
-  final DateTime createdAt;
-  final DateTime? completedAt;
-  const SyncOperationRow(
-      {required this.id,
-      required this.entity,
-      required this.entityId,
-      required this.operationType,
-      required this.payloadJson,
-      required this.createdAt,
-      this.completedAt});
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['entity'] = Variable<String>(entity);
-    map['entity_id'] = Variable<String>(entityId);
-    map['operation_type'] = Variable<String>(operationType);
-    map['payload_json'] = Variable<String>(payloadJson);
-    map['created_at'] = Variable<DateTime>(createdAt);
-    if (!nullToAbsent || completedAt != null) {
-      map['completed_at'] = Variable<DateTime>(completedAt);
-    }
-    return map;
-  }
-
-  SyncOperationsCompanion toCompanion(bool nullToAbsent) {
-    return SyncOperationsCompanion(
-      id: Value(id),
-      entity: Value(entity),
-      entityId: Value(entityId),
-      operationType: Value(operationType),
-      payloadJson: Value(payloadJson),
-      createdAt: Value(createdAt),
-      completedAt: completedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(completedAt),
-    );
-  }
-
-  factory SyncOperationRow.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return SyncOperationRow(
-      id: serializer.fromJson<String>(json['id']),
-      entity: serializer.fromJson<String>(json['entity']),
-      entityId: serializer.fromJson<String>(json['entityId']),
-      operationType: serializer.fromJson<String>(json['operationType']),
-      payloadJson: serializer.fromJson<String>(json['payloadJson']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'entity': serializer.toJson<String>(entity),
-      'entityId': serializer.toJson<String>(entityId),
-      'operationType': serializer.toJson<String>(operationType),
-      'payloadJson': serializer.toJson<String>(payloadJson),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-      'completedAt': serializer.toJson<DateTime?>(completedAt),
-    };
-  }
-
-  SyncOperationRow copyWith(
-          {String? id,
-          String? entity,
-          String? entityId,
-          String? operationType,
-          String? payloadJson,
-          DateTime? createdAt,
-          Value<DateTime?> completedAt = const Value.absent()}) =>
-      SyncOperationRow(
-        id: id ?? this.id,
-        entity: entity ?? this.entity,
-        entityId: entityId ?? this.entityId,
-        operationType: operationType ?? this.operationType,
-        payloadJson: payloadJson ?? this.payloadJson,
-        createdAt: createdAt ?? this.createdAt,
-        completedAt: completedAt.present ? completedAt.value : this.completedAt,
-      );
-  SyncOperationRow copyWithCompanion(SyncOperationsCompanion data) {
-    return SyncOperationRow(
-      id: data.id.present ? data.id.value : this.id,
-      entity: data.entity.present ? data.entity.value : this.entity,
-      entityId: data.entityId.present ? data.entityId.value : this.entityId,
-      operationType: data.operationType.present
-          ? data.operationType.value
-          : this.operationType,
-      payloadJson:
-          data.payloadJson.present ? data.payloadJson.value : this.payloadJson,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      completedAt:
-          data.completedAt.present ? data.completedAt.value : this.completedAt,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('SyncOperationRow(')
-          ..write('id: $id, ')
-          ..write('entity: $entity, ')
-          ..write('entityId: $entityId, ')
-          ..write('operationType: $operationType, ')
-          ..write('payloadJson: $payloadJson, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('completedAt: $completedAt')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(
-      id, entity, entityId, operationType, payloadJson, createdAt, completedAt);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is SyncOperationRow &&
-          other.id == this.id &&
-          other.entity == this.entity &&
-          other.entityId == this.entityId &&
-          other.operationType == this.operationType &&
-          other.payloadJson == this.payloadJson &&
-          other.createdAt == this.createdAt &&
-          other.completedAt == this.completedAt);
-}
-
-class SyncOperationsCompanion extends UpdateCompanion<SyncOperationRow> {
-  final Value<String> id;
-  final Value<String> entity;
-  final Value<String> entityId;
-  final Value<String> operationType;
-  final Value<String> payloadJson;
-  final Value<DateTime> createdAt;
-  final Value<DateTime?> completedAt;
-  final Value<int> rowid;
-  const SyncOperationsCompanion({
-    this.id = const Value.absent(),
-    this.entity = const Value.absent(),
-    this.entityId = const Value.absent(),
-    this.operationType = const Value.absent(),
-    this.payloadJson = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.completedAt = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  SyncOperationsCompanion.insert({
-    required String id,
-    required String entity,
-    required String entityId,
-    required String operationType,
-    required String payloadJson,
-    required DateTime createdAt,
-    this.completedAt = const Value.absent(),
-    this.rowid = const Value.absent(),
-  })  : id = Value(id),
-        entity = Value(entity),
-        entityId = Value(entityId),
-        operationType = Value(operationType),
-        payloadJson = Value(payloadJson),
-        createdAt = Value(createdAt);
-  static Insertable<SyncOperationRow> custom({
-    Expression<String>? id,
-    Expression<String>? entity,
-    Expression<String>? entityId,
-    Expression<String>? operationType,
-    Expression<String>? payloadJson,
-    Expression<DateTime>? createdAt,
-    Expression<DateTime>? completedAt,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (entity != null) 'entity': entity,
-      if (entityId != null) 'entity_id': entityId,
-      if (operationType != null) 'operation_type': operationType,
-      if (payloadJson != null) 'payload_json': payloadJson,
-      if (createdAt != null) 'created_at': createdAt,
-      if (completedAt != null) 'completed_at': completedAt,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  SyncOperationsCompanion copyWith(
-      {Value<String>? id,
-      Value<String>? entity,
-      Value<String>? entityId,
-      Value<String>? operationType,
-      Value<String>? payloadJson,
-      Value<DateTime>? createdAt,
-      Value<DateTime?>? completedAt,
-      Value<int>? rowid}) {
-    return SyncOperationsCompanion(
-      id: id ?? this.id,
-      entity: entity ?? this.entity,
-      entityId: entityId ?? this.entityId,
-      operationType: operationType ?? this.operationType,
-      payloadJson: payloadJson ?? this.payloadJson,
-      createdAt: createdAt ?? this.createdAt,
-      completedAt: completedAt ?? this.completedAt,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (entity.present) {
-      map['entity'] = Variable<String>(entity.value);
-    }
-    if (entityId.present) {
-      map['entity_id'] = Variable<String>(entityId.value);
-    }
-    if (operationType.present) {
-      map['operation_type'] = Variable<String>(operationType.value);
-    }
-    if (payloadJson.present) {
-      map['payload_json'] = Variable<String>(payloadJson.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    if (completedAt.present) {
-      map['completed_at'] = Variable<DateTime>(completedAt.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('SyncOperationsCompanion(')
-          ..write('id: $id, ')
-          ..write('entity: $entity, ')
-          ..write('entityId: $entityId, ')
-          ..write('operationType: $operationType, ')
-          ..write('payloadJson: $payloadJson, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('completedAt: $completedAt, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $SyncMetadataTable extends SyncMetadata
-    with TableInfo<$SyncMetadataTable, SyncMetadataRow> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $SyncMetadataTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _keyMeta = const VerificationMeta('key');
-  @override
-  late final GeneratedColumn<String> key = GeneratedColumn<String>(
-      'key', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _valueMeta = const VerificationMeta('value');
-  @override
-  late final GeneratedColumn<String> value = GeneratedColumn<String>(
-      'value', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  @override
-  List<GeneratedColumn> get $columns => [key, value];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'sync_metadata';
-  @override
-  VerificationContext validateIntegrity(Insertable<SyncMetadataRow> instance,
-      {bool isInserting = false}) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('key')) {
-      context.handle(
-          _keyMeta, key.isAcceptableOrUnknown(data['key']!, _keyMeta));
-    } else if (isInserting) {
-      context.missing(_keyMeta);
-    }
-    if (data.containsKey('value')) {
-      context.handle(
-          _valueMeta, value.isAcceptableOrUnknown(data['value']!, _valueMeta));
-    } else if (isInserting) {
-      context.missing(_valueMeta);
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {key};
-  @override
-  SyncMetadataRow map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return SyncMetadataRow(
-      key: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}key'])!,
-      value: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}value'])!,
-    );
-  }
-
-  @override
-  $SyncMetadataTable createAlias(String alias) {
-    return $SyncMetadataTable(attachedDatabase, alias);
-  }
-}
-
-class SyncMetadataRow extends DataClass implements Insertable<SyncMetadataRow> {
-  final String key;
-  final String value;
-  const SyncMetadataRow({required this.key, required this.value});
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['key'] = Variable<String>(key);
-    map['value'] = Variable<String>(value);
-    return map;
-  }
-
-  SyncMetadataCompanion toCompanion(bool nullToAbsent) {
-    return SyncMetadataCompanion(
-      key: Value(key),
-      value: Value(value),
-    );
-  }
-
-  factory SyncMetadataRow.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return SyncMetadataRow(
-      key: serializer.fromJson<String>(json['key']),
-      value: serializer.fromJson<String>(json['value']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'key': serializer.toJson<String>(key),
-      'value': serializer.toJson<String>(value),
-    };
-  }
-
-  SyncMetadataRow copyWith({String? key, String? value}) => SyncMetadataRow(
-        key: key ?? this.key,
-        value: value ?? this.value,
-      );
-  SyncMetadataRow copyWithCompanion(SyncMetadataCompanion data) {
-    return SyncMetadataRow(
-      key: data.key.present ? data.key.value : this.key,
-      value: data.value.present ? data.value.value : this.value,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('SyncMetadataRow(')
-          ..write('key: $key, ')
-          ..write('value: $value')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(key, value);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is SyncMetadataRow &&
-          other.key == this.key &&
-          other.value == this.value);
-}
-
-class SyncMetadataCompanion extends UpdateCompanion<SyncMetadataRow> {
-  final Value<String> key;
-  final Value<String> value;
-  final Value<int> rowid;
-  const SyncMetadataCompanion({
-    this.key = const Value.absent(),
-    this.value = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  SyncMetadataCompanion.insert({
-    required String key,
-    required String value,
-    this.rowid = const Value.absent(),
-  })  : key = Value(key),
-        value = Value(value);
-  static Insertable<SyncMetadataRow> custom({
-    Expression<String>? key,
-    Expression<String>? value,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (key != null) 'key': key,
-      if (value != null) 'value': value,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  SyncMetadataCompanion copyWith(
-      {Value<String>? key, Value<String>? value, Value<int>? rowid}) {
-    return SyncMetadataCompanion(
-      key: key ?? this.key,
-      value: value ?? this.value,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (key.present) {
-      map['key'] = Variable<String>(key.value);
-    }
-    if (value.present) {
-      map['value'] = Variable<String>(value.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('SyncMetadataCompanion(')
-          ..write('key: $key, ')
-          ..write('value: $value, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
 class $LocalSettingsTable extends LocalSettings
     with TableInfo<$LocalSettingsTable, LocalSettingRow> {
   @override
@@ -6007,998 +5332,6 @@ class LocalSettingsCompanion extends UpdateCompanion<LocalSettingRow> {
     return (StringBuffer('LocalSettingsCompanion(')
           ..write('key: $key, ')
           ..write('value: $value, ')
-          ..write('rowid: $rowid')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $AiJobsTable extends AiJobs with TableInfo<$AiJobsTable, AiJobRow> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $AiJobsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<String> id = GeneratedColumn<String>(
-      'id', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _jobTypeMeta =
-      const VerificationMeta('jobType');
-  @override
-  late final GeneratedColumn<String> jobType = GeneratedColumn<String>(
-      'job_type', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _subjectIdMeta =
-      const VerificationMeta('subjectId');
-  @override
-  late final GeneratedColumn<String> subjectId = GeneratedColumn<String>(
-      'subject_id', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _statusMeta = const VerificationMeta('status');
-  @override
-  late final GeneratedColumn<String> status = GeneratedColumn<String>(
-      'status', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _idempotencyKeyMeta =
-      const VerificationMeta('idempotencyKey');
-  @override
-  late final GeneratedColumn<String> idempotencyKey = GeneratedColumn<String>(
-      'idempotency_key', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _inputHashMeta =
-      const VerificationMeta('inputHash');
-  @override
-  late final GeneratedColumn<String> inputHash = GeneratedColumn<String>(
-      'input_hash', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _inputVersionMeta =
-      const VerificationMeta('inputVersion');
-  @override
-  late final GeneratedColumn<String> inputVersion = GeneratedColumn<String>(
-      'input_version', aliasedName, false,
-      type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _attemptCountMeta =
-      const VerificationMeta('attemptCount');
-  @override
-  late final GeneratedColumn<int> attemptCount = GeneratedColumn<int>(
-      'attempt_count', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(0));
-  static const VerificationMeta _maxAttemptsMeta =
-      const VerificationMeta('maxAttempts');
-  @override
-  late final GeneratedColumn<int> maxAttempts = GeneratedColumn<int>(
-      'max_attempts', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultValue: const Constant(3));
-  static const VerificationMeta _nextRetryAtMeta =
-      const VerificationMeta('nextRetryAt');
-  @override
-  late final GeneratedColumn<DateTime> nextRetryAt = GeneratedColumn<DateTime>(
-      'next_retry_at', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _promptVersionMeta =
-      const VerificationMeta('promptVersion');
-  @override
-  late final GeneratedColumn<String> promptVersion = GeneratedColumn<String>(
-      'prompt_version', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('1'));
-  static const VerificationMeta _modelVersionMeta =
-      const VerificationMeta('modelVersion');
-  @override
-  late final GeneratedColumn<String> modelVersion = GeneratedColumn<String>(
-      'model_version', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('default'));
-  static const VerificationMeta _schemaVersionMeta =
-      const VerificationMeta('schemaVersion');
-  @override
-  late final GeneratedColumn<String> schemaVersion = GeneratedColumn<String>(
-      'schema_version', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('1'));
-  static const VerificationMeta _resultJsonMeta =
-      const VerificationMeta('resultJson');
-  @override
-  late final GeneratedColumn<String> resultJson = GeneratedColumn<String>(
-      'result_json', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _errorJsonMeta =
-      const VerificationMeta('errorJson');
-  @override
-  late final GeneratedColumn<String> errorJson = GeneratedColumn<String>(
-      'error_json', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _pendingActionMeta =
-      const VerificationMeta('pendingAction');
-  @override
-  late final GeneratedColumn<String> pendingAction = GeneratedColumn<String>(
-      'pending_action', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _startedAtMeta =
-      const VerificationMeta('startedAt');
-  @override
-  late final GeneratedColumn<DateTime> startedAt = GeneratedColumn<DateTime>(
-      'started_at', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _completedAtMeta =
-      const VerificationMeta('completedAt');
-  @override
-  late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
-      'completed_at', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _dismissedAtMeta =
-      const VerificationMeta('dismissedAt');
-  @override
-  late final GeneratedColumn<DateTime> dismissedAt = GeneratedColumn<DateTime>(
-      'dismissed_at', aliasedName, true,
-      type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _createdAtMeta =
-      const VerificationMeta('createdAt');
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-      'created_at', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
-  static const VerificationMeta _updatedAtMeta =
-      const VerificationMeta('updatedAt');
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-      'updated_at', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
-  @override
-  List<GeneratedColumn> get $columns => [
-        id,
-        jobType,
-        subjectId,
-        status,
-        idempotencyKey,
-        inputHash,
-        inputVersion,
-        attemptCount,
-        maxAttempts,
-        nextRetryAt,
-        promptVersion,
-        modelVersion,
-        schemaVersion,
-        resultJson,
-        errorJson,
-        pendingAction,
-        startedAt,
-        completedAt,
-        dismissedAt,
-        createdAt,
-        updatedAt
-      ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'ai_jobs';
-  @override
-  VerificationContext validateIntegrity(Insertable<AiJobRow> instance,
-      {bool isInserting = false}) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
-    }
-    if (data.containsKey('job_type')) {
-      context.handle(_jobTypeMeta,
-          jobType.isAcceptableOrUnknown(data['job_type']!, _jobTypeMeta));
-    } else if (isInserting) {
-      context.missing(_jobTypeMeta);
-    }
-    if (data.containsKey('subject_id')) {
-      context.handle(_subjectIdMeta,
-          subjectId.isAcceptableOrUnknown(data['subject_id']!, _subjectIdMeta));
-    } else if (isInserting) {
-      context.missing(_subjectIdMeta);
-    }
-    if (data.containsKey('status')) {
-      context.handle(_statusMeta,
-          status.isAcceptableOrUnknown(data['status']!, _statusMeta));
-    } else if (isInserting) {
-      context.missing(_statusMeta);
-    }
-    if (data.containsKey('idempotency_key')) {
-      context.handle(
-          _idempotencyKeyMeta,
-          idempotencyKey.isAcceptableOrUnknown(
-              data['idempotency_key']!, _idempotencyKeyMeta));
-    } else if (isInserting) {
-      context.missing(_idempotencyKeyMeta);
-    }
-    if (data.containsKey('input_hash')) {
-      context.handle(_inputHashMeta,
-          inputHash.isAcceptableOrUnknown(data['input_hash']!, _inputHashMeta));
-    } else if (isInserting) {
-      context.missing(_inputHashMeta);
-    }
-    if (data.containsKey('input_version')) {
-      context.handle(
-          _inputVersionMeta,
-          inputVersion.isAcceptableOrUnknown(
-              data['input_version']!, _inputVersionMeta));
-    } else if (isInserting) {
-      context.missing(_inputVersionMeta);
-    }
-    if (data.containsKey('attempt_count')) {
-      context.handle(
-          _attemptCountMeta,
-          attemptCount.isAcceptableOrUnknown(
-              data['attempt_count']!, _attemptCountMeta));
-    }
-    if (data.containsKey('max_attempts')) {
-      context.handle(
-          _maxAttemptsMeta,
-          maxAttempts.isAcceptableOrUnknown(
-              data['max_attempts']!, _maxAttemptsMeta));
-    }
-    if (data.containsKey('next_retry_at')) {
-      context.handle(
-          _nextRetryAtMeta,
-          nextRetryAt.isAcceptableOrUnknown(
-              data['next_retry_at']!, _nextRetryAtMeta));
-    }
-    if (data.containsKey('prompt_version')) {
-      context.handle(
-          _promptVersionMeta,
-          promptVersion.isAcceptableOrUnknown(
-              data['prompt_version']!, _promptVersionMeta));
-    }
-    if (data.containsKey('model_version')) {
-      context.handle(
-          _modelVersionMeta,
-          modelVersion.isAcceptableOrUnknown(
-              data['model_version']!, _modelVersionMeta));
-    }
-    if (data.containsKey('schema_version')) {
-      context.handle(
-          _schemaVersionMeta,
-          schemaVersion.isAcceptableOrUnknown(
-              data['schema_version']!, _schemaVersionMeta));
-    }
-    if (data.containsKey('result_json')) {
-      context.handle(
-          _resultJsonMeta,
-          resultJson.isAcceptableOrUnknown(
-              data['result_json']!, _resultJsonMeta));
-    }
-    if (data.containsKey('error_json')) {
-      context.handle(_errorJsonMeta,
-          errorJson.isAcceptableOrUnknown(data['error_json']!, _errorJsonMeta));
-    }
-    if (data.containsKey('pending_action')) {
-      context.handle(
-          _pendingActionMeta,
-          pendingAction.isAcceptableOrUnknown(
-              data['pending_action']!, _pendingActionMeta));
-    }
-    if (data.containsKey('started_at')) {
-      context.handle(_startedAtMeta,
-          startedAt.isAcceptableOrUnknown(data['started_at']!, _startedAtMeta));
-    }
-    if (data.containsKey('completed_at')) {
-      context.handle(
-          _completedAtMeta,
-          completedAt.isAcceptableOrUnknown(
-              data['completed_at']!, _completedAtMeta));
-    }
-    if (data.containsKey('dismissed_at')) {
-      context.handle(
-          _dismissedAtMeta,
-          dismissedAt.isAcceptableOrUnknown(
-              data['dismissed_at']!, _dismissedAtMeta));
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(_createdAtMeta,
-          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
-    } else if (isInserting) {
-      context.missing(_createdAtMeta);
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(_updatedAtMeta,
-          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
-    } else if (isInserting) {
-      context.missing(_updatedAtMeta);
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  List<Set<GeneratedColumn>> get uniqueKeys => [
-        {idempotencyKey},
-      ];
-  @override
-  AiJobRow map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return AiJobRow(
-      id: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
-      jobType: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}job_type'])!,
-      subjectId: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}subject_id'])!,
-      status: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}status'])!,
-      idempotencyKey: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}idempotency_key'])!,
-      inputHash: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}input_hash'])!,
-      inputVersion: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}input_version'])!,
-      attemptCount: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}attempt_count'])!,
-      maxAttempts: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}max_attempts'])!,
-      nextRetryAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}next_retry_at']),
-      promptVersion: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}prompt_version'])!,
-      modelVersion: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}model_version'])!,
-      schemaVersion: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}schema_version'])!,
-      resultJson: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}result_json']),
-      errorJson: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}error_json']),
-      pendingAction: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}pending_action']),
-      startedAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}started_at']),
-      completedAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}completed_at']),
-      dismissedAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}dismissed_at']),
-      createdAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
-      updatedAt: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
-    );
-  }
-
-  @override
-  $AiJobsTable createAlias(String alias) {
-    return $AiJobsTable(attachedDatabase, alias);
-  }
-}
-
-class AiJobRow extends DataClass implements Insertable<AiJobRow> {
-  final String id;
-  final String jobType;
-  final String subjectId;
-  final String status;
-  final String idempotencyKey;
-  final String inputHash;
-  final String inputVersion;
-  final int attemptCount;
-  final int maxAttempts;
-  final DateTime? nextRetryAt;
-  final String promptVersion;
-  final String modelVersion;
-  final String schemaVersion;
-  final String? resultJson;
-  final String? errorJson;
-  final String? pendingAction;
-  final DateTime? startedAt;
-  final DateTime? completedAt;
-  final DateTime? dismissedAt;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  const AiJobRow(
-      {required this.id,
-      required this.jobType,
-      required this.subjectId,
-      required this.status,
-      required this.idempotencyKey,
-      required this.inputHash,
-      required this.inputVersion,
-      required this.attemptCount,
-      required this.maxAttempts,
-      this.nextRetryAt,
-      required this.promptVersion,
-      required this.modelVersion,
-      required this.schemaVersion,
-      this.resultJson,
-      this.errorJson,
-      this.pendingAction,
-      this.startedAt,
-      this.completedAt,
-      this.dismissedAt,
-      required this.createdAt,
-      required this.updatedAt});
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<String>(id);
-    map['job_type'] = Variable<String>(jobType);
-    map['subject_id'] = Variable<String>(subjectId);
-    map['status'] = Variable<String>(status);
-    map['idempotency_key'] = Variable<String>(idempotencyKey);
-    map['input_hash'] = Variable<String>(inputHash);
-    map['input_version'] = Variable<String>(inputVersion);
-    map['attempt_count'] = Variable<int>(attemptCount);
-    map['max_attempts'] = Variable<int>(maxAttempts);
-    if (!nullToAbsent || nextRetryAt != null) {
-      map['next_retry_at'] = Variable<DateTime>(nextRetryAt);
-    }
-    map['prompt_version'] = Variable<String>(promptVersion);
-    map['model_version'] = Variable<String>(modelVersion);
-    map['schema_version'] = Variable<String>(schemaVersion);
-    if (!nullToAbsent || resultJson != null) {
-      map['result_json'] = Variable<String>(resultJson);
-    }
-    if (!nullToAbsent || errorJson != null) {
-      map['error_json'] = Variable<String>(errorJson);
-    }
-    if (!nullToAbsent || pendingAction != null) {
-      map['pending_action'] = Variable<String>(pendingAction);
-    }
-    if (!nullToAbsent || startedAt != null) {
-      map['started_at'] = Variable<DateTime>(startedAt);
-    }
-    if (!nullToAbsent || completedAt != null) {
-      map['completed_at'] = Variable<DateTime>(completedAt);
-    }
-    if (!nullToAbsent || dismissedAt != null) {
-      map['dismissed_at'] = Variable<DateTime>(dismissedAt);
-    }
-    map['created_at'] = Variable<DateTime>(createdAt);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    return map;
-  }
-
-  AiJobsCompanion toCompanion(bool nullToAbsent) {
-    return AiJobsCompanion(
-      id: Value(id),
-      jobType: Value(jobType),
-      subjectId: Value(subjectId),
-      status: Value(status),
-      idempotencyKey: Value(idempotencyKey),
-      inputHash: Value(inputHash),
-      inputVersion: Value(inputVersion),
-      attemptCount: Value(attemptCount),
-      maxAttempts: Value(maxAttempts),
-      nextRetryAt: nextRetryAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(nextRetryAt),
-      promptVersion: Value(promptVersion),
-      modelVersion: Value(modelVersion),
-      schemaVersion: Value(schemaVersion),
-      resultJson: resultJson == null && nullToAbsent
-          ? const Value.absent()
-          : Value(resultJson),
-      errorJson: errorJson == null && nullToAbsent
-          ? const Value.absent()
-          : Value(errorJson),
-      pendingAction: pendingAction == null && nullToAbsent
-          ? const Value.absent()
-          : Value(pendingAction),
-      startedAt: startedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(startedAt),
-      completedAt: completedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(completedAt),
-      dismissedAt: dismissedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(dismissedAt),
-      createdAt: Value(createdAt),
-      updatedAt: Value(updatedAt),
-    );
-  }
-
-  factory AiJobRow.fromJson(Map<String, dynamic> json,
-      {ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return AiJobRow(
-      id: serializer.fromJson<String>(json['id']),
-      jobType: serializer.fromJson<String>(json['jobType']),
-      subjectId: serializer.fromJson<String>(json['subjectId']),
-      status: serializer.fromJson<String>(json['status']),
-      idempotencyKey: serializer.fromJson<String>(json['idempotencyKey']),
-      inputHash: serializer.fromJson<String>(json['inputHash']),
-      inputVersion: serializer.fromJson<String>(json['inputVersion']),
-      attemptCount: serializer.fromJson<int>(json['attemptCount']),
-      maxAttempts: serializer.fromJson<int>(json['maxAttempts']),
-      nextRetryAt: serializer.fromJson<DateTime?>(json['nextRetryAt']),
-      promptVersion: serializer.fromJson<String>(json['promptVersion']),
-      modelVersion: serializer.fromJson<String>(json['modelVersion']),
-      schemaVersion: serializer.fromJson<String>(json['schemaVersion']),
-      resultJson: serializer.fromJson<String?>(json['resultJson']),
-      errorJson: serializer.fromJson<String?>(json['errorJson']),
-      pendingAction: serializer.fromJson<String?>(json['pendingAction']),
-      startedAt: serializer.fromJson<DateTime?>(json['startedAt']),
-      completedAt: serializer.fromJson<DateTime?>(json['completedAt']),
-      dismissedAt: serializer.fromJson<DateTime?>(json['dismissedAt']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<String>(id),
-      'jobType': serializer.toJson<String>(jobType),
-      'subjectId': serializer.toJson<String>(subjectId),
-      'status': serializer.toJson<String>(status),
-      'idempotencyKey': serializer.toJson<String>(idempotencyKey),
-      'inputHash': serializer.toJson<String>(inputHash),
-      'inputVersion': serializer.toJson<String>(inputVersion),
-      'attemptCount': serializer.toJson<int>(attemptCount),
-      'maxAttempts': serializer.toJson<int>(maxAttempts),
-      'nextRetryAt': serializer.toJson<DateTime?>(nextRetryAt),
-      'promptVersion': serializer.toJson<String>(promptVersion),
-      'modelVersion': serializer.toJson<String>(modelVersion),
-      'schemaVersion': serializer.toJson<String>(schemaVersion),
-      'resultJson': serializer.toJson<String?>(resultJson),
-      'errorJson': serializer.toJson<String?>(errorJson),
-      'pendingAction': serializer.toJson<String?>(pendingAction),
-      'startedAt': serializer.toJson<DateTime?>(startedAt),
-      'completedAt': serializer.toJson<DateTime?>(completedAt),
-      'dismissedAt': serializer.toJson<DateTime?>(dismissedAt),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-    };
-  }
-
-  AiJobRow copyWith(
-          {String? id,
-          String? jobType,
-          String? subjectId,
-          String? status,
-          String? idempotencyKey,
-          String? inputHash,
-          String? inputVersion,
-          int? attemptCount,
-          int? maxAttempts,
-          Value<DateTime?> nextRetryAt = const Value.absent(),
-          String? promptVersion,
-          String? modelVersion,
-          String? schemaVersion,
-          Value<String?> resultJson = const Value.absent(),
-          Value<String?> errorJson = const Value.absent(),
-          Value<String?> pendingAction = const Value.absent(),
-          Value<DateTime?> startedAt = const Value.absent(),
-          Value<DateTime?> completedAt = const Value.absent(),
-          Value<DateTime?> dismissedAt = const Value.absent(),
-          DateTime? createdAt,
-          DateTime? updatedAt}) =>
-      AiJobRow(
-        id: id ?? this.id,
-        jobType: jobType ?? this.jobType,
-        subjectId: subjectId ?? this.subjectId,
-        status: status ?? this.status,
-        idempotencyKey: idempotencyKey ?? this.idempotencyKey,
-        inputHash: inputHash ?? this.inputHash,
-        inputVersion: inputVersion ?? this.inputVersion,
-        attemptCount: attemptCount ?? this.attemptCount,
-        maxAttempts: maxAttempts ?? this.maxAttempts,
-        nextRetryAt: nextRetryAt.present ? nextRetryAt.value : this.nextRetryAt,
-        promptVersion: promptVersion ?? this.promptVersion,
-        modelVersion: modelVersion ?? this.modelVersion,
-        schemaVersion: schemaVersion ?? this.schemaVersion,
-        resultJson: resultJson.present ? resultJson.value : this.resultJson,
-        errorJson: errorJson.present ? errorJson.value : this.errorJson,
-        pendingAction:
-            pendingAction.present ? pendingAction.value : this.pendingAction,
-        startedAt: startedAt.present ? startedAt.value : this.startedAt,
-        completedAt: completedAt.present ? completedAt.value : this.completedAt,
-        dismissedAt: dismissedAt.present ? dismissedAt.value : this.dismissedAt,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-      );
-  AiJobRow copyWithCompanion(AiJobsCompanion data) {
-    return AiJobRow(
-      id: data.id.present ? data.id.value : this.id,
-      jobType: data.jobType.present ? data.jobType.value : this.jobType,
-      subjectId: data.subjectId.present ? data.subjectId.value : this.subjectId,
-      status: data.status.present ? data.status.value : this.status,
-      idempotencyKey: data.idempotencyKey.present
-          ? data.idempotencyKey.value
-          : this.idempotencyKey,
-      inputHash: data.inputHash.present ? data.inputHash.value : this.inputHash,
-      inputVersion: data.inputVersion.present
-          ? data.inputVersion.value
-          : this.inputVersion,
-      attemptCount: data.attemptCount.present
-          ? data.attemptCount.value
-          : this.attemptCount,
-      maxAttempts:
-          data.maxAttempts.present ? data.maxAttempts.value : this.maxAttempts,
-      nextRetryAt:
-          data.nextRetryAt.present ? data.nextRetryAt.value : this.nextRetryAt,
-      promptVersion: data.promptVersion.present
-          ? data.promptVersion.value
-          : this.promptVersion,
-      modelVersion: data.modelVersion.present
-          ? data.modelVersion.value
-          : this.modelVersion,
-      schemaVersion: data.schemaVersion.present
-          ? data.schemaVersion.value
-          : this.schemaVersion,
-      resultJson:
-          data.resultJson.present ? data.resultJson.value : this.resultJson,
-      errorJson: data.errorJson.present ? data.errorJson.value : this.errorJson,
-      pendingAction: data.pendingAction.present
-          ? data.pendingAction.value
-          : this.pendingAction,
-      startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
-      completedAt:
-          data.completedAt.present ? data.completedAt.value : this.completedAt,
-      dismissedAt:
-          data.dismissedAt.present ? data.dismissedAt.value : this.dismissedAt,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('AiJobRow(')
-          ..write('id: $id, ')
-          ..write('jobType: $jobType, ')
-          ..write('subjectId: $subjectId, ')
-          ..write('status: $status, ')
-          ..write('idempotencyKey: $idempotencyKey, ')
-          ..write('inputHash: $inputHash, ')
-          ..write('inputVersion: $inputVersion, ')
-          ..write('attemptCount: $attemptCount, ')
-          ..write('maxAttempts: $maxAttempts, ')
-          ..write('nextRetryAt: $nextRetryAt, ')
-          ..write('promptVersion: $promptVersion, ')
-          ..write('modelVersion: $modelVersion, ')
-          ..write('schemaVersion: $schemaVersion, ')
-          ..write('resultJson: $resultJson, ')
-          ..write('errorJson: $errorJson, ')
-          ..write('pendingAction: $pendingAction, ')
-          ..write('startedAt: $startedAt, ')
-          ..write('completedAt: $completedAt, ')
-          ..write('dismissedAt: $dismissedAt, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hashAll([
-        id,
-        jobType,
-        subjectId,
-        status,
-        idempotencyKey,
-        inputHash,
-        inputVersion,
-        attemptCount,
-        maxAttempts,
-        nextRetryAt,
-        promptVersion,
-        modelVersion,
-        schemaVersion,
-        resultJson,
-        errorJson,
-        pendingAction,
-        startedAt,
-        completedAt,
-        dismissedAt,
-        createdAt,
-        updatedAt
-      ]);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is AiJobRow &&
-          other.id == this.id &&
-          other.jobType == this.jobType &&
-          other.subjectId == this.subjectId &&
-          other.status == this.status &&
-          other.idempotencyKey == this.idempotencyKey &&
-          other.inputHash == this.inputHash &&
-          other.inputVersion == this.inputVersion &&
-          other.attemptCount == this.attemptCount &&
-          other.maxAttempts == this.maxAttempts &&
-          other.nextRetryAt == this.nextRetryAt &&
-          other.promptVersion == this.promptVersion &&
-          other.modelVersion == this.modelVersion &&
-          other.schemaVersion == this.schemaVersion &&
-          other.resultJson == this.resultJson &&
-          other.errorJson == this.errorJson &&
-          other.pendingAction == this.pendingAction &&
-          other.startedAt == this.startedAt &&
-          other.completedAt == this.completedAt &&
-          other.dismissedAt == this.dismissedAt &&
-          other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
-}
-
-class AiJobsCompanion extends UpdateCompanion<AiJobRow> {
-  final Value<String> id;
-  final Value<String> jobType;
-  final Value<String> subjectId;
-  final Value<String> status;
-  final Value<String> idempotencyKey;
-  final Value<String> inputHash;
-  final Value<String> inputVersion;
-  final Value<int> attemptCount;
-  final Value<int> maxAttempts;
-  final Value<DateTime?> nextRetryAt;
-  final Value<String> promptVersion;
-  final Value<String> modelVersion;
-  final Value<String> schemaVersion;
-  final Value<String?> resultJson;
-  final Value<String?> errorJson;
-  final Value<String?> pendingAction;
-  final Value<DateTime?> startedAt;
-  final Value<DateTime?> completedAt;
-  final Value<DateTime?> dismissedAt;
-  final Value<DateTime> createdAt;
-  final Value<DateTime> updatedAt;
-  final Value<int> rowid;
-  const AiJobsCompanion({
-    this.id = const Value.absent(),
-    this.jobType = const Value.absent(),
-    this.subjectId = const Value.absent(),
-    this.status = const Value.absent(),
-    this.idempotencyKey = const Value.absent(),
-    this.inputHash = const Value.absent(),
-    this.inputVersion = const Value.absent(),
-    this.attemptCount = const Value.absent(),
-    this.maxAttempts = const Value.absent(),
-    this.nextRetryAt = const Value.absent(),
-    this.promptVersion = const Value.absent(),
-    this.modelVersion = const Value.absent(),
-    this.schemaVersion = const Value.absent(),
-    this.resultJson = const Value.absent(),
-    this.errorJson = const Value.absent(),
-    this.pendingAction = const Value.absent(),
-    this.startedAt = const Value.absent(),
-    this.completedAt = const Value.absent(),
-    this.dismissedAt = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-    this.rowid = const Value.absent(),
-  });
-  AiJobsCompanion.insert({
-    required String id,
-    required String jobType,
-    required String subjectId,
-    required String status,
-    required String idempotencyKey,
-    required String inputHash,
-    required String inputVersion,
-    this.attemptCount = const Value.absent(),
-    this.maxAttempts = const Value.absent(),
-    this.nextRetryAt = const Value.absent(),
-    this.promptVersion = const Value.absent(),
-    this.modelVersion = const Value.absent(),
-    this.schemaVersion = const Value.absent(),
-    this.resultJson = const Value.absent(),
-    this.errorJson = const Value.absent(),
-    this.pendingAction = const Value.absent(),
-    this.startedAt = const Value.absent(),
-    this.completedAt = const Value.absent(),
-    this.dismissedAt = const Value.absent(),
-    required DateTime createdAt,
-    required DateTime updatedAt,
-    this.rowid = const Value.absent(),
-  })  : id = Value(id),
-        jobType = Value(jobType),
-        subjectId = Value(subjectId),
-        status = Value(status),
-        idempotencyKey = Value(idempotencyKey),
-        inputHash = Value(inputHash),
-        inputVersion = Value(inputVersion),
-        createdAt = Value(createdAt),
-        updatedAt = Value(updatedAt);
-  static Insertable<AiJobRow> custom({
-    Expression<String>? id,
-    Expression<String>? jobType,
-    Expression<String>? subjectId,
-    Expression<String>? status,
-    Expression<String>? idempotencyKey,
-    Expression<String>? inputHash,
-    Expression<String>? inputVersion,
-    Expression<int>? attemptCount,
-    Expression<int>? maxAttempts,
-    Expression<DateTime>? nextRetryAt,
-    Expression<String>? promptVersion,
-    Expression<String>? modelVersion,
-    Expression<String>? schemaVersion,
-    Expression<String>? resultJson,
-    Expression<String>? errorJson,
-    Expression<String>? pendingAction,
-    Expression<DateTime>? startedAt,
-    Expression<DateTime>? completedAt,
-    Expression<DateTime>? dismissedAt,
-    Expression<DateTime>? createdAt,
-    Expression<DateTime>? updatedAt,
-    Expression<int>? rowid,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (jobType != null) 'job_type': jobType,
-      if (subjectId != null) 'subject_id': subjectId,
-      if (status != null) 'status': status,
-      if (idempotencyKey != null) 'idempotency_key': idempotencyKey,
-      if (inputHash != null) 'input_hash': inputHash,
-      if (inputVersion != null) 'input_version': inputVersion,
-      if (attemptCount != null) 'attempt_count': attemptCount,
-      if (maxAttempts != null) 'max_attempts': maxAttempts,
-      if (nextRetryAt != null) 'next_retry_at': nextRetryAt,
-      if (promptVersion != null) 'prompt_version': promptVersion,
-      if (modelVersion != null) 'model_version': modelVersion,
-      if (schemaVersion != null) 'schema_version': schemaVersion,
-      if (resultJson != null) 'result_json': resultJson,
-      if (errorJson != null) 'error_json': errorJson,
-      if (pendingAction != null) 'pending_action': pendingAction,
-      if (startedAt != null) 'started_at': startedAt,
-      if (completedAt != null) 'completed_at': completedAt,
-      if (dismissedAt != null) 'dismissed_at': dismissedAt,
-      if (createdAt != null) 'created_at': createdAt,
-      if (updatedAt != null) 'updated_at': updatedAt,
-      if (rowid != null) 'rowid': rowid,
-    });
-  }
-
-  AiJobsCompanion copyWith(
-      {Value<String>? id,
-      Value<String>? jobType,
-      Value<String>? subjectId,
-      Value<String>? status,
-      Value<String>? idempotencyKey,
-      Value<String>? inputHash,
-      Value<String>? inputVersion,
-      Value<int>? attemptCount,
-      Value<int>? maxAttempts,
-      Value<DateTime?>? nextRetryAt,
-      Value<String>? promptVersion,
-      Value<String>? modelVersion,
-      Value<String>? schemaVersion,
-      Value<String?>? resultJson,
-      Value<String?>? errorJson,
-      Value<String?>? pendingAction,
-      Value<DateTime?>? startedAt,
-      Value<DateTime?>? completedAt,
-      Value<DateTime?>? dismissedAt,
-      Value<DateTime>? createdAt,
-      Value<DateTime>? updatedAt,
-      Value<int>? rowid}) {
-    return AiJobsCompanion(
-      id: id ?? this.id,
-      jobType: jobType ?? this.jobType,
-      subjectId: subjectId ?? this.subjectId,
-      status: status ?? this.status,
-      idempotencyKey: idempotencyKey ?? this.idempotencyKey,
-      inputHash: inputHash ?? this.inputHash,
-      inputVersion: inputVersion ?? this.inputVersion,
-      attemptCount: attemptCount ?? this.attemptCount,
-      maxAttempts: maxAttempts ?? this.maxAttempts,
-      nextRetryAt: nextRetryAt ?? this.nextRetryAt,
-      promptVersion: promptVersion ?? this.promptVersion,
-      modelVersion: modelVersion ?? this.modelVersion,
-      schemaVersion: schemaVersion ?? this.schemaVersion,
-      resultJson: resultJson ?? this.resultJson,
-      errorJson: errorJson ?? this.errorJson,
-      pendingAction: pendingAction ?? this.pendingAction,
-      startedAt: startedAt ?? this.startedAt,
-      completedAt: completedAt ?? this.completedAt,
-      dismissedAt: dismissedAt ?? this.dismissedAt,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-      rowid: rowid ?? this.rowid,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<String>(id.value);
-    }
-    if (jobType.present) {
-      map['job_type'] = Variable<String>(jobType.value);
-    }
-    if (subjectId.present) {
-      map['subject_id'] = Variable<String>(subjectId.value);
-    }
-    if (status.present) {
-      map['status'] = Variable<String>(status.value);
-    }
-    if (idempotencyKey.present) {
-      map['idempotency_key'] = Variable<String>(idempotencyKey.value);
-    }
-    if (inputHash.present) {
-      map['input_hash'] = Variable<String>(inputHash.value);
-    }
-    if (inputVersion.present) {
-      map['input_version'] = Variable<String>(inputVersion.value);
-    }
-    if (attemptCount.present) {
-      map['attempt_count'] = Variable<int>(attemptCount.value);
-    }
-    if (maxAttempts.present) {
-      map['max_attempts'] = Variable<int>(maxAttempts.value);
-    }
-    if (nextRetryAt.present) {
-      map['next_retry_at'] = Variable<DateTime>(nextRetryAt.value);
-    }
-    if (promptVersion.present) {
-      map['prompt_version'] = Variable<String>(promptVersion.value);
-    }
-    if (modelVersion.present) {
-      map['model_version'] = Variable<String>(modelVersion.value);
-    }
-    if (schemaVersion.present) {
-      map['schema_version'] = Variable<String>(schemaVersion.value);
-    }
-    if (resultJson.present) {
-      map['result_json'] = Variable<String>(resultJson.value);
-    }
-    if (errorJson.present) {
-      map['error_json'] = Variable<String>(errorJson.value);
-    }
-    if (pendingAction.present) {
-      map['pending_action'] = Variable<String>(pendingAction.value);
-    }
-    if (startedAt.present) {
-      map['started_at'] = Variable<DateTime>(startedAt.value);
-    }
-    if (completedAt.present) {
-      map['completed_at'] = Variable<DateTime>(completedAt.value);
-    }
-    if (dismissedAt.present) {
-      map['dismissed_at'] = Variable<DateTime>(dismissedAt.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    if (rowid.present) {
-      map['rowid'] = Variable<int>(rowid.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('AiJobsCompanion(')
-          ..write('id: $id, ')
-          ..write('jobType: $jobType, ')
-          ..write('subjectId: $subjectId, ')
-          ..write('status: $status, ')
-          ..write('idempotencyKey: $idempotencyKey, ')
-          ..write('inputHash: $inputHash, ')
-          ..write('inputVersion: $inputVersion, ')
-          ..write('attemptCount: $attemptCount, ')
-          ..write('maxAttempts: $maxAttempts, ')
-          ..write('nextRetryAt: $nextRetryAt, ')
-          ..write('promptVersion: $promptVersion, ')
-          ..write('modelVersion: $modelVersion, ')
-          ..write('schemaVersion: $schemaVersion, ')
-          ..write('resultJson: $resultJson, ')
-          ..write('errorJson: $errorJson, ')
-          ..write('pendingAction: $pendingAction, ')
-          ..write('startedAt: $startedAt, ')
-          ..write('completedAt: $completedAt, ')
-          ..write('dismissedAt: $dismissedAt, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -8167,10 +6500,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $CaptureCorrectionsTable(this);
   late final $PlannedMealsTable plannedMeals = $PlannedMealsTable(this);
   late final $ReviewItemsTable reviewItems = $ReviewItemsTable(this);
-  late final $SyncOperationsTable syncOperations = $SyncOperationsTable(this);
-  late final $SyncMetadataTable syncMetadata = $SyncMetadataTable(this);
   late final $LocalSettingsTable localSettings = $LocalSettingsTable(this);
-  late final $AiJobsTable aiJobs = $AiJobsTable(this);
   late final $ProcessingOutboxTable processingOutbox =
       $ProcessingOutboxTable(this);
   late final $ProcessingConsentsTable processingConsents =
@@ -8189,10 +6519,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         captureCorrections,
         plannedMeals,
         reviewItems,
-        syncOperations,
-        syncMetadata,
         localSettings,
-        aiJobs,
         processingOutbox,
         processingConsents
       ];
@@ -8577,7 +6904,6 @@ typedef $$DishNotesTableCreateCompanionBuilder = DishNotesCompanion Function({
   required int position,
   required DateTime createdAt,
   required DateTime updatedAt,
-  Value<DateTime?> deletedAt,
   Value<int> rowid,
 });
 typedef $$DishNotesTableUpdateCompanionBuilder = DishNotesCompanion Function({
@@ -8587,7 +6913,6 @@ typedef $$DishNotesTableUpdateCompanionBuilder = DishNotesCompanion Function({
   Value<int> position,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
-  Value<DateTime?> deletedAt,
   Value<int> rowid,
 });
 
@@ -8617,9 +6942,6 @@ class $$DishNotesTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
-      column: $table.deletedAt, builder: (column) => ColumnFilters(column));
 }
 
 class $$DishNotesTableOrderingComposer
@@ -8648,9 +6970,6 @@ class $$DishNotesTableOrderingComposer
 
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
-      column: $table.deletedAt, builder: (column) => ColumnOrderings(column));
 }
 
 class $$DishNotesTableAnnotationComposer
@@ -8679,9 +6998,6 @@ class $$DishNotesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get deletedAt =>
-      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 }
 
 class $$DishNotesTableTableManager extends RootTableManager<
@@ -8713,7 +7029,6 @@ class $$DishNotesTableTableManager extends RootTableManager<
             Value<int> position = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
-            Value<DateTime?> deletedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               DishNotesCompanion(
@@ -8723,7 +7038,6 @@ class $$DishNotesTableTableManager extends RootTableManager<
             position: position,
             createdAt: createdAt,
             updatedAt: updatedAt,
-            deletedAt: deletedAt,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -8733,7 +7047,6 @@ class $$DishNotesTableTableManager extends RootTableManager<
             required int position,
             required DateTime createdAt,
             required DateTime updatedAt,
-            Value<DateTime?> deletedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               DishNotesCompanion.insert(
@@ -8743,7 +7056,6 @@ class $$DishNotesTableTableManager extends RootTableManager<
             position: position,
             createdAt: createdAt,
             updatedAt: updatedAt,
-            deletedAt: deletedAt,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
@@ -9620,7 +7932,6 @@ typedef $$CaptureItemsTableCreateCompanionBuilder = CaptureItemsCompanion
   Value<String?> localPreviewRef,
   Value<String?> localThumbnailRef,
   Value<String?> localPlaceholderRef,
-  Value<String?> remoteMediaRef,
   Value<String?> ideaText,
   Value<DateTime?> capturedAt,
   Value<String?> capturedLocalDate,
@@ -9641,7 +7952,6 @@ typedef $$CaptureItemsTableUpdateCompanionBuilder = CaptureItemsCompanion
   Value<String?> localPreviewRef,
   Value<String?> localThumbnailRef,
   Value<String?> localPlaceholderRef,
-  Value<String?> remoteMediaRef,
   Value<String?> ideaText,
   Value<DateTime?> capturedAt,
   Value<String?> capturedLocalDate,
@@ -9691,10 +8001,6 @@ class $$CaptureItemsTableFilterComposer
 
   ColumnFilters<String> get localPlaceholderRef => $composableBuilder(
       column: $table.localPlaceholderRef,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get remoteMediaRef => $composableBuilder(
-      column: $table.remoteMediaRef,
       builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get ideaText => $composableBuilder(
@@ -9761,10 +8067,6 @@ class $$CaptureItemsTableOrderingComposer
       column: $table.localPlaceholderRef,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get remoteMediaRef => $composableBuilder(
-      column: $table.remoteMediaRef,
-      builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<String> get ideaText => $composableBuilder(
       column: $table.ideaText, builder: (column) => ColumnOrderings(column));
 
@@ -9827,9 +8129,6 @@ class $$CaptureItemsTableAnnotationComposer
   GeneratedColumn<String> get localPlaceholderRef => $composableBuilder(
       column: $table.localPlaceholderRef, builder: (column) => column);
 
-  GeneratedColumn<String> get remoteMediaRef => $composableBuilder(
-      column: $table.remoteMediaRef, builder: (column) => column);
-
   GeneratedColumn<String> get ideaText =>
       $composableBuilder(column: $table.ideaText, builder: (column) => column);
 
@@ -9885,7 +8184,6 @@ class $$CaptureItemsTableTableManager extends RootTableManager<
             Value<String?> localPreviewRef = const Value.absent(),
             Value<String?> localThumbnailRef = const Value.absent(),
             Value<String?> localPlaceholderRef = const Value.absent(),
-            Value<String?> remoteMediaRef = const Value.absent(),
             Value<String?> ideaText = const Value.absent(),
             Value<DateTime?> capturedAt = const Value.absent(),
             Value<String?> capturedLocalDate = const Value.absent(),
@@ -9905,7 +8203,6 @@ class $$CaptureItemsTableTableManager extends RootTableManager<
             localPreviewRef: localPreviewRef,
             localThumbnailRef: localThumbnailRef,
             localPlaceholderRef: localPlaceholderRef,
-            remoteMediaRef: remoteMediaRef,
             ideaText: ideaText,
             capturedAt: capturedAt,
             capturedLocalDate: capturedLocalDate,
@@ -9925,7 +8222,6 @@ class $$CaptureItemsTableTableManager extends RootTableManager<
             Value<String?> localPreviewRef = const Value.absent(),
             Value<String?> localThumbnailRef = const Value.absent(),
             Value<String?> localPlaceholderRef = const Value.absent(),
-            Value<String?> remoteMediaRef = const Value.absent(),
             Value<String?> ideaText = const Value.absent(),
             Value<DateTime?> capturedAt = const Value.absent(),
             Value<String?> capturedLocalDate = const Value.absent(),
@@ -9945,7 +8241,6 @@ class $$CaptureItemsTableTableManager extends RootTableManager<
             localPreviewRef: localPreviewRef,
             localThumbnailRef: localThumbnailRef,
             localPlaceholderRef: localPlaceholderRef,
-            remoteMediaRef: remoteMediaRef,
             ideaText: ideaText,
             capturedAt: capturedAt,
             capturedLocalDate: capturedLocalDate,
@@ -10629,339 +8924,6 @@ typedef $$ReviewItemsTableProcessedTableManager = ProcessedTableManager<
     ),
     ReviewItemRow,
     PrefetchHooks Function()>;
-typedef $$SyncOperationsTableCreateCompanionBuilder = SyncOperationsCompanion
-    Function({
-  required String id,
-  required String entity,
-  required String entityId,
-  required String operationType,
-  required String payloadJson,
-  required DateTime createdAt,
-  Value<DateTime?> completedAt,
-  Value<int> rowid,
-});
-typedef $$SyncOperationsTableUpdateCompanionBuilder = SyncOperationsCompanion
-    Function({
-  Value<String> id,
-  Value<String> entity,
-  Value<String> entityId,
-  Value<String> operationType,
-  Value<String> payloadJson,
-  Value<DateTime> createdAt,
-  Value<DateTime?> completedAt,
-  Value<int> rowid,
-});
-
-class $$SyncOperationsTableFilterComposer
-    extends Composer<_$AppDatabase, $SyncOperationsTable> {
-  $$SyncOperationsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get entity => $composableBuilder(
-      column: $table.entity, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get entityId => $composableBuilder(
-      column: $table.entityId, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get operationType => $composableBuilder(
-      column: $table.operationType, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get payloadJson => $composableBuilder(
-      column: $table.payloadJson, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get completedAt => $composableBuilder(
-      column: $table.completedAt, builder: (column) => ColumnFilters(column));
-}
-
-class $$SyncOperationsTableOrderingComposer
-    extends Composer<_$AppDatabase, $SyncOperationsTable> {
-  $$SyncOperationsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get entity => $composableBuilder(
-      column: $table.entity, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get entityId => $composableBuilder(
-      column: $table.entityId, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get operationType => $composableBuilder(
-      column: $table.operationType,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get payloadJson => $composableBuilder(
-      column: $table.payloadJson, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get completedAt => $composableBuilder(
-      column: $table.completedAt, builder: (column) => ColumnOrderings(column));
-}
-
-class $$SyncOperationsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $SyncOperationsTable> {
-  $$SyncOperationsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get entity =>
-      $composableBuilder(column: $table.entity, builder: (column) => column);
-
-  GeneratedColumn<String> get entityId =>
-      $composableBuilder(column: $table.entityId, builder: (column) => column);
-
-  GeneratedColumn<String> get operationType => $composableBuilder(
-      column: $table.operationType, builder: (column) => column);
-
-  GeneratedColumn<String> get payloadJson => $composableBuilder(
-      column: $table.payloadJson, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get completedAt => $composableBuilder(
-      column: $table.completedAt, builder: (column) => column);
-}
-
-class $$SyncOperationsTableTableManager extends RootTableManager<
-    _$AppDatabase,
-    $SyncOperationsTable,
-    SyncOperationRow,
-    $$SyncOperationsTableFilterComposer,
-    $$SyncOperationsTableOrderingComposer,
-    $$SyncOperationsTableAnnotationComposer,
-    $$SyncOperationsTableCreateCompanionBuilder,
-    $$SyncOperationsTableUpdateCompanionBuilder,
-    (
-      SyncOperationRow,
-      BaseReferences<_$AppDatabase, $SyncOperationsTable, SyncOperationRow>
-    ),
-    SyncOperationRow,
-    PrefetchHooks Function()> {
-  $$SyncOperationsTableTableManager(
-      _$AppDatabase db, $SyncOperationsTable table)
-      : super(TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$SyncOperationsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$SyncOperationsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$SyncOperationsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<String> id = const Value.absent(),
-            Value<String> entity = const Value.absent(),
-            Value<String> entityId = const Value.absent(),
-            Value<String> operationType = const Value.absent(),
-            Value<String> payloadJson = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<DateTime?> completedAt = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              SyncOperationsCompanion(
-            id: id,
-            entity: entity,
-            entityId: entityId,
-            operationType: operationType,
-            payloadJson: payloadJson,
-            createdAt: createdAt,
-            completedAt: completedAt,
-            rowid: rowid,
-          ),
-          createCompanionCallback: ({
-            required String id,
-            required String entity,
-            required String entityId,
-            required String operationType,
-            required String payloadJson,
-            required DateTime createdAt,
-            Value<DateTime?> completedAt = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              SyncOperationsCompanion.insert(
-            id: id,
-            entity: entity,
-            entityId: entityId,
-            operationType: operationType,
-            payloadJson: payloadJson,
-            createdAt: createdAt,
-            completedAt: completedAt,
-            rowid: rowid,
-          ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ));
-}
-
-typedef $$SyncOperationsTableProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    $SyncOperationsTable,
-    SyncOperationRow,
-    $$SyncOperationsTableFilterComposer,
-    $$SyncOperationsTableOrderingComposer,
-    $$SyncOperationsTableAnnotationComposer,
-    $$SyncOperationsTableCreateCompanionBuilder,
-    $$SyncOperationsTableUpdateCompanionBuilder,
-    (
-      SyncOperationRow,
-      BaseReferences<_$AppDatabase, $SyncOperationsTable, SyncOperationRow>
-    ),
-    SyncOperationRow,
-    PrefetchHooks Function()>;
-typedef $$SyncMetadataTableCreateCompanionBuilder = SyncMetadataCompanion
-    Function({
-  required String key,
-  required String value,
-  Value<int> rowid,
-});
-typedef $$SyncMetadataTableUpdateCompanionBuilder = SyncMetadataCompanion
-    Function({
-  Value<String> key,
-  Value<String> value,
-  Value<int> rowid,
-});
-
-class $$SyncMetadataTableFilterComposer
-    extends Composer<_$AppDatabase, $SyncMetadataTable> {
-  $$SyncMetadataTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get key => $composableBuilder(
-      column: $table.key, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get value => $composableBuilder(
-      column: $table.value, builder: (column) => ColumnFilters(column));
-}
-
-class $$SyncMetadataTableOrderingComposer
-    extends Composer<_$AppDatabase, $SyncMetadataTable> {
-  $$SyncMetadataTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get key => $composableBuilder(
-      column: $table.key, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get value => $composableBuilder(
-      column: $table.value, builder: (column) => ColumnOrderings(column));
-}
-
-class $$SyncMetadataTableAnnotationComposer
-    extends Composer<_$AppDatabase, $SyncMetadataTable> {
-  $$SyncMetadataTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get key =>
-      $composableBuilder(column: $table.key, builder: (column) => column);
-
-  GeneratedColumn<String> get value =>
-      $composableBuilder(column: $table.value, builder: (column) => column);
-}
-
-class $$SyncMetadataTableTableManager extends RootTableManager<
-    _$AppDatabase,
-    $SyncMetadataTable,
-    SyncMetadataRow,
-    $$SyncMetadataTableFilterComposer,
-    $$SyncMetadataTableOrderingComposer,
-    $$SyncMetadataTableAnnotationComposer,
-    $$SyncMetadataTableCreateCompanionBuilder,
-    $$SyncMetadataTableUpdateCompanionBuilder,
-    (
-      SyncMetadataRow,
-      BaseReferences<_$AppDatabase, $SyncMetadataTable, SyncMetadataRow>
-    ),
-    SyncMetadataRow,
-    PrefetchHooks Function()> {
-  $$SyncMetadataTableTableManager(_$AppDatabase db, $SyncMetadataTable table)
-      : super(TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$SyncMetadataTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$SyncMetadataTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$SyncMetadataTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<String> key = const Value.absent(),
-            Value<String> value = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              SyncMetadataCompanion(
-            key: key,
-            value: value,
-            rowid: rowid,
-          ),
-          createCompanionCallback: ({
-            required String key,
-            required String value,
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              SyncMetadataCompanion.insert(
-            key: key,
-            value: value,
-            rowid: rowid,
-          ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ));
-}
-
-typedef $$SyncMetadataTableProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    $SyncMetadataTable,
-    SyncMetadataRow,
-    $$SyncMetadataTableFilterComposer,
-    $$SyncMetadataTableOrderingComposer,
-    $$SyncMetadataTableAnnotationComposer,
-    $$SyncMetadataTableCreateCompanionBuilder,
-    $$SyncMetadataTableUpdateCompanionBuilder,
-    (
-      SyncMetadataRow,
-      BaseReferences<_$AppDatabase, $SyncMetadataTable, SyncMetadataRow>
-    ),
-    SyncMetadataRow,
-    PrefetchHooks Function()>;
 typedef $$LocalSettingsTableCreateCompanionBuilder = LocalSettingsCompanion
     Function({
   required String key,
@@ -11089,419 +9051,6 @@ typedef $$LocalSettingsTableProcessedTableManager = ProcessedTableManager<
       BaseReferences<_$AppDatabase, $LocalSettingsTable, LocalSettingRow>
     ),
     LocalSettingRow,
-    PrefetchHooks Function()>;
-typedef $$AiJobsTableCreateCompanionBuilder = AiJobsCompanion Function({
-  required String id,
-  required String jobType,
-  required String subjectId,
-  required String status,
-  required String idempotencyKey,
-  required String inputHash,
-  required String inputVersion,
-  Value<int> attemptCount,
-  Value<int> maxAttempts,
-  Value<DateTime?> nextRetryAt,
-  Value<String> promptVersion,
-  Value<String> modelVersion,
-  Value<String> schemaVersion,
-  Value<String?> resultJson,
-  Value<String?> errorJson,
-  Value<String?> pendingAction,
-  Value<DateTime?> startedAt,
-  Value<DateTime?> completedAt,
-  Value<DateTime?> dismissedAt,
-  required DateTime createdAt,
-  required DateTime updatedAt,
-  Value<int> rowid,
-});
-typedef $$AiJobsTableUpdateCompanionBuilder = AiJobsCompanion Function({
-  Value<String> id,
-  Value<String> jobType,
-  Value<String> subjectId,
-  Value<String> status,
-  Value<String> idempotencyKey,
-  Value<String> inputHash,
-  Value<String> inputVersion,
-  Value<int> attemptCount,
-  Value<int> maxAttempts,
-  Value<DateTime?> nextRetryAt,
-  Value<String> promptVersion,
-  Value<String> modelVersion,
-  Value<String> schemaVersion,
-  Value<String?> resultJson,
-  Value<String?> errorJson,
-  Value<String?> pendingAction,
-  Value<DateTime?> startedAt,
-  Value<DateTime?> completedAt,
-  Value<DateTime?> dismissedAt,
-  Value<DateTime> createdAt,
-  Value<DateTime> updatedAt,
-  Value<int> rowid,
-});
-
-class $$AiJobsTableFilterComposer
-    extends Composer<_$AppDatabase, $AiJobsTable> {
-  $$AiJobsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<String> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get jobType => $composableBuilder(
-      column: $table.jobType, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get subjectId => $composableBuilder(
-      column: $table.subjectId, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get status => $composableBuilder(
-      column: $table.status, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get idempotencyKey => $composableBuilder(
-      column: $table.idempotencyKey,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get inputHash => $composableBuilder(
-      column: $table.inputHash, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get inputVersion => $composableBuilder(
-      column: $table.inputVersion, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get attemptCount => $composableBuilder(
-      column: $table.attemptCount, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get maxAttempts => $composableBuilder(
-      column: $table.maxAttempts, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get nextRetryAt => $composableBuilder(
-      column: $table.nextRetryAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get promptVersion => $composableBuilder(
-      column: $table.promptVersion, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get modelVersion => $composableBuilder(
-      column: $table.modelVersion, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get schemaVersion => $composableBuilder(
-      column: $table.schemaVersion, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get resultJson => $composableBuilder(
-      column: $table.resultJson, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get errorJson => $composableBuilder(
-      column: $table.errorJson, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get pendingAction => $composableBuilder(
-      column: $table.pendingAction, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get startedAt => $composableBuilder(
-      column: $table.startedAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get completedAt => $composableBuilder(
-      column: $table.completedAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get dismissedAt => $composableBuilder(
-      column: $table.dismissedAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
-}
-
-class $$AiJobsTableOrderingComposer
-    extends Composer<_$AppDatabase, $AiJobsTable> {
-  $$AiJobsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<String> get id => $composableBuilder(
-      column: $table.id, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get jobType => $composableBuilder(
-      column: $table.jobType, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get subjectId => $composableBuilder(
-      column: $table.subjectId, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get status => $composableBuilder(
-      column: $table.status, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get idempotencyKey => $composableBuilder(
-      column: $table.idempotencyKey,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get inputHash => $composableBuilder(
-      column: $table.inputHash, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get inputVersion => $composableBuilder(
-      column: $table.inputVersion,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get attemptCount => $composableBuilder(
-      column: $table.attemptCount,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get maxAttempts => $composableBuilder(
-      column: $table.maxAttempts, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get nextRetryAt => $composableBuilder(
-      column: $table.nextRetryAt, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get promptVersion => $composableBuilder(
-      column: $table.promptVersion,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get modelVersion => $composableBuilder(
-      column: $table.modelVersion,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get schemaVersion => $composableBuilder(
-      column: $table.schemaVersion,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get resultJson => $composableBuilder(
-      column: $table.resultJson, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get errorJson => $composableBuilder(
-      column: $table.errorJson, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get pendingAction => $composableBuilder(
-      column: $table.pendingAction,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get startedAt => $composableBuilder(
-      column: $table.startedAt, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get completedAt => $composableBuilder(
-      column: $table.completedAt, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get dismissedAt => $composableBuilder(
-      column: $table.dismissedAt, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
-}
-
-class $$AiJobsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $AiJobsTable> {
-  $$AiJobsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<String> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get jobType =>
-      $composableBuilder(column: $table.jobType, builder: (column) => column);
-
-  GeneratedColumn<String> get subjectId =>
-      $composableBuilder(column: $table.subjectId, builder: (column) => column);
-
-  GeneratedColumn<String> get status =>
-      $composableBuilder(column: $table.status, builder: (column) => column);
-
-  GeneratedColumn<String> get idempotencyKey => $composableBuilder(
-      column: $table.idempotencyKey, builder: (column) => column);
-
-  GeneratedColumn<String> get inputHash =>
-      $composableBuilder(column: $table.inputHash, builder: (column) => column);
-
-  GeneratedColumn<String> get inputVersion => $composableBuilder(
-      column: $table.inputVersion, builder: (column) => column);
-
-  GeneratedColumn<int> get attemptCount => $composableBuilder(
-      column: $table.attemptCount, builder: (column) => column);
-
-  GeneratedColumn<int> get maxAttempts => $composableBuilder(
-      column: $table.maxAttempts, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get nextRetryAt => $composableBuilder(
-      column: $table.nextRetryAt, builder: (column) => column);
-
-  GeneratedColumn<String> get promptVersion => $composableBuilder(
-      column: $table.promptVersion, builder: (column) => column);
-
-  GeneratedColumn<String> get modelVersion => $composableBuilder(
-      column: $table.modelVersion, builder: (column) => column);
-
-  GeneratedColumn<String> get schemaVersion => $composableBuilder(
-      column: $table.schemaVersion, builder: (column) => column);
-
-  GeneratedColumn<String> get resultJson => $composableBuilder(
-      column: $table.resultJson, builder: (column) => column);
-
-  GeneratedColumn<String> get errorJson =>
-      $composableBuilder(column: $table.errorJson, builder: (column) => column);
-
-  GeneratedColumn<String> get pendingAction => $composableBuilder(
-      column: $table.pendingAction, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get startedAt =>
-      $composableBuilder(column: $table.startedAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get completedAt => $composableBuilder(
-      column: $table.completedAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get dismissedAt => $composableBuilder(
-      column: $table.dismissedAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-}
-
-class $$AiJobsTableTableManager extends RootTableManager<
-    _$AppDatabase,
-    $AiJobsTable,
-    AiJobRow,
-    $$AiJobsTableFilterComposer,
-    $$AiJobsTableOrderingComposer,
-    $$AiJobsTableAnnotationComposer,
-    $$AiJobsTableCreateCompanionBuilder,
-    $$AiJobsTableUpdateCompanionBuilder,
-    (AiJobRow, BaseReferences<_$AppDatabase, $AiJobsTable, AiJobRow>),
-    AiJobRow,
-    PrefetchHooks Function()> {
-  $$AiJobsTableTableManager(_$AppDatabase db, $AiJobsTable table)
-      : super(TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$AiJobsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$AiJobsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$AiJobsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback: ({
-            Value<String> id = const Value.absent(),
-            Value<String> jobType = const Value.absent(),
-            Value<String> subjectId = const Value.absent(),
-            Value<String> status = const Value.absent(),
-            Value<String> idempotencyKey = const Value.absent(),
-            Value<String> inputHash = const Value.absent(),
-            Value<String> inputVersion = const Value.absent(),
-            Value<int> attemptCount = const Value.absent(),
-            Value<int> maxAttempts = const Value.absent(),
-            Value<DateTime?> nextRetryAt = const Value.absent(),
-            Value<String> promptVersion = const Value.absent(),
-            Value<String> modelVersion = const Value.absent(),
-            Value<String> schemaVersion = const Value.absent(),
-            Value<String?> resultJson = const Value.absent(),
-            Value<String?> errorJson = const Value.absent(),
-            Value<String?> pendingAction = const Value.absent(),
-            Value<DateTime?> startedAt = const Value.absent(),
-            Value<DateTime?> completedAt = const Value.absent(),
-            Value<DateTime?> dismissedAt = const Value.absent(),
-            Value<DateTime> createdAt = const Value.absent(),
-            Value<DateTime> updatedAt = const Value.absent(),
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              AiJobsCompanion(
-            id: id,
-            jobType: jobType,
-            subjectId: subjectId,
-            status: status,
-            idempotencyKey: idempotencyKey,
-            inputHash: inputHash,
-            inputVersion: inputVersion,
-            attemptCount: attemptCount,
-            maxAttempts: maxAttempts,
-            nextRetryAt: nextRetryAt,
-            promptVersion: promptVersion,
-            modelVersion: modelVersion,
-            schemaVersion: schemaVersion,
-            resultJson: resultJson,
-            errorJson: errorJson,
-            pendingAction: pendingAction,
-            startedAt: startedAt,
-            completedAt: completedAt,
-            dismissedAt: dismissedAt,
-            createdAt: createdAt,
-            updatedAt: updatedAt,
-            rowid: rowid,
-          ),
-          createCompanionCallback: ({
-            required String id,
-            required String jobType,
-            required String subjectId,
-            required String status,
-            required String idempotencyKey,
-            required String inputHash,
-            required String inputVersion,
-            Value<int> attemptCount = const Value.absent(),
-            Value<int> maxAttempts = const Value.absent(),
-            Value<DateTime?> nextRetryAt = const Value.absent(),
-            Value<String> promptVersion = const Value.absent(),
-            Value<String> modelVersion = const Value.absent(),
-            Value<String> schemaVersion = const Value.absent(),
-            Value<String?> resultJson = const Value.absent(),
-            Value<String?> errorJson = const Value.absent(),
-            Value<String?> pendingAction = const Value.absent(),
-            Value<DateTime?> startedAt = const Value.absent(),
-            Value<DateTime?> completedAt = const Value.absent(),
-            Value<DateTime?> dismissedAt = const Value.absent(),
-            required DateTime createdAt,
-            required DateTime updatedAt,
-            Value<int> rowid = const Value.absent(),
-          }) =>
-              AiJobsCompanion.insert(
-            id: id,
-            jobType: jobType,
-            subjectId: subjectId,
-            status: status,
-            idempotencyKey: idempotencyKey,
-            inputHash: inputHash,
-            inputVersion: inputVersion,
-            attemptCount: attemptCount,
-            maxAttempts: maxAttempts,
-            nextRetryAt: nextRetryAt,
-            promptVersion: promptVersion,
-            modelVersion: modelVersion,
-            schemaVersion: schemaVersion,
-            resultJson: resultJson,
-            errorJson: errorJson,
-            pendingAction: pendingAction,
-            startedAt: startedAt,
-            completedAt: completedAt,
-            dismissedAt: dismissedAt,
-            createdAt: createdAt,
-            updatedAt: updatedAt,
-            rowid: rowid,
-          ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ));
-}
-
-typedef $$AiJobsTableProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    $AiJobsTable,
-    AiJobRow,
-    $$AiJobsTableFilterComposer,
-    $$AiJobsTableOrderingComposer,
-    $$AiJobsTableAnnotationComposer,
-    $$AiJobsTableCreateCompanionBuilder,
-    $$AiJobsTableUpdateCompanionBuilder,
-    (AiJobRow, BaseReferences<_$AppDatabase, $AiJobsTable, AiJobRow>),
-    AiJobRow,
     PrefetchHooks Function()>;
 typedef $$ProcessingOutboxTableCreateCompanionBuilder
     = ProcessingOutboxCompanion Function({
@@ -12057,14 +9606,8 @@ class $AppDatabaseManager {
       $$PlannedMealsTableTableManager(_db, _db.plannedMeals);
   $$ReviewItemsTableTableManager get reviewItems =>
       $$ReviewItemsTableTableManager(_db, _db.reviewItems);
-  $$SyncOperationsTableTableManager get syncOperations =>
-      $$SyncOperationsTableTableManager(_db, _db.syncOperations);
-  $$SyncMetadataTableTableManager get syncMetadata =>
-      $$SyncMetadataTableTableManager(_db, _db.syncMetadata);
   $$LocalSettingsTableTableManager get localSettings =>
       $$LocalSettingsTableTableManager(_db, _db.localSettings);
-  $$AiJobsTableTableManager get aiJobs =>
-      $$AiJobsTableTableManager(_db, _db.aiJobs);
   $$ProcessingOutboxTableTableManager get processingOutbox =>
       $$ProcessingOutboxTableTableManager(_db, _db.processingOutbox);
   $$ProcessingConsentsTableTableManager get processingConsents =>

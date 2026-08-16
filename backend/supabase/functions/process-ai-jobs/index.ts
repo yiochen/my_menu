@@ -414,20 +414,17 @@ async function processingCaptures(
           false,
         );
       }
-      const { data, error: signedError } = await client.storage
-        .from(stringField(asset, "storage_bucket"))
-        .createSignedUrl(stringField(asset, "storage_path"), 300);
-      if (signedError != null || data?.signedUrl == null) {
-        throw new AiProviderFailure(
-          "capture_media_unavailable",
-          "Capture media is unavailable",
-          true,
-        );
-      }
+      const bucket = stringField(asset, "storage_bucket");
+      const path = stringField(asset, "storage_path");
       capture.media = {
         contentType: stringField(asset, "content_type"),
-        signedUrl: data.signedUrl,
         filename: `${assetId}.image`,
+        loadBytes: processingAssetByteLoader(
+          client,
+          bucket,
+          path,
+          capture.id,
+        ),
       };
     }
     return capture;
@@ -536,25 +533,39 @@ async function loadGroupingInput(
       const bucket = stringField(row, "storage_bucket");
       const path = stringField(row, "storage_path");
       const contentType = stringField(row, "content_type");
-      const { data: signed, error: signedError } = await client.storage
-        .from(bucket)
-        .createSignedUrl(path, 300);
-      if (signedError != null || signed?.signedUrl == null) {
-        throw new AiProviderFailure(
-          "capture_media_unavailable",
-          `Could not read capture media ${capture.id}`,
-          true,
-          { cause: signedError ?? undefined },
-        );
-      }
       capture.media = {
         contentType,
-        signedUrl: signed.signedUrl,
         filename: path.split("/").at(-1) ?? `${capture.id}.image`,
+        loadBytes: processingAssetByteLoader(
+          client,
+          bucket,
+          path,
+          capture.id,
+        ),
       };
     }
     return capture;
   }));
+}
+
+function processingAssetByteLoader(
+  client: any,
+  bucket: string,
+  path: string,
+  captureId: string,
+): () => Promise<Uint8Array> {
+  return async () => {
+    const { data, error } = await client.storage.from(bucket).download(path);
+    if (error != null || data == null) {
+      throw new AiProviderFailure(
+        "capture_media_unavailable",
+        `Could not read capture media ${captureId}`,
+        true,
+        { cause: error ?? undefined },
+      );
+    }
+    return new Uint8Array(await data.arrayBuffer());
+  };
 }
 
 function normalizeFailure(error: unknown) {

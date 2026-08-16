@@ -28,7 +28,6 @@ class CaptureItem {
     this.localPreviewRef,
     this.localThumbnailRef,
     this.localPlaceholderRef,
-    this.remoteMediaRef,
     this.text,
     this.capturedAt,
     this.capturedLocalDate,
@@ -47,7 +46,6 @@ class CaptureItem {
   final String? localPreviewRef;
   final String? localThumbnailRef;
   final String? localPlaceholderRef;
-  final String? remoteMediaRef;
   final String? text;
   final DateTime? capturedAt;
   final String? capturedLocalDate;

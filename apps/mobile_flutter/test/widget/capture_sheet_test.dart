@@ -3,11 +3,11 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/core/database/app_database.dart';
-import 'package:mymenu/core/network/my_menu_api_client.dart';
+import 'package:mymenu/core/network/processing_api_client.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
-import 'package:mymenu/domain/sync/repositories.dart';
+import 'package:mymenu/domain/menu/app_repositories.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
 import 'package:mymenu/features/capture/capture_outcome_success.dart';
 import 'package:mymenu/features/capture/capture_sheet.dart';
@@ -212,22 +212,12 @@ void main() {
   final AppDatabase database = AppDatabase.forTesting(NativeDatabase.memory());
   final AppRepositories repositories = AppRepositories(
     database: database,
-    apiClient: _ImmediateCaptureApiClient(),
+    processingApiClient: _ImmediateCaptureApiClient(),
   );
   return (MyMenuState(repositories: repositories), database);
 }
 
-class _ImmediateCaptureApiClient extends FakeMyMenuApiClient {
-  @override
-  Future<String> uploadCaptureMedia({
-    required String captureId,
-    required String batchId,
-    required int ordinal,
-    required String localMediaRef,
-  }) async {
-    return 'fake://captures/$captureId';
-  }
-}
+class _ImmediateCaptureApiClient extends FakeProcessingApiClient {}
 
 class _FakeCaptureMediaService implements CaptureMediaService {
   _FakeCaptureMediaService({

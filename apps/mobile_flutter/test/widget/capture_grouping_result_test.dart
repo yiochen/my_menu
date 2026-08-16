@@ -4,7 +4,7 @@ import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_correction.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_grouping_result.dart';
 
 void main() {
@@ -143,13 +143,13 @@ void main() {
     );
   });
 
-  testWidgets('shows pending correction status and undo action',
+  testWidgets('shows locally saved correction status and undo action',
       (WidgetTester tester) async {
     await _pumpResult(tester, _groupedState(withCorrection: true));
 
-    await tester.scrollUntilVisible(find.text('Saved here · syncing'), 120);
+    await tester.scrollUntilVisible(find.text('Saved on this device'), 120);
 
-    expect(find.text('Saved here · syncing'), findsOneWidget);
+    expect(find.text('Saved on this device'), findsOneWidget);
     expect(
       find.byKey(const ValueKey<String>('undo_capture_grouping')),
       findsOneWidget,
@@ -301,7 +301,7 @@ MyMenuState _groupedState({
                 'capture_a': 'dish_a',
               },
               targetDishId: 'dish_b',
-              status: CaptureCorrectionStatus.pending,
+              status: CaptureCorrectionStatus.applied,
               createdAt: now,
               updatedAt: now,
             ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
-import 'package:mymenu/domain/sync/repositories.dart';
+import 'package:mymenu/domain/menu/app_repositories.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/app_image.dart';

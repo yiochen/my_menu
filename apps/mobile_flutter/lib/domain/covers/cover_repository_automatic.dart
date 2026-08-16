@@ -114,8 +114,7 @@ extension CoverRepositoryAutomatic on CoverRepository {
       _database.dishNotes,
     )
           ..where(
-            (db.DishNotes table) =>
-                table.dishId.equals(dishId) & table.deletedAt.isNull(),
+            (db.DishNotes table) => table.dishId.equals(dishId),
           )
           ..orderBy(<OrderingTerm Function(db.$DishNotesTable)>[
             (db.$DishNotesTable table) => OrderingTerm.asc(table.position),

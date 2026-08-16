@@ -1,6 +1,6 @@
-part of 'my_menu_api_client.dart';
+part of 'processing_api_client.dart';
 
-mixin SupabaseProcessingApi on MyMenuApiClient {
+mixin SupabaseProcessingApi on ProcessingApiClient {
   SupabaseClient get _client;
 
   Future<void> _ensureSession();
@@ -25,10 +25,8 @@ mixin SupabaseProcessingApi on MyMenuApiClient {
 
   @override
   Future<ApiProcessingJob> createProcessingJob({
-    required String operation,
+    required ApiProcessingContract contract,
     required String idempotencyKey,
-    required String inputSchemaVersion,
-    required String resultSchemaVersion,
     required String privacyNoticeVersion,
     required List<ApiProcessingAssetManifest> assets,
   }) async {
@@ -37,10 +35,10 @@ mixin SupabaseProcessingApi on MyMenuApiClient {
       'processing-jobs',
       <String, Object?>{
         'action': 'create',
-        'operation': operation,
+        'operation': contract.operation.apiValue,
         'idempotencyKey': idempotencyKey,
-        'inputSchemaVersion': inputSchemaVersion,
-        'resultSchemaVersion': resultSchemaVersion,
+        'inputSchemaVersion': contract.inputSchemaVersion,
+        'resultSchemaVersion': contract.resultSchemaVersion,
         'privacyNoticeVersion': privacyNoticeVersion,
         'assets': assets
             .map((ApiProcessingAssetManifest asset) => asset.toJson())
@@ -67,14 +65,14 @@ mixin SupabaseProcessingApi on MyMenuApiClient {
   @override
   Future<ApiProcessingJob> submitProcessingJob({
     required String jobId,
-    required Map<String, Object?> input,
+    required ApiProcessingInput input,
   }) async {
     await _ensureSession();
     return _processingJobFromResponse(
       await _invokeJson('processing-jobs', <String, Object?>{
         'action': 'submit',
         'jobId': jobId,
-        'input': input,
+        'input': input.payload,
       }),
     );
   }
@@ -91,7 +89,7 @@ mixin SupabaseProcessingApi on MyMenuApiClient {
   }
 
   @override
-  Future<Map<String, Object?>> downloadProcessingResult({
+  Future<ApiProcessingResult> downloadProcessingResult({
     required String jobId,
   }) async {
     await _ensureSession();
@@ -99,7 +97,20 @@ mixin SupabaseProcessingApi on MyMenuApiClient {
       'processing-jobs',
       <String, Object?>{'action': 'result', 'jobId': jobId},
     );
-    return apiMapValue(response, 'result');
+    final Map<String, Object?> result = apiMapValue(response, 'result');
+    final String schemaVersion = apiStringValue(result, 'schemaVersion');
+    return switch (ApiProcessingOperation.fromApi(
+      apiStringValue(result, 'operation'),
+    )) {
+      ApiProcessingOperation.captureGrouping => ApiCaptureGroupingResult(
+          schemaVersion: schemaVersion,
+          payload: result,
+        ),
+      ApiProcessingOperation.coverGeneration => ApiCoverGenerationResult(
+          schemaVersion: schemaVersion,
+          payload: result,
+        ),
+    };
   }
 
   @override
@@ -130,9 +141,11 @@ mixin SupabaseProcessingApi on MyMenuApiClient {
             : const <Object?>[];
     return ApiProcessingJob(
       id: apiStringValue(job, 'id'),
-      operation: apiStringValue(job, 'operation'),
+      operation: ApiProcessingOperation.fromApi(
+        apiStringValue(job, 'operation'),
+      ),
       idempotencyKey: apiStringValue(job, 'idempotencyKey'),
-      status: apiStringValue(job, 'status'),
+      status: ApiProcessingJobStatus.fromApi(apiStringValue(job, 'status')),
       expiresAt: DateTime.parse(apiStringValue(job, 'expiresAt')),
       inputSchemaVersion: apiStringValue(job, 'inputSchemaVersion'),
       resultSchemaVersion: apiStringValue(job, 'resultSchemaVersion'),

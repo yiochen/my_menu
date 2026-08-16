@@ -6,7 +6,7 @@ import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_correction.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_grouping_destination_sheets.dart';
 import 'package:mymenu/shared/drag_drop/drag_drop_board.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';

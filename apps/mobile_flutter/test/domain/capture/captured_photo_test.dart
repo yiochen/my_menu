@@ -2,8 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/capture/review_item.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/domain/processing/processing_outbox.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
 
 void main() {
   test('photos exclude ideas and organization is derived from assignment', () {
@@ -135,6 +135,60 @@ void main() {
       state.photos.map((photo) => photo.dateKey),
       <String>['2026-08-03', '2026-08-02'],
     );
+  });
+
+  test('expired processing requests surface as retryable failures', () {
+    final MyMenuState state = MyMenuState.forTesting(
+      captureItems: <CaptureItem>[
+        _photo(
+          'expired',
+          batchId: 'expired-batch',
+          status: CaptureItemStatus.classifying,
+        ),
+      ],
+      processingRequests: <ProcessingOutboxRequest>[
+        ProcessingOutboxRequest(
+          id: 'expired-request',
+          kind: ProcessingRequestKind.captureGrouping,
+          subjectId: 'expired-batch',
+          payload: const <String, Object?>{},
+          deliveryState: ProcessingDeliveryState.expired,
+          adoptionState: ProcessingAdoptionState.awaitingProposal,
+          createdAt: DateTime.utc(2026, 8, 11),
+          updatedAt: DateTime.utc(2026, 8, 15),
+        ),
+      ],
+    );
+
+    expect(state.photos.single.overlayLabel, 'Couldn’t organize');
+  });
+
+  test('quota-limited processing leaves the photo unorganized', () {
+    final MyMenuState state = MyMenuState.forTesting(
+      captureItems: <CaptureItem>[
+        _photo(
+          'quota-limited',
+          batchId: 'quota-batch',
+          status: CaptureItemStatus.failed,
+        ),
+      ],
+      processingRequests: <ProcessingOutboxRequest>[
+        ProcessingOutboxRequest(
+          id: 'quota-request',
+          kind: ProcessingRequestKind.captureGrouping,
+          subjectId: 'quota-batch',
+          payload: const <String, Object?>{},
+          deliveryState: ProcessingDeliveryState.failed,
+          adoptionState: ProcessingAdoptionState.awaitingProposal,
+          failureCode: 'free_allowance_exhausted',
+          createdAt: DateTime.utc(2026, 8, 11),
+          updatedAt: DateTime.utc(2026, 8, 15),
+        ),
+      ],
+    );
+
+    expect(state.photos.single.overlayLabel, 'Unorganized');
+    expect(state.photos.single.organizationAllowanceExhausted, isTrue);
   });
 }
 

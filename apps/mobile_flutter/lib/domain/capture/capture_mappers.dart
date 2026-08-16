@@ -15,7 +15,6 @@ extension CaptureItemRowMapper on db.CaptureItemRow {
       localPreviewRef: localPreviewRef,
       localThumbnailRef: localThumbnailRef,
       localPlaceholderRef: localPlaceholderRef,
-      remoteMediaRef: remoteMediaRef,
       text: ideaText,
       capturedAt: capturedAt,
       capturedLocalDate: capturedLocalDate,

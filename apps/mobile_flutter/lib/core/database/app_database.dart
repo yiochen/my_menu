@@ -1,15 +1,18 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:mymenu/core/database/app_database_covers.dart';
 import 'package:mymenu/core/database/app_database_local.dart';
 import 'package:mymenu/core/database/app_database_processing.dart';
+import 'package:mymenu/core/files/dish_image_cache.dart';
 export 'package:mymenu/core/database/app_database_covers.dart';
 export 'package:mymenu/core/database/app_database_local.dart';
 export 'package:mymenu/core/database/app_database_processing.dart';
 
 part 'app_database.g.dart';
+part 'app_database_media_migration.dart';
 part 'app_database_migrations.dart';
 
 @DataClassName('DishRow')
@@ -45,7 +48,6 @@ class DishNotes extends Table {
   IntColumn get position => integer()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get updatedAt => dateTime()();
-  DateTimeColumn get deletedAt => dateTime().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
@@ -81,7 +83,6 @@ class CaptureItems extends Table {
   TextColumn get localPreviewRef => text().nullable()();
   TextColumn get localThumbnailRef => text().nullable()();
   TextColumn get localPlaceholderRef => text().nullable()();
-  TextColumn get remoteMediaRef => text().nullable()();
   TextColumn get ideaText => text().nullable()();
   DateTimeColumn get capturedAt => dateTime().nullable()();
   TextColumn get capturedLocalDate => text().nullable()();
@@ -137,54 +138,6 @@ class ReviewItems extends Table {
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
 }
 
-@DataClassName('SyncOperationRow')
-class SyncOperations extends Table {
-  TextColumn get id => text()();
-  TextColumn get entity => text()();
-  TextColumn get entityId => text()();
-  TextColumn get operationType => text()();
-  TextColumn get payloadJson => text()();
-  DateTimeColumn get createdAt => dateTime()();
-  DateTimeColumn get completedAt => dateTime().nullable()();
-
-  @override
-  Set<Column<Object>> get primaryKey => <Column<Object>>{id};
-}
-
-@DataClassName('AiJobRow')
-class AiJobs extends Table {
-  TextColumn get id => text()();
-  TextColumn get jobType => text()();
-  TextColumn get subjectId => text()();
-  TextColumn get status => text()();
-  TextColumn get idempotencyKey => text()();
-  TextColumn get inputHash => text()();
-  TextColumn get inputVersion => text()();
-  IntColumn get attemptCount => integer().withDefault(const Constant(0))();
-  IntColumn get maxAttempts => integer().withDefault(const Constant(3))();
-  DateTimeColumn get nextRetryAt => dateTime().nullable()();
-  TextColumn get promptVersion => text().withDefault(const Constant('1'))();
-  TextColumn get modelVersion =>
-      text().withDefault(const Constant('default'))();
-  TextColumn get schemaVersion => text().withDefault(const Constant('1'))();
-  TextColumn get resultJson => text().nullable()();
-  TextColumn get errorJson => text().nullable()();
-  TextColumn get pendingAction => text().nullable()();
-  DateTimeColumn get startedAt => dateTime().nullable()();
-  DateTimeColumn get completedAt => dateTime().nullable()();
-  DateTimeColumn get dismissedAt => dateTime().nullable()();
-  DateTimeColumn get createdAt => dateTime()();
-  DateTimeColumn get updatedAt => dateTime()();
-
-  @override
-  Set<Column<Object>> get primaryKey => <Column<Object>>{id};
-
-  @override
-  List<Set<Column<Object>>> get uniqueKeys => <Set<Column<Object>>>[
-        <Column<Object>>{idempotencyKey},
-      ];
-}
-
 @DriftDatabase(
   tables: <Type>[
     Dishes,
@@ -196,21 +149,41 @@ class AiJobs extends Table {
     CaptureCorrections,
     PlannedMeals,
     ReviewItems,
-    SyncOperations,
-    SyncMetadata,
     LocalSettings,
-    AiJobs,
     ProcessingOutbox,
     ProcessingConsents,
   ],
 )
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(driftDatabase(name: 'mymenu'));
+  AppDatabase({DishImageCache? legacyMediaCache})
+      : _legacyMediaCache = legacyMediaCache ?? DishImageCache(),
+        super(driftDatabase(name: 'mymenu'));
 
-  AppDatabase.forTesting(super.executor);
+  AppDatabase.forTesting(
+    super.executor, {
+    DishImageCache? legacyMediaCache,
+  }) : _legacyMediaCache = legacyMediaCache ?? DishImageCache();
+
+  final DishImageCache _legacyMediaCache;
+  Future<bool>? _activeLegacyMediaContraction;
+
+  Future<bool> resumeLegacyMediaContraction() {
+    final Future<bool>? active = _activeLegacyMediaContraction;
+    if (active != null) return active;
+    final Future<bool> contraction = _finishLocalMediaContraction(
+      this,
+      allowDownload: true,
+    );
+    _activeLegacyMediaContraction = contraction;
+    return contraction.whenComplete(() {
+      if (identical(_activeLegacyMediaContraction, contraction)) {
+        _activeLegacyMediaContraction = null;
+      }
+    });
+  }
 
   @override
-  int get schemaVersion => 18;
+  int get schemaVersion => 19;
 
   @override
   MigrationStrategy get migration {
@@ -219,7 +192,6 @@ class AppDatabase extends _$AppDatabase {
       onUpgrade: (Migrator migrator, int from, int to) async {
         if (from < 2) {
           await migrator.createTable(dishNotes);
-          await migrator.createTable(syncMetadata);
           await _migrateJsonNotesToRows(this);
         }
         if (from < 3) {
@@ -250,9 +222,6 @@ class AppDatabase extends _$AppDatabase {
             FROM capture_items
           ''');
           await customStatement('UPDATE capture_items SET batch_id = id');
-        }
-        if (from < 4) {
-          await migrator.createTable(aiJobs);
         }
         if (from < 5) {
           await migrator.addColumn(captureItems, captureItems.capturedAt);
@@ -392,6 +361,7 @@ class AppDatabase extends _$AppDatabase {
           await migrator.createTable(generatedCovers);
         }
         if (from < 18) await _migrateDishOpenedV18(this, migrator);
+        if (from < 19) await _migrateLocalFirstContractV19(this);
       },
     );
   }

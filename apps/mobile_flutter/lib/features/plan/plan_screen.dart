@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-
 import 'package:mymenu/app/app.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/domain/planning/plan_dates.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/plan/plan_selected_day.dart';
 import 'package:mymenu/features/plan/plan_sheets.dart';
 import 'package:mymenu/features/plan/plan_week_calendar.dart';

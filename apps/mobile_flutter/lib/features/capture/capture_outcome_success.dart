@@ -177,7 +177,7 @@ class CaptureCreatedView extends StatelessWidget {
             else if (dishes.isEmpty)
               const CaptureStatusLine(
                 icon: Icons.hourglass_top_rounded,
-                title: 'Finishing local sync',
+                title: 'Finishing organization',
                 subtitle: 'The created dish will appear in Menu shortly',
               )
             else

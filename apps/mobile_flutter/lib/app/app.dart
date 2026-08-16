@@ -7,7 +7,7 @@ import 'package:mymenu/app/home_shell.dart';
 import 'package:mymenu/core/database/app_database.dart';
 import 'package:mymenu/core/debug/debug_controls.dart';
 import 'package:mymenu/core/network/network_status_monitor.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/debug/debug_controls_overlay.dart';
 import 'package:mymenu/features/processing/processing_consent_prompt.dart';
 import 'package:mymenu/shared/theme/app_theme.dart';

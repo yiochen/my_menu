@@ -4,20 +4,15 @@ class _CaptureBatchCard extends StatelessWidget {
   const _CaptureBatchCard({
     required this.batch,
     required this.state,
-    required this.groupingJob,
   });
 
   final CaptureBatch batch;
   final MyMenuState state;
-  final AiJob? groupingJob;
 
   @override
   Widget build(BuildContext context) {
-    final bool canRetryAi = batch.status == CaptureBatchStatus.failed &&
-        groupingJob?.status == AiJobStatus.failed;
-    final bool canRetryUpload = batch.failedItemCount > 0 ||
-        (batch.status == CaptureBatchStatus.failed && !canRetryAi);
-    final bool canRetry = canRetryAi || canRetryUpload;
+    final bool canRetry =
+        batch.failedItemCount > 0 || batch.status == CaptureBatchStatus.failed;
     final bool canRemove = batch.status != CaptureBatchStatus.applied &&
         batch.status != CaptureBatchStatus.discarded;
     return Card(
@@ -60,18 +55,14 @@ class _CaptureBatchCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 FilledButton.icon(
                   key: ValueKey<String>('retry_batch_${batch.id}'),
-                  onPressed: canRetryAi
-                      ? () => state.retryAiJob(groupingJob!.id)
-                      : () => state.retryCaptureBatch(batch.id),
+                  onPressed: () => state.retryCaptureBatch(batch.id),
                   icon: const Icon(Icons.refresh_rounded),
                   label: Text(
-                    canRetryAi
+                    batch.failedItemCount == 0
                         ? 'Retry organization'
-                        : batch.failedItemCount == 0
-                            ? 'Retry batch'
-                            : batch.failedItemCount == 1
-                                ? 'Retry failed photo'
-                                : 'Retry failed photos',
+                        : batch.failedItemCount == 1
+                            ? 'Retry failed photo'
+                            : 'Retry failed photos',
                   ),
                 ),
               ],
@@ -150,25 +141,29 @@ class _BatchStatusPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (String, Color, Color) display = batch.isWaitingForConnection
-        ? ('Saved offline', MyMenuColors.orangeDark, MyMenuColors.orangeSoft)
+        ? (
+            'Saved on this device',
+            MyMenuColors.orangeDark,
+            MyMenuColors.orangeSoft,
+          )
         : switch (batch.status) {
             CaptureBatchStatus.local || CaptureBatchStatus.pendingUpload => (
-                'Pending',
+                'Saved',
                 MyMenuColors.orangeDark,
                 MyMenuColors.orangeSoft
               ),
             CaptureBatchStatus.uploading => (
-                'Uploading',
+                'Sending',
                 MyMenuColors.orangeDark,
                 MyMenuColors.orangeSoft
               ),
             CaptureBatchStatus.readyForAi => (
-                'Uploaded',
+                'Waiting',
                 MyMenuColors.green,
                 MyMenuColors.greenSoft
               ),
             CaptureBatchStatus.processing => (
-                'Processing',
+                'Organizing',
                 MyMenuColors.orangeDark,
                 MyMenuColors.orangeSoft
               ),
@@ -214,7 +209,7 @@ class _CapturePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String? imageRef = item.localMediaRef ?? item.remoteMediaRef;
+    final String? imageRef = item.localMediaRef;
     return Stack(
       children: <Widget>[
         ClipRRect(
