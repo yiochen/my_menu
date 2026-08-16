@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/domain/capture/capture_correction.dart';
 import 'package:mymenu/domain/capture/captured_photo.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_screen.dart';
 import 'package:mymenu/features/photos/photo_date_groups.dart';
 import 'package:mymenu/features/photos/photo_detail_screen.dart';

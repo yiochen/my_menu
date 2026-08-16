@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/domain/processing/processing_consent_prompt.dart';
 import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/capture/add_idea_sheet.dart';
 import 'package:mymenu/shared/widgets/local_write_feedback.dart';
 

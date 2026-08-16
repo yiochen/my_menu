@@ -6,7 +6,7 @@ import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/dishes/seeded_dishes.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/dish_detail/dish_history_content.dart';
 import 'package:mymenu/features/menu/menu_exit_transition.dart';
 import 'package:mymenu/features/menu/menu_grid_card.dart';

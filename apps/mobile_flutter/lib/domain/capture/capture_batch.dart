@@ -35,9 +35,7 @@ class CaptureBatch {
 
   int get uploadedItemCount => items
       .where(
-        (CaptureItem item) =>
-            item.status == CaptureItemStatus.uploaded ||
-            item.remoteMediaRef != null,
+        (CaptureItem item) => item.status == CaptureItemStatus.uploaded,
       )
       .length;
 

@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_screen.dart';
 import 'package:mymenu/features/menu/menu_category_filter_sheet.dart';
 import 'package:mymenu/features/menu/menu_delete_dialog.dart';
@@ -203,7 +203,7 @@ class _MenuScreenState extends State<MenuScreen> {
         ),
         Expanded(
           child: RefreshIndicator(
-            onRefresh: state.refreshFromServer,
+            onRefresh: state.resumeProcessing,
             child: CustomScrollView(
               key: const ValueKey<String>('menu_screen'),
               controller: _scrollController,

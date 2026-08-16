@@ -1,5 +1,98 @@
 part of 'app_database.dart';
 
+Future<void> _migrateLocalFirstContractV19(AppDatabase database) async {
+  final Set<String> tables = (await database
+          .customSelect(
+            "SELECT name FROM sqlite_master WHERE type = 'table'",
+          )
+          .get())
+      .map((QueryRow row) => row.read<String>('name'))
+      .toSet();
+
+  await _finishLocalMediaContraction(database, allowDownload: false);
+
+  if (tables.contains('dish_notes')) {
+    final Set<String> columns = await _tableColumns(database, 'dish_notes');
+    if (columns.contains('deleted_at')) {
+      await database.customStatement(
+        'DELETE FROM dish_notes WHERE deleted_at IS NOT NULL',
+      );
+      await database.customStatement(
+        'ALTER TABLE dish_notes DROP COLUMN deleted_at',
+      );
+    }
+  }
+
+  if (tables.contains('capture_corrections')) {
+    await database.customStatement(
+      "UPDATE capture_corrections SET status = 'applied' "
+      "WHERE status IN ('pending', 'synced')",
+    );
+  }
+
+  if (tables.contains('ai_jobs')) {
+    await _preserveLegacyProcessingRequests(database);
+  }
+  await database.customStatement('DROP TABLE IF EXISTS ai_jobs');
+  await database.customStatement('DROP TABLE IF EXISTS sync_operations');
+  await database.customStatement('DROP TABLE IF EXISTS sync_metadata');
+}
+
+Future<void> _preserveLegacyProcessingRequests(AppDatabase database) async {
+  final Set<String> columns = await _tableColumns(database, 'ai_jobs');
+  const Set<String> required = <String>{
+    'id',
+    'job_type',
+    'subject_id',
+    'created_at',
+    'updated_at',
+  };
+  if (!columns.containsAll(required)) {
+    return;
+  }
+  await database.customStatement('''
+    INSERT OR IGNORE INTO processing_outbox (
+      id,
+      request_kind,
+      subject_id,
+      payload_json,
+      delivery_state,
+      adoption_state,
+      privacy_notice_version,
+      idempotency_key,
+      failure_code,
+      created_at,
+      updated_at
+    )
+    SELECT
+      jobs.id,
+      'capture_grouping',
+      jobs.subject_id,
+      json_object(
+        'batchId', jobs.subject_id,
+        'captureIds', json(
+          coalesce(
+            (
+              SELECT json_group_array(items.id)
+              FROM capture_items AS items
+              WHERE items.batch_id = jobs.subject_id
+            ),
+            '[]'
+          )
+        )
+      ),
+      'failed',
+      'awaitingProposal',
+      NULL,
+      jobs.id,
+      'legacy_processing_replaced',
+      jobs.created_at,
+      jobs.updated_at
+    FROM ai_jobs AS jobs
+    WHERE jobs.job_type = 'batch_grouping'
+  ''');
+}
+
 Future<void> _migrateDishOpenedV18(
   AppDatabase database,
   Migrator migrator,

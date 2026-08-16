@@ -22,12 +22,3 @@ class LocalSettings extends Table {
   @override
   Set<Column<Object>> get primaryKey => <Column<Object>>{key};
 }
-
-@DataClassName('SyncMetadataRow')
-class SyncMetadata extends Table {
-  TextColumn get key => text()();
-  TextColumn get value => text()();
-
-  @override
-  Set<Column<Object>> get primaryKey => <Column<Object>>{key};
-}

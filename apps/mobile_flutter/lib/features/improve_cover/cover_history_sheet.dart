@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:mymenu/domain/covers/generated_cover.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/shared/widgets/app_image.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 

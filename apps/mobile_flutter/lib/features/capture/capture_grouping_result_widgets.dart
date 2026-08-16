@@ -88,7 +88,7 @@ class _OutcomeCapturePhoto extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String? imageRef = item.localMediaRef ?? item.remoteMediaRef;
+    final String? imageRef = item.localMediaRef;
     return Container(
       width: 72,
       height: 72,
@@ -145,7 +145,7 @@ class _DraggableCapturePhoto extends StatelessWidget {
   }
 
   Widget _photo(BuildContext context) {
-    final String? imageRef = item.localMediaRef ?? item.remoteMediaRef;
+    final String? imageRef = item.localMediaRef;
     return Semantics(
       button: true,
       selected: selected,
@@ -333,15 +333,9 @@ class _CorrectionStatus extends StatelessWidget {
   Widget build(BuildContext context) {
     final (IconData, String, Color, Color) display =
         switch (correction.status) {
-      CaptureCorrectionStatus.pending => (
-          Icons.sync_rounded,
-          'Saved here · syncing',
-          MyMenuColors.orangeDark,
-          MyMenuColors.orangeSoft,
-        ),
-      CaptureCorrectionStatus.synced => (
-          Icons.cloud_done_outlined,
-          'Correction synced',
+      CaptureCorrectionStatus.applied => (
+          Icons.check_circle_outline_rounded,
+          'Saved on this device',
           MyMenuColors.green,
           MyMenuColors.greenSoft,
         ),

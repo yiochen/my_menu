@@ -1,15 +1,20 @@
-part of 'my_menu_api_client.dart';
+part of 'processing_api_client.dart';
 
-mixin FakeProcessingApi on MyMenuApiClient {
+mixin FakeProcessingApi on ProcessingApiClient {
   final Map<String, _FakeProcessingRecord> _processingJobs =
       <String, _FakeProcessingRecord>{};
   bool _interruptProcessingUpload = false;
+  bool _interruptAcknowledgementAfterCommit = false;
   int _processingJobCreationCount = 0;
 
   int get processingJobCreationCount => _processingJobCreationCount;
 
   void interruptNextProcessingUpload() {
     _interruptProcessingUpload = true;
+  }
+
+  void interruptNextAcknowledgementAfterCommit() {
+    _interruptAcknowledgementAfterCommit = true;
   }
 
   @override
@@ -26,10 +31,8 @@ mixin FakeProcessingApi on MyMenuApiClient {
 
   @override
   Future<ApiProcessingJob> createProcessingJob({
-    required String operation,
+    required ApiProcessingContract contract,
     required String idempotencyKey,
-    required String inputSchemaVersion,
-    required String resultSchemaVersion,
     required String privacyNoticeVersion,
     required List<ApiProcessingAssetManifest> assets,
   }) async {
@@ -46,12 +49,12 @@ mixin FakeProcessingApi on MyMenuApiClient {
     final String id = 'processing-job-$_processingJobCreationCount';
     final ApiProcessingJob job = ApiProcessingJob(
       id: id,
-      operation: operation,
+      operation: contract.operation,
       idempotencyKey: idempotencyKey,
-      status: 'created',
+      status: ApiProcessingJobStatus.created,
       expiresAt: DateTime.now().toUtc().add(const Duration(hours: 24)),
-      inputSchemaVersion: inputSchemaVersion,
-      resultSchemaVersion: resultSchemaVersion,
+      inputSchemaVersion: contract.inputSchemaVersion,
+      resultSchemaVersion: contract.resultSchemaVersion,
       uploadTargets: assets
           .map(
             (ApiProcessingAssetManifest asset) => ApiProcessingUploadTarget(
@@ -94,15 +97,15 @@ mixin FakeProcessingApi on MyMenuApiClient {
   @override
   Future<ApiProcessingJob> submitProcessingJob({
     required String jobId,
-    required Map<String, Object?> input,
+    required ApiProcessingInput input,
   }) async {
     final _FakeProcessingRecord record = _processingJobs[jobId]!;
     if (!record.uploadedAssetIds.containsAll(record.assetIds)) {
       throw StateError('Processing assets are not uploaded.');
     }
-    if (record.job.operation == 'cover_generation') {
+    if (input is ApiCoverGenerationInput) {
       record
-        ..input = input
+        ..input = input.payload
         ..result = <String, Object?>{
           'operation': 'cover_generation',
           'schemaVersion': record.job.resultSchemaVersion,
@@ -121,11 +124,17 @@ mixin FakeProcessingApi on MyMenuApiClient {
             'model': 'fake-cover-v1',
           },
         };
-      return record.job = _copyProcessingJob(record.job, status: 'succeeded');
+      return record.job = _copyProcessingJob(
+        record.job,
+        status: ApiProcessingJobStatus.succeeded,
+      );
     }
-    final List<Object?> captures = input['captures']! as List<Object?>;
+    if (input is! ApiCaptureGroupingInput) {
+      throw ArgumentError.value(input, 'input', 'Unsupported input contract.');
+    }
+    final List<Object?> captures = input.payload['captures']! as List<Object?>;
     record
-      ..input = input
+      ..input = input.payload
       ..result = <String, Object?>{
         'operation': 'capture_grouping',
         'schemaVersion': record.job.resultSchemaVersion,
@@ -155,7 +164,10 @@ mixin FakeProcessingApi on MyMenuApiClient {
           'model': 'fake-context-router-v2',
         },
       };
-    return record.job = _copyProcessingJob(record.job, status: 'succeeded');
+    return record.job = _copyProcessingJob(
+      record.job,
+      status: ApiProcessingJobStatus.succeeded,
+    );
   }
 
   @override
@@ -164,10 +176,22 @@ mixin FakeProcessingApi on MyMenuApiClient {
   }
 
   @override
-  Future<Map<String, Object?>> downloadProcessingResult({
+  Future<ApiProcessingResult> downloadProcessingResult({
     required String jobId,
   }) async {
-    return Map<String, Object?>.from(_processingJobs[jobId]!.result!);
+    final _FakeProcessingRecord record = _processingJobs[jobId]!;
+    final Map<String, Object?> payload =
+        Map<String, Object?>.from(record.result!);
+    return switch (record.job.operation) {
+      ApiProcessingOperation.captureGrouping => ApiCaptureGroupingResult(
+          schemaVersion: record.job.resultSchemaVersion,
+          payload: payload,
+        ),
+      ApiProcessingOperation.coverGeneration => ApiCoverGenerationResult(
+          schemaVersion: record.job.resultSchemaVersion,
+          payload: payload,
+        ),
+    };
   }
 
   @override
@@ -177,7 +201,14 @@ mixin FakeProcessingApi on MyMenuApiClient {
       ..input = null
       ..result = null
       ..uploadedAssetIds.clear()
-      ..job = _copyProcessingJob(record.job, status: 'acknowledged');
+      ..job = _copyProcessingJob(
+        record.job,
+        status: ApiProcessingJobStatus.acknowledged,
+      );
+    if (_interruptAcknowledgementAfterCommit) {
+      _interruptAcknowledgementAfterCommit = false;
+      throw const SocketException('Acknowledgement response interrupted');
+    }
   }
 
   @override
@@ -187,12 +218,15 @@ mixin FakeProcessingApi on MyMenuApiClient {
       ..input = null
       ..result = null
       ..uploadedAssetIds.clear()
-      ..job = _copyProcessingJob(record.job, status: 'canceled');
+      ..job = _copyProcessingJob(
+        record.job,
+        status: ApiProcessingJobStatus.canceled,
+      );
   }
 
   ApiProcessingJob _copyProcessingJob(
     ApiProcessingJob job, {
-    required String status,
+    required ApiProcessingJobStatus status,
   }) {
     return ApiProcessingJob(
       id: job.id,

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-
 import 'package:mymenu/domain/dishes/dish.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/domain/planning/plan_dates.dart';
 import 'package:mymenu/domain/planning/planned_meal.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/shared/widgets/app_dialog.dart';
 import 'package:mymenu/shared/widgets/local_write_feedback.dart';
 

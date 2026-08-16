@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/improve_cover/improve_cover_dialog.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/dish_artwork.dart';

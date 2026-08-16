@@ -4,15 +4,13 @@ import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/core/database/app_database.dart';
-import 'package:mymenu/core/network/my_menu_api_client.dart';
-import 'package:mymenu/domain/ai/ai_job.dart';
+import 'package:mymenu/core/network/processing_api_client.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
+import 'package:mymenu/domain/menu/app_repositories.dart';
 import 'package:mymenu/domain/processing/processing_outbox.dart';
 import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
-import 'package:mymenu/domain/sync/repositories.dart';
-import 'package:sqlite3/sqlite3.dart' as sqlite;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -29,7 +27,7 @@ void main() {
         AppDatabase.forTesting(NativeDatabase(databaseFile));
     final AppRepositories firstRepositories = AppRepositories(
       database: firstDatabase,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
 
     final batch = await firstRepositories.captureRepository.createPhotoBatch(
@@ -50,7 +48,7 @@ void main() {
     addTearDown(restartedDatabase.close);
     final AppRepositories restartedRepositories = AppRepositories(
       database: restartedDatabase,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
 
     final captures =
@@ -78,14 +76,14 @@ void main() {
     final File databaseFile = File('${temp.path}/mymenu.sqlite');
     final File photo = File('${temp.path}/capture.jpg')
       ..writeAsBytesSync(<int>[0xff, 0xd8, 0xff, 0xd9]);
-    final FakeMyMenuApiClient server = FakeMyMenuApiClient()
+    final FakeProcessingApiClient server = FakeProcessingApiClient()
       ..interruptNextProcessingUpload();
 
     final AppDatabase firstDatabase =
         AppDatabase.forTesting(NativeDatabase(databaseFile));
     final AppRepositories firstRepositories = AppRepositories(
       database: firstDatabase,
-      apiClient: server,
+      processingApiClient: server,
     );
     await firstRepositories.processingConsentRepository.acceptCurrentNotice();
     await firstRepositories.captureRepository.createPhotoBatch(
@@ -99,7 +97,7 @@ void main() {
       ],
     );
 
-    await firstRepositories.syncRepository.processPendingCaptures();
+    await firstRepositories.processingCoordinator.processPendingCaptures();
     final ProcessingOutboxRequest interrupted =
         (await firstRepositories.processingOutboxRepository.listRequests())
             .single;
@@ -113,10 +111,10 @@ void main() {
     addTearDown(restartedDatabase.close);
     final AppRepositories restartedRepositories = AppRepositories(
       database: restartedDatabase,
-      apiClient: server,
+      processingApiClient: server,
     );
 
-    await restartedRepositories.syncRepository.processPendingCaptures();
+    await restartedRepositories.processingCoordinator.processPendingCaptures();
 
     final ProcessingOutboxRequest completed =
         (await restartedRepositories.processingOutboxRepository.listRequests())
@@ -133,6 +131,56 @@ void main() {
     expect(server.hasPayloadForProcessingJob(completed.serverJobId!), isFalse);
   });
 
+  test('capture adoption resumes after the server acknowledgement commits',
+      () async {
+    final Directory temp = await Directory.systemTemp.createTemp(
+      'mymenu_processing_ack_resume_',
+    );
+    addTearDown(() => temp.delete(recursive: true));
+    final File photo = File('${temp.path}/capture.jpg')
+      ..writeAsBytesSync(<int>[0xff, 0xd8, 0xff, 0xd9]);
+    final FakeProcessingApiClient server = FakeProcessingApiClient()
+      ..interruptNextAcknowledgementAfterCommit();
+    final AppDatabase database =
+        AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final AppRepositories repositories = AppRepositories(
+      database: database,
+      processingApiClient: server,
+    );
+    await repositories.processingConsentRepository.acceptCurrentNotice();
+    await repositories.captureRepository.createPhotoBatch(
+      <CapturedMedia>[
+        CapturedMedia(
+          path: photo.path,
+          capturedAt: DateTime.utc(2026, 8, 2, 12),
+          capturedLocalDate: '2026-08-02',
+          dateSource: CaptureDateSource.camera,
+        ),
+      ],
+    );
+
+    await repositories.processingCoordinator.processPendingCaptures();
+    ProcessingOutboxRequest request =
+        (await repositories.processingOutboxRepository.listRequests()).single;
+    expect(request.deliveryState, ProcessingDeliveryState.submitted);
+    expect(
+      request.adoptionState,
+      ProcessingAdoptionState.readyForAdoption,
+    );
+
+    await repositories.processingCoordinator.processPendingCaptures();
+
+    request = (await repositories.processingOutboxRepository.listRequests())
+        .singleWhere(
+      (ProcessingOutboxRequest item) =>
+          item.kind == ProcessingRequestKind.captureGrouping,
+    );
+    expect(request.deliveryState, ProcessingDeliveryState.acknowledged);
+    expect(request.adoptionState, ProcessingAdoptionState.adopted);
+    expect(await repositories.dishRepository.listDishes(), hasLength(1));
+  });
+
   test('consent makes held work eligible and disabling holds new uploads',
       () async {
     final AppDatabase database =
@@ -140,7 +188,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
 
     await repositories.captureRepository.createIdeaCapture('ramen');
@@ -194,7 +242,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.processingConsentRepository.acceptCurrentNotice();
     await repositories.captureRepository.createIdeaCapture('reset noodles');
@@ -225,7 +273,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.processingConsentRepository.declineCurrentNotice();
 
@@ -260,8 +308,6 @@ void main() {
       await repositories.processingOutboxRepository.listRequests(),
       isEmpty,
     );
-    expect(await database.select(database.aiJobs).get(), isEmpty);
-    expect(await database.select(database.syncOperations).get(), isEmpty);
   });
 
   test('declining cancels held AI work without inventing a dish', () async {
@@ -270,7 +316,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.captureRepository.createPhotoBatch(
       <CapturedMedia>[
@@ -296,8 +342,6 @@ void main() {
     expect(repairedBatch.items.single.status, CaptureItemStatus.localOnly);
     expect(repairedBatch.items.single.appliedDishId, isNull);
     expect(request.deliveryState, ProcessingDeliveryState.canceled);
-    expect(await database.select(database.aiJobs).get(), isEmpty);
-    expect(await database.select(database.syncOperations).get(), isEmpty);
   });
 
   test('canceling pending processing keeps the local capture', () async {
@@ -306,7 +350,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
 
     final String captureId =
@@ -334,7 +378,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.processingConsentRepository.acceptCurrentNotice();
     await repositories.captureRepository.createIdeaCapture('yakisoba');
@@ -360,7 +404,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.processingConsentRepository.acceptCurrentNotice();
     await repositories.captureRepository.createIdeaCapture('cold soba');
@@ -386,7 +430,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.processingConsentRepository.acceptCurrentNotice();
     final String batchId =
@@ -407,38 +451,6 @@ void main() {
     );
   });
 
-  test('legacy applied batch adoption survives restart', () async {
-    final Directory temp =
-        await Directory.systemTemp.createTemp('mymenu_adoption_restart_');
-    addTearDown(() => temp.delete(recursive: true));
-    final File databaseFile = File('${temp.path}/mymenu.sqlite');
-    final _AppliedBatchApiClient api = _AppliedBatchApiClient();
-    final AppDatabase firstDatabase =
-        AppDatabase.forTesting(NativeDatabase(databaseFile));
-    final AppRepositories firstRepositories = AppRepositories(
-      database: firstDatabase,
-      apiClient: api,
-    );
-    await firstRepositories.processingConsentRepository.acceptCurrentNotice();
-    api.batchId =
-        await firstRepositories.captureRepository.createIdeaCapture('somen');
-
-    await firstRepositories.syncRepository.pullCaptureSync();
-    await firstDatabase.close();
-
-    final AppDatabase restartedDatabase =
-        AppDatabase.forTesting(NativeDatabase(databaseFile));
-    addTearDown(restartedDatabase.close);
-    final AppRepositories restartedRepositories = AppRepositories(
-      database: restartedDatabase,
-      apiClient: FakeMyMenuApiClient(),
-    );
-    final ProcessingOutboxRequest request =
-        (await restartedRepositories.processingOutboxRepository.listRequests())
-            .single;
-    expect(request.adoptionState, ProcessingAdoptionState.adopted);
-  });
-
   test('capture processing waits for current consent', () async {
     final Directory temp =
         await Directory.systemTemp.createTemp('mymenu_processing_consent_');
@@ -448,10 +460,10 @@ void main() {
     final AppDatabase database =
         AppDatabase.forTesting(NativeDatabase.memory());
     addTearDown(database.close);
-    final FakeMyMenuApiClient api = FakeMyMenuApiClient();
+    final FakeProcessingApiClient api = FakeProcessingApiClient();
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: api,
+      processingApiClient: api,
     );
     await repositories.captureRepository.createPhotoBatch(
       <CapturedMedia>[
@@ -464,11 +476,11 @@ void main() {
       ],
     );
 
-    await repositories.syncRepository.processPendingCaptures();
+    await repositories.processingCoordinator.processPendingCaptures();
     expect(api.processingJobCreationCount, 0);
 
     await repositories.processingConsentRepository.acceptCurrentNotice();
-    await repositories.syncRepository.processPendingCaptures();
+    await repositories.processingCoordinator.processPendingCaptures();
 
     expect(api.processingJobCreationCount, 1);
     final ProcessingOutboxRequest request =
@@ -494,7 +506,7 @@ void main() {
         AppDatabase.forTesting(NativeDatabase(databaseFile));
     final AppRepositories firstRepositories = AppRepositories(
       database: firstDatabase,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await firstRepositories.processingConsentRepository.acceptCurrentNotice();
     await firstDatabase.close();
@@ -504,7 +516,7 @@ void main() {
     addTearDown(restartedDatabase.close);
     final AppRepositories restartedRepositories = AppRepositories(
       database: restartedDatabase,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
 
     expect(
@@ -512,163 +524,4 @@ void main() {
       ProcessingConsentDecision.accepted,
     );
   });
-
-  test('schema 8 capture work is expanded into a held outbox request',
-      () async {
-    final Directory temp =
-        await Directory.systemTemp.createTemp('mymenu_outbox_migration_');
-    addTearDown(() => temp.delete(recursive: true));
-    final File databaseFile = File('${temp.path}/mymenu.sqlite');
-
-    final AppDatabase currentDatabase =
-        AppDatabase.forTesting(NativeDatabase(databaseFile));
-    final AppRepositories currentRepositories = AppRepositories(
-      database: currentDatabase,
-      apiClient: FakeMyMenuApiClient(),
-    );
-    final String captureId =
-        (await currentRepositories.captureRepository.createIdeaCapture(
-      'legacy idea',
-    ))!;
-    final DateTime now = DateTime.utc(2026, 8);
-    await currentDatabase.into(currentDatabase.aiJobs).insert(
-          AiJobsCompanion.insert(
-            id: '50000000-0000-4000-8000-000000000055',
-            jobType: AiJobType.batchGrouping.apiValue,
-            subjectId: captureId,
-            status: AiJobStatus.pendingOffline.databaseValue,
-            idempotencyKey: 'legacy-capture-grouping-$captureId',
-            inputHash: 'legacy-input',
-            inputVersion: 'batch-grouping-v2',
-            createdAt: now,
-            updatedAt: now,
-          ),
-        );
-    await currentDatabase.close();
-
-    sqlite.sqlite3.open(databaseFile.path)
-      ..execute('DROP TABLE processing_outbox')
-      ..execute('DROP TABLE processing_consents')
-      ..execute('PRAGMA user_version = 8')
-      ..close();
-
-    final AppDatabase migratedDatabase =
-        AppDatabase.forTesting(NativeDatabase(databaseFile));
-    addTearDown(migratedDatabase.close);
-    final AppRepositories migratedRepositories = AppRepositories(
-      database: migratedDatabase,
-      apiClient: FakeMyMenuApiClient(),
-    );
-
-    final ProcessingOutboxRequest request =
-        (await migratedRepositories.processingOutboxRepository.listRequests())
-            .single;
-    expect(request.subjectId, captureId);
-    expect(
-      request.deliveryState,
-      ProcessingDeliveryState.waitingForConsent,
-    );
-  });
-
-  test('other AI submissions also wait for current consent', () async {
-    final AppDatabase database =
-        AppDatabase.forTesting(NativeDatabase.memory());
-    addTearDown(database.close);
-    final _RecordingAiApiClient api = _RecordingAiApiClient();
-    final AppRepositories repositories = AppRepositories(
-      database: database,
-      apiClient: api,
-    );
-    await repositories.aiJobRepository.schedule(
-      type: AiJobType.coverGeneration,
-      subjectId: 'dish-local-cover',
-      inputHash: 'cover-input',
-      inputVersion: '1',
-    );
-
-    await repositories.syncRepository.processPendingAiJobs();
-    expect(api.scheduledJobIds, isEmpty);
-
-    await repositories.processingConsentRepository.acceptCurrentNotice();
-    await repositories.syncRepository.processPendingAiJobs();
-    expect(api.scheduledJobIds, hasLength(1));
-  });
-}
-
-class _RecordingAiApiClient extends FakeMyMenuApiClient {
-  final List<String> scheduledJobIds = <String>[];
-
-  @override
-  Future<ApiAiJob> scheduleAiJob({
-    required String jobId,
-    required String jobType,
-    required String subjectId,
-    required String idempotencyKey,
-    required String inputHash,
-    required String inputVersion,
-    required String promptVersion,
-    required String modelVersion,
-    required String schemaVersion,
-    required int maxAttempts,
-  }) {
-    scheduledJobIds.add(jobId);
-    return super.scheduleAiJob(
-      jobId: jobId,
-      jobType: jobType,
-      subjectId: subjectId,
-      idempotencyKey: idempotencyKey,
-      inputHash: inputHash,
-      inputVersion: inputVersion,
-      promptVersion: promptVersion,
-      modelVersion: modelVersion,
-      schemaVersion: schemaVersion,
-      maxAttempts: maxAttempts,
-    );
-  }
-}
-
-class _AppliedBatchApiClient extends FakeMyMenuApiClient {
-  String? batchId;
-
-  @override
-  Future<ApiSyncPull> pullSync({
-    required int afterCursor,
-    required int limit,
-  }) async {
-    final String? id = batchId;
-    if (id == null || afterCursor >= 1) {
-      return const ApiSyncPull(
-        cursor: 1,
-        hasMore: false,
-        requiresBootstrap: false,
-        events: <ApiSyncEvent>[],
-      );
-    }
-    return ApiSyncPull(
-      cursor: 1,
-      hasMore: false,
-      requiresBootstrap: false,
-      events: <ApiSyncEvent>[
-        ApiSyncEvent(
-          cursor: 1,
-          type: 'capture_batch.applied',
-          entityIds: <String, String>{'batchId': id},
-        ),
-      ],
-    );
-  }
-
-  @override
-  Future<List<ApiCaptureBatch>> getCaptureBatches(List<String> ids) async {
-    final String? id = batchId;
-    return <ApiCaptureBatch>[
-      if (id != null && ids.contains(id))
-        ApiCaptureBatch(
-          id: id,
-          status: 'applied',
-          itemCount: 1,
-          uploadedItemCount: 1,
-        ),
-    ];
-  }
 }

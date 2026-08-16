@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_add_idea.dart';
 import 'package:mymenu/features/capture/capture_outcome_frame.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';

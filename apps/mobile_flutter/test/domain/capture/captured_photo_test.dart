@@ -2,8 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/capture/review_item.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/domain/processing/processing_outbox.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
 
 void main() {
   test('photos exclude ideas and organization is derived from assignment', () {

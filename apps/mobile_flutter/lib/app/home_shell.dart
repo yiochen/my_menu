@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/app/home_capture_button.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
 import 'package:mymenu/features/capture/capture_sheet.dart';
 import 'package:mymenu/features/menu/menu_screen.dart';

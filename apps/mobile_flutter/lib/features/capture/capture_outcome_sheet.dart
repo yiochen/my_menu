@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
-import 'package:mymenu/domain/ai/ai_job.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_grouping_result.dart';
 import 'package:mymenu/features/capture/capture_outcome_recovery.dart';
 import 'package:mymenu/features/capture/capture_outcome_success.dart';
@@ -186,20 +185,8 @@ class _CaptureOutcomeSheetState extends State<CaptureOutcomeSheet> {
     if (batchId == null) {
       return;
     }
-    final AiJob? groupingJob = widget.state.aiJobs
-        .where(
-          (AiJob job) =>
-              job.type == AiJobType.batchGrouping &&
-              job.subjectId == batchId &&
-              job.status.canRetry,
-        )
-        .firstOrNull;
     setState(() => _step = CaptureOutcomeStep.saved);
-    if (groupingJob != null) {
-      await widget.state.retryAiJob(groupingJob.id);
-    } else {
-      await widget.state.retryCaptureBatch(batchId);
-    }
+    await widget.state.retryCaptureBatch(batchId);
   }
 
   void _close() => Navigator.pop(context);

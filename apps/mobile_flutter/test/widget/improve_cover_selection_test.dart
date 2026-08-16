@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/domain/covers/generated_cover.dart';
 import 'package:mymenu/domain/dishes/seeded_dishes.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/improve_cover/improve_cover_dialog.dart';
 import 'package:mymenu/features/improve_cover/improve_cover_selection.dart';
 import 'package:mymenu/shared/theme/app_theme.dart';

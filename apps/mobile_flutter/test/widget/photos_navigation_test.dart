@@ -4,12 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/app/home_shell.dart';
 import 'package:mymenu/core/database/app_database.dart';
-import 'package:mymenu/core/network/my_menu_api_client.dart';
 import 'package:mymenu/core/network/network_status_monitor.dart';
+import 'package:mymenu/core/network/processing_api_client.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
-import 'package:mymenu/domain/sync/repositories.dart';
+import 'package:mymenu/domain/menu/app_repositories.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
 import 'package:mymenu/shared/theme/app_theme.dart';
 
@@ -255,7 +255,7 @@ Future<({AppDatabase database, MyMenuState state})> _buildRepositoryState({
   final AppDatabase database = AppDatabase.forTesting(NativeDatabase.memory());
   final AppRepositories repositories = AppRepositories(
     database: database,
-    apiClient: FakeMyMenuApiClient(),
+    processingApiClient: FakeProcessingApiClient(),
   );
   await repositories.processingConsentRepository.declineCurrentNotice();
   if (withDish) {

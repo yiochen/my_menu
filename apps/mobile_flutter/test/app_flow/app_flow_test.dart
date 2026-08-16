@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/core/database/app_database.dart';
-import 'package:mymenu/core/network/my_menu_api_client.dart';
 import 'package:mymenu/core/network/network_status_monitor.dart';
+import 'package:mymenu/core/network/processing_api_client.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
+import 'package:mymenu/domain/menu/app_repositories.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/domain/planning/plan_dates.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
-import 'package:mymenu/domain/sync/repositories.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_screen.dart';
 import 'package:mymenu/features/menu/menu_screen.dart';
 import 'package:mymenu/features/plan/plan_dish_dialog.dart';
@@ -63,12 +63,11 @@ void main() {
       expect(find.byKey(const ValueKey<String>('plan_screen')), findsOneWidget);
       final AppRepositories repositories = AppRepositories(
         database: database,
-        apiClient: FakeMyMenuApiClient(),
+        processingApiClient: FakeProcessingApiClient(),
       );
       final Dish saved = (await repositories.dishRepository.listDishes())
           .singleWhere((Dish dish) => dish.title == 'Gochujang Noodles');
       expect(saved.notes.single.body, 'Try sesame and scallions.');
-      expect(await database.select(database.syncOperations).get(), isEmpty);
       expect(tester.takeException(), isNull);
     });
   });
@@ -80,7 +79,7 @@ void main() {
       addTearDown(database.close);
       final AppRepositories repositories = AppRepositories(
         database: database,
-        apiClient: FakeMyMenuApiClient(),
+        processingApiClient: FakeProcessingApiClient(),
       );
       await repositories.seedIfNeeded();
       final MyMenuState state = MyMenuState(
@@ -115,7 +114,6 @@ void main() {
           .singleWhere((Dish dish) => dish.id == 'dish_salmon');
       expect(
           saved.ingredients, <String>['Salmon|2 fillets', 'White miso|2 tbsp']);
-      expect(await database.select(database.syncOperations).get(), isEmpty);
       expect(tester.takeException(), isNull);
     });
   });
@@ -129,7 +127,7 @@ void main() {
       addTearDown(database.close);
       final AppRepositories repositories = AppRepositories(
         database: database,
-        apiClient: FakeMyMenuApiClient(),
+        processingApiClient: FakeProcessingApiClient(),
       );
       await repositories.seedIfNeeded();
       final MyMenuState state = MyMenuState(
@@ -165,7 +163,6 @@ void main() {
           .singleWhere((Dish dish) => dish.id == 'dish_katsu');
       expect(saved.isFavorite, isTrue);
       expect(saved.notes.last.body, 'Use the wide skillet.');
-      expect(await database.select(database.syncOperations).get(), isEmpty);
     });
   });
 
@@ -177,7 +174,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.seedIfNeeded();
     final MyMenuState state = MyMenuState(
@@ -217,7 +214,6 @@ void main() {
         await database.select(database.plannedMeals).get();
     expect(saved, hasLength(before + 1));
     expect(saved.last.dayKey, dayKey);
-    expect(await database.select(database.syncOperations).get(), isEmpty);
   });
 
   testWidgets('user can commit a local dish deletion', (
@@ -228,7 +224,7 @@ void main() {
     addTearDown(database.close);
     final AppRepositories repositories = AppRepositories(
       database: database,
-      apiClient: FakeMyMenuApiClient(),
+      processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.seedIfNeeded();
     final MyMenuState state = MyMenuState(
@@ -274,7 +270,6 @@ void main() {
           .getSingleOrNull(),
       isNull,
     );
-    expect(await database.select(database.syncOperations).get(), isEmpty);
   });
 }
 

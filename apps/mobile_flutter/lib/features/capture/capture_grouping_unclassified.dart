@@ -133,7 +133,7 @@ class _UnclassifiedPhotoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String? imageRef = item.localMediaRef ?? item.remoteMediaRef;
+    final String? imageRef = item.localMediaRef;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[

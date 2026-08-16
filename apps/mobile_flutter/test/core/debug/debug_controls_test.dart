@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/core/debug/debug_controls.dart';
 import 'package:mymenu/core/debug/shared_preferences_debug_controls.dart';
-import 'package:mymenu/core/network/my_menu_api_client.dart';
-import 'package:mymenu/core/network/network_gated_my_menu_api_client.dart';
+import 'package:mymenu/core/network/network_gated_processing_api_client.dart';
 import 'package:mymenu/core/network/network_status_monitor.dart';
+import 'package:mymenu/core/network/processing_api_client.dart';
 import 'package:mymenu/shared/debug_feedback/debug_feedback_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -14,28 +14,21 @@ void main() {
   test('network toggle emits off and on events and gates requests', () async {
     final DebugControlsController controls = DebugControlsController();
     addTearDown(controls.dispose);
-    final NetworkGatedMyMenuApiClient client = NetworkGatedMyMenuApiClient(
-      FakeMyMenuApiClient(),
+    final NetworkGatedProcessingApiClient client =
+        NetworkGatedProcessingApiClient(
+      FakeProcessingApiClient(),
       controls.requireNetwork,
     );
     final Future<List<void>> events = controls.changes.take(2).toList();
 
     controls.setNetworkEnabled(enabled: false);
     await expectLater(
-      client.upsertCaptureBatch(
-        batchId: 'batch',
-        itemCount: 1,
-        createdAt: DateTime.utc(2026, 7, 26),
-      ),
+      client.getProcessingAllowances(),
       throwsA(isA<SocketException>()),
     );
 
     controls.setNetworkEnabled(enabled: true);
-    await client.upsertCaptureBatch(
-      batchId: 'batch',
-      itemCount: 1,
-      createdAt: DateTime.utc(2026, 7, 26),
-    );
+    await client.getProcessingAllowances();
 
     expect(await events, <void>[null, null]);
   });

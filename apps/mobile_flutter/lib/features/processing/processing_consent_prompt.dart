@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mymenu/app/app.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/domain/processing/processing_consent_prompt.dart';
 import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/shared/widgets/app_dialog.dart';
 
 class ProcessingConsentPromptHost extends StatefulWidget {

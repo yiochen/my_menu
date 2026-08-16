@@ -1,12 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-
 import 'package:mymenu/domain/covers/generated_cover.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/domain/processing/processing_consent_prompt.dart';
 import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/improve_cover/cover_history_sheet.dart';
 import 'package:mymenu/features/improve_cover/improve_cover_selection.dart';
 import 'package:mymenu/features/improve_cover/improve_cover_status.dart';

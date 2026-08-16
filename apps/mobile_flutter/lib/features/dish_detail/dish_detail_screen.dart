@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/domain/covers/generated_cover.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
 import 'package:mymenu/features/capture/capture_sheet.dart';
 import 'package:mymenu/features/dish_detail/cook_again_sheet.dart';

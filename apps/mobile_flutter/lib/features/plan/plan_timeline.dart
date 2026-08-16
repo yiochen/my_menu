@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/app/app_shell_theme.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/domain/planning/plan_dates.dart';
 import 'package:mymenu/domain/planning/planned_meal.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/features/plan/plan_dish_dialog.dart';
 import 'package:mymenu/features/plan/plan_theme.dart';
 import 'package:mymenu/shared/drag_drop/drag_drop_board.dart';

@@ -4,7 +4,7 @@ import 'package:mymenu/app/app.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/capture/review_item.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/photos/photo_gallery_tile.dart';
 import 'package:mymenu/features/photos/photos_screen.dart';
 import 'package:mymenu/shared/theme/app_theme.dart';

@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mymenu/domain/ai/ai_job.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_feed_sheet.dart';
 
 void main() {
-  testWidgets('shows capture results first and completed AI card opens result',
+  testWidgets('opens an adopted local capture result from its batch card',
       (WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -32,15 +31,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Capture results'), findsOneWidget);
-    expect(find.text('AI activity'), findsOneWidget);
-    expect(
-      tester.getTopLeft(find.text('Capture results')).dy,
-      lessThan(tester.getTopLeft(find.text('AI activity')).dy),
-    );
-    expect(find.text('Open result'), findsOneWidget);
+    expect(find.text('AI activity'), findsNothing);
     expect(find.text('Remove upload'), findsNothing);
 
-    await tester.tap(find.text('Open result'));
+    await tester.tap(find.text('3 photos'));
     await tester.pumpAndSettle();
 
     expect(find.text('3 photos organized into 2 dishes'), findsOneWidget);
@@ -136,24 +130,6 @@ MyMenuState _state() {
         createdAt: now,
         updatedAt: now,
         items: items,
-      ),
-    ],
-    aiJobs: <AiJob>[
-      AiJob(
-        id: 'grouping_1',
-        type: AiJobType.batchGrouping,
-        subjectId: 'batch_1',
-        status: AiJobStatus.succeeded,
-        idempotencyKey: 'batch_grouping:batch_1:1',
-        inputHash: 'hash',
-        inputVersion: '1',
-        attemptCount: 1,
-        maxAttempts: 3,
-        promptVersion: '1',
-        modelVersion: 'gemini-flash-latest',
-        schemaVersion: '1',
-        createdAt: now,
-        updatedAt: now,
       ),
     ],
   );

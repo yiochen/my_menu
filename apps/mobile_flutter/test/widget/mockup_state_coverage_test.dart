@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/capture/add_idea_sheet.dart';
 import 'package:mymenu/features/capture/capture_outcome_sheet.dart';
 import 'package:mymenu/features/improve_cover/improve_cover_dialog.dart';

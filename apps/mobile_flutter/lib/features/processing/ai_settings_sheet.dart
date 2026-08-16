@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
 Future<void> showAiSettingsSheet(

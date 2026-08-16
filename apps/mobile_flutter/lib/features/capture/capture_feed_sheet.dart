@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mymenu/domain/ai/ai_job.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
-import 'package:mymenu/features/ai/ai_job_status_card.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_batch_removal_dialog.dart';
 import 'package:mymenu/features/capture/capture_outcome_sheet.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
@@ -27,9 +25,8 @@ Future<void> showCaptureFeedSheet(
           animation: state,
           builder: (BuildContext context, _) {
             final List<CaptureBatch> batches = state.captureBatches;
-            final List<AiJob> aiJobs = state.aiJobs;
             return RefreshIndicator(
-              onRefresh: state.refreshFromServer,
+              onRefresh: state.resumeProcessing,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
@@ -55,38 +52,6 @@ Future<void> showCaptureFeedSheet(
                       _CaptureBatchCard(
                         batch: batch,
                         state: state,
-                        groupingJob: _groupingJobFor(aiJobs, batch.id),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                    const SizedBox(height: 4),
-                  ],
-                  if (aiJobs.isNotEmpty) ...<Widget>[
-                    Text(
-                      'AI activity',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 8),
-                    for (final AiJob job in aiJobs) ...<Widget>[
-                      AiJobStatusCard(
-                        job: job,
-                        onRetry: job.status.canRetry
-                            ? () => state.retryAiJob(job.id)
-                            : null,
-                        onCancel: job.type != AiJobType.batchGrouping &&
-                                job.status.canCancel
-                            ? () => state.cancelAiJob(job.id)
-                            : null,
-                        onDismiss: job.status.canDismiss
-                            ? () => state.dismissAiJob(job.id)
-                            : null,
-                        onOpenResult: _canOpenResult(job, batches)
-                            ? () => _openBatchResult(
-                                  context,
-                                  state,
-                                  _batchFor(batches, job.subjectId)!,
-                                )
-                            : null,
                       ),
                       const SizedBox(height: 12),
                     ],
@@ -103,16 +68,6 @@ Future<void> showCaptureFeedSheet(
   );
 }
 
-CaptureBatch? _batchFor(List<CaptureBatch> batches, String batchId) {
-  return batches.where((CaptureBatch batch) => batch.id == batchId).firstOrNull;
-}
-
-bool _canOpenResult(AiJob job, List<CaptureBatch> batches) {
-  return job.type == AiJobType.batchGrouping &&
-      job.status == AiJobStatus.succeeded &&
-      _batchFor(batches, job.subjectId)?.status == CaptureBatchStatus.applied;
-}
-
 Future<void> _openBatchResult(
   BuildContext context,
   MyMenuState state,
@@ -126,16 +81,4 @@ Future<void> _openBatchResult(
     photoCount: batch.items.length,
     batchId: batch.id,
   );
-}
-
-AiJob? _groupingJobFor(List<AiJob> jobs, String batchId) {
-  final List<AiJob> matches = jobs
-      .where(
-        (AiJob job) =>
-            job.type == AiJobType.batchGrouping && job.subjectId == batchId,
-      )
-      .toList(growable: false)
-    ..sort(
-        (AiJob left, AiJob right) => right.updatedAt.compareTo(left.updatedAt));
-  return matches.firstOrNull;
 }

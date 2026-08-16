@@ -30,7 +30,7 @@ class CapturedPhoto {
   String get id => item.id;
   String? get batchId => item.batchId;
   int get ordinal => item.ordinal;
-  String get imageRef => item.localMediaRef ?? item.remoteMediaRef ?? '';
+  String get imageRef => item.localMediaRef ?? '';
   DateTime get uploadedAt => item.createdAt;
   bool get isOrganized => item.appliedDishId != null;
 

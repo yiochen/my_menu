@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/app/home_shell.dart';
-import 'package:mymenu/domain/sync/my_menu_state.dart';
+import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/processing/processing_consent_prompt.dart';
 import 'package:mymenu/shared/theme/app_theme.dart';
 
