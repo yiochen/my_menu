@@ -148,6 +148,13 @@ extension ProcessingCoordinatorCaptures on ProcessingCoordinator {
           .timeout(_controlRequestTimeout);
       if (job.status == ApiProcessingJobStatus.expired) {
         await outbox.markExpired(request.id);
+        const String reason = 'The AI organization request expired.';
+        await _markBatchStatus(
+          request.subjectId,
+          CaptureBatchStatus.failed,
+          failureReason: reason,
+        );
+        await _markCapturesFailed(request.subjectId, reason);
         return;
       }
       if (job.status == ApiProcessingJobStatus.acknowledged &&
@@ -163,18 +170,20 @@ extension ProcessingCoordinatorCaptures on ProcessingCoordinator {
         return;
       }
       if (job.status == ApiProcessingJobStatus.failed) {
+        final String code = job.errorCode ?? 'processing_failed';
+        final String reason = _processingFailureReason(code);
         await outbox.markFailed(
           request.id,
-          failureCode: job.errorCode ?? 'processing_failed',
+          failureCode: code,
         );
         await _markBatchStatus(
           request.subjectId,
           CaptureBatchStatus.failed,
-          failureReason: job.errorCode ?? 'Processing failed.',
+          failureReason: reason,
         );
         await _markCapturesFailed(
           request.subjectId,
-          job.errorCode ?? 'Processing failed.',
+          reason,
         );
         return;
       }

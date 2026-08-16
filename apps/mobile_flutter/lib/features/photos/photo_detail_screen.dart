@@ -227,8 +227,7 @@ class _StatusSummary extends StatelessWidget {
     final String description = switch (photo.state) {
       CapturedPhotoState.review => photo.reviewItem?.summary ??
           'MyMenu needs your help placing this photo.',
-      CapturedPhotoState.failed =>
-        'The photo is safe here. You can organize it yourself or try again.',
+      CapturedPhotoState.failed => photoFailureDescription(photo),
       CapturedPhotoState.organizing =>
         'Ready to use now. MyMenu is quietly looking for the right dish.',
       CapturedPhotoState.unorganized =>
@@ -251,4 +250,37 @@ class _StatusSummary extends StatelessWidget {
       ),
     );
   }
+}
+
+String photoFailureDescription(CapturedPhoto photo) {
+  if (photo.processingFailureCode == 'free_allowance_exhausted') {
+    return 'You’ve used all 10 free AI organizations available in the last '
+        '30 days. Your photo is safe. Organize it yourself now, or try again '
+        'when your allowance refreshes.';
+  }
+  final String? reason = photo.item.failureReason?.trim();
+  final bool isDisplaySafe = reason != null &&
+      reason.isNotEmpty &&
+      !reason.contains('_') &&
+      !reason.startsWith('http');
+  if (isDisplaySafe) {
+    return '$reason Your photo is safe. You can organize it yourself or try '
+        'again.';
+  }
+  return 'AI organization could not finish. Your photo is safe. You can '
+      'organize it yourself or try again.';
+}
+
+void showPhotoRetryFailure(BuildContext context, CapturedPhoto photo) {
+  if (photo.state != CapturedPhotoState.failed) return;
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        content: Text(
+          photoFailureDescription(photo),
+          key: const ValueKey<String>('photo_retry_failure_message'),
+        ),
+      ),
+    );
 }

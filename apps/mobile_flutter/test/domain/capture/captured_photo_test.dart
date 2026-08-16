@@ -136,6 +136,32 @@ void main() {
       <String>['2026-08-03', '2026-08-02'],
     );
   });
+
+  test('expired processing requests surface as retryable failures', () {
+    final MyMenuState state = MyMenuState.forTesting(
+      captureItems: <CaptureItem>[
+        _photo(
+          'expired',
+          batchId: 'expired-batch',
+          status: CaptureItemStatus.classifying,
+        ),
+      ],
+      processingRequests: <ProcessingOutboxRequest>[
+        ProcessingOutboxRequest(
+          id: 'expired-request',
+          kind: ProcessingRequestKind.captureGrouping,
+          subjectId: 'expired-batch',
+          payload: const <String, Object?>{},
+          deliveryState: ProcessingDeliveryState.expired,
+          adoptionState: ProcessingAdoptionState.awaitingProposal,
+          createdAt: DateTime.utc(2026, 8, 11),
+          updatedAt: DateTime.utc(2026, 8, 15),
+        ),
+      ],
+    );
+
+    expect(state.photos.single.overlayLabel, 'Couldn’t organize');
+  });
 }
 
 CaptureItem _photo(

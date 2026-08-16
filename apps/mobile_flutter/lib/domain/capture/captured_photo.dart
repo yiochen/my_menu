@@ -19,6 +19,7 @@ class CapturedPhoto {
     required this.dateKey,
     this.dish,
     this.reviewItem,
+    this.processingFailureCode,
   });
 
   final CaptureItem item;
@@ -26,6 +27,7 @@ class CapturedPhoto {
   final String dateKey;
   final Dish? dish;
   final ReviewItem? reviewItem;
+  final String? processingFailureCode;
 
   String get id => item.id;
   String? get batchId => item.batchId;
@@ -83,6 +85,7 @@ List<CapturedPhoto> buildCapturedPhotos({
       dateKey: _localDate(item.createdAt),
       dish: item.appliedDishId == null ? null : dishesById[item.appliedDishId],
       reviewItem: review,
+      processingFailureCode: request?.failureCode,
     );
   }).toList(growable: false);
   final Map<String, DateTime> groupTimes = <String, DateTime>{};
@@ -124,7 +127,8 @@ CapturedPhotoState _photoState(
     return CapturedPhotoState.notADish;
   }
   if (item.status == CaptureItemStatus.failed ||
-      request?.deliveryState == ProcessingDeliveryState.failed) {
+      request?.deliveryState == ProcessingDeliveryState.failed ||
+      request?.deliveryState == ProcessingDeliveryState.expired) {
     return CapturedPhotoState.failed;
   }
   if (request != null &&
