@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'package:mymenu/app/app.dart';
@@ -29,10 +31,26 @@ class DishDetailScreen extends StatefulWidget {
 
 class _DishDetailScreenState extends State<DishDetailScreen>
     with SingleTickerProviderStateMixin {
+  bool _dishOpened = false;
   late final TabController _tabController = TabController(
     length: DishDetailTab.values.length,
     vsync: this,
   );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_dishOpened) {
+      return;
+    }
+    _dishOpened = true;
+    final MyMenuState state = MyMenuScope.read(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        unawaited(state.markDishOpened(widget.dishId));
+      }
+    });
+  }
 
   @override
   void dispose() {

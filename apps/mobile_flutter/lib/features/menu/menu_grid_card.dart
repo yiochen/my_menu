@@ -16,6 +16,7 @@ class MenuGridCard extends StatelessWidget {
     required this.dish,
     this.selected = false,
     this.selectionMode = false,
+    this.showNewBadge = false,
     this.onTap,
     this.onLongPress,
     this.onSelect,
@@ -25,6 +26,7 @@ class MenuGridCard extends StatelessWidget {
   final Dish dish;
   final bool selected;
   final bool selectionMode;
+  final bool showNewBadge;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final VoidCallback? onSelect;
@@ -84,6 +86,7 @@ class MenuGridCard extends StatelessWidget {
               titleSlotHeight: titleSlotHeight,
               selected: selected,
               selectionMode: selectionMode,
+              showNewBadge: showNewBadge,
             ),
           ),
         ),
@@ -99,6 +102,7 @@ class _MenuCardBody extends StatelessWidget {
     required this.titleSlotHeight,
     required this.selected,
     required this.selectionMode,
+    required this.showNewBadge,
   });
 
   final Dish dish;
@@ -106,6 +110,7 @@ class _MenuCardBody extends StatelessWidget {
   final double titleSlotHeight;
   final bool selected;
   final bool selectionMode;
+  final bool showNewBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -117,6 +122,7 @@ class _MenuCardBody extends StatelessWidget {
             dish: dish,
             selected: selected,
             selectionMode: selectionMode,
+            showNewBadge: showNewBadge,
           ),
         ),
         Padding(
@@ -155,18 +161,24 @@ class _MenuCardArtwork extends StatelessWidget {
     required this.dish,
     required this.selected,
     required this.selectionMode,
+    required this.showNewBadge,
   });
 
   final Dish dish;
   final bool selected;
   final bool selectionMode;
+  final bool showNewBadge;
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       fit: StackFit.expand,
       children: <Widget>[
-        DishArtwork(dish: dish, resizeForDisplay: true),
+        Hero(
+          key: ValueKey<String>('menu_artwork_hero_${dish.id}'),
+          tag: dishArtworkHeroTag(dish.id),
+          child: DishArtwork(dish: dish, resizeForDisplay: true),
+        ),
         if (selectionMode)
           Positioned.fill(
             child: ColoredBox(
@@ -181,7 +193,7 @@ class _MenuCardArtwork extends StatelessWidget {
             left: 10,
             child: _SelectionIndicator(selected: selected),
           ),
-        if (!selectionMode && dish.createdAt != null)
+        if (!selectionMode && showNewBadge && dish.isNew)
           Positioned(
             top: 5,
             left: 7,

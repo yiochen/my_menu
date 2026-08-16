@@ -25,6 +25,7 @@ extension DishRowMapper on db.DishRow {
       sourcePhotos: sourcePhotos,
       isFavorite: isFavorite,
       createdAt: createdAt,
+      openedAt: openedAt,
     );
   }
 }
@@ -49,6 +50,7 @@ extension DishCompanionMapper on Dish {
       notesJson: jsonEncode(notes.map((DishNote note) => note.body).toList()),
       isFavorite: Value<bool>(isFavorite),
       createdAt: Value<DateTime?>(createdAt),
+      openedAt: Value<DateTime?>(openedAt),
     );
   }
 }

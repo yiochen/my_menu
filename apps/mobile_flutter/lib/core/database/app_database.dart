@@ -5,7 +5,6 @@ import 'package:drift_flutter/drift_flutter.dart';
 import 'package:mymenu/core/database/app_database_covers.dart';
 import 'package:mymenu/core/database/app_database_local.dart';
 import 'package:mymenu/core/database/app_database_processing.dart';
-
 export 'package:mymenu/core/database/app_database_covers.dart';
 export 'package:mymenu/core/database/app_database_local.dart';
 export 'package:mymenu/core/database/app_database_processing.dart';
@@ -32,6 +31,7 @@ class Dishes extends Table {
   TextColumn get notesJson => text()();
   BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime().nullable()();
+  DateTimeColumn get openedAt => dateTime().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
@@ -210,7 +210,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 17;
+  int get schemaVersion => 18;
 
   @override
   MigrationStrategy get migration {
@@ -391,6 +391,7 @@ class AppDatabase extends _$AppDatabase {
         if (from < 17) {
           await migrator.createTable(generatedCovers);
         }
+        if (from < 18) await _migrateDishOpenedV18(this, migrator);
       },
     );
   }

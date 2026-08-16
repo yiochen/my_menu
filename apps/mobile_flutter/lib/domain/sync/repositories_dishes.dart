@@ -117,6 +117,14 @@ class DishRepository {
     );
   }
 
+  Future<void> markOpened(String dishId, DateTime openedAt) async {
+    await (_database.update(_database.dishes)
+          ..where((db.Dishes table) => table.id.equals(dishId)))
+        .write(
+      db.DishesCompanion(openedAt: Value<DateTime?>(openedAt)),
+    );
+  }
+
   Future<void> updateDetails(
     String dishId, {
     required String title,

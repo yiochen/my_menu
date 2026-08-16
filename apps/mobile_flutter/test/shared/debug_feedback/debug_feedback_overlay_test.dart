@@ -5,6 +5,62 @@ import 'package:mymenu/shared/debug_feedback/debug_feedback_overlay.dart';
 import 'package:mymenu/shared/debug_feedback/feedback_target.dart';
 
 void main() {
+  testWidgets('keeps the screen header available for feedback selection', (
+    WidgetTester tester,
+  ) async {
+    final DebugFeedbackController controller = DebugFeedbackController();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(_FeedbackTestApp(controller: controller));
+    controller.startCollecting();
+    await tester.pump();
+
+    final Finder toolbar = find.byKey(
+      const ValueKey<String>('debug_feedback_toolbar'),
+    );
+    final Finder header = find.byKey(
+      const ValueKey<String>('feedback_test_header'),
+    );
+    expect(tester.getTopLeft(toolbar).dy,
+        greaterThan(tester.getBottomLeft(header).dy));
+
+    await tester.tapAt(tester.getCenter(header));
+    await tester.pump();
+
+    expect(
+      find.byKey(const ValueKey<String>('debug_feedback_composer')),
+      findsOneWidget,
+    );
+    expect(find.text('Screen header'), findsOneWidget);
+  });
+
+  testWidgets('moves the feedback toolbar when the opposite edge is needed', (
+    WidgetTester tester,
+  ) async {
+    final DebugFeedbackController controller = DebugFeedbackController();
+    addTearDown(controller.dispose);
+
+    await tester.pumpWidget(_FeedbackTestApp(controller: controller));
+    controller.startCollecting();
+    await tester.pump();
+
+    final Finder toolbar = find.byKey(
+      const ValueKey<String>('debug_feedback_toolbar'),
+    );
+    final double bottomPosition = tester.getTopLeft(toolbar).dy;
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('debug_feedback_move_toolbar')),
+    );
+    await tester.pump();
+
+    expect(tester.getTopLeft(toolbar).dy, lessThan(bottomPosition));
+    expect(
+      find.bySemanticsLabel('Move feedback toolbar to bottom'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('selects an explicit meaningful target and saves a comment', (
     WidgetTester tester,
   ) async {
@@ -229,35 +285,55 @@ class _FeedbackTestApp extends StatelessWidget {
       home: DebugFeedbackOverlay(
         controller: controller,
         child: const Scaffold(
-          body: Align(
-            alignment: Alignment.topCenter,
-            child: Padding(
-              padding: EdgeInsets.only(top: 120),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  FeedbackTarget(
-                    id: 'detail.continue',
-                    label: 'Continue action',
-                    child: FilledButton(
-                      key: ValueKey<String>('feedback_test_action'),
-                      onPressed: _noOp,
-                      child: Text('Continue'),
+          body: Stack(
+            children: <Widget>[
+              Align(
+                alignment: Alignment.topCenter,
+                child: FeedbackTarget(
+                  id: 'screen.header',
+                  label: 'Screen header',
+                  child: SizedBox(
+                    key: ValueKey<String>('feedback_test_header'),
+                    width: double.infinity,
+                    height: 64,
+                    child: ColoredBox(
+                      color: Colors.white,
+                      child: Center(child: Text('Header title')),
                     ),
                   ),
-                  SizedBox(height: 32),
-                  FeedbackTarget(
-                    id: 'detail.alternate',
-                    label: 'Alternate action',
-                    child: FilledButton(
-                      key: ValueKey<String>('feedback_test_alternate'),
-                      onPressed: _noOp,
-                      child: Text('Alternate'),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+              Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: EdgeInsets.only(top: 120),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      FeedbackTarget(
+                        id: 'detail.continue',
+                        label: 'Continue action',
+                        child: FilledButton(
+                          key: ValueKey<String>('feedback_test_action'),
+                          onPressed: _noOp,
+                          child: Text('Continue'),
+                        ),
+                      ),
+                      SizedBox(height: 32),
+                      FeedbackTarget(
+                        id: 'detail.alternate',
+                        label: 'Alternate action',
+                        child: FilledButton(
+                          key: ValueKey<String>('feedback_test_alternate'),
+                          onPressed: _noOp,
+                          child: Text('Alternate'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

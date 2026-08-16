@@ -112,6 +112,12 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, DishRow> {
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
       'created_at', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _openedAtMeta =
+      const VerificationMeta('openedAt');
+  @override
+  late final GeneratedColumn<DateTime> openedAt = GeneratedColumn<DateTime>(
+      'opened_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -130,7 +136,8 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, DishRow> {
         recipeStepsJson,
         notesJson,
         isFavorite,
-        createdAt
+        createdAt,
+        openedAt
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -255,6 +262,10 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, DishRow> {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
     }
+    if (data.containsKey('opened_at')) {
+      context.handle(_openedAtMeta,
+          openedAt.isAcceptableOrUnknown(data['opened_at']!, _openedAtMeta));
+    }
     return context;
   }
 
@@ -298,6 +309,8 @@ class $DishesTable extends Dishes with TableInfo<$DishesTable, DishRow> {
           .read(DriftSqlType.bool, data['${effectivePrefix}is_favorite'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at']),
+      openedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}opened_at']),
     );
   }
 
@@ -325,6 +338,7 @@ class DishRow extends DataClass implements Insertable<DishRow> {
   final String notesJson;
   final bool isFavorite;
   final DateTime? createdAt;
+  final DateTime? openedAt;
   const DishRow(
       {required this.id,
       required this.title,
@@ -342,7 +356,8 @@ class DishRow extends DataClass implements Insertable<DishRow> {
       required this.recipeStepsJson,
       required this.notesJson,
       required this.isFavorite,
-      this.createdAt});
+      this.createdAt,
+      this.openedAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -370,6 +385,9 @@ class DishRow extends DataClass implements Insertable<DishRow> {
     map['is_favorite'] = Variable<bool>(isFavorite);
     if (!nullToAbsent || createdAt != null) {
       map['created_at'] = Variable<DateTime>(createdAt);
+    }
+    if (!nullToAbsent || openedAt != null) {
+      map['opened_at'] = Variable<DateTime>(openedAt);
     }
     return map;
   }
@@ -401,6 +419,9 @@ class DishRow extends DataClass implements Insertable<DishRow> {
       createdAt: createdAt == null && nullToAbsent
           ? const Value.absent()
           : Value(createdAt),
+      openedAt: openedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(openedAt),
     );
   }
 
@@ -426,6 +447,7 @@ class DishRow extends DataClass implements Insertable<DishRow> {
       notesJson: serializer.fromJson<String>(json['notesJson']),
       isFavorite: serializer.fromJson<bool>(json['isFavorite']),
       createdAt: serializer.fromJson<DateTime?>(json['createdAt']),
+      openedAt: serializer.fromJson<DateTime?>(json['openedAt']),
     );
   }
   @override
@@ -449,6 +471,7 @@ class DishRow extends DataClass implements Insertable<DishRow> {
       'notesJson': serializer.toJson<String>(notesJson),
       'isFavorite': serializer.toJson<bool>(isFavorite),
       'createdAt': serializer.toJson<DateTime?>(createdAt),
+      'openedAt': serializer.toJson<DateTime?>(openedAt),
     };
   }
 
@@ -469,7 +492,8 @@ class DishRow extends DataClass implements Insertable<DishRow> {
           String? recipeStepsJson,
           String? notesJson,
           bool? isFavorite,
-          Value<DateTime?> createdAt = const Value.absent()}) =>
+          Value<DateTime?> createdAt = const Value.absent(),
+          Value<DateTime?> openedAt = const Value.absent()}) =>
       DishRow(
         id: id ?? this.id,
         title: title ?? this.title,
@@ -493,6 +517,7 @@ class DishRow extends DataClass implements Insertable<DishRow> {
         notesJson: notesJson ?? this.notesJson,
         isFavorite: isFavorite ?? this.isFavorite,
         createdAt: createdAt.present ? createdAt.value : this.createdAt,
+        openedAt: openedAt.present ? openedAt.value : this.openedAt,
       );
   DishRow copyWithCompanion(DishesCompanion data) {
     return DishRow(
@@ -531,6 +556,7 @@ class DishRow extends DataClass implements Insertable<DishRow> {
       isFavorite:
           data.isFavorite.present ? data.isFavorite.value : this.isFavorite,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      openedAt: data.openedAt.present ? data.openedAt.value : this.openedAt,
     );
   }
 
@@ -553,7 +579,8 @@ class DishRow extends DataClass implements Insertable<DishRow> {
           ..write('recipeStepsJson: $recipeStepsJson, ')
           ..write('notesJson: $notesJson, ')
           ..write('isFavorite: $isFavorite, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('openedAt: $openedAt')
           ..write(')'))
         .toString();
   }
@@ -576,7 +603,8 @@ class DishRow extends DataClass implements Insertable<DishRow> {
       recipeStepsJson,
       notesJson,
       isFavorite,
-      createdAt);
+      createdAt,
+      openedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -597,7 +625,8 @@ class DishRow extends DataClass implements Insertable<DishRow> {
           other.recipeStepsJson == this.recipeStepsJson &&
           other.notesJson == this.notesJson &&
           other.isFavorite == this.isFavorite &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.openedAt == this.openedAt);
 }
 
 class DishesCompanion extends UpdateCompanion<DishRow> {
@@ -618,6 +647,7 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
   final Value<String> notesJson;
   final Value<bool> isFavorite;
   final Value<DateTime?> createdAt;
+  final Value<DateTime?> openedAt;
   final Value<int> rowid;
   const DishesCompanion({
     this.id = const Value.absent(),
@@ -637,6 +667,7 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
     this.notesJson = const Value.absent(),
     this.isFavorite = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.openedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   DishesCompanion.insert({
@@ -657,6 +688,7 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
     required String notesJson,
     this.isFavorite = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.openedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         title = Value(title),
@@ -688,6 +720,7 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
     Expression<String>? notesJson,
     Expression<bool>? isFavorite,
     Expression<DateTime>? createdAt,
+    Expression<DateTime>? openedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -709,6 +742,7 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
       if (notesJson != null) 'notes_json': notesJson,
       if (isFavorite != null) 'is_favorite': isFavorite,
       if (createdAt != null) 'created_at': createdAt,
+      if (openedAt != null) 'opened_at': openedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -731,6 +765,7 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
       Value<String>? notesJson,
       Value<bool>? isFavorite,
       Value<DateTime?>? createdAt,
+      Value<DateTime?>? openedAt,
       Value<int>? rowid}) {
     return DishesCompanion(
       id: id ?? this.id,
@@ -750,6 +785,7 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
       notesJson: notesJson ?? this.notesJson,
       isFavorite: isFavorite ?? this.isFavorite,
       createdAt: createdAt ?? this.createdAt,
+      openedAt: openedAt ?? this.openedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -808,6 +844,9 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (openedAt.present) {
+      map['opened_at'] = Variable<DateTime>(openedAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -834,6 +873,7 @@ class DishesCompanion extends UpdateCompanion<DishRow> {
           ..write('notesJson: $notesJson, ')
           ..write('isFavorite: $isFavorite, ')
           ..write('createdAt: $createdAt, ')
+          ..write('openedAt: $openedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -8176,6 +8216,7 @@ typedef $$DishesTableCreateCompanionBuilder = DishesCompanion Function({
   required String notesJson,
   Value<bool> isFavorite,
   Value<DateTime?> createdAt,
+  Value<DateTime?> openedAt,
   Value<int> rowid,
 });
 typedef $$DishesTableUpdateCompanionBuilder = DishesCompanion Function({
@@ -8196,6 +8237,7 @@ typedef $$DishesTableUpdateCompanionBuilder = DishesCompanion Function({
   Value<String> notesJson,
   Value<bool> isFavorite,
   Value<DateTime?> createdAt,
+  Value<DateTime?> openedAt,
   Value<int> rowid,
 });
 
@@ -8263,6 +8305,9 @@ class $$DishesTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get openedAt => $composableBuilder(
+      column: $table.openedAt, builder: (column) => ColumnFilters(column));
 }
 
 class $$DishesTableOrderingComposer
@@ -8331,6 +8376,9 @@ class $$DishesTableOrderingComposer
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get openedAt => $composableBuilder(
+      column: $table.openedAt, builder: (column) => ColumnOrderings(column));
 }
 
 class $$DishesTableAnnotationComposer
@@ -8392,6 +8440,9 @@ class $$DishesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get openedAt =>
+      $composableBuilder(column: $table.openedAt, builder: (column) => column);
 }
 
 class $$DishesTableTableManager extends RootTableManager<
@@ -8434,6 +8485,7 @@ class $$DishesTableTableManager extends RootTableManager<
             Value<String> notesJson = const Value.absent(),
             Value<bool> isFavorite = const Value.absent(),
             Value<DateTime?> createdAt = const Value.absent(),
+            Value<DateTime?> openedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               DishesCompanion(
@@ -8454,6 +8506,7 @@ class $$DishesTableTableManager extends RootTableManager<
             notesJson: notesJson,
             isFavorite: isFavorite,
             createdAt: createdAt,
+            openedAt: openedAt,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -8474,6 +8527,7 @@ class $$DishesTableTableManager extends RootTableManager<
             required String notesJson,
             Value<bool> isFavorite = const Value.absent(),
             Value<DateTime?> createdAt = const Value.absent(),
+            Value<DateTime?> openedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               DishesCompanion.insert(
@@ -8494,6 +8548,7 @@ class $$DishesTableTableManager extends RootTableManager<
             notesJson: notesJson,
             isFavorite: isFavorite,
             createdAt: createdAt,
+            openedAt: openedAt,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0

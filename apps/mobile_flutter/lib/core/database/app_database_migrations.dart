@@ -1,5 +1,25 @@
 part of 'app_database.dart';
 
+Future<void> _migrateDishOpenedV18(
+  AppDatabase database,
+  Migrator migrator,
+) async {
+  final Set<String> existingTables = (await database
+          .customSelect(
+            "SELECT name FROM sqlite_master WHERE type = 'table'",
+          )
+          .get())
+      .map((QueryRow row) => row.read<String>('name'))
+      .toSet();
+  if (!existingTables.contains('dishes')) {
+    return;
+  }
+  final Set<String> columns = await _tableColumns(database, 'dishes');
+  if (!columns.contains('opened_at')) {
+    await migrator.addColumn(database.dishes, database.dishes.openedAt);
+  }
+}
+
 Future<void> _migrateStandaloneNotesV16(AppDatabase database) async {
   final Set<String> columns = await _tableColumns(database, 'source_photos');
   if (columns.contains('note')) {

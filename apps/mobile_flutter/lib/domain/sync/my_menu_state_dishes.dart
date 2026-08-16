@@ -1,6 +1,24 @@
 part of 'my_menu_state.dart';
 
 extension MyMenuDishEdits on MyMenuState {
+  Future<void> markDishOpened(String dishId, {DateTime? openedAt}) async {
+    final Dish current = dishById(dishId);
+    if (!current.isNew) {
+      return;
+    }
+    final DateTime timestamp = openedAt ?? DateTime.now();
+    final AppRepositories? repositories = _repositories;
+    if (repositories != null) {
+      await repositories.dishRepository.markOpened(dishId, timestamp);
+      await _reloadFromRepositories();
+      return;
+    }
+    _dishes = _dishes.map((Dish dish) {
+      return dish.id == dishId ? dish.copyWith(openedAt: timestamp) : dish;
+    }).toList(growable: false);
+    _notifyChanged();
+  }
+
   Future<void> updateDishDetails(
     String dishId, {
     required String title,

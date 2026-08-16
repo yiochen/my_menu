@@ -324,6 +324,26 @@ void main() {
       });
     });
 
+    testWidgets('date pager supports fractional Android logical widths', (
+      WidgetTester tester,
+    ) async {
+      tester.view.devicePixelRatio = 2.625;
+      tester.view.physicalSize = const Size(1080, 2400);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await runWithMockNetworkImages(() async {
+        await tester.pumpWidget(_testApp());
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey<String>('plan_screen')),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+      });
+    });
+
     testWidgets('empty menu does not build a broken plan suggestion', (
       WidgetTester tester,
     ) async {
@@ -415,7 +435,7 @@ void main() {
                 body: SizedBox(
                   width: 180,
                   height: 300,
-                  child: MenuGridCard(dish: dish),
+                  child: MenuGridCard(dish: dish, showNewBadge: true),
                 ),
               ),
             ),

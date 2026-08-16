@@ -39,7 +39,7 @@ void main() {
     );
   });
 
-  testWidgets('photo button announces organizing without a job count',
+  testWidgets('photo button animates its border while organizing',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -52,10 +52,22 @@ void main() {
         ),
       ),
     );
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump();
 
     expect(find.text('3'), findsNothing);
     expect(find.byIcon(Icons.auto_awesome_rounded), findsOneWidget);
+    final Finder border = find.byKey(
+      const ValueKey<String>('menu_photos_processing_border'),
+    );
+    expect(border, findsOneWidget);
+    final CustomPainter initialPainter =
+        tester.widget<CustomPaint>(border).painter!;
+
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final CustomPainter advancedPainter =
+        tester.widget<CustomPaint>(border).painter!;
+    expect(advancedPainter.shouldRepaint(initialPainter), isTrue);
     expect(
       tester
           .getSemantics(
@@ -64,5 +76,35 @@ void main() {
           .label,
       contains('organizing in progress'),
     );
+  });
+
+  testWidgets('photo processing border stays static for reduced motion',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MediaQuery(
+          data: const MediaQueryData(disableAnimations: true),
+          child: Scaffold(
+            body: PhotosEntryButton(
+              unorganizedCount: 0,
+              organizing: true,
+              onPressed: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final Finder border = find.byKey(
+      const ValueKey<String>('menu_photos_processing_border'),
+    );
+    final CustomPainter initialPainter =
+        tester.widget<CustomPaint>(border).painter!;
+    await tester.pump(const Duration(milliseconds: 100));
+    final CustomPainter laterPainter =
+        tester.widget<CustomPaint>(border).painter!;
+
+    expect(identical(initialPainter, laterPainter), isTrue);
   });
 }

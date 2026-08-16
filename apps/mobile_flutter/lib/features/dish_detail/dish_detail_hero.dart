@@ -55,7 +55,11 @@ class _DishDetailHeroState extends State<DishDetailHero> {
         child: Stack(
           fit: StackFit.expand,
           children: <Widget>[
-            DishArtwork(dish: dish),
+            Hero(
+              key: ValueKey<String>('dish_detail_artwork_hero_${dish.id}'),
+              tag: dishArtworkHeroTag(dish.id),
+              child: DishArtwork(dish: dish),
+            ),
             const DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
