@@ -85,8 +85,14 @@ class _PlanScreenState extends State<PlanScreen> {
                   setState(() => _selectedDate = date);
                 }
               },
-              itemCount: _pageCount,
               itemBuilder: (BuildContext context, int page) {
+                // Let the delegate discover the final page lazily. Supplying a
+                // large finite child count makes Flutter precompute the full
+                // scroll extent, which can exceed its layout precision
+                // tolerance on fractional Android logical widths.
+                if (page >= _pageCount) {
+                  return null;
+                }
                 final DateTime date = _dateForPage(page);
                 final String dayKey = dayKeyForDate(date);
                 return ListView(
