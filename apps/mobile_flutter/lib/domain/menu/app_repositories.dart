@@ -141,6 +141,7 @@ class AppRepositories {
     if (seedSampleDataOnPrepare) {
       await seedIfNeeded();
     }
+    await captureRepository.keepQuotaLimitedPhotoCapturesLocal();
     await _removeBundledMockImageRefs();
     if (_prepareImagePreviewsOnBootstrap) {
       await _prepareImagePreviews();

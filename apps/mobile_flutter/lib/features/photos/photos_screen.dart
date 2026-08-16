@@ -320,7 +320,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
         if (photo.batchId != null) {
           await state.retryCaptureBatch(photo.batchId!);
           if (!mounted) return;
-          showPhotoRetryFailure(
+          showPhotoRetryOutcome(
             context,
             state.photos.firstWhere(
               (CapturedPhoto candidate) => candidate.id == photo.id,

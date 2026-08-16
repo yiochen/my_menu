@@ -71,6 +71,8 @@ abstract interface class CaptureProcessingLocalStore {
 
   Future<void> markCapturesPending(String batchId);
 
+  Future<void> markBatchUnorganized(String batchId);
+
   Future<void> markCapturesFailed(String batchId, String reason);
 
   Future<void> markBatchStatus(

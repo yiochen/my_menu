@@ -496,6 +496,71 @@ void main() {
     );
   });
 
+  test('quota exhaustion leaves captures local and unorganized', () async {
+    final Directory temp =
+        await Directory.systemTemp.createTemp('mymenu_processing_quota_');
+    addTearDown(() => temp.delete(recursive: true));
+    final File photo = File('${temp.path}/quota-capture.jpg')
+      ..writeAsBytesSync(<int>[0xff, 0xd8, 0xff, 0xd9]);
+    final AppDatabase database =
+        AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final AppRepositories repositories = AppRepositories(
+      database: database,
+      processingApiClient: _QuotaExhaustedProcessingApi(),
+    );
+    await repositories.processingConsentRepository.acceptCurrentNotice();
+    await repositories.captureRepository.createPhotoBatch(
+      <CapturedMedia>[
+        CapturedMedia(
+          path: photo.path,
+          capturedAt: DateTime.utc(2026, 8, 11, 12),
+          capturedLocalDate: '2026-08-11',
+          dateSource: CaptureDateSource.camera,
+        ),
+      ],
+    );
+
+    await repositories.processingCoordinator.processPendingCaptures();
+
+    final CaptureBatch batch =
+        (await repositories.captureRepository.listBatches()).single;
+    final ProcessingOutboxRequest request =
+        (await repositories.processingOutboxRepository.listRequests()).single;
+    expect(batch.status, CaptureBatchStatus.local);
+    expect(batch.items.single.status, CaptureItemStatus.localOnly);
+    expect(batch.failureReason, isNull);
+    expect(batch.items.single.failureReason, isNull);
+    expect(request.deliveryState, ProcessingDeliveryState.failed);
+    expect(request.failureCode, 'free_allowance_exhausted');
+
+    await (database.update(database.captureItems)
+          ..where((row) => row.batchId.equals(batch.id)))
+        .write(
+      const CaptureItemsCompanion(
+        status: Value<String>('failed'),
+        failureReason: Value<String?>('The free processing allowance is used.'),
+      ),
+    );
+    await (database.update(database.captureBatches)
+          ..where((row) => row.id.equals(batch.id)))
+        .write(
+      const CaptureBatchesCompanion(
+        status: Value<String>('failed'),
+        failureReason: Value<String?>('The free processing allowance is used.'),
+      ),
+    );
+
+    await repositories.prepareLocalData();
+
+    final CaptureBatch repaired =
+        (await repositories.captureRepository.listBatches()).single;
+    expect(repaired.status, CaptureBatchStatus.local);
+    expect(repaired.items.single.status, CaptureItemStatus.localOnly);
+    expect(repaired.failureReason, isNull);
+    expect(repaired.items.single.failureReason, isNull);
+  });
+
   test('accepted consent survives restart', () async {
     final Directory temp =
         await Directory.systemTemp.createTemp('mymenu_consent_restart_');
@@ -524,4 +589,16 @@ void main() {
       ProcessingConsentDecision.accepted,
     );
   });
+}
+
+class _QuotaExhaustedProcessingApi extends ProcessingApiClient {
+  @override
+  Future<ApiProcessingJob> createProcessingJob({
+    required ApiProcessingContract contract,
+    required String idempotencyKey,
+    required String privacyNoticeVersion,
+    required List<ApiProcessingAssetManifest> assets,
+  }) {
+    throw StateError('free_allowance_exhausted');
+  }
 }

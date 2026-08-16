@@ -1,3 +1,5 @@
+const String processingFreeAllowanceExhaustedCode = 'free_allowance_exhausted';
+
 enum ProcessingRequestKind {
   captureGrouping('capture_grouping'),
   coverGeneration('cover_generation');

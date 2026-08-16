@@ -83,6 +83,11 @@ class LocalCaptureProcessingStore implements CaptureProcessingLocalStore {
   }
 
   @override
+  Future<void> markBatchUnorganized(String batchId) {
+    return _repository._keepPhotoBatchUnorganized(batchId);
+  }
+
+  @override
   Future<void> markCapturesFailed(String batchId, String reason) {
     return (_repository._database.update(_repository._database.captureItems)
           ..where((db.CaptureItems table) => table.batchId.equals(batchId)))

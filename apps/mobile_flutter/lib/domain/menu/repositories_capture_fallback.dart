@@ -1,6 +1,27 @@
 part of 'app_repositories.dart';
 
 extension CaptureRepositoryFallback on CaptureRepository {
+  Future<void> keepQuotaLimitedPhotoCapturesLocal() async {
+    final List<db.ProcessingOutboxRow> requests =
+        await (_database.select(_database.processingOutbox)
+              ..where(
+                (db.ProcessingOutbox table) =>
+                    table.requestKind.equals(
+                      ProcessingRequestKind.captureGrouping.databaseValue,
+                    ) &
+                    table.deliveryState.equals(
+                      ProcessingDeliveryState.failed.name,
+                    ) &
+                    table.failureCode.equals(
+                      processingFreeAllowanceExhaustedCode,
+                    ),
+              ))
+            .get();
+    for (final db.ProcessingOutboxRow request in requests) {
+      await _keepPhotoBatchUnorganized(request.subjectId);
+    }
+  }
+
   Future<void> adoptDeclinedPhotoCapturesLocally() async {
     final ProcessingConsentDecision consent =
         await ProcessingConsentRepository(_database).currentDecision();
@@ -78,6 +99,51 @@ extension CaptureRepositoryFallback on CaptureRepository {
       );
       await _processingOutboxRepository.cancelBeforeUpload(request.id);
       await _processingOutboxRepository.rejectProposal(request.id);
+    });
+  }
+
+  Future<void> _keepPhotoBatchUnorganized(String batchId) async {
+    final DateTime now = DateTime.now();
+    await _database.transaction(() async {
+      await (_database.update(_database.captureItems)
+            ..where(
+              (db.CaptureItems table) =>
+                  table.batchId.equals(batchId) &
+                  table.appliedDishId.isNull() &
+                  table.status
+                      .equals(
+                        capture_domain.CaptureItemStatus.discarded.name,
+                      )
+                      .not() &
+                  (table.status
+                          .equals(
+                            capture_domain.CaptureItemStatus.localOnly.name,
+                          )
+                          .not() |
+                      table.failureReason.isNotNull()),
+            ))
+          .write(
+        db.CaptureItemsCompanion(
+          status: Value<String>(
+            capture_domain.CaptureItemStatus.localOnly.name,
+          ),
+          failureReason: const Value<String?>(null),
+        ),
+      );
+      await (_database.update(_database.captureBatches)
+            ..where(
+              (db.CaptureBatches table) =>
+                  table.id.equals(batchId) &
+                  (table.status.equals(CaptureBatchStatus.local.name).not() |
+                      table.failureReason.isNotNull()),
+            ))
+          .write(
+        db.CaptureBatchesCompanion(
+          status: Value<String>(CaptureBatchStatus.local.name),
+          updatedAt: Value<DateTime>(now),
+          failureReason: const Value<String?>(null),
+        ),
+      );
     });
   }
 }

@@ -125,14 +125,7 @@ extension ProcessingCoordinatorCaptures on ProcessingCoordinator {
           );
           await _markCapturesPending(request.subjectId);
         } else {
-          final String reason = _processingFailureReason(code);
-          await outbox.markFailed(request.id, failureCode: code);
-          await _markBatchStatus(
-            request.subjectId,
-            CaptureBatchStatus.failed,
-            failureReason: reason,
-          );
-          await _markCapturesFailed(request.subjectId, reason);
+          await _recordCaptureProcessingStop(outbox, request, code);
         }
         return;
       }
@@ -171,20 +164,7 @@ extension ProcessingCoordinatorCaptures on ProcessingCoordinator {
       }
       if (job.status == ApiProcessingJobStatus.failed) {
         final String code = job.errorCode ?? 'processing_failed';
-        final String reason = _processingFailureReason(code);
-        await outbox.markFailed(
-          request.id,
-          failureCode: code,
-        );
-        await _markBatchStatus(
-          request.subjectId,
-          CaptureBatchStatus.failed,
-          failureReason: reason,
-        );
-        await _markCapturesFailed(
-          request.subjectId,
-          reason,
-        );
+        await _recordCaptureProcessingStop(outbox, request, code);
         return;
       }
       if (job.status != ApiProcessingJobStatus.succeeded) {
@@ -298,6 +278,27 @@ extension ProcessingCoordinatorCaptures on ProcessingCoordinator {
 
   Future<void> _markCapturesPending(String batchId) async {
     await _captureProcessingLocalStore.markCapturesPending(batchId);
+  }
+
+  Future<void> _recordCaptureProcessingStop(
+    ProcessingOutboxRepository outbox,
+    ProcessingOutboxRequest request,
+    String code,
+  ) async {
+    await outbox.markFailed(request.id, failureCode: code);
+    if (code == processingFreeAllowanceExhaustedCode) {
+      await _captureProcessingLocalStore.markBatchUnorganized(
+        request.subjectId,
+      );
+      return;
+    }
+    final String reason = _processingFailureReason(code);
+    await _markBatchStatus(
+      request.subjectId,
+      CaptureBatchStatus.failed,
+      failureReason: reason,
+    );
+    await _markCapturesFailed(request.subjectId, reason);
   }
 
   Future<void> _markCapturesFailed(String batchId, String reason) async {

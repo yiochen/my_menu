@@ -162,6 +162,34 @@ void main() {
 
     expect(state.photos.single.overlayLabel, 'Couldn’t organize');
   });
+
+  test('quota-limited processing leaves the photo unorganized', () {
+    final MyMenuState state = MyMenuState.forTesting(
+      captureItems: <CaptureItem>[
+        _photo(
+          'quota-limited',
+          batchId: 'quota-batch',
+          status: CaptureItemStatus.failed,
+        ),
+      ],
+      processingRequests: <ProcessingOutboxRequest>[
+        ProcessingOutboxRequest(
+          id: 'quota-request',
+          kind: ProcessingRequestKind.captureGrouping,
+          subjectId: 'quota-batch',
+          payload: const <String, Object?>{},
+          deliveryState: ProcessingDeliveryState.failed,
+          adoptionState: ProcessingAdoptionState.awaitingProposal,
+          failureCode: 'free_allowance_exhausted',
+          createdAt: DateTime.utc(2026, 8, 11),
+          updatedAt: DateTime.utc(2026, 8, 15),
+        ),
+      ],
+    );
+
+    expect(state.photos.single.overlayLabel, 'Unorganized');
+    expect(state.photos.single.organizationAllowanceExhausted, isTrue);
+  });
 }
 
 CaptureItem _photo(

@@ -35,6 +35,8 @@ class CapturedPhoto {
   String get imageRef => item.localMediaRef ?? '';
   DateTime get uploadedAt => item.createdAt;
   bool get isOrganized => item.appliedDishId != null;
+  bool get organizationAllowanceExhausted =>
+      processingFailureCode == processingFreeAllowanceExhaustedCode;
 
   String get overlayLabel => switch (state) {
         CapturedPhotoState.review => 'Review',
@@ -125,6 +127,9 @@ CapturedPhotoState _photoState(
   }
   if (item.status == CaptureItemStatus.notADish) {
     return CapturedPhotoState.notADish;
+  }
+  if (request?.failureCode == processingFreeAllowanceExhaustedCode) {
+    return CapturedPhotoState.unorganized;
   }
   if (item.status == CaptureItemStatus.failed ||
       request?.deliveryState == ProcessingDeliveryState.failed ||

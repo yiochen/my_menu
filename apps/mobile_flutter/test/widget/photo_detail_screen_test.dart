@@ -6,7 +6,7 @@ import 'package:mymenu/features/photos/photo_detail_screen.dart';
 import 'package:mymenu/shared/theme/app_theme.dart';
 
 void main() {
-  testWidgets('failed photo explains an exhausted organization allowance',
+  testWidgets('quota-limited photo stays unorganized and explains why',
       (WidgetTester tester) async {
     final CapturedPhoto photo = _quotaPhoto();
 
@@ -27,19 +27,20 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('last 30 days'), findsOneWidget);
+    expect(find.text('Unorganized'), findsWidgets);
     expect(find.text('Add to a dish'), findsOneWidget);
     expect(find.text('Create a new dish'), findsOneWidget);
-    expect(find.text('Try organizing again'), findsOneWidget);
+    expect(find.text('Try AI organization again'), findsOneWidget);
   });
 
-  testWidgets('failed retry immediately shows the failure reason',
+  testWidgets('quota-limited retry immediately explains the outcome',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: Builder(
             builder: (BuildContext context) => FilledButton(
-              onPressed: () => showPhotoRetryFailure(context, _quotaPhoto()),
+              onPressed: () => showPhotoRetryOutcome(context, _quotaPhoto()),
               child: const Text('Show retry result'),
             ),
           ),
@@ -51,7 +52,7 @@ void main() {
     await tester.pump();
 
     expect(
-      find.byKey(const ValueKey<String>('photo_retry_failure_message')),
+      find.byKey(const ValueKey<String>('photo_retry_outcome_message')),
       findsOneWidget,
     );
     expect(
@@ -70,7 +71,7 @@ CapturedPhoto _quotaPhoto() => CapturedPhoto(
         createdAt: DateTime(2026, 8, 11),
         failureReason: 'The free processing allowance is used.',
       ),
-      state: CapturedPhotoState.failed,
+      state: CapturedPhotoState.unorganized,
       dateKey: '2026-08-11',
       processingFailureCode: 'free_allowance_exhausted',
     );
