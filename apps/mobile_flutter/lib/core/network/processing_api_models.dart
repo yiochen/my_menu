@@ -23,9 +23,15 @@ enum ApiProcessingJobStatus {
   expired,
   canceled;
 
-  static ApiProcessingJobStatus fromApi(String value) => values.firstWhere(
-        (ApiProcessingJobStatus status) => status.name == value,
-      );
+  static ApiProcessingJobStatus fromApi(String value) => switch (value) {
+        // Supabase persists worker-oriented names while the client exposes
+        // delivery-oriented names for its local outbox state machine.
+        'queued' => ApiProcessingJobStatus.submitted,
+        'running' => ApiProcessingJobStatus.processing,
+        _ => values.firstWhere(
+            (ApiProcessingJobStatus status) => status.name == value,
+          ),
+      };
 }
 
 class ApiProcessingContract {
