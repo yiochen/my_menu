@@ -4,13 +4,18 @@ import 'dart:io';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/core/database/app_database.dart';
-import 'package:mymenu/core/network/service_identity_client.dart';
+import 'package:mymenu/domain/account/service_identity.dart';
 
 void main() {
-  test('auth changes and refresh leave local menu rows and media untouched',
+  test(
+      'all identity actions leave persisted local menu rows and media untouched',
       () async {
-    final AppDatabase database =
-        AppDatabase.forTesting(NativeDatabase.memory());
+    final Directory temp =
+        await Directory.systemTemp.createTemp('mymenu_identity_boundary_');
+    addTearDown(() => temp.delete(recursive: true));
+    final AppDatabase database = AppDatabase.forTesting(
+      NativeDatabase(File('${temp.path}/menu.sqlite')),
+    );
     addTearDown(database.close);
     await database.into(database.dishes).insert(
           DishesCompanion.insert(
@@ -28,9 +33,6 @@ void main() {
             notesJson: '[]',
           ),
         );
-    final Directory temp =
-        await Directory.systemTemp.createTemp('mymenu_identity_boundary_');
-    addTearDown(() => temp.delete(recursive: true));
     final File media = await File('${temp.path}/noodles.jpg').writeAsBytes(
       <int>[1, 2, 3, 4],
     );
@@ -50,6 +52,14 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     await controller.refreshIdentity();
     await controller.signOutToGuest();
+    client.emit(
+      const ServiceIdentity.account(
+        userId: 'second-account-id',
+        email: 'again@example.com',
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    await controller.deleteAccount();
 
     expect(controller.identity.isGuest, isTrue);
     expect(await database.select(database.dishes).get(), hasLength(1));

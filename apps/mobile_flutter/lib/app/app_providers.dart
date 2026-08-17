@@ -7,6 +7,7 @@ import 'package:mymenu/core/network/network_gated_processing_api_client.dart';
 import 'package:mymenu/core/network/network_status_monitor.dart';
 import 'package:mymenu/core/network/processing_api_client.dart';
 import 'package:mymenu/core/network/service_identity_client.dart';
+import 'package:mymenu/domain/account/service_identity.dart';
 import 'package:mymenu/domain/menu/app_repositories.dart';
 import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';

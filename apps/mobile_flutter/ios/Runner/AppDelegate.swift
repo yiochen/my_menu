@@ -47,13 +47,9 @@ import UIKit
       appropriateFor: nil,
       create: true
     )
-    let protectedDirectories = [
-      documents,
-      support.appendingPathComponent("menu_media", isDirectory: true),
-      support.appendingPathComponent("generated-covers", isDirectory: true),
-      support.appendingPathComponent("processing", isDirectory: true),
-      support.appendingPathComponent("dish_image_cache", isDirectory: true),
-    ]
+    // Protect the roots rather than enumerating today's media subdirectories,
+    // so newly introduced app-owned storage inherits the same policy.
+    let protectedDirectories = [documents, support]
     for directory in protectedDirectories {
       try protectRecursively(directory, fileManager: fileManager)
     }

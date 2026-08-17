@@ -1,30 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymenu/app/app_providers.dart';
-import 'package:mymenu/core/network/service_identity_client.dart';
+import 'package:mymenu/domain/account/service_identity.dart';
 import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
 import 'package:mymenu/shared/widgets/app_dialog.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
-Future<void> showAiSettingsSheet(
+Future<void> showSettingsSheet(
   BuildContext context,
   MyMenuState state,
 ) =>
     showModalBottomSheet<void>(
       context: context,
       useSafeArea: true,
-      builder: (BuildContext context) => _AiSettingsSheet(state: state),
+      builder: (BuildContext context) => _SettingsSheet(state: state),
     );
 
-class _AiSettingsSheet extends ConsumerStatefulWidget {
-  const _AiSettingsSheet({required this.state});
+class _SettingsSheet extends ConsumerStatefulWidget {
+  const _SettingsSheet({required this.state});
   final MyMenuState state;
   @override
-  ConsumerState<_AiSettingsSheet> createState() => _AiSettingsSheetState();
+  ConsumerState<_SettingsSheet> createState() => _SettingsSheetState();
 }
 
-class _AiSettingsSheetState extends ConsumerState<_AiSettingsSheet> {
+class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
   bool? _automatic;
   int? _coverAllowanceRemaining;
   bool _erasingLocalMenu = false;

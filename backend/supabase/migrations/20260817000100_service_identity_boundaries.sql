@@ -104,6 +104,28 @@ alter table public.service_identity_deletions enable row level security;
 revoke all on public.service_identity_deletions from public, anon, authenticated;
 grant all on public.service_identity_deletions to service_role;
 
+-- This cleanup record intentionally has no auth.users foreign key. It must
+-- survive account deletion long enough to remove an object uploaded with a
+-- signed upload token that was issued immediately before deletion began.
+create table public.service_identity_asset_deletions (
+  user_id uuid not null,
+  storage_bucket text not null check (
+    storage_bucket in ('processing-media', 'menu-media')
+  ),
+  storage_path text not null check (storage_path <> ''),
+  delete_after timestamptz not null default (now() + interval '2 hours 5 minutes'),
+  created_at timestamptz not null default now(),
+  primary key (storage_bucket, storage_path)
+);
+
+create index service_identity_asset_deletions_due_idx
+on public.service_identity_asset_deletions(delete_after);
+
+alter table public.service_identity_asset_deletions enable row level security;
+revoke all on public.service_identity_asset_deletions
+from public, anon, authenticated;
+grant all on public.service_identity_asset_deletions to service_role;
+
 create function public.reject_processing_for_deleting_identity()
 returns trigger
 language plpgsql
@@ -205,13 +227,76 @@ begin
 end;
 $$;
 
+create function public.internal_schedule_service_identity_asset_deletions(
+  p_user_id uuid,
+  p_assets jsonb
+)
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_scheduled integer;
+begin
+  if auth.role() <> 'service_role' then
+    raise exception 'Service role required';
+  end if;
+  if p_assets is null or jsonb_typeof(p_assets) is distinct from 'array' then
+    raise exception 'Invalid service identity asset list';
+  end if;
+  if jsonb_array_length(p_assets) > 2000 then
+    raise exception 'Invalid service identity asset list';
+  end if;
+  if not exists (
+    select 1
+    from public.service_identity_deletions deletion
+    where deletion.user_id = p_user_id
+  ) then
+    raise exception 'Service identity deletion was not started';
+  end if;
+  if exists (
+    select 1
+    from jsonb_to_recordset(p_assets) as asset(storage_bucket text, storage_path text)
+    where asset.storage_bucket not in ('processing-media', 'menu-media')
+      or asset.storage_path is null
+      or asset.storage_path = ''
+  ) then
+    raise exception 'Invalid service identity asset';
+  end if;
+
+  insert into public.service_identity_asset_deletions (
+    user_id,
+    storage_bucket,
+    storage_path
+  )
+  select p_user_id, asset.storage_bucket, asset.storage_path
+  from jsonb_to_recordset(p_assets) as asset(storage_bucket text, storage_path text)
+  on conflict (storage_bucket, storage_path) do update
+  set user_id = excluded.user_id,
+      delete_after = greatest(
+        public.service_identity_asset_deletions.delete_after,
+        now() + interval '2 hours 5 minutes'
+      );
+
+  get diagnostics v_scheduled = row_count;
+  return v_scheduled;
+end;
+$$;
+
 revoke all on function public.reject_processing_for_deleting_identity()
 from public, anon, authenticated;
 revoke all on function public.internal_begin_service_identity_deletion(uuid)
 from public, anon, authenticated;
 revoke all on function public.internal_complete_service_identity_deletion(uuid)
 from public, anon, authenticated;
+revoke all on function public.internal_schedule_service_identity_asset_deletions(
+  uuid, jsonb
+) from public, anon, authenticated;
 grant execute on function public.internal_begin_service_identity_deletion(uuid)
 to service_role;
 grant execute on function public.internal_complete_service_identity_deletion(uuid)
 to service_role;
+grant execute on function public.internal_schedule_service_identity_asset_deletions(
+  uuid, jsonb
+) to service_role;

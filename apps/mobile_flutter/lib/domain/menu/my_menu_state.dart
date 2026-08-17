@@ -194,6 +194,11 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
     final AppRepositories? repositories = _repositories;
     if (repositories != null) {
       _processingResumeTimer?.cancel();
+      final Future<void>? activeProcessingResume = _activeProcessingResume;
+      if (activeProcessingResume != null) {
+        await activeProcessingResume;
+      }
+      _processingResumeTimer?.cancel();
       await repositories.eraseLocalMenu();
       _pendingDishDeletions.clear();
       _pendingCaptureDeletions.clear();

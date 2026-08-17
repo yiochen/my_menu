@@ -4,6 +4,10 @@ import {
   operationalLog,
 } from "../_shared/operational_log.ts";
 import { requireUser, type SupabaseClientAny } from "../_shared/supabase.ts";
+import {
+  removeStorageAssets,
+  type StorageAsset,
+} from "../_shared/storage_cleanup.ts";
 
 Deno.serve(async (request: Request) => {
   const options = handleOptions(request);
@@ -38,24 +42,35 @@ Deno.serve(async (request: Request) => {
       p_user_id: userId,
     });
 
-    const { data: assets, error: assetsError } = await adminClient
-      .from("processing_assets")
-      .select("storage_path")
+    const { data: processingAssets, error: processingAssetsError } =
+      await adminClient
+        .from("processing_assets")
+        .select("storage_path")
+        .eq("user_id", userId);
+    if (processingAssetsError != null) {
+      throw processingAssetsError;
+    }
+    const { data: legacyAssets, error: legacyAssetsError } = await adminClient
+      .from("dish_images")
+      .select("storage_bucket, storage_path")
       .eq("user_id", userId);
-    if (assetsError != null) {
-      throw assetsError;
+    if (legacyAssetsError != null) {
+      throw legacyAssetsError;
     }
-    const paths = (assets ?? []).map(
-      (asset: { storage_path: string }) => asset.storage_path,
+    const assets: StorageAsset[] = [
+      ...(processingAssets ?? []).map((asset: { storage_path: string }) => ({
+        storage_bucket: "processing-media",
+        storage_path: asset.storage_path,
+      })),
+      ...((legacyAssets ?? []) as StorageAsset[]),
+    ];
+
+    await rpc(
+      adminClient,
+      "internal_schedule_service_identity_asset_deletions",
+      { p_user_id: userId, p_assets: assets },
     );
-    for (let offset = 0; offset < paths.length; offset += 100) {
-      const { error: removeError } = await adminClient.storage
-        .from("processing-media")
-        .remove(paths.slice(offset, offset + 100));
-      if (removeError != null) {
-        throw removeError;
-      }
-    }
+    await removeStorageAssets(adminClient, assets);
 
     await rpc(adminClient, "internal_complete_service_identity_deletion", {
       p_user_id: userId,

@@ -4,8 +4,9 @@ import type { SupabaseClientAny } from "../../functions/_shared/supabase.ts";
 const baseUrl = Deno.env.get("SUPABASE_URL") ?? "http://127.0.0.1:54321";
 const serviceRoleKey = requiredEnv("SUPABASE_SERVICE_ROLE_KEY");
 const anonKey = requiredEnv("SUPABASE_ANON_KEY");
+const workerKey = requiredEnv("AI_WORKER_KEY");
 
-Deno.test("signed account deletion removes service state and processing media", async () => {
+Deno.test("signed account deletion removes all service state and closes upload races", async () => {
   const admin = createClient(baseUrl, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -29,6 +30,7 @@ Deno.test("signed account deletion removes service state and processing media", 
   const jobId = crypto.randomUUID();
   const assetId = crypto.randomUUID();
   const storagePath = `${userId}/${jobId}/${assetId}.jpg`;
+  const legacyStoragePath = `${userId}/legacy-${crypto.randomUUID()}.jpg`;
   await insertOrThrow(admin, "service_entitlements", {
     user_id: userId,
     plan_key: "pro",
@@ -51,16 +53,17 @@ Deno.test("signed account deletion removes service state and processing media", 
     content_type: "image/jpeg",
     byte_size: 4,
   });
-  const { error: uploadError } = await admin.storage.from("processing-media")
-    .upload(
-      storagePath,
-      new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])], {
-        type: "image/jpeg",
-      }),
-    );
-  if (uploadError != null) {
-    throw new Error(`upload fixture: ${uploadError.message}`);
-  }
+  await insertOrThrow(admin, "dish_images", {
+    id: crypto.randomUUID(),
+    user_id: userId,
+    kind: "capture_photo",
+    storage_bucket: "menu-media",
+    storage_path: legacyStoragePath,
+    content_type: "image/jpeg",
+    byte_size: 4,
+  });
+  await uploadFixture(admin, "processing-media", storagePath);
+  await uploadFixture(admin, "menu-media", legacyStoragePath);
 
   const response = await fetch(`${baseUrl}/functions/v1/service-account`, {
     method: "POST",
@@ -78,10 +81,36 @@ Deno.test("signed account deletion removes service state and processing media", 
   assertEquals(await countOwned(admin, "service_entitlements", userId), 0);
   assertEquals(await countOwned(admin, "processing_jobs", userId), 0);
   assertEquals(await countOwned(admin, "processing_assets", userId), 0);
-  const download = await admin.storage.from("processing-media").download(
-    storagePath,
+  assertEquals(await countOwned(admin, "dish_images", userId), 0);
+  assertEquals(
+    await countOwned(admin, "service_identity_asset_deletions", userId),
+    2,
   );
-  assertEquals(download.data, null);
+  await assertStorageMissing(admin, "processing-media", storagePath);
+  await assertStorageMissing(admin, "menu-media", legacyStoragePath);
+
+  // Simulate an upload token issued before deletion being used after the
+  // immediate remove. The durable cleanup must remove the late object.
+  await uploadFixture(admin, "processing-media", storagePath);
+  const { error: dueError } = await admin
+    .from("service_identity_asset_deletions")
+    .update({ delete_after: new Date(0).toISOString() })
+    .eq("user_id", userId);
+  if (dueError != null) {
+    throw new Error(`make asset cleanup due: ${dueError.message}`);
+  }
+  const cleanup = await fetch(
+    `${baseUrl}/functions/v1/cleanup-processing-jobs`,
+    { method: "POST", headers: { "x-mymenu-worker-key": workerKey } },
+  );
+  assertEquals(cleanup.status, 200);
+  const cleanupBody = await cleanup.json();
+  assertEquals(cleanupBody.deletedAccountAssets, 2);
+  await assertStorageMissing(admin, "processing-media", storagePath);
+  assertEquals(
+    await countOwned(admin, "service_identity_asset_deletions", userId),
+    0,
+  );
 });
 
 Deno.test("account deletion rejects guests and missing authentication", async () => {
@@ -140,6 +169,31 @@ async function countOwned(
     throw new Error(`count ${table}: ${error.message}`);
   }
   return count;
+}
+
+async function uploadFixture(
+  client: SupabaseClientAny,
+  bucket: string,
+  path: string,
+) {
+  const { error } = await client.storage.from(bucket).upload(
+    path,
+    new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])], {
+      type: "image/jpeg",
+    }),
+  );
+  if (error != null) {
+    throw new Error(`upload ${bucket} fixture: ${error.message}`);
+  }
+}
+
+async function assertStorageMissing(
+  client: SupabaseClientAny,
+  bucket: string,
+  path: string,
+) {
+  const download = await client.storage.from(bucket).download(path);
+  assertEquals(download.data, null);
 }
 
 function requiredEnv(name: string) {

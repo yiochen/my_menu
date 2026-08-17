@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/app/app_providers.dart';
-import 'package:mymenu/core/network/service_identity_client.dart';
+import 'package:mymenu/domain/account/service_identity.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/dishes/seeded_dishes.dart';
 import 'package:mymenu/domain/menu/my_menu_state.dart';
-import 'package:mymenu/features/processing/ai_settings_sheet.dart';
+import 'package:mymenu/features/settings/settings_sheet.dart';
 
 void main() {
   testWidgets('account deletion keeps menu and local erase keeps identity',
@@ -36,7 +36,7 @@ void main() {
           home: Builder(
             builder: (BuildContext context) => Scaffold(
               body: FilledButton(
-                onPressed: () => showAiSettingsSheet(context, state),
+                onPressed: () => showSettingsSheet(context, state),
                 child: const Text('Open settings'),
               ),
             ),
