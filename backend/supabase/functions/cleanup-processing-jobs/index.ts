@@ -51,12 +51,27 @@ Deno.serve(async (request: Request) => {
       }
       expired += 1;
     }
+    const inactiveBefore = new Date();
+    inactiveBefore.setUTCDate(inactiveBefore.getUTCDate() - 90);
+    const { data: expiredGuestRows, error: guestCleanupError } = await client
+      .rpc("internal_expire_inactive_guest_identities", {
+        p_inactive_before: inactiveBefore.toISOString(),
+        p_limit: 100,
+      });
+    if (guestCleanupError != null) {
+      throw guestCleanupError;
+    }
+    const expiredGuests = expiredGuestRows?.length ?? 0;
     await client.from("ai_usage_records").delete().lt(
       "expires_at",
       new Date().toISOString(),
     );
-    operationalLog("processing_cleanup_complete", { status: "ok" });
-    return json({ expired });
+    operationalLog("processing_cleanup_complete", {
+      status: "ok",
+      expiredJobs: expired,
+      expiredGuests,
+    });
+    return json({ expired, expiredGuests });
   } catch (_) {
     operationalError("processing_cleanup_failed", "cleanup_failed");
     return json({ error: "cleanup_failed" }, 500);

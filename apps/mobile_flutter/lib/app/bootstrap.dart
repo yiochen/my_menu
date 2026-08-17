@@ -3,11 +3,13 @@ import 'package:flutter/widgets.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/core/debug/debug_controls.dart';
 import 'package:mymenu/core/debug/shared_preferences_debug_controls.dart';
+import 'package:mymenu/core/files/platform_data_protection.dart';
 import 'package:mymenu/core/network/processing_api_client.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await PlatformDataProtection.harden();
   DebugControlsBootstrap? debugControlsBootstrap;
   if (kDebugMode) {
     final SharedPreferencesDebugControls controls =

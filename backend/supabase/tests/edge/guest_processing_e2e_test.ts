@@ -166,6 +166,9 @@ Deno.test("guest capture grouping is ephemeral and idempotent", async () => {
     {},
   );
   assertEquals(cleanup.status, 200);
+  const cleanupBody = await jsonBody(cleanup);
+  assertEquals(cleanupBody.expired, 1);
+  assertEquals(cleanupBody.expiredGuests, 0);
   const expiredStatus = await post(session.headers, "processing-jobs", {
     action: "status",
     jobId: expiringJob,

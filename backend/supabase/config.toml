@@ -54,6 +54,10 @@ verify_jwt = true
 enabled = true
 verify_jwt = false
 
+[functions.service-account]
+enabled = true
+verify_jwt = true
+
 [functions.sync-pull]
 enabled = true
 verify_jwt = true

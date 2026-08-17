@@ -190,6 +190,29 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
   @visibleForTesting
   Future<void> get initialized => _repositoryBootstrap ?? Future<void>.value();
 
+  Future<void> eraseLocalMenu() async {
+    final AppRepositories? repositories = _repositories;
+    if (repositories != null) {
+      _processingResumeTimer?.cancel();
+      await repositories.eraseLocalMenu();
+      _pendingDishDeletions.clear();
+      _pendingCaptureDeletions.clear();
+      _pendingCaptureBatchDeletions.clear();
+      await _reloadFromRepositories();
+      return;
+    }
+    _dishes = const <Dish>[];
+    _plan = const <PlannedMeal>[];
+    _captureBatches = const <CaptureBatch>[];
+    _captureItems = const <CaptureItem>[];
+    _captureCorrections = const <CaptureCorrection>[];
+    _generatedCovers = const <GeneratedCover>[];
+    _processingRequests = const <ProcessingOutboxRequest>[];
+    _reviewItems = const <ReviewItem>[];
+    _processingConsentDecision = ProcessingConsentDecision.notDecided;
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     if (_repositories != null) {
