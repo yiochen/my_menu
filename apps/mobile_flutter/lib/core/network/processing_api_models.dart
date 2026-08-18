@@ -95,14 +95,44 @@ class ApiCoverGenerationResult extends ApiProcessingResult {
   });
 }
 
-class ApiProcessingAllowances {
-  const ApiProcessingAllowances({
-    required this.organizationRemaining,
-    required this.coverRemaining,
+enum ApiProcessingAllowanceStatus {
+  enforced,
+  exhausted,
+  enforcementDisabled;
+
+  static ApiProcessingAllowanceStatus fromApi(String value) => switch (value) {
+        'enforced' => enforced,
+        'exhausted' => exhausted,
+        'enforcement_disabled' => enforcementDisabled,
+        _ => throw StateError('Unknown processing allowance status: $value'),
+      };
+}
+
+class ApiProcessingAllowance {
+  const ApiProcessingAllowance({
+    required this.status,
+    required this.used,
+    required this.limit,
+    required this.remaining,
   });
 
-  final int organizationRemaining;
-  final int coverRemaining;
+  final ApiProcessingAllowanceStatus status;
+  final int used;
+  final int limit;
+  final int? remaining;
+
+  bool get enforced =>
+      status != ApiProcessingAllowanceStatus.enforcementDisabled;
+}
+
+class ApiProcessingAllowances {
+  const ApiProcessingAllowances({
+    required this.organization,
+    required this.cover,
+  });
+
+  final ApiProcessingAllowance organization;
+  final ApiProcessingAllowance cover;
 }
 
 class ApiProcessingAssetManifest {

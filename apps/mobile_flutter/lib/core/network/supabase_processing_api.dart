@@ -18,8 +18,26 @@ mixin SupabaseProcessingApi on ProcessingApiClient {
       <String, Object?>{'action': 'allowances'},
     );
     return ApiProcessingAllowances(
-      organizationRemaining: apiIntValue(response, 'organizationRemaining'),
-      coverRemaining: apiIntValue(response, 'coverRemaining'),
+      organization: _processingAllowanceFromResponse(
+        apiMapValue(response, 'organization'),
+      ),
+      cover: _processingAllowanceFromResponse(
+        apiMapValue(response, 'cover'),
+      ),
+    );
+  }
+
+  ApiProcessingAllowance _processingAllowanceFromResponse(
+    Map<String, Object?> response,
+  ) {
+    final Object? remaining = response['remaining'];
+    return ApiProcessingAllowance(
+      status: ApiProcessingAllowanceStatus.fromApi(
+        apiStringValue(response, 'status'),
+      ),
+      used: apiIntValue(response, 'used'),
+      limit: apiIntValue(response, 'limit'),
+      remaining: remaining == null ? null : apiIntValue(response, 'remaining'),
     );
   }
 

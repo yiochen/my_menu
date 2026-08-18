@@ -22,7 +22,9 @@ select throws_ok(
       'capture-grouping-input-v2',
       'capture-grouping-result-v2',
       '2026-08-03',
-      '[]'::jsonb
+      '[]'::jsonb,
+      10,
+      false
     )
   $$,
   'P0001',
@@ -39,7 +41,9 @@ select is(
       'capture-grouping-input-v2',
       'capture-grouping-result-v2',
       '2026-08-04-cover-v1',
-      '[]'::jsonb
+      '[]'::jsonb,
+      10,
+      false
     )
   ),
   'capture-grouping-input-v2',

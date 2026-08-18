@@ -25,4 +25,29 @@ void main() {
       expect(ApiProcessingJobStatus.fromApi(status.name), status);
     }
   });
+
+  test('allowance states distinguish enforcement from exhaustion and bypass',
+      () {
+    expect(
+      ApiProcessingAllowanceStatus.fromApi('enforced'),
+      ApiProcessingAllowanceStatus.enforced,
+    );
+    expect(
+      ApiProcessingAllowanceStatus.fromApi('exhausted'),
+      ApiProcessingAllowanceStatus.exhausted,
+    );
+    expect(
+      ApiProcessingAllowanceStatus.fromApi('enforcement_disabled'),
+      ApiProcessingAllowanceStatus.enforcementDisabled,
+    );
+    expect(
+      const ApiProcessingAllowance(
+        status: ApiProcessingAllowanceStatus.enforcementDisabled,
+        used: 11,
+        limit: 10,
+        remaining: null,
+      ).enforced,
+      isFalse,
+    );
+  });
 }

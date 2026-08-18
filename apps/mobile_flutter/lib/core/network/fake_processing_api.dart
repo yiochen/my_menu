@@ -20,8 +20,18 @@ mixin FakeProcessingApi on ProcessingApiClient {
   @override
   Future<ApiProcessingAllowances> getProcessingAllowances() async =>
       const ApiProcessingAllowances(
-        organizationRemaining: 10,
-        coverRemaining: 10,
+        organization: ApiProcessingAllowance(
+          status: ApiProcessingAllowanceStatus.enforced,
+          used: 0,
+          limit: 10,
+          remaining: 10,
+        ),
+        cover: ApiProcessingAllowance(
+          status: ApiProcessingAllowanceStatus.enforced,
+          used: 0,
+          limit: 10,
+          remaining: 10,
+        ),
       );
 
   bool hasPayloadForProcessingJob(String jobId) {

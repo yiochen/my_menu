@@ -6,6 +6,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter/widgets.dart';
 import 'package:mymenu/core/database/app_database.dart' as db;
 import 'package:mymenu/core/network/network_status_monitor.dart';
+import 'package:mymenu/core/network/processing_api_client.dart';
 import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_correction.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';

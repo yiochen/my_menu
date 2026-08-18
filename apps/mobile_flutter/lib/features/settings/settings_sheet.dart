@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mymenu/app/app_providers.dart';
+import 'package:mymenu/core/network/processing_api_client.dart';
 import 'package:mymenu/domain/account/service_identity.dart';
 import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
@@ -26,7 +27,8 @@ class _SettingsSheet extends ConsumerStatefulWidget {
 
 class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
   bool? _automatic;
-  int? _coverAllowanceRemaining;
+  ApiProcessingAllowance? _coverAllowance;
+  bool _coverAllowanceLoaded = false;
   bool _erasingLocalMenu = false;
 
   @override
@@ -37,11 +39,13 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
 
   Future<void> _load() async {
     final bool enabled = await widget.state.automaticCoverGenerationEnabled();
-    final int? remaining = await widget.state.remainingCoverAllowance();
+    final ApiProcessingAllowance? allowance =
+        await widget.state.coverAllowance();
     if (mounted) {
       setState(() {
         _automatic = enabled;
-        _coverAllowanceRemaining = remaining;
+        _coverAllowance = allowance;
+        _coverAllowanceLoaded = true;
       });
     }
   }
@@ -117,11 +121,7 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
           contentPadding: EdgeInsets.zero,
           leading: const Icon(Icons.image_outlined),
           title: const Text('Cover allowance'),
-          subtitle: Text(
-            _coverAllowanceRemaining == null
-                ? 'Remaining allowance unavailable offline'
-                : '$_coverAllowanceRemaining of 10 remaining in the last 30 days',
-          ),
+          subtitle: Text(_coverAllowanceDescription),
         ),
         if (widget.state.processingConsentDecision ==
             ProcessingConsentDecision.accepted)
@@ -134,6 +134,20 @@ class _SettingsSheetState extends ConsumerState<_SettingsSheet> {
             label: const Text('Turn off AI processing'),
           ),
       ];
+
+  String get _coverAllowanceDescription {
+    if (!_coverAllowanceLoaded) return 'Checking allowance…';
+    final ApiProcessingAllowance? allowance = _coverAllowance;
+    if (allowance == null) return 'Remaining allowance unavailable offline';
+    return switch (allowance.status) {
+      ApiProcessingAllowanceStatus.enforcementDisabled =>
+        'Allowance enforcement is disabled for this service identity',
+      ApiProcessingAllowanceStatus.exhausted =>
+        'Free allowance used for the last 30 days',
+      ApiProcessingAllowanceStatus.enforced =>
+        '${allowance.remaining} of ${allowance.limit} remaining in the last 30 days',
+    };
+  }
 
   List<Widget> _accountSettings(
     BuildContext context, {

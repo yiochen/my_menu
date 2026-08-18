@@ -28,7 +28,9 @@ select is(
       'capture-grouping-input-v1',
       'capture-grouping-result-v1',
       '2026-08-02',
-      '[]'::jsonb
+      '[]'::jsonb,
+      10,
+      false
     )
   ),
   'capture_grouping',
@@ -45,7 +47,9 @@ select is(
       'capture-grouping-input-v1',
       'capture-grouping-result-v1',
       '2026-08-02',
-      '[]'::jsonb
+      '[]'::jsonb,
+      10,
+      false
     )
   ),
   (
@@ -64,7 +68,9 @@ select throws_ok(
       'capture-grouping-input-v1',
       'capture-grouping-result-v1',
       '2026-08-02',
-      '[{"assetId":"not-a-uuid","contentType":"image/jpeg","byteSize":4}]'::jsonb
+      '[{"assetId":"not-a-uuid","contentType":"image/jpeg","byteSize":4}]'::jsonb,
+      10,
+      false
     )
   $$,
   'P0001',
@@ -125,7 +131,7 @@ select ok(
 select is(
   has_function_privilege(
     'authenticated',
-    'public.internal_create_processing_job(uuid,text,text,text,text,text,jsonb)',
+    'public.internal_create_processing_job(uuid,text,text,text,text,text,jsonb,integer,boolean)',
     'execute'
   ),
   false,
