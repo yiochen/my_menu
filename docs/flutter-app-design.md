@@ -12,7 +12,7 @@ MyMenu is a device-local personal cooking memory system:
 - every menu read and write is local
 - server AI is optional enrichment, not remote application state
 - a processing outbox coordinates temporary server work
-- account portability never implies menu portability
+- in V1, account portability does not imply menu portability
 
 ## Core Architecture Rule
 
@@ -97,7 +97,13 @@ Supabase Auth is separate from the cooking domain.
 
 - the app silently creates a guest identity for AI quota
 - optional sign-in restores paid access and allowance
+- one account may serve multiple devices with shared entitlement and allowance,
+  while each device retains an independent local menu
 - signing in or out never replaces, merges, uploads, or deletes the local menu
+- non-destructive identity changes wait for in-flight server jobs to be received
+  and acknowledged; purely local pending work may use the new identity
+- an offline refresh failure retains the cached account identity and affects
+  service access only; it never blocks or changes the device-local menu
 - deleting an account returns the installation to guest service
 - erasing the menu is a separate local-only action
 

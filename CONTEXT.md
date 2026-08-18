@@ -6,9 +6,14 @@ revisiting dishes a person cooks.
 ## Language
 
 **Device-local menu**:
-A person's menu and cooking memory that belongs to one device and is not
-automatically recoverable on another device.
+A person's live menu and cooking memory whose authoritative state belongs to
+one device. A future Menu backup may restore a snapshot but is not live menu state.
 _Avoid_: Cloud library, synchronized menu
+
+**Menu backup**:
+An account-bound encrypted snapshot created for explicit recovery on a device.
+It is not a remotely editable menu or a source of continuous synchronization.
+_Avoid_: Cloud menu, synchronized menu, server menu
 
 **Processing job**:
 A time-limited request for server assistance that exists only long enough to
@@ -133,6 +138,11 @@ A content-free record of processing consumed by a guest installation or MyMenu
 account for quota, billing, and dispute handling.
 _Avoid_: Job history, processing result
 
+**Service identity**:
+The server-recognized identity that owns processing entitlement and AI usage.
+A guest installation may become a MyMenu account without replacing this identity.
+_Avoid_: Menu owner, profile
+
 **Organization allowance**:
 The processing entitlement available for AI capture grouping. It is independent
 of Cover allowance.
@@ -150,5 +160,6 @@ _Avoid_: Anonymous account, guest account
 
 **MyMenu account**:
 An optional signed-in identity that owns paid access and AI usage allowance but
-never owns the device-local menu.
+not the live device-local menu. A future MyMenu account may also control access
+to encrypted Menu backups.
 _Avoid_: User profile, cloud menu account
