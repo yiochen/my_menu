@@ -6,6 +6,8 @@ import 'package:mymenu/core/debug/debug_controls.dart';
 import 'package:mymenu/core/network/network_gated_processing_api_client.dart';
 import 'package:mymenu/core/network/network_status_monitor.dart';
 import 'package:mymenu/core/network/processing_api_client.dart';
+import 'package:mymenu/core/network/service_identity_client.dart';
+import 'package:mymenu/domain/account/service_identity.dart';
 import 'package:mymenu/domain/menu/app_repositories.dart';
 import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
@@ -63,6 +65,17 @@ final processingApiClientProvider = Provider<ProcessingApiClient>((Ref ref) {
     client,
     ref.read(debugControlsProvider).requireNetwork,
   );
+});
+
+final serviceIdentityClientProvider = Provider<ServiceIdentityClient>(
+  (Ref ref) => ProcessingApiConfig.shouldUseSupabase
+      ? SupabaseServiceIdentityClient()
+      : LocalServiceIdentityClient(),
+);
+
+final serviceIdentityControllerProvider =
+    ChangeNotifierProvider<ServiceIdentityController>((Ref ref) {
+  return ServiceIdentityController(ref.watch(serviceIdentityClientProvider));
 });
 
 final captureMediaServiceProvider = Provider<CaptureMediaService>((Ref ref) {

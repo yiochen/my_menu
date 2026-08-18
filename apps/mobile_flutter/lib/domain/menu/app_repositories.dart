@@ -18,6 +18,7 @@ import 'package:mymenu/domain/covers/cover_repository.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/dishes/dish_mappers.dart';
 import 'package:mymenu/domain/dishes/seeded_dishes.dart';
+import 'package:mymenu/domain/menu/local_menu_eraser.dart';
 import 'package:mymenu/domain/planning/planned_meal.dart' as planning_domain;
 import 'package:mymenu/domain/planning/seeded_plan.dart';
 import 'package:mymenu/domain/processing/processing_consent_repository.dart';
@@ -60,6 +61,7 @@ class AppRepositories {
     this.seedSampleDataOnPrepare = false,
     DishImageCache? dishImageCache,
     ImageDerivativeStore? imageDerivativeStore,
+    LocalMenuEraser? localMenuEraser,
   }) {
     final DishImageCache resolvedImageCache =
         dishImageCache ?? DishImageCache();
@@ -68,6 +70,8 @@ class AppRepositories {
     _prepareImagePreviewsOnBootstrap = imageDerivativeStore != null ||
         Platform.environment['FLUTTER_TEST'] != 'true';
     _imageDerivativeStore = resolvedDerivativeStore;
+    this.localMenuEraser =
+        localMenuEraser ?? LocalMenuEraser(database: database);
     dishRepository = DishRepository(
       database,
       resolvedImageCache,
@@ -102,6 +106,7 @@ class AppRepositories {
   @visibleForTesting
   final bool seedSampleDataOnPrepare;
   late final ImageDerivativeStore _imageDerivativeStore;
+  late final LocalMenuEraser localMenuEraser;
   late final bool _prepareImagePreviewsOnBootstrap;
   late final DishRepository dishRepository;
   late final CoverRepository coverRepository;
@@ -153,6 +158,8 @@ class AppRepositories {
           ),
         );
   }
+
+  Future<void> eraseLocalMenu() => localMenuEraser.erase();
 
   Future<void> _removeBundledMockImageRefs() async {
     final List<db.DishRow> affectedDishes = await (database.select(

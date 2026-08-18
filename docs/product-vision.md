@@ -353,9 +353,10 @@ Network is required only for server-assisted features such as:
 - AI cover generation
 - Account entitlement and AI quota status
 
-Local SQLite and the app file store are the only source of truth for the
-personal menu. MyMenu does not provide automatic cloud backup, menu sync, or
-multi-device menu recovery.
+Local SQLite and the app file store are the only source of truth for the live
+personal menu. V1 does not provide automatic cloud backup, menu sync, or
+multi-device recovery. A later account-bound encrypted backup may restore an
+explicit snapshot without becoming live server menu state.
 
 ## Backend Direction
 
@@ -389,7 +390,7 @@ API keys should never live in the mobile app.
 
 ## Data Model Summary
 
-Core entities:
+Core device entities:
 
 - Dish
 - Ingredient
@@ -399,14 +400,21 @@ Core entities:
 - CaptureItem
 - PlannedMeal
 - ReviewItem
-- SyncOperation
-- Profile
+- ProcessingOutbox
+
+Server service concepts:
+
+- Guest installation
+- MyMenu account
+- Service entitlement
+- AI usage record
+- Processing job
 
 Important design choice:
 
-Use locally generated UUIDs so the same IDs can be used locally and remotely.
-
-This avoids complicated local ID to remote ID mapping later.
+Use locally generated UUIDs for device-local menu entities. A processing request
+may carry those IDs as opaque correlation references, but they never become
+remote canonical menu IDs.
 
 ## Monetization Direction
 
@@ -492,6 +500,7 @@ The core is:
 ### Later
 
 - Recipe web search enrichment
+- Account-bound encrypted menu backup and restore, without live menu sync
 - Encrypted cookbook export/import
 - Subscriptions or AI credits
 - Custom themes
