@@ -38,7 +38,6 @@ cloud recovery, and separately confirms the destructive reset:
 
 ```bash
 SUPABASE_PROJECT_REF=... \
-SUPABASE_URL=https://PROJECT_REF.supabase.co \
 SUPABASE_SERVICE_ROLE_KEY=... \
 SNAPSHOT_DIR=/recoverable/external/location \
 CONFIRM_NO_REAL_USERS=NO_REAL_USERS_DEPEND_ON_CLOUD_RECOVERY \
@@ -52,7 +51,9 @@ writes SHA-256 checksums, removes both pre-reset Storage buckets, resets the
 linked database from the reduced migrations (which recreates only the private
 `processing-media` bucket), and deploys the four checked-in Edge Functions with
 pruning enabled. Obtain the service-role key from the project's API settings;
-never write it to the snapshot or the repository.
+the API URL is derived from `SUPABASE_PROJECT_REF` so Storage and database
+operations cannot target different projects. Never write the key to the
+snapshot or the repository.
 
 Do not store the snapshot in Git. Preserve it until the release candidate has
 passed the physical-device and real-provider gates and the rollback window has

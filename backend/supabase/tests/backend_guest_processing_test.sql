@@ -1,5 +1,5 @@
 begin;
-select plan(20);
+select plan(22);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password,
@@ -249,6 +249,30 @@ select ok(
     'worker-key'
   ) > 0,
   'worker dispatch returns the queued pg_net request identifier'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select is(
+  has_function_privilege(
+    'authenticated',
+    'public.internal_enqueue_ai_worker(text,text)',
+    'execute'
+  ),
+  false,
+  'clients have no execution grant for worker dispatch'
+);
+
+select throws_ok(
+  $$
+    select public.internal_enqueue_ai_worker(
+      'http://127.0.0.1:54321/functions/v1/process-ai-jobs',
+      'worker-key'
+    )
+  $$,
+  'permission denied for function internal_enqueue_ai_worker',
+  'clients cannot dispatch the protected worker'
 );
 
 select * from finish();

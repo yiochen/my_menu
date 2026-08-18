@@ -34,14 +34,12 @@ if [[ -z "${SNAPSHOT_DIR:-}" ]]; then
   echo "SNAPSHOT_DIR must be an external, recoverable destination." >&2
   exit 1
 fi
-if [[ -z "${SUPABASE_URL:-}" ]]; then
-  echo "SUPABASE_URL must identify the linked project's API URL." >&2
-  exit 1
-fi
 if [[ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]]; then
   echo "SUPABASE_SERVICE_ROLE_KEY is required for Storage bucket deletion." >&2
   exit 1
 fi
+
+SUPABASE_URL="https://${SUPABASE_PROJECT_REF}.supabase.co"
 
 require_confirmation CONFIRM_NO_REAL_USERS NO_REAL_USERS_DEPEND_ON_CLOUD_RECOVERY
 require_confirmation CONFIRM_DESTRUCTIVE_RESET RESET_PRELAUNCH_SUPABASE
