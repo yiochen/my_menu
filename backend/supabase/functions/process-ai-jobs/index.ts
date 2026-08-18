@@ -50,59 +50,7 @@ async function processOneJob() {
   if (processingJob != null) {
     return await processProcessingJob(client, processingJob);
   }
-  const job = await claimJob(client);
-  if (job == null) {
-    return { processed: 0, failed: 0 };
-  }
-
-  const jobId = stringField(job, "id");
-  const leaseToken = stringField(job, "lease_token");
-  try {
-    const captures = await loadGroupingInput(client, jobId, leaseToken);
-    const provider = createGroupingProvider(
-      stringField(job, "provider"),
-      stringField(job, "model_version"),
-    );
-    const result = await provider.group(captures);
-    const { error } = await client.rpc(
-      "internal_apply_capture_grouping_job",
-      {
-        p_job_id: jobId,
-        p_lease_token: leaseToken,
-        p_normalized_result: {
-          groups: result.output.groups,
-          rejectedCaptures: result.output.rejectedCaptures,
-          provenance: result.provenance,
-        },
-      },
-    );
-    if (error != null) {
-      throw error;
-    }
-    return { processed: 1, failed: 0, jobId };
-  } catch (error) {
-    const failure = normalizeFailure(error);
-    operationalError("legacy_ai_job_failed", failure.code, { jobId });
-    const { error: failError } = await client.rpc("internal_fail_ai_job", {
-      p_job_id: jobId,
-      p_lease_token: leaseToken,
-      p_retryable: failure.retryable,
-      p_normalized_error: {
-        code: failure.code,
-        message: failure.message,
-      },
-    });
-    if (failError != null) {
-      operationalError(
-        "legacy_ai_job_failure_persist_failed",
-        "persist_failed",
-        {
-          jobId,
-        },
-      );
-    }
-    return { processed: 0, failed: 1, jobId };
-  }
+  return { processed: 0, failed: 0 };
 }
 
 async function claimProcessingJob(client: any): Promise<JsonRecord | null> {
@@ -473,79 +421,6 @@ function stringArrayField(row: JsonRecord, key: string) {
     }
     return value;
   });
-}
-
-async function claimJob(client: any): Promise<JsonRecord | null> {
-  const { data, error } = await client.rpc("internal_claim_ai_job", {
-    p_job_types: ["batch_grouping"],
-  });
-  if (error != null) {
-    throw error;
-  }
-  if (!Array.isArray(data) || data.length === 0) {
-    return null;
-  }
-  return data[0] as JsonRecord;
-}
-
-async function loadGroupingInput(
-  client: any,
-  jobId: string,
-  leaseToken: string,
-): Promise<GroupingCaptureInput[]> {
-  const { data, error } = await client.rpc(
-    "internal_get_capture_grouping_input",
-    {
-      p_job_id: jobId,
-      p_lease_token: leaseToken,
-    },
-  );
-  if (error != null) {
-    throw error;
-  }
-  if (!Array.isArray(data) || data.length === 0) {
-    throw new AiProviderFailure(
-      "capture_grouping_input_empty",
-      "The capture batch has no active captures",
-      false,
-    );
-  }
-
-  return await Promise.all(data.map(async (value: unknown) => {
-    const row = recordValue(value);
-    const kind = stringField(row, "kind");
-    if (kind !== "photo" && kind !== "idea") {
-      throw new AiProviderFailure(
-        "capture_kind_invalid",
-        `Unsupported capture kind: ${kind}`,
-        false,
-      );
-    }
-
-    const capture: GroupingCaptureInput = {
-      id: stringField(row, "capture_id"),
-      ordinal: numberField(row, "ordinal"),
-      kind,
-      ideaText: nullableString(row.idea_text),
-      capturedLocalDate: nullableString(row.captured_local_date),
-    };
-    if (kind === "photo") {
-      const bucket = stringField(row, "storage_bucket");
-      const path = stringField(row, "storage_path");
-      const contentType = stringField(row, "content_type");
-      capture.media = {
-        contentType,
-        filename: path.split("/").at(-1) ?? `${capture.id}.image`,
-        loadBytes: processingAssetByteLoader(
-          client,
-          bucket,
-          path,
-          capture.id,
-        ),
-      };
-    }
-    return capture;
-  }));
 }
 
 function processingAssetByteLoader(

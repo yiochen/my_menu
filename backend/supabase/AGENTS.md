@@ -48,8 +48,8 @@ Add or update tests with backend changes:
   coverage under `supabase/tests/`
 - Edge Function routing, request validation, auth behavior, storage access, or
   RPC integration changes should include HTTP tests under `supabase/tests/edge/`
-- capture organization is durably queued by `internal_finalize_capture_batch`;
-  `finalize-capture-batch` also dispatches `process-ai-jobs` with `pg_net`
+- processing is durably queued through the typed `processing-jobs` lifecycle;
+  submission dispatches the protected `process-ai-jobs` worker with `pg_net`
 - test job creation, date grouping, leases, retries, and atomic completion in
   pgTAP, and test the internal worker authorization with Edge Function HTTP tests
 - when a change intentionally has no useful test seam, document why in the PR
@@ -85,8 +85,8 @@ Do not commit secrets or local machine state, including Supabase access tokens,
 database passwords, production API keys, OAuth provider secrets, Edge Function
 secrets, or generated local environment files.
 
-Immediate AI dispatch occurs through `finalize-capture-batch` and the protected
-`process-ai-jobs` route. The recurring recovery path uses `pg_cron` and
-`pg_net` to invoke that same Edge worker once per minute. The worker is guarded
-by the dedicated `AI_WORKER_KEY`, which is stored in Supabase Vault for cron
-dispatch and must not be the service-role key.
+Immediate AI dispatch occurs when `processing-jobs` submits a typed job to the
+protected `process-ai-jobs` route. Scheduled cleanup uses `pg_cron` and
+`pg_net`. Both internal routes are guarded by the dedicated `AI_WORKER_KEY`,
+which is stored in Supabase Vault for scheduled dispatch and must not be the
+service-role key.

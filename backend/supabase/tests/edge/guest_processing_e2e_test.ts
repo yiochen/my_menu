@@ -134,13 +134,6 @@ Deno.test("guest capture grouping is ephemeral and idempotent", async () => {
   assertEquals(decisions.length, 1);
   assertEquals("confidence" in objectValue(decisions[0]), false);
 
-  const [dishCount, captureCount] = await Promise.all([
-    countOwned(admin, "dishes", session.userId),
-    countOwned(admin, "captures", session.userId),
-  ]);
-  assertEquals(dishCount, 0);
-  assertEquals(captureCount, 0);
-
   const acknowledge = await post(session.headers, "processing-jobs", {
     action: "acknowledge",
     jobId,
@@ -183,7 +176,7 @@ Deno.test("guest capture grouping is ephemeral and idempotent", async () => {
   const cleanupBody = await jsonBody(cleanup);
   assertEquals(cleanupBody.expired, 1);
   assertEquals(cleanupBody.expiredGuests, 0);
-  assertEquals(cleanupBody.deletedAccountAssets, 0);
+  assertEquals(cleanupBody.deletedOrphanAssets, 0);
   const expiredStatus = await post(session.headers, "processing-jobs", {
     action: "status",
     jobId: expiringJob,
@@ -215,6 +208,31 @@ Deno.test("guest capture grouping is ephemeral and idempotent", async () => {
     assets: [],
   });
   assertEquals(overAllowance.status, 429);
+});
+
+Deno.test("processing jobs are isolated to their service owner", async () => {
+  const owner = await createGuestSession();
+  const other = await createGuestSession();
+  const jobId = await createJob(owner.headers, crypto.randomUUID());
+
+  for (const action of ["status", "result", "acknowledge", "cancel"]) {
+    const response = await post(other.headers, "processing-jobs", {
+      action,
+      jobId,
+    });
+    assertEquals(response.status, 404);
+  }
+
+  const ownerStatus = await post(owner.headers, "processing-jobs", {
+    action: "status",
+    jobId,
+  });
+  assertEquals(ownerStatus.status, 200);
+  const canceled = await post(owner.headers, "processing-jobs", {
+    action: "cancel",
+    jobId,
+  });
+  assertEquals(canceled.status, 200);
 });
 
 Deno.test("guest idea cover uses the bounded contract and charges on acknowledgement", async () => {

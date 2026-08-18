@@ -13,11 +13,6 @@ major_version = 15
 [storage]
 enabled = true
 
-[storage.buckets.menu-media]
-public = false
-file_size_limit = "20MiB"
-allowed_mime_types = ["image/jpeg", "image/png", "image/heic", "image/heif"]
-
 [storage.buckets.processing-media]
 public = false
 file_size_limit = "20MiB"
@@ -25,22 +20,6 @@ allowed_mime_types = ["image/jpeg", "image/png", "image/heic", "image/heif"]
 
 [edge_runtime]
 policy = "per_worker"
-
-[functions.prepare-photo-upload]
-enabled = true
-verify_jwt = true
-
-[functions.create-photo]
-enabled = true
-verify_jwt = true
-
-[functions.finalize-capture-batch]
-enabled = true
-verify_jwt = true
-
-[functions.discard]
-enabled = true
-verify_jwt = true
 
 [functions.process-ai-jobs]
 enabled = true
@@ -55,29 +34,5 @@ enabled = true
 verify_jwt = false
 
 [functions.service-account]
-enabled = true
-verify_jwt = true
-
-[functions.sync-pull]
-enabled = true
-verify_jwt = true
-
-[functions.get-captures]
-enabled = true
-verify_jwt = true
-
-[functions.get-dishes]
-enabled = true
-verify_jwt = true
-
-[functions.delete-dishes]
-enabled = true
-verify_jwt = true
-
-[functions.delete-capture-batch]
-enabled = true
-verify_jwt = true
-
-[functions.get-review-items]
 enabled = true
 verify_jwt = true

@@ -50,31 +50,21 @@ Deno.serve(async (request: Request) => {
     if (processingAssetsError != null) {
       throw processingAssetsError;
     }
-    const { data: legacyAssets, error: legacyAssetsError } = await adminClient
-      .from("dish_images")
-      .select("storage_bucket, storage_path")
-      .eq("user_id", userId);
-    if (legacyAssetsError != null) {
-      throw legacyAssetsError;
-    }
-    const assets: StorageAsset[] = [
-      ...(processingAssets ?? []).map((asset: { storage_path: string }) => ({
+    const assets: StorageAsset[] = (processingAssets ?? []).map(
+      (asset: { storage_path: string }) => ({
         storage_bucket: "processing-media",
         storage_path: asset.storage_path,
-      })),
-      ...((legacyAssets ?? []) as StorageAsset[]),
-    ];
-
-    await rpc(
-      adminClient,
-      "internal_schedule_service_identity_asset_deletions",
-      { p_user_id: userId, p_assets: assets },
+      }),
     );
     await removeStorageAssets(adminClient, assets);
 
     await rpc(adminClient, "internal_complete_service_identity_deletion", {
       p_user_id: userId,
     });
+    // A signed upload may have completed between the first removal and Auth
+    // deletion. Remove the known paths again; scheduled orphan cleanup catches
+    // uploads that land after this point.
+    await removeStorageAssets(adminClient, assets);
     operationalLog("service_identity_deleted", {
       action: "delete",
       status: "ok",
