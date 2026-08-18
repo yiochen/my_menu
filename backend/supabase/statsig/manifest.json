@@ -1,0 +1,42 @@
+{
+  "dynamicConfigs": [
+    {
+      "id": "processing_allowances",
+      "name": "Processing allowances",
+      "description": "Server-owned processing limits selected with the trusted service entitlement plan_key.",
+      "isEnabled": true,
+      "idType": "userID",
+      "defaultValue": {
+        "capture_auto_organization_limit": 10,
+        "dish_cover_gen_limit": 10
+      },
+      "schema": "{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"type\":\"object\",\"additionalProperties\":false,\"required\":[\"capture_auto_organization_limit\",\"dish_cover_gen_limit\"],\"properties\":{\"capture_auto_organization_limit\":{\"type\":\"integer\",\"minimum\":0},\"dish_cover_gen_limit\":{\"type\":\"integer\",\"minimum\":0}}}"
+    }
+  ],
+  "gates": [
+    {
+      "id": "processing_capture_auto_organization_allowance_bypass",
+      "name": "Processing capture auto organization allowance bypass",
+      "description": "Allows a targeted service identity to exceed the capture auto-organization allowance. Keep false unless an expiring operator rule applies.",
+      "isEnabled": true,
+      "idType": "userID",
+      "type": "PERMANENT"
+    },
+    {
+      "id": "processing_dish_cover_gen_allowance_bypass",
+      "name": "Processing dish cover generation allowance bypass",
+      "description": "Allows a targeted service identity to exceed the dish cover-generation allowance. Keep false unless an expiring operator rule applies.",
+      "isEnabled": true,
+      "idType": "userID",
+      "type": "PERMANENT"
+    },
+    {
+      "id": "processing_allowance_emergency_enforcement",
+      "name": "Processing allowance emergency enforcement",
+      "description": "Globally forces allowance enforcement and takes precedence over both account bypass gates.",
+      "isEnabled": true,
+      "idType": "userID",
+      "type": "PERMANENT"
+    }
+  ]
+}

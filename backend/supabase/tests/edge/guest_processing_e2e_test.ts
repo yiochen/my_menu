@@ -1,9 +1,23 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import type {
+  ProcessingPolicy,
+  ProcessingPolicyProvider,
+} from "../../functions/_shared/processing_policy.ts";
+import { createProcessingJobsHandler } from "../../functions/processing-jobs/handler.ts";
 
 const baseUrl = Deno.env.get("SUPABASE_URL") ?? "http://127.0.0.1:54321";
 const serviceRoleKey = requiredEnv("SUPABASE_SERVICE_ROLE_KEY");
 const anonKey = requiredEnv("SUPABASE_ANON_KEY");
 const workerKey = requiredEnv("AI_WORKER_KEY");
+const freePolicy: ProcessingPolicy = {
+  captureOrganizationLimit: 10,
+  captureOrganizationBypass: false,
+  dishCoverLimit: 10,
+  dishCoverBypass: false,
+};
+const processingJobsHandler = createProcessingJobsHandler(
+  fixedPolicyProvider(freePolicy),
+);
 
 Deno.test("guest capture grouping is ephemeral and idempotent", async () => {
   const session = await createGuestSession();
@@ -275,9 +289,106 @@ Deno.test("guest idea cover uses the bounded contract and charges on acknowledge
   });
   assertEquals(allowance.status, 200);
   assertEquals(
-    objectValue(await jsonBody(allowance)).coverRemaining,
+    objectValue(await jsonBody(allowance), "cover").remaining,
     9,
   );
+});
+
+Deno.test("allowance status exposes a Statsig account bypass", async () => {
+  const session = await createGuestSession();
+
+  const initial = await postProcessing(processingJobsHandler, session.headers, {
+    action: "allowances",
+    plan_key: "pro",
+    capture_auto_organization_limit: 999,
+    capture_auto_organization_bypass: true,
+  });
+  assertEquals(initial.status, 200);
+  const initialOrganization = objectValue(
+    await jsonBody(initial),
+    "organization",
+  );
+  assertEquals(initialOrganization.status, "enforced");
+  assertEquals(initialOrganization.enforced, true);
+  assertEquals(initialOrganization.remaining, 10);
+
+  const bypassedHandler = createProcessingJobsHandler(fixedPolicyProvider({
+    ...freePolicy,
+    captureOrganizationBypass: true,
+  }));
+  const bypassed = await postProcessing(bypassedHandler, session.headers, {
+    action: "allowances",
+  });
+  assertEquals(bypassed.status, 200);
+  const bypassedOrganization = objectValue(
+    await jsonBody(bypassed),
+    "organization",
+  );
+  assertEquals(bypassedOrganization.status, "enforcement_disabled");
+  assertEquals(bypassedOrganization.enforced, false);
+  assertEquals(bypassedOrganization.remaining, null);
+  assertEquals(bypassedOrganization.limit, 10);
+  assertEquals(bypassedOrganization.used, 0);
+});
+
+Deno.test("processing policy uses only the trusted entitlement plan", async () => {
+  const session = await createGuestSession();
+  const admin = createClient(baseUrl, serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const plans: string[] = [];
+  const provider: ProcessingPolicyProvider = {
+    async evaluate(context) {
+      plans.push(context.planKey);
+      return freePolicy;
+    },
+    async flush() {},
+  };
+  const handler = createProcessingJobsHandler(provider);
+
+  await postProcessing(handler, session.headers, {
+    action: "allowances",
+    plan_key: "client-controlled",
+  });
+  const { error: insertError } = await admin.from("service_entitlements")
+    .insert({ user_id: session.userId, plan_key: "pro", status: "active" });
+  if (insertError != null) throw insertError;
+  await postProcessing(handler, session.headers, { action: "allowances" });
+  const { error: updateError } = await admin.from("service_entitlements")
+    .update({ status: "inactive" }).eq("user_id", session.userId);
+  if (updateError != null) throw updateError;
+  await postProcessing(handler, session.headers, { action: "allowances" });
+
+  assertEquals(plans, ["free", "pro", "free"]);
+});
+
+Deno.test("unavailable processing policy returns 503 before job creation", async () => {
+  const session = await createGuestSession();
+  const admin = createClient(baseUrl, serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const handler = createProcessingJobsHandler({
+    async evaluate() {
+      throw new Error("processing_policy_unavailable");
+    },
+    async flush() {},
+  });
+  const response = await postProcessing(handler, session.headers, {
+    action: "create",
+    operation: "capture_grouping",
+    idempotencyKey: crypto.randomUUID(),
+    inputSchemaVersion: "capture-grouping-input-v2",
+    resultSchemaVersion: "capture-grouping-result-v2",
+    privacyNoticeVersion: "2026-08-04-cover-v1",
+    assets: [],
+  });
+
+  assertEquals(response.status, 503);
+  assertEquals(
+    (await jsonBody(response)).error,
+    "processing_policy_unavailable",
+  );
+  assertEquals(await countOwned(admin, "processing_jobs", session.userId), 0);
 });
 
 async function usageFor(client: any, userId: string, idempotencyKey: string) {
@@ -343,11 +454,39 @@ async function createGuestSession() {
 }
 
 function post(headers: HeadersInit, functionName: string, body: unknown) {
+  if (functionName === "processing-jobs") {
+    return postProcessing(processingJobsHandler, headers, body);
+  }
   return fetch(`${baseUrl}/functions/v1/${functionName}`, {
     method: "POST",
     headers,
     body: JSON.stringify(body),
   });
+}
+
+function postProcessing(
+  handler: (request: Request) => Promise<Response>,
+  headers: HeadersInit,
+  body: unknown,
+) {
+  return handler(
+    new Request(`${baseUrl}/functions/v1/processing-jobs`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+    }),
+  );
+}
+
+function fixedPolicyProvider(
+  policy: ProcessingPolicy,
+): ProcessingPolicyProvider {
+  return {
+    async evaluate() {
+      return policy;
+    },
+    async flush() {},
+  };
 }
 
 async function jsonBody(response: Response) {

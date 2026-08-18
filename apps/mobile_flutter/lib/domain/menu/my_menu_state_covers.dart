@@ -223,15 +223,18 @@ extension MyMenuStateCovers on MyMenuState {
   Future<bool> automaticCoverGenerationEnabled() async =>
       await _repositories?.coverRepository.automaticGenerationEnabled() ?? true;
 
-  Future<int?> remainingCoverAllowance() async {
+  Future<ApiProcessingAllowance?> coverAllowance() async {
     try {
       return (await _repositories?.processingApiClient
               .getProcessingAllowances())
-          ?.coverRemaining;
+          ?.cover;
     } on Object {
       return null;
     }
   }
+
+  Future<int?> remainingCoverAllowance() async =>
+      (await coverAllowance())?.remaining;
 
   Future<void> setAutomaticCoverGenerationEnabled(
       {required bool enabled}) async {

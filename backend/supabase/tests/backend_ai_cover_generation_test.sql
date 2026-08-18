@@ -16,7 +16,7 @@ select throws_ok(
   $$ select * from public.internal_create_processing_job(
     '00000000-0000-4000-8000-000000000256','cover_generation',
     '00000000-0000-4000-8000-000000000257','cover-generation-input-v1',
-    'cover-generation-result-v1','2026-08-04','[]'::jsonb
+    'cover-generation-result-v1','2026-08-04','[]'::jsonb,10,false
   ) $$,
   'P0001','Obsolete processing privacy notice',
   'cover generation rejects organization-only consent'
@@ -25,7 +25,7 @@ select throws_ok(
 select is((select operation from public.internal_create_processing_job(
   '00000000-0000-4000-8000-000000000256','cover_generation',
   '00000000-0000-4000-8000-000000000257','cover-generation-input-v1',
-  'cover-generation-result-v1','2026-08-04-cover-v1','[]'::jsonb
+  'cover-generation-result-v1','2026-08-04-cover-v1','[]'::jsonb,10,false
 )), 'cover_generation', 'a zero-source idea cover can be created');
 
 select is((select units from public.ai_usage_records where idempotency_key=
