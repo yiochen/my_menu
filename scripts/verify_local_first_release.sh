@@ -4,6 +4,11 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FLUTTER_DIR="$ROOT_DIR/apps/mobile_flutter"
 
+cd "$ROOT_DIR/backend"
+deno fmt --check supabase/functions
+find supabase/functions -path '*/index.ts' -print0 \
+  | xargs -0 -n1 deno check
+
 "$ROOT_DIR/scripts/supabase_local_check.sh"
 
 cd "$FLUTTER_DIR"

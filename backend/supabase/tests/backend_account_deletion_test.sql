@@ -1,6 +1,6 @@
 begin;
 
-select plan(13);
+select plan(15);
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password,
@@ -51,6 +51,17 @@ insert into public.processing_assets (
   'image/jpeg', 4
 );
 
+insert into storage.objects (bucket_id, name, owner)
+values (
+  'processing-media',
+  '00000000-0000-0000-0000-000000000201/delete.jpg',
+  '00000000-0000-0000-0000-000000000201'
+), (
+  'processing-media',
+  '00000000-0000-0000-0000-000000000201/orphan.jpg',
+  '00000000-0000-0000-0000-000000000201'
+);
+
 set local request.jwt.claim.role = 'service_role';
 
 select ok(
@@ -65,6 +76,23 @@ select is(
    where user_id = '00000000-0000-0000-0000-000000000201'),
   'deleting',
   'the entitlement row records deletion before asset cleanup'
+);
+
+select set_eq(
+  $$
+    select storage_path
+    from public.internal_list_orphan_processing_assets(10)
+  $$,
+  $$ values
+    ('00000000-0000-0000-0000-000000000201/orphan.jpg')
+  $$,
+  'orphan cleanup returns only Storage objects without processing metadata'
+);
+
+select throws_ok(
+  $$select * from public.internal_list_orphan_processing_assets(0)$$,
+  'Orphan asset limit must be between 1 and 1000',
+  'orphan cleanup rejects an invalid batch limit'
 );
 
 select throws_ok(

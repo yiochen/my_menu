@@ -21,6 +21,10 @@ command -v shasum >/dev/null || {
   echo "shasum is required to verify the administrative snapshot." >&2
   exit 1
 }
+command -v curl >/dev/null || {
+  echo "curl is required to delete the pre-reset Storage buckets." >&2
+  exit 1
+}
 
 if [[ -z "${SUPABASE_PROJECT_REF:-}" ]]; then
   echo "SUPABASE_PROJECT_REF must identify the pre-launch project." >&2
@@ -28,6 +32,14 @@ if [[ -z "${SUPABASE_PROJECT_REF:-}" ]]; then
 fi
 if [[ -z "${SNAPSHOT_DIR:-}" ]]; then
   echo "SNAPSHOT_DIR must be an external, recoverable destination." >&2
+  exit 1
+fi
+if [[ -z "${SUPABASE_URL:-}" ]]; then
+  echo "SUPABASE_URL must identify the linked project's API URL." >&2
+  exit 1
+fi
+if [[ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]]; then
+  echo "SUPABASE_SERVICE_ROLE_KEY is required for Storage bucket deletion." >&2
   exit 1
 fi
 
@@ -67,8 +79,28 @@ supabase storage cp --experimental --linked --recursive ss:///processing-media \
 )
 
 echo "Snapshot complete at $snapshot"
-echo "Removing the legacy durable media bucket contents..."
+echo "Removing all pre-reset Storage content..."
 supabase storage rm --experimental --linked --recursive ss:///menu-media
+supabase storage rm --experimental --linked --recursive ss:///processing-media
+
+delete_bucket() {
+  local bucket="$1"
+  local status
+  status="$(curl --silent --show-error --output /dev/null \
+    --write-out '%{http_code}' \
+    --request DELETE \
+    --header "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+    --header "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+    "$SUPABASE_URL/storage/v1/bucket/$bucket")"
+  if [[ "$status" != "200" && "$status" != "404" ]]; then
+    echo "Storage bucket deletion failed for $bucket (HTTP $status)." >&2
+    exit 1
+  fi
+}
+
+echo "Removing the pre-reset Storage buckets..."
+delete_bucket menu-media
+delete_bucket processing-media
 
 echo "Resetting the linked database to the reduced migration baseline..."
 supabase db reset --linked --no-seed --yes

@@ -2,24 +2,26 @@ import { sanitizeOperationalMetadata } from "../../functions/_shared/operational
 import { rpcOne } from "../../functions/_shared/supabase.ts";
 
 Deno.test("routine processing metadata excludes fixture content and URLs", () => {
-  const sanitized = sanitizeOperationalMetadata({
-    action: "submit",
-    operation: "capture_grouping",
-    jobId: "opaque-job-id",
-    status: 200,
-    filename: "private-noodles.jpg",
-    prompt: "Classify Private fixture noodles",
-    signedUrl: "https://storage.example/private-token",
-    providerBody: { private: "secret scallions" },
-    menuText: "Never persist this fixture menu content",
-  });
+  for (const action of ["submit", "acknowledge", "expire"]) {
+    const sanitized = sanitizeOperationalMetadata({
+      action,
+      operation: "capture_grouping",
+      jobId: "opaque-job-id",
+      status: 200,
+      filename: "private-noodles.jpg",
+      prompt: "Classify Private fixture noodles",
+      signedUrl: "https://storage.example/private-token",
+      providerBody: { private: "secret scallions" },
+      menuText: "Never persist this fixture menu content",
+    });
 
-  assertEquals(sanitized, {
-    action: "submit",
-    operation: "capture_grouping",
-    jobId: "opaque-job-id",
-    status: 200,
-  });
+    assertEquals(sanitized, {
+      action,
+      operation: "capture_grouping",
+      jobId: "opaque-job-id",
+      status: 200,
+    });
+  }
 });
 
 Deno.test("schema cache retries do not log raw database errors", async () => {
