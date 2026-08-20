@@ -78,8 +78,8 @@ supabase storage cp --experimental --linked --recursive ss:///processing-media \
 
 echo "Snapshot complete at $snapshot"
 echo "Removing all pre-reset Storage content..."
-supabase storage rm --experimental --linked --recursive ss:///menu-media
-supabase storage rm --experimental --linked --recursive ss:///processing-media
+supabase storage rm --experimental --linked --recursive --yes ss:///menu-media
+supabase storage rm --experimental --linked --recursive --yes ss:///processing-media
 
 delete_bucket() {
   local bucket="$1"
