@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="mocklens:form-factor" content="phone">
+<meta name="mocklens:primary-device" content="iphone-14">
+<meta name="mocklens:target-devices" content="iphone-14">
+<meta name="mocklens:viewport" content="390x844">
+<title>Menu — MyMenu</title>
+<link rel="stylesheet" href="./shared.css">
+<style>
+  .topbar { margin-bottom: 10px; }
+  .heading { margin-bottom: 11px; }
+  .heading h1 { max-width: 330px; font-size: 29px; }
+  .heading p { margin-top: 6px; font-size: 14px; }
+
+  .filters {
+    display: flex;
+    gap: 8px;
+    margin: -4px 0 15px;
+    overflow: hidden;
+  }
+  .filter {
+    min-height: 35px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px;
+    border-radius: 999px;
+    color: #6e6964;
+    background: var(--soft);
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  .filter.active { color: #fff; background: var(--orange); }
+  .filter svg { width: 15px; height: 15px; }
+
+  .featured {
+    position: relative;
+    height: 184px;
+    overflow: hidden;
+    margin-bottom: 17px;
+  }
+  .featured img { width: 100%; height: 100%; object-fit: cover; }
+  .featured::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(24,14,7,.78), rgba(24,14,7,.06) 77%);
+  }
+  .featured-copy {
+    position: absolute;
+    z-index: 2;
+    top: 17px;
+    bottom: 16px;
+    left: 17px;
+    width: 190px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-end;
+    color: #fff;
+  }
+  .featured-copy .label {
+    margin-bottom: auto;
+    padding: 7px 10px;
+    border-radius: 999px;
+    color: #9f4300;
+    background: #fff0de;
+    font-size: 11px;
+    font-weight: 850;
+  }
+  .featured-copy h2 { margin-bottom: 5px; font-size: 22px; }
+  .featured-copy p { color: rgba(255,255,255,.78); font-size: 12px; line-height: 1.35; }
+  .heart {
+    position: absolute;
+    z-index: 3;
+    top: 14px;
+    right: 14px;
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--orange);
+    background: rgba(255,255,255,.92);
+  }
+  .heart svg { width: 19px; height: 19px; fill: currentColor; stroke-width: 1.6; }
+
+  .dish-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+  .dish-card {
+    overflow: hidden;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: var(--shadow-small);
+  }
+  .dish-image { position: relative; height: 96px; }
+  .dish-image img { width: 100%; height: 100%; object-fit: cover; }
+  .dish-image .mini-tag {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
+    padding: 5px 8px;
+    border-radius: 999px;
+    color: #64411f;
+    background: rgba(255,255,255,.88);
+    backdrop-filter: blur(7px);
+    font-size: 10px;
+    font-weight: 850;
+  }
+  .dish-info { padding: 10px 11px 12px; }
+  .dish-info strong { display: block; margin-bottom: 5px; font-size: 14px; line-height: 1.15; }
+  .dish-info span { color: var(--muted); font-size: 11px; }
+
+  .memory {
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-top: 18px;
+    padding: 10px 13px;
+    border-radius: 19px;
+    background: var(--soft-orange);
+  }
+  .memory-icon {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    color: var(--orange-dark);
+    background: #fff;
+  }
+  .memory strong { display: block; margin-bottom: 3px; font-size: 13px; }
+  .memory p { color: #8a6548; font-size: 11px; line-height: 1.3; }
+  .memory .arrow { margin-left: auto; color: var(--orange-dark); }
+</style>
+</head>
+<body>
+<main class="screen">
+  <header class="topbar">
+    <div class="profile">
+      <div class="avatar">YC</div>
+      <div class="profile-copy"><span>Your personal restaurant</span><strong>MyMenu</strong></div>
+    </div>
+    <div class="icon-button" aria-label="Notifications">
+      <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+      <i class="notification-dot"></i>
+    </div>
+  </header>
+
+  <section class="heading">
+    <p class="eyebrow">28 dishes & counting</p>
+    <h1>What sounds good today?</h1>
+    <p class="muted">Everything here is something you can make.</p>
+  </section>
+
+  <div class="search">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+    <span>Search your dishes</span>
+    <div class="search-action" aria-label="Search with photo" data-mocklens-action="Tap opens photo-assisted search over existing dishes; it does not create a capture."><svg viewBox="0 0 24 24"><path d="M14.5 5 13 3h-2L9.5 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3.5"/></svg></div>
+  </div>
+
+  <div class="filters">
+    <div class="filter active">All</div>
+    <div class="filter">Favorites</div>
+    <div class="filter">Quick</div>
+    <div class="filter"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Filters</div>
+  </div>
+
+  <section>
+    <div class="section-head"><h2>Made with love</h2><a href="#">See all</a></div>
+    <article class="card featured" data-mocklens-action="Tap opens Lemon Garlic Linguine; the heart toggles favorite without opening the dish.">
+      <img src="./assets/lemon-linguine.png" alt="Lemon garlic linguine">
+      <div class="heart"><svg viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.7-7.5 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg></div>
+      <div class="featured-copy">
+        <span class="label">Made 8 times</span>
+        <h2>Lemon Garlic Linguine</h2>
+        <p>Your weeknight classic. Last made 2 weeks ago.</p>
+      </div>
+    </article>
+  </section>
+
+  <section>
+    <div class="section-head"><h2>Cook again soon</h2><a href="#">Browse all</a></div>
+    <div class="dish-grid">
+      <article class="dish-card" data-mocklens-action="Tap opens Miso Salmon Bowl detail.">
+        <div class="dish-image"><img src="./assets/miso-salmon.png" alt="Miso salmon bowl"><span class="mini-tag">20 min</span></div>
+        <div class="dish-info"><strong>Miso Salmon Bowl</strong><span>Made 4× · Easy</span></div>
+      </article>
+      <article class="dish-card" data-mocklens-action="Tap opens Chicken Katsu Curry detail.">
+        <div class="dish-image"><img src="./assets/katsu-curry.png" alt="Chicken katsu curry"><span class="mini-tag">40 min</span></div>
+        <div class="dish-info"><strong>Chicken Katsu Curry</strong><span>Made 5× · Medium</span></div>
+      </article>
+    </div>
+  </section>
+
+  <aside class="memory">
+    <div class="memory-icon"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/></svg></div>
+    <div><strong>Captured something tasty?</strong><p>Add it now. We’ll figure out where it belongs.</p></div>
+    <svg class="arrow" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+  </aside>
+</main>
+
+<div class="fade-bottom"></div>
+<nav class="bottom-nav" aria-label="Primary navigation">
+  <div class="nav-item" data-mocklens-action="Tap opens Plan with Plan selected."><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg><span>Plan</span></div>
+  <div class="capture-button" aria-label="Capture" data-mocklens-action="Tap opens Quick Capture over Menu; Capture is global and not a destination tab."><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div>
+  <div class="nav-item active" data-mocklens-action="Menu is the selected primary destination."><svg viewBox="0 0 24 24"><path d="M4 6.5C4 5.1 5.1 4 6.5 4H20v16H6.5A2.5 2.5 0 0 1 4 17.5z"/><path d="M4 17.5A2.5 2.5 0 0 1 6.5 15H20"/></svg><span>Menu</span></div>
+</nav>
+</body>
+</html>

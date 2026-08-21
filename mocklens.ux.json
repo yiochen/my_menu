@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "goal": "Help a home cook capture food in seconds, let MyMenu organize it into a trustworthy personal cooking memory, correct uncertain or mistaken organization, revisit notes and source history, and plan a dish to cook again on a phone.",
+  "delivery": {
+    "screens": [
+      "plan.iphone-14",
+      "plan-dish-picker.iphone-14",
+      "states/plan-meal-actions.iphone-14",
+      "states/plan-meal-removed.iphone-14",
+      "menu.iphone-14",
+      "states/menu-empty.iphone-14",
+      "dish-detail.iphone-14",
+      "dish-edit.iphone-14",
+      "dish-notes.iphone-14",
+      "note-editor.iphone-14",
+      "dish-sources.iphone-14",
+      "source-detail.iphone-14",
+      "states/dish-incomplete.iphone-14",
+      "states/dish-archive-confirmation.iphone-14",
+      "states/dish-archived.iphone-14",
+      "capture.iphone-14",
+      "states/capture-saved.iphone-14",
+      "states/capture-offline.iphone-14",
+      "review-capture.iphone-14"
+    ],
+    "devices": ["iphone-se", "iphone-14", "pixel-7"]
+  },
+  "requirements": [
+    {
+      "id": "stable-two-destination-shell",
+      "kind": "screen-family",
+      "description": "Plan and Menu remain the only primary destinations in a stable floating shell, while Capture is a global action rather than a permanent tab; task sheets and detail screens use one contextual dismissal instead of duplicating navigation controls.",
+      "screens": ["plan.iphone-14", "menu.iphone-14", "states/menu-empty.iphone-14", "capture.iphone-14", "dish-detail.iphone-14"]
+    },
+    {
+      "id": "fast-capture-canonical",
+      "kind": "flow",
+      "description": "The global Capture action opens one sheet with Take photo, Import photos, and Add idea choices without asking the cook to classify first; the saved state confirms local capture and offers one clear return path.",
+      "screens": ["plan.iphone-14", "menu.iphone-14", "capture.iphone-14", "states/capture-saved.iphone-14"]
+    },
+    {
+      "id": "offline-capture-recovery",
+      "kind": "flow",
+      "description": "When cloud organization is unavailable, the capture remains safely stored on the phone, the offline state distinguishes saved data from pending AI work, and Retry now plus a non-blocking Done path make recovery explicit.",
+      "screens": ["capture.iphone-14", "states/capture-offline.iphone-14", "states/capture-saved.iphone-14"]
+    },
+    {
+      "id": "ai-review-correction",
+      "kind": "flow",
+      "description": "An uncertain capture is surfaced contextually rather than as a permanent inbox; Review shows the source photo, explains uncertainty, lets the cook choose a compatible existing dish or create a new dish, and keeps a visible Not this dish correction path.",
+      "screens": ["plan.iphone-14", "review-capture.iphone-14", "states/capture-saved.iphone-14", "dish-detail.iphone-14"]
+    },
+    {
+      "id": "weekly-plan-create-and-correct",
+      "kind": "flow",
+      "description": "Open days and planned meal rows visibly disclose their behavior; the picker adds a dish from the personal menu, and the meal actions state supports rescheduling, replacing, or removing the reference without editing the underlying dish.",
+      "screens": ["plan.iphone-14", "plan-dish-picker.iphone-14", "states/plan-meal-actions.iphone-14", "states/plan-meal-removed.iphone-14"]
+    },
+    {
+      "id": "dish-collection-coverage",
+      "kind": "screen-family",
+      "description": "The dish collection covers a first-use empty state with one dominant Capture CTA, a typical personal menu, and a 28-dish scrollable library with clear reachability; a one-item library reuses the same card and shell, while long titles wrap inside the demonstrated resilient card pattern.",
+      "screens": ["states/menu-empty.iphone-14", "menu.iphone-14"]
+    },
+    {
+      "id": "living-dish-record",
+      "kind": "screen-family",
+      "description": "Dish Detail prioritizes the cover, identity, cooking history, and Cook Again action; Recipe, Notes, and Sources are distinct views of the same dish, and the incomplete state honestly handles missing cover, recipe, notes, sources, and optional metadata without pretending AI work is finished.",
+      "screens": ["dish-detail.iphone-14", "dish-notes.iphone-14", "dish-sources.iphone-14", "states/dish-incomplete.iphone-14"]
+    },
+    {
+      "id": "notes-and-sources-parity",
+      "kind": "flow",
+      "description": "Notes can be added and opened for correction from the Notes view; Sources are immutable cooking-history captures that can be viewed and annotated but are corrected by reassigning the capture through Review, which is stated visibly rather than exposing incompatible editing controls.",
+      "screens": ["dish-notes.iphone-14", "note-editor.iphone-14", "dish-sources.iphone-14", "source-detail.iphone-14", "review-capture.iphone-14"]
+    },
+    {
+      "id": "dish-correction-and-safe-archive",
+      "kind": "flow",
+      "description": "Dish Detail opens a recognizable prefilled editor for title, description, and category correction; Archive remains text-led and subordinate until a named confirmation explains that history is preserved and offers one Cancel dismissal.",
+      "screens": ["dish-detail.iphone-14", "dish-edit.iphone-14", "states/dish-archive-confirmation.iphone-14", "states/dish-archived.iphone-14"]
+    },
+    {
+      "id": "documented-action-behavior",
+      "kind": "flow",
+      "description": "Actionable navigation, capture choices, dish cards, plan rows, note rows, source rows, and confirmation actions declare product-specific data-mocklens-action behavior; referenced outcome screens demonstrate the material create, view, correct, archive, and recovery results.",
+      "screens": ["plan.iphone-14", "plan-dish-picker.iphone-14", "states/plan-meal-actions.iphone-14", "states/plan-meal-removed.iphone-14", "menu.iphone-14", "dish-detail.iphone-14", "dish-edit.iphone-14", "dish-notes.iphone-14", "note-editor.iphone-14", "dish-sources.iphone-14", "source-detail.iphone-14", "states/dish-archive-confirmation.iphone-14", "states/dish-archived.iphone-14", "capture.iphone-14", "states/capture-saved.iphone-14", "states/capture-offline.iphone-14", "review-capture.iphone-14"]
+    },
+    {
+      "id": "task-first-responsive-hierarchy",
+      "kind": "screen-family",
+      "description": "Across every delivery device, task data and the next meaningful action precede decorative copy, repeated rows remain quiet, long content wraps without clipping, fixed controls reserve space, and each viewport has at most one filled primary action per task region.",
+      "screens": ["plan.iphone-14", "menu.iphone-14", "states/menu-empty.iphone-14", "dish-detail.iphone-14", "dish-edit.iphone-14", "dish-notes.iphone-14", "note-editor.iphone-14", "dish-sources.iphone-14", "source-detail.iphone-14", "states/dish-incomplete.iphone-14", "capture.iphone-14", "review-capture.iphone-14", "plan-dish-picker.iphone-14"]
+    }
+  ]
+}
