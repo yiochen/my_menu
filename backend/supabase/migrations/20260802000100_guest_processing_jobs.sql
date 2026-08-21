@@ -1,3 +1,8 @@
+create extension if not exists pgcrypto;
+create extension if not exists pg_net;
+create extension if not exists pg_cron;
+create extension if not exists supabase_vault;
+
 insert into storage.buckets (
   id,
   name,
@@ -608,6 +613,78 @@ begin
 end;
 $$;
 
+create or replace function public.internal_enqueue_ai_worker(
+  p_function_url text,
+  p_worker_key text
+)
+returns bigint
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_request_id bigint;
+  v_project_url text;
+  v_project_secret_id uuid;
+  v_worker_secret_id uuid;
+begin
+  if auth.role() <> 'service_role' then
+    raise exception 'Service role required';
+  end if;
+  if nullif(trim(p_function_url), '') is null then
+    raise exception 'Missing AI worker URL';
+  end if;
+  if nullif(p_worker_key, '') is null then
+    raise exception 'Missing AI worker key';
+  end if;
+
+  v_project_url := regexp_replace(
+    trim(p_function_url),
+    '/functions/v1/process-ai-jobs/?$',
+    ''
+  );
+
+  select id into v_project_secret_id
+  from vault.secrets
+  where name = 'mymenu_project_url';
+  if v_project_secret_id is null then
+    perform vault.create_secret(
+      v_project_url,
+      'mymenu_project_url',
+      'MyMenu Edge Function base URL'
+    );
+  else
+    perform vault.update_secret(v_project_secret_id, v_project_url);
+  end if;
+
+  select id into v_worker_secret_id
+  from vault.secrets
+  where name = 'mymenu_ai_worker_key';
+  if v_worker_secret_id is null then
+    perform vault.create_secret(
+      p_worker_key,
+      'mymenu_ai_worker_key',
+      'Dedicated MyMenu AI worker dispatch key'
+    );
+  else
+    perform vault.update_secret(v_worker_secret_id, p_worker_key);
+  end if;
+
+  select net.http_post(
+    url := p_function_url,
+    body := '{}'::jsonb,
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || p_worker_key,
+      'x-mymenu-worker-key', p_worker_key
+    ),
+    timeout_milliseconds := 10000
+  )
+  into v_request_id;
+  return v_request_id;
+end;
+$$;
+
 revoke all on function public.internal_create_processing_job(
   uuid, text, text, text, text, text, jsonb
 ) from public, anon, authenticated;
@@ -623,6 +700,8 @@ revoke all on function public.internal_fail_processing_job(uuid, uuid, text, boo
 revoke all on function public.internal_finish_processing_job(uuid, uuid, text)
   from public, anon, authenticated;
 revoke all on function public.internal_expire_processing_job(uuid)
+  from public, anon, authenticated;
+revoke all on function public.internal_enqueue_ai_worker(text, text)
   from public, anon, authenticated;
 
 grant execute on function public.internal_create_processing_job(
@@ -640,6 +719,8 @@ grant execute on function public.internal_fail_processing_job(uuid, uuid, text, 
 grant execute on function public.internal_finish_processing_job(uuid, uuid, text)
   to service_role;
 grant execute on function public.internal_expire_processing_job(uuid)
+  to service_role;
+grant execute on function public.internal_enqueue_ai_worker(text, text)
   to service_role;
 
 do $$

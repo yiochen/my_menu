@@ -23,27 +23,13 @@ Deno.serve(async (request: Request) => {
     true,
   );
   try {
-    const { data: dueAccountAssets, error: accountAssetError } = await client
-      .from("service_identity_asset_deletions")
-      .select("storage_bucket, storage_path")
-      .lte("delete_after", new Date().toISOString())
-      .order("delete_after")
-      .limit(500);
-    if (accountAssetError != null) {
-      throw accountAssetError;
-    }
-    const accountAssets = (dueAccountAssets ?? []) as StorageAsset[];
-    await removeStorageAssets(client, accountAssets);
-    for (const asset of accountAssets) {
-      const { error: deletionError } = await client
-        .from("service_identity_asset_deletions")
-        .delete()
-        .eq("storage_bucket", asset.storage_bucket)
-        .eq("storage_path", asset.storage_path);
-      if (deletionError != null) {
-        throw deletionError;
-      }
-    }
+    const { data: orphanRows, error: orphanError } = await client.rpc(
+      "internal_list_orphan_processing_assets",
+      { p_limit: 500 },
+    );
+    if (orphanError != null) throw orphanError;
+    const orphanAssets = (orphanRows ?? []) as StorageAsset[];
+    await removeStorageAssets(client, orphanAssets);
 
     const { data: jobs, error } = await client.from("processing_jobs")
       .select("id").lt("expires_at", new Date().toISOString())
@@ -96,12 +82,12 @@ Deno.serve(async (request: Request) => {
       status: "ok",
       expiredJobs: expired,
       expiredGuests,
-      deletedAccountAssets: accountAssets.length,
+      deletedOrphanAssets: orphanAssets.length,
     });
     return json({
       expired,
       expiredGuests,
-      deletedAccountAssets: accountAssets.length,
+      deletedOrphanAssets: orphanAssets.length,
     });
   } catch (_) {
     operationalError("processing_cleanup_failed", "cleanup_failed");

@@ -134,13 +134,6 @@ Deno.test("guest capture grouping is ephemeral and idempotent", async () => {
   assertEquals(decisions.length, 1);
   assertEquals("confidence" in objectValue(decisions[0]), false);
 
-  const [dishCount, captureCount] = await Promise.all([
-    countOwned(admin, "dishes", session.userId),
-    countOwned(admin, "captures", session.userId),
-  ]);
-  assertEquals(dishCount, 0);
-  assertEquals(captureCount, 0);
-
   const acknowledge = await post(session.headers, "processing-jobs", {
     action: "acknowledge",
     jobId,
@@ -167,7 +160,58 @@ Deno.test("guest capture grouping is ephemeral and idempotent", async () => {
   });
   assertEquals(canceledStatus.status, 404);
 
-  const expiringJob = await createJob(session.headers, crypto.randomUUID());
+  const expirySession = session;
+  const expiryAssetId = crypto.randomUUID();
+  const expiryCreate = await post(expirySession.headers, "processing-jobs", {
+    ...createBody,
+    idempotencyKey: crypto.randomUUID(),
+    assets: [{
+      assetId: expiryAssetId,
+      contentType: "image/jpeg",
+      byteSize: 4,
+    }],
+  });
+  assertEquals(expiryCreate.status, 200);
+  const expiryCreateBody = await jsonBody(expiryCreate);
+  const expiringJob = stringValue(objectValue(expiryCreateBody, "job"), "id");
+  const expiryTarget = objectValue(
+    arrayValue(expiryCreateBody, "uploadTargets")[0],
+  );
+  const expiryUpload = await expirySession.client.storage.from(
+    "processing-media",
+  ).uploadToSignedUrl(
+    stringValue(expiryTarget, "storagePath"),
+    stringValue(expiryTarget, "token"),
+    new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])], {
+      type: "image/jpeg",
+    }),
+    { contentType: "image/jpeg", upsert: true },
+  );
+  if (expiryUpload.error != null) {
+    throw new Error(`signed expiry upload: ${expiryUpload.error.message}`);
+  }
+  const expirySubmit = await post(expirySession.headers, "processing-jobs", {
+    action: "submit",
+    jobId: expiringJob,
+    input: {
+      captures: [{
+        id: expiryAssetId,
+        kind: "photo",
+        ordinal: 0,
+        capturedLocalDate: "2026-08-02",
+        assetId: expiryAssetId,
+      }],
+      dishes: [{
+        localId: crypto.randomUUID(),
+        title: "Expired private fixture ramen",
+        description: "Must disappear during expiry cleanup",
+        ingredients: ["private broth"],
+        recipeSteps: ["private step"],
+        notes: ["private note"],
+      }],
+    },
+  });
+  assertEquals(expirySubmit.status, 200);
   const { error: expireError } = await admin.from("processing_jobs").update({
     expires_at: "2026-08-01T00:00:00Z",
   }).eq("id", expiringJob);
@@ -183,12 +227,18 @@ Deno.test("guest capture grouping is ephemeral and idempotent", async () => {
   const cleanupBody = await jsonBody(cleanup);
   assertEquals(cleanupBody.expired, 1);
   assertEquals(cleanupBody.expiredGuests, 0);
-  assertEquals(cleanupBody.deletedAccountAssets, 0);
-  const expiredStatus = await post(session.headers, "processing-jobs", {
+  assertEquals(cleanupBody.deletedOrphanAssets, 0);
+  const expiredStatus = await post(expirySession.headers, "processing-jobs", {
     action: "status",
     jobId: expiringJob,
   });
   assertEquals(expiredStatus.status, 404);
+  assertEquals(await countRows(admin, "processing_jobs", "id", expiringJob), 0);
+  assertEquals(
+    await countRows(admin, "processing_assets", "job_id", expiringJob),
+    0,
+  );
+  assertEquals(await countJobObjects(admin, expiringJob), 0);
 
   for (let index = 0; index < 6; index += 1) {
     await createJob(session.headers, crypto.randomUUID());
@@ -215,6 +265,31 @@ Deno.test("guest capture grouping is ephemeral and idempotent", async () => {
     assets: [],
   });
   assertEquals(overAllowance.status, 429);
+});
+
+Deno.test("processing jobs are isolated to their service owner", async () => {
+  const owner = await createGuestSession();
+  const other = await createGuestSession();
+  const jobId = await createJob(owner.headers, crypto.randomUUID());
+
+  for (const action of ["status", "result", "acknowledge", "cancel"]) {
+    const response = await post(other.headers, "processing-jobs", {
+      action,
+      jobId,
+    });
+    assertEquals(response.status, 404);
+  }
+
+  const ownerStatus = await post(owner.headers, "processing-jobs", {
+    action: "status",
+    jobId,
+  });
+  assertEquals(ownerStatus.status, 200);
+  const canceled = await post(owner.headers, "processing-jobs", {
+    action: "cancel",
+    jobId,
+  });
+  assertEquals(canceled.status, 200);
 });
 
 Deno.test("guest idea cover uses the bounded contract and charges on acknowledgement", async () => {

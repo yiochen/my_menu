@@ -1,5 +1,5 @@
 begin;
-select plan(14);
+select plan(22);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password,
@@ -189,6 +189,90 @@ select is(
   (select attempt_count from public.internal_claim_processing_job()),
   2,
   'an expired worker lease is reclaimed with a bounded attempt count'
+);
+
+select throws_ok(
+  $$
+    select * from public.internal_complete_processing_job(
+      (select id from public.processing_jobs where user_id =
+        '00000000-0000-4000-8000-000000000055'),
+      gen_random_uuid(),
+      '{}'::jsonb,
+      'fake',
+      'fake',
+      null,
+      null
+    )
+  $$,
+  'Processing job does not have the active lease',
+  'a stale worker token cannot complete the active lease'
+);
+
+update public.processing_jobs
+set attempt_count = max_attempts,
+    lease_expires_at = now() - interval '1 second'
+where user_id = '00000000-0000-4000-8000-000000000055';
+
+select is(
+  (select count(*) from public.internal_claim_processing_job()),
+  0::bigint,
+  'an exhausted worker lease is not reclaimed'
+);
+
+select is(
+  (select status from public.processing_jobs where user_id =
+    '00000000-0000-4000-8000-000000000055'),
+  'failed',
+  'an exhausted worker lease becomes a terminal failure'
+);
+
+select throws_ok(
+  $$select public.internal_enqueue_ai_worker('', 'worker-key')$$,
+  'Missing AI worker URL',
+  'worker dispatch rejects an empty function URL'
+);
+
+select throws_ok(
+  $$
+    select public.internal_enqueue_ai_worker(
+      'http://127.0.0.1:54321/functions/v1/process-ai-jobs',
+      ''
+    )
+  $$,
+  'Missing AI worker key',
+  'worker dispatch rejects an empty authorization key'
+);
+
+select ok(
+  public.internal_enqueue_ai_worker(
+    'http://127.0.0.1:54321/functions/v1/process-ai-jobs',
+    'worker-key'
+  ) > 0,
+  'worker dispatch returns the queued pg_net request identifier'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select is(
+  has_function_privilege(
+    'authenticated',
+    'public.internal_enqueue_ai_worker(text,text)',
+    'execute'
+  ),
+  false,
+  'clients have no execution grant for worker dispatch'
+);
+
+select throws_ok(
+  $$
+    select public.internal_enqueue_ai_worker(
+      'http://127.0.0.1:54321/functions/v1/process-ai-jobs',
+      'worker-key'
+    )
+  $$,
+  'permission denied for function internal_enqueue_ai_worker',
+  'clients cannot dispatch the protected worker'
 );
 
 select * from finish();

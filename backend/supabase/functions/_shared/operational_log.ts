@@ -4,7 +4,7 @@ const allowedKeys = new Set([
   "action",
   "code",
   "durationMs",
-  "deletedAccountAssets",
+  "deletedOrphanAssets",
   "expiredGuests",
   "expiredJobs",
   "inputTokens",

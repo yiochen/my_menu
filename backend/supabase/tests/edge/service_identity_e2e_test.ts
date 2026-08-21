@@ -30,7 +30,6 @@ Deno.test("signed account deletion removes all service state and closes upload r
   const jobId = crypto.randomUUID();
   const assetId = crypto.randomUUID();
   const storagePath = `${userId}/${jobId}/${assetId}.jpg`;
-  const legacyStoragePath = `${userId}/legacy-${crypto.randomUUID()}.jpg`;
   await insertOrThrow(admin, "service_entitlements", {
     user_id: userId,
     plan_key: "pro",
@@ -53,17 +52,7 @@ Deno.test("signed account deletion removes all service state and closes upload r
     content_type: "image/jpeg",
     byte_size: 4,
   });
-  await insertOrThrow(admin, "dish_images", {
-    id: crypto.randomUUID(),
-    user_id: userId,
-    kind: "capture_photo",
-    storage_bucket: "menu-media",
-    storage_path: legacyStoragePath,
-    content_type: "image/jpeg",
-    byte_size: 4,
-  });
   await uploadFixture(admin, "processing-media", storagePath);
-  await uploadFixture(admin, "menu-media", legacyStoragePath);
 
   const response = await fetch(`${baseUrl}/functions/v1/service-account`, {
     method: "POST",
@@ -81,36 +70,20 @@ Deno.test("signed account deletion removes all service state and closes upload r
   assertEquals(await countOwned(admin, "service_entitlements", userId), 0);
   assertEquals(await countOwned(admin, "processing_jobs", userId), 0);
   assertEquals(await countOwned(admin, "processing_assets", userId), 0);
-  assertEquals(await countOwned(admin, "dish_images", userId), 0);
-  assertEquals(
-    await countOwned(admin, "service_identity_asset_deletions", userId),
-    2,
-  );
   await assertStorageMissing(admin, "processing-media", storagePath);
-  await assertStorageMissing(admin, "menu-media", legacyStoragePath);
 
   // Simulate an upload token issued before deletion being used after the
-  // immediate remove. The durable cleanup must remove the late object.
+  // immediate remove. Scheduled orphan cleanup must remove the late object.
   await uploadFixture(admin, "processing-media", storagePath);
-  const { error: dueError } = await admin
-    .from("service_identity_asset_deletions")
-    .update({ delete_after: new Date(0).toISOString() })
-    .eq("user_id", userId);
-  if (dueError != null) {
-    throw new Error(`make asset cleanup due: ${dueError.message}`);
-  }
+  await new Promise((resolve) => setTimeout(resolve, 250));
   const cleanup = await fetch(
     `${baseUrl}/functions/v1/cleanup-processing-jobs`,
     { method: "POST", headers: { "x-mymenu-worker-key": workerKey } },
   );
   assertEquals(cleanup.status, 200);
   const cleanupBody = await cleanup.json();
-  assertEquals(cleanupBody.deletedAccountAssets, 2);
+  assertEquals(cleanupBody.deletedOrphanAssets, 1);
   await assertStorageMissing(admin, "processing-media", storagePath);
-  assertEquals(
-    await countOwned(admin, "service_identity_asset_deletions", userId),
-    0,
-  );
 });
 
 Deno.test("account deletion rejects guests and missing authentication", async () => {
