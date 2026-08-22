@@ -147,6 +147,7 @@ class AppRepositories {
       await seedIfNeeded();
     }
     await captureRepository.keepQuotaLimitedPhotoCapturesLocal();
+    await processingOutboxRepository.compactAdoptedCoverResults();
     await _removeBundledMockImageRefs();
     if (_prepareImagePreviewsOnBootstrap) {
       await _prepareImagePreviews();

@@ -198,14 +198,12 @@ async function processCoverJob(
       false,
     );
   }
+  const output = await storeGeneratedCoverOutput(client, job, generated);
   const result = {
     operation: "cover_generation",
     schemaVersion: "cover-generation-result-v1",
     proposalId: crypto.randomUUID(),
-    output: {
-      contentType: generated.contentType,
-      imageBase64: bytesToBase64(generated.bytes),
-    },
+    output,
     validation: generated.validation,
     provenance: generated.provenance,
   };
@@ -226,6 +224,56 @@ async function processCoverJob(
     state: "succeeded",
   });
   return { processed: 1, failed: 0, jobId };
+}
+
+async function storeGeneratedCoverOutput(
+  client: any,
+  job: JsonRecord,
+  generated: {
+    bytes: Uint8Array;
+    contentType: "image/png" | "image/jpeg";
+  },
+) {
+  const jobId = stringField(job, "id");
+  const bucket = "processing-media";
+  const extension = generated.contentType === "image/png" ? "png" : "jpg";
+  const storagePath = `${jobId}/cover-output.${extension}`;
+  const { error: assetError } = await client.from("processing_assets").upsert({
+    job_id: jobId,
+    user_id: stringField(job, "user_id"),
+    asset_id: "cover-output",
+    storage_bucket: bucket,
+    storage_path: storagePath,
+    content_type: generated.contentType,
+    byte_size: generated.bytes.length,
+  }, { onConflict: "job_id,asset_id" });
+  if (assetError != null) {
+    throw new AiProviderFailure(
+      "cover_output_storage_failed",
+      "Generated Cover output could not be recorded",
+      true,
+      { cause: assetError },
+    );
+  }
+  const { error: uploadError } = await client.storage.from(bucket).upload(
+    storagePath,
+    generated.bytes.slice().buffer,
+    { contentType: generated.contentType, upsert: true },
+  );
+  if (uploadError != null) {
+    throw new AiProviderFailure(
+      "cover_output_storage_failed",
+      "Generated Cover output could not be stored",
+      true,
+      { cause: uploadError },
+    );
+  }
+  return {
+    contentType: generated.contentType,
+    storageBucket: bucket,
+    storagePath,
+    byteSize: generated.bytes.length,
+  };
 }
 
 async function processingCoverSources(
@@ -269,14 +317,6 @@ async function processingCoverSources(
       signedUrl: data.signedUrl,
     };
   }));
-}
-
-function bytesToBase64(bytes: Uint8Array) {
-  let binary = "";
-  for (let offset = 0; offset < bytes.length; offset += 0x8000) {
-    binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
-  }
-  return btoa(binary);
 }
 
 async function processRoutingJob(

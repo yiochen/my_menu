@@ -298,7 +298,7 @@ Deno.test("guest idea cover uses the bounded contract and charges on acknowledge
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const idempotencyKey = crypto.randomUUID();
-  const created = await post(session.headers, "processing-jobs", {
+  const createBody = {
     action: "create",
     operation: "cover_generation",
     idempotencyKey,
@@ -306,7 +306,18 @@ Deno.test("guest idea cover uses the bounded contract and charges on acknowledge
     resultSchemaVersion: "cover-generation-result-v1",
     privacyNoticeVersion: "2026-08-04-cover-v1",
     assets: [],
+  };
+  const reservedOutput = await post(session.headers, "processing-jobs", {
+    ...createBody,
+    idempotencyKey: crypto.randomUUID(),
+    assets: [{
+      assetId: "cover-output",
+      contentType: "image/png",
+      byteSize: 12,
+    }],
   });
+  assertEquals(reservedOutput.status, 400);
+  const created = await post(session.headers, "processing-jobs", createBody);
   assertEquals(created.status, 200);
   const jobId = stringValue(
     objectValue(await jsonBody(created), "job"),
@@ -348,6 +359,19 @@ Deno.test("guest idea cover uses the bounded contract and charges on acknowledge
   const result = objectValue(await jsonBody(delivered), "result");
   assertEquals(result.operation, "cover_generation");
   assertEquals(objectValue(result, "validation").valid, true);
+  const output = objectValue(result, "output");
+  assertEquals("imageBase64" in output, false);
+  assertEquals(output.contentType, "image/png");
+  const coverDownload = await fetch(stringValue(output, "downloadUrl"));
+  assertEquals(coverDownload.status, 200);
+  const coverBytes = new Uint8Array(await coverDownload.arrayBuffer());
+  assertEquals(coverBytes.length, output.byteSize);
+  assertEquals(Array.from(coverBytes.subarray(0, 4)), [0x89, 0x50, 0x4e, 0x47]);
+  assertEquals(await countJobObjects(admin, jobId), 1);
+  const repeated = await post(session.headers, "processing-jobs", createBody);
+  const repeatedBody = await jsonBody(repeated);
+  assertEquals(stringValue(objectValue(repeatedBody, "job"), "id"), jobId);
+  assertEquals(arrayValue(repeatedBody, "uploadTargets"), []);
   const before = await usageFor(admin, session.userId, idempotencyKey);
   assertEquals(before.units, 0);
   assertEquals(before.outcome, "reserved");
@@ -356,6 +380,7 @@ Deno.test("guest idea cover uses the bounded contract and charges on acknowledge
     jobId,
   });
   assertEquals(acknowledged.status, 200);
+  assertEquals(await countJobObjects(admin, jobId), 0);
   const after = await usageFor(admin, session.userId, idempotencyKey);
   assertEquals(after.units, 1);
   assertEquals(after.outcome, "succeeded");

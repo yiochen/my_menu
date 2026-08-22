@@ -140,6 +140,27 @@ void main() {
         expect(find.text('Network'), findsOneWidget);
         expect(find.text('Slow animation'), findsOneWidget);
         expect(find.text('Camera access'), findsOneWidget);
+        expect(find.text('Performance overlay'), findsOneWidget);
+        expect(find.text('Performance recording'), findsOneWidget);
+        expect(
+          find.byKey(
+            const ValueKey<String>('debug_performance_record_start'),
+          ),
+          findsOneWidget,
+        );
+
+        final Finder performanceOverlayToggle = find.descendant(
+          of: find.byKey(
+            const ValueKey<String>('debug_performance_overlay_toggle'),
+          ),
+          matching: find.byType(Switch),
+        );
+        await tester.tap(performanceOverlayToggle);
+        await tester.pump();
+        expect(find.byType(PerformanceOverlay), findsOneWidget);
+        await tester.tap(performanceOverlayToggle);
+        await tester.pump();
+        expect(find.byType(PerformanceOverlay), findsNothing);
 
         await tester.tap(
           find.descendant(

@@ -157,6 +157,14 @@ async function createJob(
   if (!Array.isArray(assets)) {
     return json({ error: "invalid_assets" }, 400);
   }
+  if (
+    assets.some((asset) =>
+      typeof asset === "object" && asset != null &&
+      (asset as JsonRecord).assetId === "cover-output"
+    )
+  ) {
+    return json({ error: "invalid_assets" }, 400);
+  }
   const operation = requiredString(body, "operation");
   const allowance = operationAllowance(operation, policy);
   const row = await rpcOne(client, "internal_create_processing_job", {
@@ -174,6 +182,7 @@ async function createJob(
     .from("processing_assets")
     .select("asset_id,storage_path,content_type")
     .eq("job_id", row.id)
+    .neq("asset_id", "cover-output")
     .order("asset_id");
   if (assetError != null) throw assetError;
   const uploadTargets = await Promise.all(
@@ -226,7 +235,30 @@ async function resultJob(client: any, userId: string, body: JsonRecord) {
   if (row.status !== "succeeded" || row.result_payload == null) {
     return json({ error: "result_unavailable" }, 409);
   }
-  return json({ result: row.result_payload as JsonRecord });
+  return json({ result: await downloadableResult(client, row) });
+}
+
+async function downloadableResult(client: any, row: JsonRecord) {
+  const result = row.result_payload as JsonRecord;
+  if (row.operation !== "cover_generation") return result;
+  const output = requiredObject(result, "output");
+  const bucket = requiredString(output, "storageBucket");
+  const storagePath = requiredString(output, "storagePath");
+  const { data, error } = await client.storage.from(bucket).createSignedUrl(
+    storagePath,
+    300,
+  );
+  if (error != null || data?.signedUrl == null) {
+    throw new Error("processing_result_unavailable");
+  }
+  return {
+    ...result,
+    output: {
+      contentType: requiredString(output, "contentType"),
+      byteSize: output.byteSize,
+      downloadUrl: data.signedUrl,
+    },
+  };
 }
 
 async function finishJob(

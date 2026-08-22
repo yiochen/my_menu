@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mymenu/core/debug/debug_controls.dart';
 import 'package:mymenu/features/debug/debug_feedback_panel_section.dart';
+import 'package:mymenu/features/debug/debug_performance_panel_section.dart';
 import 'package:mymenu/shared/debug_feedback/debug_feedback_overlay.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 
@@ -30,15 +31,14 @@ class _DebugControlsOverlayState extends State<DebugControlsOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.enabled) {
-      return widget.child;
-    }
+    if (!widget.enabled) return widget.child;
     return DebugFeedbackOverlay(
       controller: widget.controller.feedback,
       child: AnimatedBuilder(
         animation: Listenable.merge(<Listenable>[
           widget.controller,
           widget.controller.feedback,
+          widget.controller.performanceRecorder,
         ]),
         builder: (BuildContext context, _) {
           return LayoutBuilder(
@@ -54,6 +54,12 @@ class _DebugControlsOverlayState extends State<DebugControlsOverlay> {
                 fit: StackFit.expand,
                 children: <Widget>[
                   widget.child,
+                  if (widget.controller.performanceOverlayEnabled)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: PerformanceOverlay.allEnabled(),
+                      ),
+                    ),
                   if (!widget.controller.feedback.collecting &&
                       widget.controller.panelOpen)
                     CustomSingleChildLayout(
@@ -162,9 +168,13 @@ class _DebugLauncher extends StatelessWidget {
           child: IconButton(
             key: const ValueKey<String>('debug_controls_open'),
             onPressed: () => controller.setPanelOpen(open: true),
-            icon: const Icon(
-              Icons.developer_mode_rounded,
-              color: Colors.white,
+            icon: Icon(
+              controller.performanceRecorder.isRecording
+                  ? Icons.fiber_manual_record_rounded
+                  : Icons.developer_mode_rounded,
+              color: controller.performanceRecorder.isRecording
+                  ? Colors.redAccent
+                  : Colors.white,
             ),
           ),
         ),
@@ -241,66 +251,83 @@ class _DebugPanel extends StatelessWidget {
       borderRadius: BorderRadius.circular(18),
       clipBehavior: Clip.antiAlias,
       child: SizedBox(
-        width: 270,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            _DebugPanelHeader(controller: controller),
-            const Divider(height: 1),
-            _DebugToggle(
-              key: const ValueKey<String>('debug_network_toggle'),
-              icon: controller.networkEnabled
-                  ? Icons.wifi_rounded
-                  : Icons.wifi_off_rounded,
-              label: 'Network',
-              value: controller.networkEnabled,
-              onChanged: (bool value) {
-                controller.setNetworkEnabled(enabled: value);
-              },
-            ),
-            _DebugToggle(
-              key: const ValueKey<String>('debug_slow_animation_toggle'),
-              icon: Icons.slow_motion_video_rounded,
-              label: 'Slow animation',
-              value: controller.slowAnimations,
-              onChanged: (bool value) {
-                controller.setSlowAnimations(enabled: value);
-              },
-            ),
-            _DebugToggle(
-              key: const ValueKey<String>('debug_camera_toggle'),
-              icon: controller.cameraAccessEnabled
-                  ? Icons.photo_camera_rounded
-                  : Icons.no_photography_rounded,
-              label: 'Camera access',
-              value: controller.cameraAccessEnabled,
-              onChanged: (bool value) {
-                controller.setCameraAccessEnabled(enabled: value);
-              },
-            ),
-            const Divider(height: 1),
-            DebugFeedbackPanelSection(
-              controller: controller.feedback,
-              onStart: () {
-                controller.setPanelOpen(open: false);
-                controller.feedback.startCollecting();
-              },
-            ),
-            const Divider(height: 1),
-            ListTile(
-              key: const ValueKey<String>('debug_reset_processing_consent'),
-              leading: const Icon(
-                Icons.restart_alt_rounded,
-                color: MyMenuColors.orangeDark,
+        width: 290,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              _DebugPanelHeader(controller: controller),
+              const Divider(height: 1),
+              _DebugToggle(
+                key: const ValueKey<String>('debug_network_toggle'),
+                icon: controller.networkEnabled
+                    ? Icons.wifi_rounded
+                    : Icons.wifi_off_rounded,
+                label: 'Network',
+                value: controller.networkEnabled,
+                onChanged: (bool value) {
+                  controller.setNetworkEnabled(enabled: value);
+                },
               ),
-              title: const Text('Reset AI consent'),
-              dense: true,
-              onTap: () async {
-                await onResetProcessingConsent();
-                controller.setPanelOpen(open: false);
-              },
-            ),
-          ],
+              _DebugToggle(
+                key: const ValueKey<String>('debug_slow_animation_toggle'),
+                icon: Icons.slow_motion_video_rounded,
+                label: 'Slow animation',
+                value: controller.slowAnimations,
+                onChanged: (bool value) {
+                  controller.setSlowAnimations(enabled: value);
+                },
+              ),
+              _DebugToggle(
+                key: const ValueKey<String>('debug_camera_toggle'),
+                icon: controller.cameraAccessEnabled
+                    ? Icons.photo_camera_rounded
+                    : Icons.no_photography_rounded,
+                label: 'Camera access',
+                value: controller.cameraAccessEnabled,
+                onChanged: (bool value) {
+                  controller.setCameraAccessEnabled(enabled: value);
+                },
+              ),
+              _DebugToggle(
+                key: const ValueKey<String>('debug_performance_overlay_toggle'),
+                icon: Icons.speed_rounded,
+                label: 'Performance overlay',
+                value: controller.performanceOverlayEnabled,
+                onChanged: (bool value) {
+                  controller.setPerformanceOverlayEnabled(enabled: value);
+                },
+              ),
+              DebugFeedbackPanelSection(
+                controller: controller.feedback,
+                onStart: () {
+                  controller.setPanelOpen(open: false);
+                  controller.feedback.startCollecting();
+                },
+              ),
+              const Divider(height: 1),
+              ListTile(
+                key: const ValueKey<String>('debug_reset_processing_consent'),
+                leading: const Icon(
+                  Icons.restart_alt_rounded,
+                  color: MyMenuColors.orangeDark,
+                ),
+                title: const Text('Reset AI consent'),
+                dense: true,
+                onTap: () async {
+                  await onResetProcessingConsent();
+                  controller.setPanelOpen(open: false);
+                },
+              ),
+              const Divider(height: 1),
+              DebugPerformancePanelSection(
+                recorder: controller.performanceRecorder,
+                onRecordingStarted: () {
+                  controller.setPanelOpen(open: false);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

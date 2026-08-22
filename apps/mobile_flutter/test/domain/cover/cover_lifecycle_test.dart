@@ -322,8 +322,18 @@ void main() {
     expect(cover.origin, CoverOrigin.automatic);
     expect(cover.state, GeneratedCoverState.current);
     expect(dish.heroImageUrl, cover.localPath);
+    expect(cover.previewPath == null, isFalse);
+    expect(cover.thumbnailPath == null, isFalse);
+    expect(cover.placeholderPath == null, isFalse);
+    expect(dish.heroPreviewUrl, cover.previewPath);
+    expect(dish.heroThumbnailUrl, cover.thumbnailPath);
+    expect(dish.heroPlaceholderUrl, cover.placeholderPath);
     expect(request.deliveryState, ProcessingDeliveryState.acknowledged);
     expect(request.adoptionState, ProcessingAdoptionState.adopted);
+    expect(request.resultPayload, <String, Object?>{
+      'operation': 'cover_generation',
+      'materialized': true,
+    });
     expect(api.hasPayloadForProcessingJob(request.serverJobId!), isFalse);
   });
 
@@ -678,6 +688,45 @@ void main() {
       await repositories.processingOutboxRepository.listRequests(),
       isEmpty,
     );
+  });
+
+  test('bootstrap compacts adopted legacy Cover Base64 results', () async {
+    final AppDatabase database =
+        AppDatabase.forTesting(NativeDatabase.memory());
+    addTearDown(database.close);
+    final AppRepositories repositories = AppRepositories(
+      database: database,
+      processingApiClient: FakeProcessingApiClient(),
+    );
+    await repositories.processingConsentRepository.acceptCurrentNotice();
+    await repositories.dishRepository.createDish(_dish('dish-compact-cover'));
+    await repositories.processingOutboxRepository.enqueueCoverGeneration(
+      requestId: 'cover-compact',
+      dishId: 'dish-compact-cover',
+      payload: const <String, Object?>{'origin': 'automatic'},
+      now: DateTime.utc(2026, 8, 4, 18),
+    );
+    await repositories.processingOutboxRepository.storeResult(
+      requestId: 'cover-compact',
+      result: const <String, Object?>{
+        'operation': 'cover_generation',
+        'output': <String, Object?>{
+          'imageBase64': 'legacy-sensitive-output',
+        },
+      },
+      schemaVersion: 'cover-generation-result-v1',
+    );
+    await repositories.processingOutboxRepository.markAdopted('cover-compact');
+
+    await repositories.prepareLocalData();
+
+    final ProcessingOutboxRequest compacted =
+        (await repositories.processingOutboxRepository.listRequests()).single;
+    expect(compacted.resultPayload, <String, Object?>{
+      'operation': 'cover_generation',
+      'materialized': true,
+    });
+    expect(compacted.resultSchemaVersion, 'cover-generation-result-v1');
   });
 
   test('consent withdrawal clears a queued manual restart', () async {
