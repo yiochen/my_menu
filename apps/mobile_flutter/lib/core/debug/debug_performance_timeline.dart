@@ -73,7 +73,7 @@ class _VmServiceDebugTimelineSession implements DebugTimelineSession {
   Future<List<Object?>> stop() async {
     try {
       final int endMicros = await _service.getTimelineMicros();
-      return _service.getTimelineEvents(
+      return await _service.getTimelineEvents(
         timeOriginMicros: _startMicros,
         timeExtentMicros: math.max(1, endMicros - _startMicros),
       );
