@@ -1,5 +1,5 @@
 begin;
-select plan(8);
+select plan(10);
 
 insert into auth.users (
   id, instance_id, aud, role, email, encrypted_password,
@@ -48,9 +48,28 @@ select is((select status::text from public.internal_submit_processing_job(
   )
 )), 'queued', 'the bounded cover input is accepted');
 
-select is((with lease as (select * from public.internal_claim_processing_job())
-  select status::text from public.internal_complete_processing_job(
-    (select id from lease),(select lease_token from lease),
+insert into public.processing_assets (
+  job_id, user_id, asset_id, storage_bucket, storage_path,
+  content_type, byte_size
+)
+select
+  id, user_id, 'cover-output', 'processing-media',
+  id::text || '/cover-output.png', 'image/png', 12
+from public.processing_jobs
+where idempotency_key = '00000000-0000-4000-8000-000000000257';
+
+select is(
+  (select status::text from public.internal_claim_processing_job()),
+  'running',
+  'the worker claims the binary Cover job'
+);
+
+select throws_ok(
+  $$ select * from public.internal_complete_processing_job(
+    (select id from public.processing_jobs where idempotency_key =
+      '00000000-0000-4000-8000-000000000257'),
+    (select lease_token from public.processing_jobs where idempotency_key =
+      '00000000-0000-4000-8000-000000000257'),
     jsonb_build_object(
       'operation','cover_generation','schemaVersion','cover-generation-result-v1',
       'proposalId',gen_random_uuid()::text,
@@ -58,7 +77,32 @@ select is((with lease as (select * from public.internal_claim_processing_job())
       'validation',jsonb_build_object('valid',true,'confidence',1),
       'provenance',jsonb_build_object('provider','fake','model','fake')
     ),'fake','fake-cover-v1',null,null
-  )), 'succeeded', 'a validated cover can be delivered');
+  ) $$,
+  'P0001', 'Invalid cover generation result',
+  'inline Base64 cover results are rejected'
+);
+
+select is((select status::text from public.internal_complete_processing_job(
+    (select id from public.processing_jobs where idempotency_key =
+      '00000000-0000-4000-8000-000000000257'),
+    (select lease_token from public.processing_jobs where idempotency_key =
+      '00000000-0000-4000-8000-000000000257'),
+    jsonb_build_object(
+      'operation','cover_generation','schemaVersion','cover-generation-result-v1',
+      'proposalId',gen_random_uuid()::text,
+      'output',jsonb_build_object(
+        'contentType','image/png',
+        'storageBucket','processing-media',
+        'storagePath',(
+          select id::text || '/cover-output.png' from public.processing_jobs
+          where idempotency_key = '00000000-0000-4000-8000-000000000257'
+        ),
+        'byteSize',12
+      ),
+      'validation',jsonb_build_object('valid',true,'confidence',1),
+      'provenance',jsonb_build_object('provider','fake','model','fake')
+    ),'fake','fake-cover-v1',null,null
+  )), 'succeeded', 'a validated binary cover can be delivered');
 
 select is((select units from public.ai_usage_records where idempotency_key=
   '00000000-0000-4000-8000-000000000257'), 0,

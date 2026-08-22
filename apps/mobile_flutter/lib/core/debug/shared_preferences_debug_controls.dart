@@ -11,6 +11,8 @@ class SharedPreferencesDebugControls implements DebugControlsPersistence {
   static const String _slowAnimationsKey = 'debug_controls.slow_animations';
   static const String _cameraAccessEnabledKey =
       'debug_controls.camera_access_enabled';
+  static const String _performanceOverlayEnabledKey =
+      'debug_controls.performance_overlay_enabled';
   static const String _feedbackEntriesKey = 'debug_controls.feedback_entries';
 
   final SharedPreferences _preferences;
@@ -27,6 +29,8 @@ class SharedPreferencesDebugControls implements DebugControlsPersistence {
       slowAnimations: _preferences.getBool(_slowAnimationsKey) ?? false,
       cameraAccessEnabled:
           _preferences.getBool(_cameraAccessEnabledKey) ?? true,
+      performanceOverlayEnabled:
+          _preferences.getBool(_performanceOverlayEnabledKey) ?? false,
       feedbackEntries: _readFeedbackEntries(),
     );
   }
@@ -67,6 +71,11 @@ class SharedPreferencesDebugControls implements DebugControlsPersistence {
   @override
   Future<void> setCameraAccessEnabled({required bool enabled}) {
     return _preferences.setBool(_cameraAccessEnabledKey, enabled);
+  }
+
+  @override
+  Future<void> setPerformanceOverlayEnabled({required bool enabled}) {
+    return _preferences.setBool(_performanceOverlayEnabledKey, enabled);
   }
 
   @override

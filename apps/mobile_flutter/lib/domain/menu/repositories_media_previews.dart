@@ -124,6 +124,8 @@ extension AppRepositoriesMediaPreviews on AppRepositories {
         await database.select(database.sourcePhotos).get();
     final List<db.DishRow> refreshedDishes =
         await database.select(database.dishes).get();
+    final List<db.GeneratedCoverRow> refreshedGeneratedCovers =
+        await database.select(database.generatedCovers).get();
     await _imageDerivativeStore.cleanup(
       referencedRefs: <String?>[
         ...refreshedCaptures.map(
@@ -147,6 +149,15 @@ extension AppRepositoriesMediaPreviews on AppRepositories {
         ...refreshedDishes.map((db.DishRow dish) => dish.heroPreviewUrl),
         ...refreshedDishes.map((db.DishRow dish) => dish.heroThumbnailUrl),
         ...refreshedDishes.map((db.DishRow dish) => dish.heroPlaceholderUrl),
+        ...refreshedGeneratedCovers.map(
+          (db.GeneratedCoverRow cover) => cover.previewPath,
+        ),
+        ...refreshedGeneratedCovers.map(
+          (db.GeneratedCoverRow cover) => cover.thumbnailPath,
+        ),
+        ...refreshedGeneratedCovers.map(
+          (db.GeneratedCoverRow cover) => cover.placeholderPath,
+        ),
       ],
     );
   }

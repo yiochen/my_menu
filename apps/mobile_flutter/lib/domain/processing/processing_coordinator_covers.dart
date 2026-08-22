@@ -179,18 +179,21 @@ extension ProcessingCoordinatorCovers on ProcessingCoordinator {
           request,
           result,
         );
+        final ImageDerivativeSet previews =
+            await _imageDerivativeStore.ensureSet(
+          key: 'generated_cover_${request.id}',
+          sourcePath: localPath,
+        );
         await _database.transaction(() async {
-          await _storeDeliveredCover(request, result, localPath);
-          await outbox.storeResult(
+          await _storeDeliveredCover(request, result, localPath, previews);
+          await outbox.storeMaterializedCoverMarker(
             requestId: request.id,
-            result: result,
             schemaVersion: job.resultSchemaVersion,
           );
         });
       } else {
-        await outbox.storeResult(
+        await outbox.storeMaterializedCoverMarker(
           requestId: request.id,
-          result: result,
           schemaVersion: job.resultSchemaVersion,
         );
       }

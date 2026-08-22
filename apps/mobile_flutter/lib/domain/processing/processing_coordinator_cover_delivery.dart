@@ -31,6 +31,10 @@ extension ProcessingCoordinatorCoverDelivery on ProcessingCoordinator {
     } else {
       throw const FormatException('Generated Cover bytes are missing.');
     }
+    final Object? expectedByteSize = output['byteSize'];
+    if (expectedByteSize is int && expectedByteSize != bytes.length) {
+      throw const FormatException('Generated Cover byte size changed.');
+    }
     final bool png = contentType == 'image/png' &&
         bytes.length >= 8 &&
         bytes[0] == 0x89 &&
@@ -72,6 +76,7 @@ extension ProcessingCoordinatorCoverDelivery on ProcessingCoordinator {
     ProcessingOutboxRequest request,
     Map<String, Object?> result,
     String localPath,
+    ImageDerivativeSet previews,
   ) async {
     final Map<String, Object?> treatment =
         request.payload['treatment']! as Map<String, Object?>;
@@ -100,6 +105,9 @@ extension ProcessingCoordinatorCoverDelivery on ProcessingCoordinator {
       ),
       proposalId: result['proposalId']! as String,
       createdAt: DateTime.now(),
+      previewPath: previews.processingRef,
+      thumbnailPath: previews.cardRef,
+      placeholderPath: previews.placeholderRef,
     );
   }
 

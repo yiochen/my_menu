@@ -80,6 +80,35 @@ void main() {
     expect(reloadedController.networkEnabled, isTrue);
   });
 
+  test('performance overlay setting survives controller recreation', () async {
+    SharedPreferences.setMockInitialValues(
+      <String, Object>{
+        'debug_controls.performance_overlay_enabled': true,
+      },
+    );
+    final SharedPreferencesDebugControls storedControls =
+        await SharedPreferencesDebugControls.load();
+    final DebugControlsController firstController = DebugControlsController(
+      initialSettings: storedControls.settings,
+      persistence: storedControls,
+    );
+
+    expect(firstController.performanceOverlayEnabled, isTrue);
+    firstController.setPerformanceOverlayEnabled(enabled: false);
+    await Future<void>.delayed(Duration.zero);
+    firstController.dispose();
+
+    final SharedPreferencesDebugControls reloadedControls =
+        await SharedPreferencesDebugControls.load();
+    final DebugControlsController reloadedController = DebugControlsController(
+      initialSettings: reloadedControls.settings,
+      persistence: reloadedControls,
+    );
+    addTearDown(reloadedController.dispose);
+
+    expect(reloadedController.performanceOverlayEnabled, isFalse);
+  });
+
   test('feedback survives controller recreation', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     final SharedPreferencesDebugControls storedControls =

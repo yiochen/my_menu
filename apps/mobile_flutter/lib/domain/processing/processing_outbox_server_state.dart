@@ -1,6 +1,44 @@
 part of 'processing_outbox_repository.dart';
 
 extension ProcessingOutboxServerState on ProcessingOutboxRepository {
+  Future<void> storeMaterializedCoverMarker({
+    required String requestId,
+    required String schemaVersion,
+  }) {
+    return storeResult(
+      requestId: requestId,
+      result: <String, Object?>{
+        'operation': ProcessingRequestKind.coverGeneration.databaseValue,
+        'materialized': true,
+      },
+      schemaVersion: schemaVersion,
+    );
+  }
+
+  Future<void> compactAdoptedCoverResults() async {
+    final String marker = jsonEncode(<String, Object?>{
+      'operation': ProcessingRequestKind.coverGeneration.databaseValue,
+      'materialized': true,
+    });
+    await (_database.update(_database.processingOutbox)
+          ..where(
+            (db.ProcessingOutbox table) =>
+                table.requestKind.equals(
+                  ProcessingRequestKind.coverGeneration.databaseValue,
+                ) &
+                table.adoptionState.equals(
+                  ProcessingAdoptionState.adopted.name,
+                ) &
+                table.resultPayloadJson.isNotNull() &
+                table.resultPayloadJson.equals(marker).not(),
+          ))
+        .write(
+      db.ProcessingOutboxCompanion(
+        resultPayloadJson: Value<String?>(marker),
+      ),
+    );
+  }
+
   Future<bool> cancelBeforeUpload(String requestId) async {
     final int changed = await (_database.update(_database.processingOutbox)
           ..where(
