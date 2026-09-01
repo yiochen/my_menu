@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="mocklens:form-factor" content="phone">
+<meta name="mocklens:primary-device" content="iphone-14">
+<meta name="mocklens:target-devices" content="iphone-14">
+<meta name="mocklens:viewport" content="390x844">
+<title>Capture — MyMenu</title>
+<link rel="stylesheet" href="./shared.css">
+<style>
+  body { overflow: hidden; }
+  .stage { position: relative; height: 100vh; overflow: hidden; background: var(--cream); }
+  .underlay { min-height: 100vh; padding: 18px; filter: blur(1.2px); }
+  .under-heading { margin: 15px 0; }
+  .under-heading h1 { font-size: 31px; }
+  .under-heading p { margin-top: 6px; color: var(--muted); font-size: 14px; }
+  .under-search { margin-bottom: 16px; }
+  .fake-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+  .fake-card { height: 190px; overflow: hidden; border-radius: 21px; background: #fff; }
+  .fake-card img { width: 100%; height: 125px; object-fit: cover; }
+  .fake-card strong { display: block; padding: 11px; font-size: 14px; }
+
+  .scrim {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    background: rgba(31,24,18,.45);
+    backdrop-filter: blur(2px);
+  }
+  .sheet {
+    position: absolute;
+    z-index: 3;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    min-height: 604px;
+    padding: 11px 18px 25px;
+    border-radius: 32px 32px 0 0;
+    background:
+      radial-gradient(circle at 100% 0%, rgba(255,181,112,.16), transparent 30%),
+      var(--cream);
+    box-shadow: 0 -16px 45px rgba(25,16,9,.18);
+  }
+  .handle { width: 42px; height: 5px; margin: 0 auto 15px; border-radius: 999px; background: #d9d2ca; }
+  .sheet-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
+  .sheet-head h1 { font-size: 30px; }
+  .sheet-head p { max-width: 260px; margin-top: 6px; color: var(--muted); font-size: 14px; line-height: 1.4; }
+  .close { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; color: var(--ink); background: var(--soft); }
+
+  .capture-options { display: grid; gap: 10px; }
+  .capture-option {
+    min-height: 94px;
+    display: grid;
+    grid-template-columns: 60px 1fr 30px;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: rgba(255,255,255,.94);
+    box-shadow: var(--shadow-small);
+  }
+  .option-icon {
+    width: 60px;
+    height: 60px;
+    display: grid;
+    place-items: center;
+    border-radius: 19px;
+    color: var(--orange-dark);
+    background: var(--soft-orange);
+  }
+  .option-icon svg { width: 26px; height: 26px; }
+  .option-copy strong { display: block; margin-bottom: 5px; font-size: 16px; }
+  .option-copy span { color: var(--muted); font-size: 12px; line-height: 1.35; }
+  .chevron { color: var(--orange-dark); }
+
+  .promise {
+    min-height: 74px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-top: 13px;
+    padding: 12px 14px;
+    border-radius: 21px;
+    color: #684525;
+    background: #fff0df;
+  }
+  .promise-mark {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border-radius: 15px;
+    color: #fff;
+    background: var(--orange);
+    box-shadow: 0 7px 16px rgba(255,114,0,.22);
+    font-size: 19px;
+  }
+  .promise strong { display: block; margin-bottom: 3px; color: #523014; font-size: 12px; }
+  .promise p { font-size: 11px; line-height: 1.35; }
+</style>
+</head>
+<body>
+<main class="stage">
+  <section class="underlay">
+    <header class="topbar">
+      <div class="profile"><div class="avatar">YC</div><div class="profile-copy"><span>Your personal restaurant</span><strong>MyMenu</strong></div></div>
+      <div class="icon-button"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/></svg></div>
+    </header>
+    <div class="under-heading"><p class="eyebrow">28 dishes & counting</p><h1>What sounds good today?</h1><p>Everything here is something you can make.</p></div>
+    <div class="search under-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><span>Search your dishes</span></div>
+    <div class="fake-grid">
+      <div class="fake-card"><img src="./assets/lemon-linguine.png" alt=""><strong>Lemon Garlic Linguine</strong></div>
+      <div class="fake-card"><img src="./assets/miso-salmon.png" alt=""><strong>Miso Salmon Bowl</strong></div>
+    </div>
+  </section>
+
+  <div class="scrim"></div>
+  <section class="sheet" role="dialog" aria-label="Capture something">
+    <div class="handle"></div>
+    <header class="sheet-head">
+      <div><p class="eyebrow">Quick capture</p><h1>Save the moment</h1><p>Snap it now. We’ll organize it into your menu.</p></div>
+      <div class="close" data-mocklens-action="Tap dismisses Quick Capture and returns to the unchanged underlying screen."><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></div>
+    </header>
+
+    <div class="capture-options">
+      <article class="capture-option" data-mocklens-action="Tap opens the system camera; after capture, the photo is saved locally before AI organization begins.">
+        <div class="option-icon"><svg viewBox="0 0 24 24"><path d="M14.5 5 13 3h-2L9.5 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3.5"/></svg></div>
+        <div class="option-copy"><strong>Take a photo</strong><span>Capture what’s on your plate right now.</span></div>
+        <svg class="chevron" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+      </article>
+      <article class="capture-option" data-mocklens-action="Tap opens the system photo picker; selected photos are saved locally before AI organization begins.">
+        <div class="option-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 15-5-5L5 20"/></svg></div>
+        <div class="option-copy"><strong>Import photos</strong><span>Pick one or a few from your camera roll.</span></div>
+        <svg class="chevron" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+      </article>
+      <article class="capture-option" data-mocklens-action="Tap opens a one-field idea editor; Save creates an incomplete dish without requiring classification.">
+        <div class="option-icon"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13 7 4 4"/></svg></div>
+        <div class="option-copy"><strong>Jot down an idea</strong><span>Save something you wanna try later.</span></div>
+        <svg class="chevron" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+      </article>
+    </div>
+
+    <aside class="promise">
+      <div class="promise-mark">✦</div>
+      <div><strong>No filing required</strong><p>MyMenu matches it to a dish—or starts a new one for you.</p></div>
+    </aside>
+  </section>
+</main>
+</body>
+</html>

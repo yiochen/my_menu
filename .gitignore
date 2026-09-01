@@ -4,6 +4,7 @@
 # local tooling
 .claude/
 .vscode/
+.mocklens/
 .env
 .env.*
 !.env.example

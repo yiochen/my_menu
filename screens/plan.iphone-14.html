@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="mocklens:form-factor" content="phone">
+<meta name="mocklens:primary-device" content="iphone-14">
+<meta name="mocklens:target-devices" content="iphone-14">
+<meta name="mocklens:viewport" content="390x844">
+<title>Plan — MyMenu</title>
+<link rel="stylesheet" href="./shared.css">
+<style>
+  .intro { margin-bottom: 17px; }
+  .intro h1 { max-width: 300px; font-size: 31px; }
+  .intro p { margin-top: 6px; font-size: 14px; }
+
+  .week-strip {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 7px;
+    margin-bottom: 20px;
+  }
+  .day {
+    min-height: 61px;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 3px;
+    border-radius: 19px;
+    color: var(--muted);
+    background: var(--soft);
+    font-size: 10px;
+    font-weight: 800;
+  }
+  .day strong { color: var(--ink); font-size: 17px; }
+  .day.active {
+    color: #fff3e8;
+    background: var(--orange);
+    box-shadow: 0 9px 20px rgba(255,114,0,.23);
+  }
+  .day.active strong { color: #fff; }
+
+  .tonight-card {
+    position: relative;
+    height: 241px;
+    overflow: hidden;
+    margin-bottom: 21px;
+    color: #fff;
+  }
+  .tonight-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .tonight-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(20,12,4,.02) 28%, rgba(20,12,4,.82) 100%);
+  }
+  .tonight-badge {
+    position: absolute;
+    z-index: 2;
+    top: 13px;
+    left: 13px;
+    min-height: 31px;
+    padding: 0 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    color: #8c3b00;
+    background: #fff5e9;
+    font-size: 12px;
+    font-weight: 850;
+  }
+  .spark { color: var(--orange); font-size: 15px; }
+  .more {
+    position: absolute;
+    z-index: 2;
+    top: 13px;
+    right: 13px;
+    width: 33px;
+    height: 33px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(23,14,7,.28);
+    backdrop-filter: blur(8px);
+    font-size: 20px;
+    line-height: 1;
+  }
+  .tonight-copy {
+    position: absolute;
+    z-index: 2;
+    left: 17px;
+    right: 17px;
+    bottom: 16px;
+  }
+  .tonight-copy h2 { margin-bottom: 5px; font-size: 23px; }
+  .tonight-copy p { color: rgba(255,255,255,.8); font-size: 13px; }
+  .meta { display: flex; gap: 7px; margin-top: 11px; }
+
+  .upcoming-list { display: grid; gap: 10px; }
+  .review-nudge {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: -3px 0 16px;
+    padding: 9px 12px;
+    border-radius: 17px;
+    color: #734417;
+    background: var(--soft-orange);
+    font-size: 11px;
+  }
+  .review-nudge b { display: block; color: #532f0d; font-size: 12px; }
+  .review-nudge .spark { width: 31px; height: 31px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 11px; color: #fff; background: var(--orange); }
+  .review-nudge .review-arrow { margin-left: auto; color: var(--orange-dark); font-size: 19px; }
+  .meal-row {
+    min-height: 79px;
+    display: grid;
+    grid-template-columns: 46px 62px 1fr 27px;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px 9px 9px;
+    border-radius: 20px;
+    background: var(--soft);
+  }
+  .date {
+    text-align: center;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 850;
+    text-transform: uppercase;
+  }
+  .date strong { display: block; margin-top: 1px; color: var(--ink); font-size: 20px; }
+  .meal-row img { width: 62px; height: 59px; object-fit: cover; border-radius: 16px; }
+  .meal-copy { min-width: 0; }
+  .meal-copy strong { display: block; margin-bottom: 5px; font-size: 14px; line-height: 1.15; }
+  .meal-copy span { color: var(--muted); font-size: 11px; }
+  .row-action {
+    width: 27px;
+    height: 27px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--orange-dark);
+    background: #fff;
+  }
+  .row-action svg { width: 15px; height: 15px; }
+</style>
+</head>
+<body>
+<main class="screen">
+  <header class="topbar">
+    <div class="profile">
+      <div class="avatar">YC</div>
+      <div class="profile-copy"><span>Good afternoon</span><strong>Hey, Yiou!</strong></div>
+    </div>
+    <div class="icon-button" aria-label="Notifications">
+      <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+      <i class="notification-dot"></i>
+    </div>
+  </header>
+
+  <section class="intro">
+    <p class="eyebrow">This week</p>
+    <h1>What you wanna cook?</h1>
+    <p class="muted">A little plan, a much calmer dinner.</p>
+  </section>
+
+  <div class="week-strip" aria-label="Week of July 21">
+    <div class="day active" data-mocklens-action="Tap filters the timeline to today's planned meals."><span>TUE</span><strong>21</strong><span>Today</span></div>
+    <div class="day" data-mocklens-action="Tap filters the timeline to Wednesday and its one planned dish."><span>WED</span><strong>22</strong><span>1 dish</span></div>
+    <div class="day" data-mocklens-action="Tap opens Thursday and reveals an Add dish entry point for the open day."><span>THU</span><strong>23</strong><span>+ Open</span></div>
+    <div class="day" data-mocklens-action="Tap filters the timeline to Friday and its one planned dish."><span>FRI</span><strong>24</strong><span>1 dish</span></div>
+    <div class="day" data-mocklens-action="Tap opens Saturday and reveals an Add dish entry point for the open day."><span>SAT</span><strong>25</strong><span>+ Open</span></div>
+  </div>
+
+  <aside class="review-nudge" data-mocklens-action="Tap opens Review Capture for the uncertain salmon-bowl match; this appears only while review is needed."><span class="spark">✦</span><div><b>1 capture needs a quick check</b>Help MyMenu match it correctly.</div><span class="review-arrow">›</span></aside>
+
+  <section>
+    <div class="section-head"><h2>Cook tonight</h2><a href="#">Shuffle idea</a></div>
+    <article class="card tonight-card" data-mocklens-action="Tap opens Lemon Garlic Linguine; Shuffle idea replaces only this recommendation.">
+      <img src="./assets/lemon-linguine.png" alt="Lemon garlic linguine with shrimp">
+      <div class="tonight-badge"><span class="spark">✦</span> Your easy favorite</div>
+      <div class="more">···</div>
+      <div class="tonight-copy">
+        <h2>Lemon Garlic Linguine</h2>
+        <p>Bright, buttery, and on the table fast.</p>
+        <div class="meta">
+          <span class="pill"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>25 min</span>
+          <span class="pill orange">Easy</span>
+          <span class="pill">★ 4.9</span>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section>
+    <div class="section-head"><h2>Coming up</h2><a href="#">See week</a></div>
+    <div class="upcoming-list">
+      <article class="meal-row" data-mocklens-action="Tap opens Chicken Katsu Curry; the trailing affordance opens planned-meal actions for reschedule, replace, or remove.">
+        <div class="date">Wed<strong>22</strong></div>
+        <img src="./assets/katsu-curry.png" alt="Chicken katsu curry">
+        <div class="meal-copy"><strong>Chicken Katsu Curry</strong><span>Dinner · 40 min</span></div>
+        <div class="row-action"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></div>
+      </article>
+      <article class="meal-row" data-mocklens-action="Tap opens Cozy Beef Pho; the trailing affordance opens planned-meal actions for reschedule, replace, or remove.">
+        <div class="date">Fri<strong>24</strong></div>
+        <img src="./assets/pho.png" alt="Homemade pho">
+        <div class="meal-copy"><strong>Cozy Beef Pho</strong><span>Dinner · Made 6×</span></div>
+        <div class="row-action"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></div>
+      </article>
+    </div>
+  </section>
+</main>
+
+<div class="fade-bottom"></div>
+<nav class="bottom-nav" aria-label="Primary navigation">
+  <div class="nav-item active" data-mocklens-action="Plan is the selected primary destination."><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg><span>Plan</span></div>
+  <div class="capture-button" aria-label="Capture" data-mocklens-action="Tap opens Quick Capture over the current screen; Capture is global and not a destination tab."><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div>
+  <div class="nav-item" data-mocklens-action="Tap opens Menu with Menu selected."><svg viewBox="0 0 24 24"><path d="M4 6.5C4 5.1 5.1 4 6.5 4H20v16H6.5A2.5 2.5 0 0 1 4 17.5z"/><path d="M4 17.5A2.5 2.5 0 0 1 6.5 15H20"/></svg><span>Menu</span></div>
+</nav>
+</body>
+</html>
