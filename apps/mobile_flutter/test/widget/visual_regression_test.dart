@@ -211,12 +211,12 @@ void main() {
         final Finder title = find.byKey(
           const ValueKey<String>('menu_dish_title_dish_katsu'),
         );
-        final Finder metadata = find.text('3 cooks · 5 photos');
         final Rect titleRect = tester.getRect(title);
-        final Rect metadataRect = tester.getRect(metadata);
+        final Rect cardRect = tester.getRect(card);
 
         expect(titleRect.height, greaterThanOrEqualTo(43));
-        expect(titleRect.bottom, lessThanOrEqualTo(metadataRect.top));
+        expect(titleRect.bottom, lessThan(cardRect.bottom));
+        expect(find.text('3 cooks · 5 photos'), findsNothing);
         expect(tester.takeException(), isNull);
         await _settleGoldenFrame(tester);
         await expectLater(
@@ -276,7 +276,7 @@ void main() {
           ),
         );
         expect(emptyTitle.data, isEmpty);
-        expect(find.textContaining('0 photos'), findsOneWidget);
+        expect(find.textContaining('0 photos'), findsNothing);
         expect(tester.takeException(), isNull);
         await _expectFullAppGolden(tester, 'ui_menu_edge_case_grid');
       });
@@ -340,7 +340,11 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Cook again'), findsOneWidget);
+        expect(find.text('Cook again'), findsNothing);
+        expect(
+          find.byKey(const ValueKey<String>('dish_cook_count')),
+          findsNothing,
+        );
         expect(
           find.byKey(const ValueKey<String>('cover_image_button')),
           findsOneWidget,
@@ -472,7 +476,7 @@ MyMenuState _buildPhotoGoldenState() {
     captureItems: <CaptureItem>[
       CaptureItem(
         id: 'golden_unorganized',
-        batchId: 'golden_batch',
+        ingestId: 'golden_batch',
         kind: CaptureItemKind.photo,
         status: CaptureItemStatus.localOnly,
         createdAt: capturedAt,
@@ -482,7 +486,7 @@ MyMenuState _buildPhotoGoldenState() {
       ),
       CaptureItem(
         id: 'golden_review',
-        batchId: 'golden_review_batch',
+        ingestId: 'golden_review_batch',
         kind: CaptureItemKind.photo,
         status: CaptureItemStatus.needsReview,
         createdAt: capturedAt.subtract(const Duration(minutes: 8)),
@@ -492,7 +496,7 @@ MyMenuState _buildPhotoGoldenState() {
       ),
       CaptureItem(
         id: 'golden_organized',
-        batchId: 'golden_organized_batch',
+        ingestId: 'golden_organized_batch',
         kind: CaptureItemKind.photo,
         status: CaptureItemStatus.applied,
         createdAt: capturedAt.subtract(const Duration(days: 1)),
@@ -513,7 +517,7 @@ MyMenuState _buildDensePhotoGoldenState() {
       final DateTime itemTime = capturedAt.subtract(Duration(minutes: index));
       return CaptureItem(
         id: 'golden_dense_$index',
-        batchId: 'golden_dense_batch_${index ~/ 3}',
+        ingestId: 'golden_dense_batch_${index ~/ 3}',
         ordinal: index % 3,
         kind: CaptureItemKind.photo,
         status: CaptureItemStatus.localOnly,

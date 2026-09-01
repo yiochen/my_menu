@@ -40,6 +40,10 @@ void main() {
       'capture_items',
     );
     final Set<String> noteColumns = await _columns(database, 'dish_notes');
+    final Set<String> dishColumns = await _columns(database, 'dishes');
+    final Set<String> sourceColumns = await _columns(database, 'source_photos');
+    final Set<String> correctionColumns =
+        await _columns(database, 'capture_corrections');
     final List<QueryRow> dishes =
         await database.customSelect('SELECT id, title FROM dishes').get();
     final List<QueryRow> notes = await database
@@ -47,11 +51,12 @@ void main() {
         .get();
     final List<QueryRow> captures = await database
         .customSelect(
-          'SELECT id, local_media_ref FROM capture_items',
+          'SELECT id, local_media_ref, failure_reason FROM capture_items',
         )
         .get();
-    final List<QueryRow> sourcePhotos =
-        await database.customSelect('SELECT id, url FROM source_photos').get();
+    final List<QueryRow> sourcePhotos = await database
+        .customSelect('SELECT id, url, ingest_id FROM source_photos')
+        .get();
     final List<QueryRow> plans =
         await database.customSelect('SELECT id FROM planned_meals').get();
     final List<QueryRow> reviews =
@@ -61,16 +66,24 @@ void main() {
         .get();
     final List<QueryRow> adoptedResults = await database
         .customSelect(
-          'SELECT id, result_payload_json FROM processing_outbox '
+          'SELECT id, payload_json, result_payload_json FROM processing_outbox '
           "WHERE adoption_state = 'adopted'",
         )
         .get();
 
-    expect(database.schemaVersion, 19);
+    expect(database.schemaVersion, 20);
+    expect(tableNames, isNot(contains('capture_batches')));
     expect(tableNames, isNot(contains('sync_operations')));
     expect(tableNames, isNot(contains('sync_metadata')));
     expect(tableNames, isNot(contains('ai_jobs')));
     expect(captureColumns, isNot(contains('remote_media_ref')));
+    expect(captureColumns, contains('ingest_id'));
+    expect(captureColumns, isNot(contains('batch_id')));
+    expect(sourceColumns, contains('ingest_id'));
+    expect(sourceColumns, isNot(contains('cooking_occasion_id')));
+    expect(correctionColumns, contains('ingest_id'));
+    expect(correctionColumns, isNot(contains('batch_id')));
+    expect(dishColumns, isNot(contains('made_count')));
     expect(noteColumns, isNot(contains('deleted_at')));
     expect(dishes.single.read<String>('title'), 'Preserved Dish');
     expect(
@@ -78,12 +91,14 @@ void main() {
       <String>['active_note'],
     );
     expect(captures.single.read<String>('local_media_ref'), localPhoto.path);
+    expect(captures.single.read<String>('failure_reason'), 'Legacy reason');
     expect(await isVerifiedLocalImage(localPhoto), isTrue);
     final String localizedHero = (await database
             .customSelect('SELECT hero_image_url FROM dishes')
             .getSingle())
         .read<String>('hero_image_url');
     final String localizedSource = sourcePhotos.single.read<String>('url');
+    expect(sourcePhotos.single.read<String>('ingest_id'), 'batch_1');
     expect(localizedHero, isNot(startsWith('https://')));
     expect(localizedSource, isNot(startsWith('https://')));
     expect(await isVerifiedLocalImage(File(localizedHero)), isTrue);
@@ -94,6 +109,10 @@ void main() {
     expect(
       adoptedResults.single.read<String>('result_payload_json'),
       '{"decisions":[]}',
+    );
+    expect(
+      adoptedResults.single.read<String>('payload_json'),
+      '{"captureIds":["capture_1"],"ingestId":"batch_1"}',
     );
   });
 
@@ -314,7 +333,15 @@ void _createSchema18Fixture(File databaseFile, String localPhotoPath) {
       )
     ''')
     ..execute('CREATE TABLE sync_metadata (key TEXT PRIMARY KEY, value TEXT)')
-    ..execute('CREATE TABLE ai_jobs (id TEXT PRIMARY KEY)')
+    ..execute('''
+      CREATE TABLE ai_jobs (
+        id TEXT PRIMARY KEY,
+        job_type TEXT NOT NULL,
+        subject_id TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''')
     ..execute('''
       INSERT INTO dishes VALUES (
         'dish_1', 'Preserved Dish', '', ?, NULL, NULL, NULL, 'Dinner', 30,
@@ -335,9 +362,14 @@ void _createSchema18Fixture(File databaseFile, String localPhotoPath) {
       ''',
       <Object?>[localPhotoPath, 'https://legacy.example/capture.jpg'],
     )
-    ..execute(
-      "INSERT INTO capture_batches VALUES ('batch_1', 'applied', 1, 1, NULL)",
-    )
+    ..execute('''
+      INSERT INTO capture_batches VALUES
+        ('batch_1', 'applied', 1, 1, 'Legacy reason')
+    ''')
+    ..execute('''
+      INSERT INTO ai_jobs VALUES
+        ('legacy_job', 'batch_grouping', 'batch_1', 1, 1)
+    ''')
     ..execute('''
       INSERT INTO source_photos VALUES (
         'source_1', 'dish_1', 'https://legacy.example/source.jpg', NULL, NULL,
@@ -364,7 +396,8 @@ void _createSchema18Fixture(File databaseFile, String localPhotoPath) {
         adoption_state, privacy_notice_version, created_at, updated_at,
         idempotency_key, result_payload_json, result_schema_version
       ) VALUES (
-        'adopted_1', 'capture_grouping', 'batch_1', '{}', 'acknowledged',
+        'adopted_1', 'capture_grouping', 'batch_1',
+        '{"batchId":"batch_1","captureIds":["capture_1"]}', 'acknowledged',
         'adopted', '2026-08-01', 1, 1, 'adopted_1', '{"decisions":[]}',
         'capture-grouping-result-v2'
       )

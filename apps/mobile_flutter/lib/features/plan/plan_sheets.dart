@@ -225,7 +225,7 @@ class _DishChoice extends StatelessWidget {
                       ),
                       Text(
                         '${dish.prepMinutes} min · '
-                        'Made ${dish.madeCount} times',
+                        '${dish.prepMinutes} min · ${dish.category}',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],

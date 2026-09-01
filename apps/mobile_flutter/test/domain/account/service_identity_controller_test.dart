@@ -26,7 +26,6 @@ void main() {
             category: 'Captured',
             prepMinutes: 0,
             difficulty: 'Draft',
-            madeCount: 1,
             lastMadeLabel: 'Today',
             ingredientsJson: '[]',
             recipeStepsJson: '[]',

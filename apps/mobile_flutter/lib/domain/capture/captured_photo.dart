@@ -30,7 +30,7 @@ class CapturedPhoto {
   final String? processingFailureCode;
 
   String get id => item.id;
-  String? get batchId => item.batchId;
+  String? get ingestId => item.ingestId;
   int get ordinal => item.ordinal;
   String get imageRef => item.localMediaRef ?? '';
   DateTime get uploadedAt => item.createdAt;
@@ -68,7 +68,7 @@ List<CapturedPhoto> buildCapturedPhotos({
     for (final ReviewItem review in reviewItems)
       if (review.captureId != null) review.captureId!: review,
   };
-  final Map<String, ProcessingOutboxRequest> requestsByBatch =
+  final Map<String, ProcessingOutboxRequest> requestsByIngest =
       <String, ProcessingOutboxRequest>{
     for (final ProcessingOutboxRequest request in processingRequests)
       request.subjectId: request,
@@ -79,7 +79,7 @@ List<CapturedPhoto> buildCapturedPhotos({
       .map((CaptureItem item) {
     final ReviewItem? review = reviewsByCapture[item.id];
     final ProcessingOutboxRequest? request =
-        item.batchId == null ? null : requestsByBatch[item.batchId!];
+        item.ingestId == null ? null : requestsByIngest[item.ingestId!];
     final CapturedPhotoState state = _photoState(item, review, request);
     return CapturedPhoto(
       item: item,
@@ -92,7 +92,7 @@ List<CapturedPhoto> buildCapturedPhotos({
   }).toList(growable: false);
   final Map<String, DateTime> groupTimes = <String, DateTime>{};
   for (final CapturedPhoto photo in photos) {
-    final String groupKey = photo.batchId ?? 'photo:${photo.id}';
+    final String groupKey = photo.ingestId ?? 'photo:${photo.id}';
     final DateTime? current = groupTimes[groupKey];
     if (current == null || photo.uploadedAt.isAfter(current)) {
       groupTimes[groupKey] = photo.uploadedAt;
@@ -104,8 +104,8 @@ List<CapturedPhoto> buildCapturedPhotos({
       if (byDate != 0) {
         return byDate;
       }
-      final String leftGroup = left.batchId ?? 'photo:${left.id}';
-      final String rightGroup = right.batchId ?? 'photo:${right.id}';
+      final String leftGroup = left.ingestId ?? 'photo:${left.id}';
+      final String rightGroup = right.ingestId ?? 'photo:${right.id}';
       if (leftGroup == rightGroup) {
         final int byOrdinal = left.ordinal.compareTo(right.ordinal);
         return byOrdinal != 0 ? byOrdinal : left.id.compareTo(right.id);

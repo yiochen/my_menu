@@ -9,6 +9,17 @@ import 'package:mymenu/shared/widgets/dish_artwork.dart';
 import 'package:mymenu/shared/widgets/local_write_feedback.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
+const Set<String> _legacyGeneratedDescriptions = <String>{
+  'Created from selected capture photos.',
+  'Created from a photo capture.',
+  'Created from a mocked photo capture.',
+};
+
+String _editableDescription(Dish dish) {
+  final String description = dish.description.trim();
+  return _legacyGeneratedDescriptions.contains(description) ? '' : description;
+}
+
 class DishDetailHero extends StatefulWidget {
   const DishDetailHero({required this.dish, super.key});
 
@@ -23,7 +34,7 @@ class _DishDetailHeroState extends State<DishDetailHero> {
     text: widget.dish.title,
   );
   late final TextEditingController _descriptionController =
-      TextEditingController(text: widget.dish.description);
+      TextEditingController(text: _editableDescription(widget.dish));
   bool _editing = false;
   bool _saving = false;
 
@@ -58,6 +69,7 @@ class _DishDetailHeroState extends State<DishDetailHero> {
             Hero(
               key: ValueKey<String>('dish_detail_artwork_hero_${dish.id}'),
               tag: dishArtworkHeroTag(dish.id),
+              flightShuttleBuilder: dishArtworkFlightShuttleBuilder,
               child: DishArtwork(dish: dish),
             ),
             const DecoratedBox(
@@ -149,7 +161,7 @@ class _DishDetailHeroState extends State<DishDetailHero> {
 
   void _resetControllers() {
     _titleController.text = dish.title;
-    _descriptionController.text = dish.description;
+    _descriptionController.text = _editableDescription(dish);
   }
 }
 
@@ -317,15 +329,17 @@ class _HeroCaption extends StatelessWidget {
                 fontSize: 31,
               ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          dish.description,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.white,
-              ),
-        ),
+        if (_editableDescription(dish).isNotEmpty) ...<Widget>[
+          const SizedBox(height: 8),
+          Text(
+            _editableDescription(dish),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.white,
+                ),
+          ),
+        ],
       ],
     );
   }

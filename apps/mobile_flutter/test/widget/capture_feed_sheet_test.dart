@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mymenu/domain/capture/capture_batch.dart';
+import 'package:mymenu/domain/capture/capture_ingest.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/menu/my_menu_state.dart';
@@ -49,14 +49,14 @@ void main() {
     final List<CaptureItem> items = <CaptureItem>[
       CaptureItem(
         id: 'pending_a',
-        batchId: 'pending_batch',
+        ingestId: 'pending_batch',
         kind: CaptureItemKind.photo,
         status: CaptureItemStatus.pendingUpload,
         createdAt: now,
       ),
       CaptureItem(
         id: 'pending_b',
-        batchId: 'pending_batch',
+        ingestId: 'pending_batch',
         ordinal: 1,
         kind: CaptureItemKind.photo,
         status: CaptureItemStatus.uploading,
@@ -65,10 +65,10 @@ void main() {
     ];
     final MyMenuState state = MyMenuState.forTesting(
       captureItems: items,
-      captureBatches: <CaptureBatch>[
-        CaptureBatch(
+      captureIngests: <CaptureIngest>[
+        CaptureIngest(
           id: 'pending_batch',
-          status: CaptureBatchStatus.uploading,
+          status: CaptureIngestStatus.uploading,
           createdAt: now,
           updatedAt: now,
           items: items,
@@ -100,11 +100,11 @@ void main() {
     expect(find.textContaining('phone’s library'), findsOneWidget);
 
     await tester.tap(
-      find.byKey(const ValueKey<String>('confirm_remove_capture_batch')),
+      find.byKey(const ValueKey<String>('confirm_remove_capture_ingest')),
     );
     await tester.pumpAndSettle();
 
-    expect(state.captureBatches, isEmpty);
+    expect(state.captureIngests, isEmpty);
     expect(state.captureItems, isEmpty);
     expect(find.text('No captures yet.'), findsOneWidget);
   });
@@ -123,10 +123,10 @@ MyMenuState _state() {
       _dish('dish_b', 'Charred Corn Ramen'),
     ],
     captureItems: items,
-    captureBatches: <CaptureBatch>[
-      CaptureBatch(
+    captureIngests: <CaptureIngest>[
+      CaptureIngest(
         id: 'batch_1',
-        status: CaptureBatchStatus.applied,
+        status: CaptureIngestStatus.applied,
         createdAt: now,
         updatedAt: now,
         items: items,
@@ -143,7 +143,7 @@ CaptureItem _capture(
 ) {
   return CaptureItem(
     id: id,
-    batchId: 'batch_1',
+    ingestId: 'batch_1',
     ordinal: ordinal,
     kind: CaptureItemKind.photo,
     status: CaptureItemStatus.applied,
@@ -161,7 +161,6 @@ Dish _dish(String id, String title) {
     category: 'Captured',
     prepMinutes: 0,
     difficulty: 'Not set',
-    madeCount: 1,
     lastMadeLabel: 'Today',
     ingredients: const <String>[],
     recipeSteps: const <String>[],

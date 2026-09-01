@@ -11,11 +11,10 @@ extension ProcessingCoordinatorCovers on ProcessingCoordinator {
         final bool rightManual =
             right.payload['origin'] == CoverOrigin.manual.name;
         if (leftManual != rightManual) return leftManual ? -1 : 1;
-        final String? leftBatch =
-            left.payload['automaticCaptureBatchId'] as String?;
-        final String? rightBatch =
-            right.payload['automaticCaptureBatchId'] as String?;
-        if (!leftManual && leftBatch != null && leftBatch == rightBatch) {
+        final String? leftIngest = left.payload['automaticIngestId'] as String?;
+        final String? rightIngest =
+            right.payload['automaticIngestId'] as String?;
+        if (!leftManual && leftIngest != null && leftIngest == rightIngest) {
           final int leftOrdinal =
               left.payload['automaticCaptureOrdinal'] as int? ?? 1 << 30;
           final int rightOrdinal =

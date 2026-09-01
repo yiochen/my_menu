@@ -64,17 +64,17 @@ class PhotoSelectionBar extends StatelessWidget {
 void showPhotoUndoSnackBar(
   BuildContext context,
   MyMenuState state,
-  String? batchId,
+  String? ingestId,
   String message,
 ) {
-  if (batchId == null) return;
+  if (ingestId == null) return;
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(message),
       action: SnackBarAction(
         label: 'Undo',
         onPressed: () => unawaited(
-          state.undoLatestCaptureCorrection(batchId),
+          state.undoLatestCaptureCorrection(ingestId),
         ),
       ),
     ),

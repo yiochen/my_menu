@@ -58,11 +58,11 @@ extension MyMenuDishEdits on MyMenuState {
       final CaptureItem capture = _captureItems.firstWhere(
         (CaptureItem capture) => capture.id == item.captureId,
       );
-      if (capture.batchId == null) {
+      if (capture.ingestId == null) {
         return;
       }
       await repositories.captureCorrectionRepository.assignCaptures(
-        batchId: capture.batchId!,
+        ingestId: capture.ingestId!,
         captureIds: <String>[capture.id],
         targetDishId: dishId,
       );
@@ -73,7 +73,7 @@ extension MyMenuDishEdits on MyMenuState {
     _reviewItems = _reviewItems
         .where((ReviewItem review) => review.id != reviewId)
         .toList(growable: false);
-    _attachCook(
+    _attachCapture(
       dishId,
       item.summary,
       imageRef: item.imageRef,
@@ -124,11 +124,11 @@ extension MyMenuDishEdits on MyMenuState {
       final CaptureItem capture = _captureItems.firstWhere(
         (CaptureItem capture) => capture.id == item.captureId,
       );
-      if (capture.batchId == null) {
+      if (capture.ingestId == null) {
         return;
       }
       await repositories.captureCorrectionRepository.assignCapturesToNewDish(
-        batchId: capture.batchId!,
+        ingestId: capture.ingestId!,
         captureIds: <String>[capture.id],
         title: 'Captured Dish',
       );
@@ -171,7 +171,6 @@ extension MyMenuDishEdits on MyMenuState {
       category: 'Ideas',
       prepMinutes: 0,
       difficulty: 'Draft',
-      madeCount: 0,
       lastMadeLabel: 'Not cooked yet',
       ingredients: const <String>[],
       recipeSteps: const <String>[],

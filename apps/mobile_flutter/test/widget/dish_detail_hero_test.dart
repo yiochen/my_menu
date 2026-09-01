@@ -90,6 +90,35 @@ void main() {
     expect(find.text('Use existing'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('generated fallback description is hidden but editable', (
+    WidgetTester tester,
+  ) async {
+    final Dish dish = seededDishes.first.copyWith(
+      heroImageUrl: '',
+      description: 'Created from selected capture photos.',
+    );
+    final MyMenuState state = MyMenuState.forTesting(dishes: <Dish>[dish]);
+    addTearDown(state.dispose);
+    await _pumpHero(tester, state, dish.id);
+
+    expect(find.text('Created from selected capture photos.'), findsNothing);
+    expect(
+      find.byKey(const ValueKey<String>('dish_description_field')),
+      findsNothing,
+    );
+
+    await tester.tap(find.byKey(const ValueKey<String>('dish_edit_button')));
+    await tester.pump();
+
+    final Finder descriptionField =
+        find.byKey(const ValueKey<String>('dish_description_field'));
+    expect(descriptionField, findsOneWidget);
+    expect(
+      tester.widget<TextField>(descriptionField).controller?.text,
+      isEmpty,
+    );
+  });
 }
 
 Future<void> _pumpHero(

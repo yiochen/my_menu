@@ -71,7 +71,7 @@ class DishCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    '${dish.prepMinutes} min · ${dish.category} · Made ${dish.madeCount} times',
+                    '${dish.prepMinutes} min · ${dish.category}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall,

@@ -560,7 +560,11 @@ void main() {
         await tester.tap(linguineCard);
         await tester.pumpAndSettle();
 
-        expect(find.text('Cook again'), findsOneWidget);
+        expect(find.text('Cook again'), findsNothing);
+        expect(
+          find.byKey(const ValueKey<String>('dish_cook_count')),
+          findsNothing,
+        );
         expect(find.text('Journal'), findsOneWidget);
         await tester.scrollUntilVisible(
           find.byKey(const ValueKey<String>('journal_add_note')),
@@ -633,12 +637,17 @@ void main() {
         final Container menuCard = tester.widget(
           find.byKey(const ValueKey<String>('menu_dish_dish_salmon')),
         );
-        final BoxDecoration cardDecoration =
-            menuCard.decoration! as BoxDecoration;
-        final BoxDecoration cardForeground =
-            menuCard.foregroundDecoration! as BoxDecoration;
-        expect(cardForeground.border, isNotNull);
-        expect(cardDecoration.boxShadow, isNotEmpty);
+        expect(menuCard.decoration, isNull);
+        expect(menuCard.foregroundDecoration, isNull);
+        final ClipRRect artworkClip = tester.widget(
+          find.byKey(
+            const ValueKey<String>('menu_dish_artwork_clip_dish_salmon'),
+          ),
+        );
+        expect(
+          artworkClip.borderRadius,
+          const BorderRadius.all(Radius.circular(20)),
+        );
         final Finder compactSearch = find.byKey(
           const ValueKey<String>('menu_compact_search_header'),
         );

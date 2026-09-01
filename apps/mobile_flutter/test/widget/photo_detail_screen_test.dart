@@ -16,7 +16,7 @@ void main() {
         home: PhotoDetailScreen(
           photo: photo,
           dishes: const [],
-          batchSiblingCount: 2,
+          ingestSiblingCount: 2,
           canUndo: false,
         ),
       ),
@@ -65,7 +65,7 @@ void main() {
 CapturedPhoto _quotaPhoto() => CapturedPhoto(
       item: CaptureItem(
         id: 'capture-quota',
-        batchId: 'batch-quota',
+        ingestId: 'batch-quota',
         kind: CaptureItemKind.photo,
         status: CaptureItemStatus.failed,
         createdAt: DateTime(2026, 8, 11),

@@ -25,7 +25,6 @@ void main() {
       category: 'Pasta',
       prepMinutes: 0,
       difficulty: 'Not set',
-      madeCount: 0,
       lastMadeLabel: 'Not cooked yet',
       ingredients: const <String>[],
       recipeSteps: const <String>[],
@@ -52,7 +51,6 @@ void main() {
       category: 'Ideas',
       prepMinutes: 0,
       difficulty: 'Draft',
-      madeCount: 0,
       lastMadeLabel: 'Not cooked yet',
       ingredients: const <String>[],
       recipeSteps: const <String>[],
@@ -88,7 +86,6 @@ void main() {
       category: 'Dinner',
       prepMinutes: 20,
       difficulty: 'Easy',
-      madeCount: 1,
       lastMadeLabel: 'Today',
       ingredients: const <String>[],
       recipeSteps: const <String>[],
@@ -120,7 +117,34 @@ void main() {
       tester.widget<AppImage>(find.byType(AppImage)).placeholderImageRef,
       '/placeholders/menu-dish.jpg',
     );
+    expect(find.text('Menu Dish'), findsOneWidget);
+    expect(find.text('1 cook · 0 photos'), findsNothing);
+    expect(find.text('Last made Today'), findsNothing);
     expect(find.byType(CoverGenerationEffect), findsNothing);
+
+    final Container card = tester.widget<Container>(
+      find.byKey(const ValueKey<String>('menu_dish_menu-dish')),
+    );
+    expect(card.decoration, isNull);
+
+    final Finder artwork = find.byKey(
+      const ValueKey<String>('menu_dish_artwork_clip_menu-dish'),
+    );
+    final ClipRRect artworkClip = tester.widget<ClipRRect>(artwork);
+    expect(
+      artworkClip.borderRadius,
+      const BorderRadius.all(Radius.circular(20)),
+    );
+
+    final Finder title = find.byKey(
+      const ValueKey<String>('menu_dish_title_menu-dish'),
+    );
+    final Text titleWidget = tester.widget<Text>(title);
+    expect(titleWidget.style?.fontWeight, FontWeight.w600);
+    final Rect titleRect = tester.getRect(title);
+    final Rect artworkRect = tester.getRect(artwork);
+    expect(titleRect.left, artworkRect.left);
+    expect(titleRect.right, artworkRect.right);
   });
 
   testWidgets('active cover generation applies the contained effect', (
@@ -134,7 +158,6 @@ void main() {
       category: 'Dinner',
       prepMinutes: 20,
       difficulty: 'Easy',
-      madeCount: 1,
       lastMadeLabel: 'Today',
       ingredients: const <String>[],
       recipeSteps: const <String>[],

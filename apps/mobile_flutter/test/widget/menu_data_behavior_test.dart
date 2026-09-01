@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/app/app.dart';
-import 'package:mymenu/domain/capture/capture_batch.dart';
+import 'package:mymenu/domain/capture/capture_ingest.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/dishes/seeded_dishes.dart';
@@ -88,6 +88,13 @@ void main() {
       'Newest dish',
       'Older dish',
     ]);
+
+    expect(find.text('Newest'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const ValueKey<String>('menu_sort_button')),
+    );
+    await tester.pump();
+    expect(find.text('Oldest'), findsOneWidget);
   });
 
   testWidgets('new badge is recent-only and clears after opening with a Hero', (
@@ -117,6 +124,16 @@ void main() {
     await tester.tap(
       find.byKey(ValueKey<String>('menu_dish_${newDish.id}')),
     );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    final ClipRRect flightClip = tester.widget<ClipRRect>(
+      find.byKey(
+        const ValueKey<String>('dish_artwork_hero_flight_clip'),
+      ),
+    );
+    final BorderRadius flightRadius = flightClip.borderRadius as BorderRadius;
+    expect(flightRadius.topLeft.x, greaterThan(20));
+    expect(flightRadius.topLeft.x, lessThan(28));
     await tester.pumpAndSettle();
 
     final Hero detailHero = tester.widget<Hero>(
@@ -136,7 +153,7 @@ void main() {
     final DateTime now = DateTime.utc(2026, 7, 27, 12);
     final CaptureItem capture = CaptureItem(
       id: 'capture_1',
-      batchId: 'batch_1',
+      ingestId: 'batch_1',
       kind: CaptureItemKind.photo,
       status: CaptureItemStatus.uploading,
       createdAt: now,
@@ -144,10 +161,10 @@ void main() {
     );
     final MyMenuState state = MyMenuState.forTesting(
       dishes: <Dish>[seededDishes.first],
-      captureBatches: <CaptureBatch>[
-        CaptureBatch(
+      captureIngests: <CaptureIngest>[
+        CaptureIngest(
           id: 'batch_1',
-          status: CaptureBatchStatus.uploading,
+          status: CaptureIngestStatus.uploading,
           createdAt: now,
           updatedAt: now,
           items: <CaptureItem>[capture],
@@ -180,27 +197,26 @@ void main() {
     WidgetTester tester,
   ) async {
     final Dish dish = seededDishes.first.copyWith(
-      madeCount: 2,
       sourcePhotos: <SourcePhoto>[
         SourcePhoto(
           id: 'photo_1',
           url: 'https://example.com/1.jpg',
           capturedLabel: 'Jul 27',
-          cookingOccasionId: 'occasion_new',
+          ingestId: 'occasion_new',
           capturedAt: DateTime.utc(2026, 7, 27, 12),
         ),
         SourcePhoto(
           id: 'photo_2',
           url: 'https://example.com/2.jpg',
           capturedLabel: 'Jul 27',
-          cookingOccasionId: 'occasion_new',
+          ingestId: 'occasion_new',
           capturedAt: DateTime.utc(2026, 7, 27, 12, 1),
         ),
         SourcePhoto(
           id: 'photo_3',
           url: 'https://example.com/3.jpg',
           capturedLabel: 'Jul 20',
-          cookingOccasionId: 'occasion_old',
+          ingestId: 'occasion_old',
           capturedAt: DateTime.utc(2026, 7, 20, 18),
         ),
       ],
@@ -240,7 +256,6 @@ void main() {
     WidgetTester tester,
   ) async {
     final Dish idea = seededDishes.first.copyWith(
-      madeCount: 0,
       notes: const <DishNote>[],
       sourcePhotos: const <SourcePhoto>[],
     );
@@ -262,7 +277,6 @@ void main() {
     final Dish idea = seededDishes.first.copyWith(
       id: 'idea',
       title: 'Dinner idea',
-      madeCount: 0,
       sourcePhotos: const <SourcePhoto>[],
     );
     final Dish cooked = seededDishes.last.copyWith(
@@ -308,17 +322,17 @@ void main() {
     final DateTime now = DateTime.utc(2026, 7, 28);
     final CaptureItem capture = CaptureItem(
       id: 'capture_processing',
-      batchId: 'batch_processing',
+      ingestId: 'batch_processing',
       kind: CaptureItemKind.photo,
       status: CaptureItemStatus.uploading,
       createdAt: now,
     );
     final MyMenuState state = MyMenuState.forTesting(
       dishes: <Dish>[seededDishes.first, seededDishes.last],
-      captureBatches: <CaptureBatch>[
-        CaptureBatch(
+      captureIngests: <CaptureIngest>[
+        CaptureIngest(
           id: 'batch_processing',
-          status: CaptureBatchStatus.uploading,
+          status: CaptureIngestStatus.uploading,
           createdAt: now,
           updatedAt: now,
           items: <CaptureItem>[capture],
@@ -400,7 +414,6 @@ void main() {
     final Dish idea = seededDishes.first.copyWith(
       id: 'idea_to_delete',
       title: 'Dinner idea',
-      madeCount: 0,
       sourcePhotos: const <SourcePhoto>[],
     );
     final MyMenuState state = MyMenuState.forTesting(dishes: <Dish>[idea]);
@@ -461,7 +474,6 @@ void main() {
     final Dish idea = seededDishes.first.copyWith(
       id: 'idea_to_keep',
       title: 'Keep this idea',
-      madeCount: 0,
       sourcePhotos: const <SourcePhoto>[],
     );
     final MyMenuState state = MyMenuState.forTesting(dishes: <Dish>[idea]);

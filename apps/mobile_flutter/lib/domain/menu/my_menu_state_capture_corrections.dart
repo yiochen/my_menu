@@ -1,10 +1,10 @@
 part of 'my_menu_state.dart';
 
 extension MyMenuStateCaptureCorrections on MyMenuState {
-  CaptureCorrection? latestCaptureCorrection(String batchId) {
+  CaptureCorrection? latestCaptureCorrection(String ingestId) {
     final List<CaptureCorrection> matches = _captureCorrections
         .where(
-          (CaptureCorrection correction) => correction.batchId == batchId,
+          (CaptureCorrection correction) => correction.ingestId == ingestId,
         )
         .toList(growable: false)
       ..sort(
@@ -29,7 +29,7 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
   }
 
   Future<CaptureCorrection?> moveCapturePhotos({
-    required String batchId,
+    required String ingestId,
     required List<String> captureIds,
     required String targetDishId,
   }) async {
@@ -39,7 +39,7 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
     }
     final CaptureCorrection? correction =
         await repositories.captureCorrectionRepository.moveCaptures(
-      batchId: batchId,
+      ingestId: ingestId,
       captureIds: captureIds,
       targetDishId: targetDishId,
     );
@@ -49,7 +49,7 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
   }
 
   Future<CaptureCorrection?> splitCapturePhotos({
-    required String batchId,
+    required String ingestId,
     required List<String> captureIds,
     required String title,
   }) async {
@@ -59,7 +59,7 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
     }
     final CaptureCorrection? correction =
         await repositories.captureCorrectionRepository.splitCaptures(
-      batchId: batchId,
+      ingestId: ingestId,
       captureIds: captureIds,
       title: title,
     );
@@ -68,7 +68,7 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
   }
 
   Future<CaptureCorrection?> assignUnclassifiedPhotos({
-    required String batchId,
+    required String ingestId,
     required List<String> captureIds,
     required String targetDishId,
   }) async {
@@ -78,7 +78,7 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
     }
     final CaptureCorrection? correction =
         await repositories.captureCorrectionRepository.assignCaptures(
-      batchId: batchId,
+      ingestId: ingestId,
       captureIds: captureIds,
       targetDishId: targetDishId,
     );
@@ -87,7 +87,7 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
   }
 
   Future<CaptureCorrection?> assignUnclassifiedPhotosToNewDish({
-    required String batchId,
+    required String ingestId,
     required List<String> captureIds,
     required String title,
   }) async {
@@ -97,7 +97,7 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
     }
     final CaptureCorrection? correction =
         await repositories.captureCorrectionRepository.assignCapturesToNewDish(
-      batchId: batchId,
+      ingestId: ingestId,
       captureIds: captureIds,
       title: title,
     );
@@ -106,7 +106,7 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
   }
 
   Future<CaptureCorrection?> undoLatestCaptureCorrection(
-    String batchId, {
+    String ingestId, {
     String? captureId,
   }) async {
     final AppRepositories? repositories = _repositories;
@@ -115,7 +115,7 @@ extension MyMenuStateCaptureCorrections on MyMenuState {
     }
     final CaptureCorrection? correction =
         await repositories.captureCorrectionRepository.undoLatest(
-      batchId,
+      ingestId,
       captureId: captureId,
     );
     await _reloadFromRepositories();

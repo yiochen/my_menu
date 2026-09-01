@@ -32,7 +32,7 @@ extension DishRepositoryInserts on DishRepository {
           placeholderUrl: Value<String?>(photo.placeholderUrl),
           capturedLabel: photo.capturedLabel,
           captureId: Value<String?>(photo.captureId),
-          cookingOccasionId: Value<String?>(photo.cookingOccasionId),
+          ingestId: Value<String?>(photo.ingestId),
           capturedAt: Value<DateTime?>(photo.capturedAt),
           confidenceLabel: Value<String?>(photo.confidenceLabel),
         ),

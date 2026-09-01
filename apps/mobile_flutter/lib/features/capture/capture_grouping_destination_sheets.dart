@@ -179,9 +179,7 @@ class _DishDestinationTile extends StatelessWidget {
             ),
           ),
           title: Text(dish.title),
-          subtitle: Text(
-            '${dish.madeCount} ${dish.madeCount == 1 ? 'cook' : 'cooks'}',
-          ),
+          subtitle: Text(dish.category),
           trailing: const Icon(
             Icons.arrow_forward_rounded,
             color: MyMenuColors.orangeDark,

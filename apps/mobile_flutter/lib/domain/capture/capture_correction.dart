@@ -7,7 +7,7 @@ enum CaptureCorrectionStatus { applied, failed, undone }
 class CaptureCorrection {
   const CaptureCorrection({
     required this.id,
-    required this.batchId,
+    required this.ingestId,
     required this.type,
     required this.captureIds,
     required this.previousDishIds,
@@ -24,7 +24,7 @@ class CaptureCorrection {
   });
 
   final String id;
-  final String batchId;
+  final String ingestId;
   final CaptureCorrectionType type;
   final List<String> captureIds;
   final Map<String, String> previousDishIds;

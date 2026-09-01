@@ -75,7 +75,7 @@ class CaptureFailedView extends StatelessWidget {
       topLabel: 'Organization paused',
       headline: 'Your photos are still safe',
       description:
-          'MyMenu could not organize this batch yet. Nothing was deleted.',
+          'MyMenu could not organize these photos yet. Nothing was deleted.',
       art: const CaptureResultIcon(
         icon: Icons.error_outline_rounded,
         color: MyMenuColors.red,

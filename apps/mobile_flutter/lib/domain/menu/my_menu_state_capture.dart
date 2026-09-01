@@ -33,16 +33,56 @@ List<ReviewItem> _reviewItemsWithPhotoCaptures(
   ];
 }
 
+extension MyMenuStateMockCapture on MyMenuState {
+  void _attachCapture(
+    String dishId,
+    String note, {
+    String? imageRef,
+    bool notify = true,
+  }) {
+    _dishes = _dishes.map((Dish dish) {
+      if (dish.id != dishId) {
+        return dish;
+      }
+      return dish.copyWith(
+        lastMadeLabel: 'Today',
+        notes: <DishNote>[
+          ...dish.notes,
+          DishNote(
+            id: '${dish.id}_note_${DateTime.now().microsecondsSinceEpoch}',
+            dishId: dish.id,
+            body: note,
+            position: dish.notes.length,
+          ),
+        ],
+        sourcePhotos: <SourcePhoto>[
+          SourcePhoto(
+            url: imageRef ??
+                (dish.sourcePhotos.isEmpty
+                    ? dish.heroImageUrl
+                    : dish.sourcePhotos.first.url),
+            capturedLabel: 'Today',
+            confidenceLabel: '86%',
+          ),
+          ...dish.sourcePhotos,
+        ],
+      );
+    }).toList(growable: false);
+    if (notify) {
+      _notifyChanged();
+    }
+  }
+}
+
 Dish _dishFromPhotoReview(ReviewItem item, String dishId) {
   return Dish(
     id: dishId,
     title: 'Captured Dish',
-    description: 'Created from a photo capture.',
+    description: '',
     heroImageUrl: item.imageRef!,
     category: 'Captured',
     prepMinutes: 0,
     difficulty: 'Draft',
-    madeCount: 1,
     lastMadeLabel: 'Today',
     ingredients: const <String>[],
     recipeSteps: const <String>[],

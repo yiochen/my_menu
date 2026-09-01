@@ -169,7 +169,6 @@ The target local model includes:
 - `recipe_steps` or an intentionally embedded step representation
 - `source_photos`
 - `planned_meals`
-- `capture_batches`
 - `capture_items`
 - `capture_corrections` when needed for undo/history
 - `review_items`
@@ -177,6 +176,9 @@ The target local model includes:
 
 Cooking-domain IDs remain client-generated UUIDs. They are useful as opaque
 references inside one processing request but are never remote canonical IDs.
+`capture_items.ingest_id` is a correlation ID for captures submitted together;
+it does not identify a cooking event or require a parent table. Ingest lifecycle
+is derived from the correlated items and their `processing_outbox` request.
 
 ### Columns to Remove or Reinterpret
 
@@ -238,7 +240,8 @@ corrections, and dish deletion.
 For photo capture:
 
 1. Copy/import the original photo into the app file store.
-2. Persist the capture batch/items and original local capture date.
+2. Persist the capture items with one correlation `ingest_id` and each original
+   local capture date.
 3. If AI consent is enabled, create a local processing-outbox entry in the same
    database transaction.
 4. Close the capture UI as soon as the local save succeeds.
@@ -324,7 +327,7 @@ ID.
 - every automatic grouping adoption remains locally undoable
 
 If adoption is replayed after a crash, it must detect that the proposal was
-already applied rather than create duplicate dishes or cooking occasions.
+already applied rather than create duplicate dishes or source associations.
 
 ## Processing Outbox
 

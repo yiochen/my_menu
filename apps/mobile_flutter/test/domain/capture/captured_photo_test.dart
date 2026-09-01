@@ -37,7 +37,7 @@ void main() {
       captureItems: <CaptureItem>[
         _photo('review', status: CaptureItemStatus.needsReview),
         _photo('failed', status: CaptureItemStatus.failed),
-        _photo('organizing', batchId: 'working'),
+        _photo('organizing', ingestId: 'working'),
         _photo('plain'),
         _photo('organized', dishId: 'dish_1'),
       ],
@@ -82,18 +82,18 @@ void main() {
       captureItems: <CaptureItem>[
         _photo(
           'batch-a-first',
-          batchId: 'batch-a',
+          ingestId: 'batch-a',
           capturedAt: DateTime.utc(2026, 8, 2, 8),
         ),
         _photo(
           'batch-a-second',
-          batchId: 'batch-a',
+          ingestId: 'batch-a',
           ordinal: 1,
           capturedAt: DateTime.utc(2026, 8, 2, 10),
         ),
         _photo(
           'batch-b',
-          batchId: 'batch-b',
+          ingestId: 'batch-b',
           capturedAt: DateTime.utc(2026, 8, 2, 9),
         ),
       ],
@@ -110,13 +110,13 @@ void main() {
       captureItems: <CaptureItem>[
         _photo(
           'shot-recently-uploaded-earlier',
-          batchId: 'earlier-upload',
+          ingestId: 'earlier-upload',
           createdAt: DateTime(2026, 8, 2, 12),
           capturedAt: DateTime(2026, 8, 2, 11),
         ),
         _photo(
           'shot-years-ago-uploaded-today',
-          batchId: 'latest-upload',
+          ingestId: 'latest-upload',
           createdAt: DateTime(2026, 8, 3, 12),
           capturedAt: DateTime(2020, 1, 1, 11),
           capturedLocalDate: '2020-01-01',
@@ -142,7 +142,7 @@ void main() {
       captureItems: <CaptureItem>[
         _photo(
           'expired',
-          batchId: 'expired-batch',
+          ingestId: 'expired-batch',
           status: CaptureItemStatus.classifying,
         ),
       ],
@@ -168,7 +168,7 @@ void main() {
       captureItems: <CaptureItem>[
         _photo(
           'quota-limited',
-          batchId: 'quota-batch',
+          ingestId: 'quota-batch',
           status: CaptureItemStatus.failed,
         ),
       ],
@@ -195,7 +195,7 @@ void main() {
 CaptureItem _photo(
   String id, {
   int ordinal = 0,
-  String batchId = 'batch',
+  String ingestId = 'batch',
   String? dishId,
   CaptureItemStatus status = CaptureItemStatus.localOnly,
   DateTime? createdAt,
@@ -204,7 +204,7 @@ CaptureItem _photo(
 }) {
   return CaptureItem(
     id: id,
-    batchId: batchId,
+    ingestId: ingestId,
     ordinal: ordinal,
     kind: CaptureItemKind.photo,
     status: status,
@@ -225,7 +225,6 @@ Dish _dish(String id, String title) {
     category: '',
     prepMinutes: 0,
     difficulty: '',
-    madeCount: 0,
     lastMadeLabel: '',
     ingredients: const <String>[],
     recipeSteps: const <String>[],

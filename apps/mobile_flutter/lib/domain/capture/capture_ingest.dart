@@ -2,7 +2,7 @@ import 'package:mymenu/domain/capture/capture_item.dart';
 
 const String captureWaitingForConnectionReason = 'Waiting for connection.';
 
-enum CaptureBatchStatus {
+enum CaptureIngestStatus {
   local,
   pendingUpload,
   uploading,
@@ -13,8 +13,8 @@ enum CaptureBatchStatus {
   discarded,
 }
 
-class CaptureBatch {
-  const CaptureBatch({
+class CaptureIngest {
+  const CaptureIngest({
     required this.id,
     required this.status,
     required this.createdAt,
@@ -24,7 +24,7 @@ class CaptureBatch {
   });
 
   final String id;
-  final CaptureBatchStatus status;
+  final CaptureIngestStatus status;
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<CaptureItem> items;

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/core/database/app_database.dart';
 import 'package:mymenu/core/network/processing_api_client.dart';
-import 'package:mymenu/domain/capture/capture_batch.dart';
+import 'package:mymenu/domain/capture/capture_ingest.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
 import 'package:mymenu/domain/menu/app_repositories.dart';
 import 'package:mymenu/domain/menu/my_menu_state.dart';
@@ -132,7 +132,7 @@ void main() {
     await tester.tap(find.text('Done'));
     await tester.pump(const Duration(milliseconds: 500));
 
-    final CaptureBatch batch = state.captureBatches.single;
+    final CaptureIngest batch = state.captureIngests.single;
     expect(
       batch.items.map((item) => item.localMediaRef).toList(growable: false),
       <String>[
@@ -173,7 +173,7 @@ void main() {
     await tester.tap(find.text('Import Photos'));
     await tester.pump(const Duration(milliseconds: 500));
 
-    final CaptureBatch batch = state.captureBatches.single;
+    final CaptureIngest batch = state.captureIngests.single;
     expect(
       batch.items.map((item) => item.localMediaRef).toList(growable: false),
       mediaService.importRefs,

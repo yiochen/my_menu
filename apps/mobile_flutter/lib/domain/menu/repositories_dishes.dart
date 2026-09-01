@@ -42,6 +42,21 @@ class DishRepository {
       _database.sourcePhotos,
     )..where((db.SourcePhotos table) => table.dishId.isIn(dishIds)))
         .get();
+    final List<String> sourceCaptureIds = sourceRows
+        .map((db.SourcePhotoRow row) => row.captureId)
+        .whereType<String>()
+        .toList(growable: false);
+    final List<db.CaptureItemRow> sourceCaptureRows = sourceCaptureIds.isEmpty
+        ? const <db.CaptureItemRow>[]
+        : await (_database.select(_database.captureItems)
+              ..where(
+                (db.CaptureItems table) => table.id.isIn(sourceCaptureIds),
+              ))
+            .get();
+    final Map<String, DateTime> sourceAddedAtByCaptureId = <String, DateTime>{
+      for (final db.CaptureItemRow row in sourceCaptureRows)
+        row.id: row.createdAt,
+    };
     final List<db.DishNoteRow> noteRows = await (_database.select(
       _database.dishNotes,
     )
@@ -55,9 +70,13 @@ class DishRepository {
     final Map<String, List<SourcePhoto>> sourcesByDishId =
         <String, List<SourcePhoto>>{};
     for (final db.SourcePhotoRow row in sourceRows) {
-      sourcesByDishId
-          .putIfAbsent(row.dishId, () => <SourcePhoto>[])
-          .add(row.toDomain());
+      sourcesByDishId.putIfAbsent(row.dishId, () => <SourcePhoto>[]).add(
+            row.toDomain(
+              addedAt: row.captureId == null
+                  ? null
+                  : sourceAddedAtByCaptureId[row.captureId!],
+            ),
+          );
     }
     final Map<String, List<DishNote>> notesByDishId =
         <String, List<DishNote>>{};
@@ -177,8 +196,8 @@ class DishRepository {
         await _relatedCorrections(ids, captureRows);
     final List<String> captureIds =
         captureRows.map((db.CaptureItemRow row) => row.id).toList();
-    final Set<String> batchIds = captureRows
-        .map((db.CaptureItemRow row) => row.batchId)
+    final Set<String> ingestIds = captureRows
+        .map((db.CaptureItemRow row) => row.ingestId)
         .whereType<String>()
         .toSet();
 
@@ -228,14 +247,14 @@ class DishRepository {
             ..where((db.Dishes table) => table.id.isIn(ids)))
           .go();
 
-      for (final String batchId in batchIds) {
+      for (final String ingestId in ingestIds) {
         final Expression<int> countExpression =
             _database.captureItems.id.count();
         final int remaining = await (_database.selectOnly(
           _database.captureItems,
         )
               ..addColumns(<Expression<Object>>[countExpression])
-              ..where(_database.captureItems.batchId.equals(batchId)))
+              ..where(_database.captureItems.ingestId.equals(ingestId)))
             .map(
               (TypedResult row) => row.read(countExpression) ?? 0,
             )
@@ -243,11 +262,9 @@ class DishRepository {
         if (remaining != 0) {
           continue;
         }
-        await (_database.delete(_database.captureBatches)
-              ..where(
-                (db.CaptureBatches table) => table.id.equals(batchId),
-              ))
-            .go();
+        await ProcessingOutboxRepository(
+          _database,
+        ).supersedeCaptureGrouping(ingestId);
       }
     });
 

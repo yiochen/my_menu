@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/shared/widgets/app_image.dart';
-import 'package:mymenu/shared/widgets/warm_components.dart';
 
 class DishHistoryContent extends StatelessWidget {
   const DishHistoryContent({
@@ -18,14 +17,15 @@ class DishHistoryContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<_CookingOccasion> occasions = _occasionsFor(dish);
-    if (occasions.isEmpty && dish.notes.isEmpty) {
+    final List<_JournalEntry> entries = _journalEntriesFor(dish);
+    if (entries.isEmpty) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _JournalActions(onAddPhoto: onAddPhoto, onAddNote: onAddNote),
           const SizedBox(height: 12),
-          WarmCard(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
@@ -51,15 +51,14 @@ class DishHistoryContent extends StatelessWidget {
       children: <Widget>[
         _JournalActions(onAddPhoto: onAddPhoto, onAddNote: onAddNote),
         const SizedBox(height: 18),
-        for (int index = 0; index < occasions.length; index += 1) ...<Widget>[
-          _InstantPhotoPost(
-            occasion: occasions[index],
-            clockwise: index.isOdd,
-          ),
-          const SizedBox(height: 18),
-        ],
-        for (int index = 0; index < dish.notes.length; index += 1) ...<Widget>[
-          _BulletinNote(note: dish.notes[index]),
+        for (int index = 0; index < entries.length; index += 1) ...<Widget>[
+          if (entries[index].photoGroup case final _PhotoGroup photoGroup)
+            _InstantPhotoPost(
+              photoGroup: photoGroup,
+              clockwise: index.isOdd,
+            )
+          else
+            _BulletinNote(note: entries[index].note!),
           const SizedBox(height: 18),
         ],
       ],
@@ -98,11 +97,11 @@ class _JournalActions extends StatelessWidget {
 
 class _InstantPhotoPost extends StatelessWidget {
   const _InstantPhotoPost({
-    required this.occasion,
+    required this.photoGroup,
     required this.clockwise,
   });
 
-  final _CookingOccasion occasion;
+  final _PhotoGroup photoGroup;
   final bool clockwise;
 
   @override
@@ -110,6 +109,9 @@ class _InstantPhotoPost extends StatelessWidget {
     return Transform.rotate(
       angle: clockwise ? 0.012 : -0.014,
       child: Container(
+        key: ValueKey<String>(
+          'journal_photo_${photoGroup.photos.first.id ?? photoGroup.photos.first.url}',
+        ),
         margin: const EdgeInsets.symmetric(horizontal: 8),
         padding: const EdgeInsets.fromLTRB(10, 10, 10, 16),
         decoration: const BoxDecoration(
@@ -129,24 +131,24 @@ class _InstantPhotoPost extends StatelessWidget {
               aspectRatio: 1.08,
               child: ClipRect(
                 child: AppImage(
-                  imageRef: occasion.photos.first.url,
+                  imageRef: photoGroup.photos.first.url,
                   fit: BoxFit.cover,
                 ),
               ),
             ),
-            if (occasion.photos.length > 1) ...<Widget>[
+            if (photoGroup.photos.length > 1) ...<Widget>[
               const SizedBox(height: 8),
               SizedBox(
                 height: 72,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  itemCount: occasion.photos.length - 1,
+                  itemCount: photoGroup.photos.length - 1,
                   separatorBuilder: (_, __) => const SizedBox(width: 7),
                   itemBuilder: (BuildContext context, int index) {
                     return ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: AppImage(
-                        imageRef: occasion.photos[index + 1].url,
+                        imageRef: photoGroup.photos[index + 1].url,
                         width: 72,
                         height: 72,
                         fit: BoxFit.cover,
@@ -158,7 +160,7 @@ class _InstantPhotoPost extends StatelessWidget {
             ],
             const SizedBox(height: 12),
             Text(
-              _dateLabel(context, occasion),
+              _dateLabel(context, photoGroup),
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
@@ -198,22 +200,74 @@ class _BulletinNote extends StatelessWidget {
   }
 }
 
-class _CookingOccasion {
-  const _CookingOccasion({required this.photos, required this.capturedAt});
+class _PhotoGroup {
+  const _PhotoGroup({
+    required this.photos,
+    required this.capturedAt,
+    required this.addedAt,
+  });
 
   final List<SourcePhoto> photos;
   final DateTime? capturedAt;
+  final DateTime? addedAt;
 }
 
-List<_CookingOccasion> _occasionsFor(Dish dish) {
+class _JournalEntry {
+  const _JournalEntry({
+    required this.addedAt,
+    required this.sequence,
+    this.photoGroup,
+    this.note,
+  });
+
+  final DateTime? addedAt;
+  final int sequence;
+  final _PhotoGroup? photoGroup;
+  final DishNote? note;
+}
+
+List<_JournalEntry> _journalEntriesFor(Dish dish) {
+  final List<_PhotoGroup> photoGroups = _photoGroupsFor(dish);
+  final List<_JournalEntry> entries = <_JournalEntry>[
+    for (int index = 0; index < photoGroups.length; index += 1)
+      _JournalEntry(
+        photoGroup: photoGroups[index],
+        addedAt: photoGroups[index].addedAt,
+        sequence: index,
+      ),
+    for (int index = 0; index < dish.notes.length; index += 1)
+      _JournalEntry(
+        note: dish.notes[index],
+        addedAt: dish.notes[index].createdAt,
+        sequence: photoGroups.length + index,
+      ),
+  ]..sort((_JournalEntry left, _JournalEntry right) {
+      final DateTime? leftDate = left.addedAt;
+      final DateTime? rightDate = right.addedAt;
+      if (leftDate != null && rightDate != null) {
+        final int dateOrder = rightDate.compareTo(leftDate);
+        if (dateOrder != 0) return dateOrder;
+      } else if (leftDate != null) {
+        return -1;
+      } else if (rightDate != null) {
+        return 1;
+      }
+      return right.sequence.compareTo(left.sequence);
+    });
+  return entries;
+}
+
+List<_PhotoGroup> _photoGroupsFor(Dish dish) {
   final Map<String, List<SourcePhoto>> grouped = <String, List<SourcePhoto>>{};
   for (int index = 0; index < dish.sourcePhotos.length; index += 1) {
     final SourcePhoto photo = dish.sourcePhotos[index];
-    final String key = photo.cookingOccasionId ??
-        photo.capturedLabel.trim().toLowerCase().replaceAll(' ', '-');
+    final String key = photo.ingestId ??
+        photo.id ??
+        photo.captureId ??
+        'ungrouped-source-$index';
     grouped.putIfAbsent(key, () => <SourcePhoto>[]).add(photo);
   }
-  final List<_CookingOccasion> occasions = grouped.values.map((
+  final List<_PhotoGroup> photoGroups = grouped.values.map((
     List<SourcePhoto> photos,
   ) {
     final List<DateTime> dates = photos
@@ -221,25 +275,35 @@ List<_CookingOccasion> _occasionsFor(Dish dish) {
         .whereType<DateTime>()
         .toList(growable: false)
       ..sort();
-    return _CookingOccasion(
+    final List<DateTime> addedDates = photos
+        .map((SourcePhoto photo) => photo.addedAt)
+        .whereType<DateTime>()
+        .toList(growable: false)
+      ..sort();
+    return _PhotoGroup(
       photos: photos,
       capturedAt: dates.isEmpty ? null : dates.last,
+      addedAt: addedDates.isNotEmpty
+          ? addedDates.last
+          : dates.isEmpty
+              ? null
+              : dates.last,
     );
   }).toList(growable: false)
-    ..sort((_CookingOccasion left, _CookingOccasion right) {
+    ..sort((_PhotoGroup left, _PhotoGroup right) {
       final DateTime leftDate =
-          left.capturedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          left.addedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
       final DateTime rightDate =
-          right.capturedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          right.addedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
       return rightDate.compareTo(leftDate);
     });
-  return occasions;
+  return photoGroups;
 }
 
-String _dateLabel(BuildContext context, _CookingOccasion occasion) {
-  final DateTime? capturedAt = occasion.capturedAt;
+String _dateLabel(BuildContext context, _PhotoGroup photoGroup) {
+  final DateTime? capturedAt = photoGroup.capturedAt;
   if (capturedAt != null) {
     return MaterialLocalizations.of(context).formatMediumDate(capturedAt);
   }
-  return occasion.photos.first.capturedLabel;
+  return photoGroup.photos.first.capturedLabel;
 }

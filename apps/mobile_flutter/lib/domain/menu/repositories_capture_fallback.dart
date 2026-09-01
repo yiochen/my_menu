@@ -18,7 +18,7 @@ extension CaptureRepositoryFallback on CaptureRepository {
               ))
             .get();
     for (final db.ProcessingOutboxRow request in requests) {
-      await _keepPhotoBatchUnorganized(request.subjectId);
+      await _keepPhotoIngestUnorganized(request.subjectId);
     }
   }
 
@@ -41,18 +41,18 @@ extension CaptureRepositoryFallback on CaptureRepository {
               ))
             .get();
     for (final db.ProcessingOutboxRow request in requests) {
-      await _keepWaitingPhotoBatchLocal(request);
+      await _keepWaitingPhotoIngestLocal(request);
     }
   }
 
-  Future<void> _keepWaitingPhotoBatchLocal(
+  Future<void> _keepWaitingPhotoIngestLocal(
     db.ProcessingOutboxRow request,
   ) async {
     final List<db.CaptureItemRow> items =
         await (_database.select(_database.captureItems)
               ..where(
                 (db.CaptureItems table) =>
-                    table.batchId.equals(request.subjectId) &
+                    table.ingestId.equals(request.subjectId) &
                     table.kind.equals(
                       capture_domain.CaptureItemKind.photo.name,
                     ) &
@@ -66,7 +66,6 @@ extension CaptureRepositoryFallback on CaptureRepository {
     if (items.isEmpty) {
       return;
     }
-    final DateTime now = DateTime.now();
     await _database.transaction(() async {
       for (final db.CaptureItemRow item in items) {
         if (item.appliedDishId != null) {
@@ -86,29 +85,17 @@ extension CaptureRepositoryFallback on CaptureRepository {
           ),
         );
       }
-      await (_database.update(_database.captureBatches)
-            ..where(
-              (db.CaptureBatches table) => table.id.equals(request.subjectId),
-            ))
-          .write(
-        db.CaptureBatchesCompanion(
-          status: Value<String>(CaptureBatchStatus.applied.name),
-          updatedAt: Value<DateTime>(now),
-          failureReason: const Value<String?>(null),
-        ),
-      );
       await _processingOutboxRepository.cancelBeforeUpload(request.id);
       await _processingOutboxRepository.rejectProposal(request.id);
     });
   }
 
-  Future<void> _keepPhotoBatchUnorganized(String batchId) async {
-    final DateTime now = DateTime.now();
+  Future<void> _keepPhotoIngestUnorganized(String ingestId) async {
     await _database.transaction(() async {
       await (_database.update(_database.captureItems)
             ..where(
               (db.CaptureItems table) =>
-                  table.batchId.equals(batchId) &
+                  table.ingestId.equals(ingestId) &
                   table.appliedDishId.isNull() &
                   table.status
                       .equals(
@@ -127,20 +114,6 @@ extension CaptureRepositoryFallback on CaptureRepository {
           status: Value<String>(
             capture_domain.CaptureItemStatus.localOnly.name,
           ),
-          failureReason: const Value<String?>(null),
-        ),
-      );
-      await (_database.update(_database.captureBatches)
-            ..where(
-              (db.CaptureBatches table) =>
-                  table.id.equals(batchId) &
-                  (table.status.equals(CaptureBatchStatus.local.name).not() |
-                      table.failureReason.isNotNull()),
-            ))
-          .write(
-        db.CaptureBatchesCompanion(
-          status: Value<String>(CaptureBatchStatus.local.name),
-          updatedAt: Value<DateTime>(now),
           failureReason: const Value<String?>(null),
         ),
       );

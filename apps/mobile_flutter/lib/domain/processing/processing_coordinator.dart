@@ -9,7 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:mymenu/core/database/app_database.dart' as db;
 import 'package:mymenu/core/files/image_derivative_store.dart';
 import 'package:mymenu/core/network/processing_api_client.dart';
-import 'package:mymenu/domain/capture/capture_batch.dart';
+import 'package:mymenu/domain/capture/capture_ingest.dart';
 import 'package:mymenu/domain/capture/capture_item.dart' as capture_domain;
 import 'package:mymenu/domain/covers/cover_repository.dart';
 import 'package:mymenu/domain/covers/generated_cover.dart';
@@ -55,7 +55,7 @@ typedef CaptureProposalAdopter = Future<void> Function(
 );
 
 abstract interface class CaptureProcessingLocalStore {
-  Future<List<db.CaptureItemRow>> activeItemsForBatch(String batchId);
+  Future<List<db.CaptureItemRow>> activeItemsForIngest(String ingestId);
 
   Future<void> updatePreviewRefs(
     String captureId,
@@ -67,17 +67,11 @@ abstract interface class CaptureProcessingLocalStore {
     capture_domain.CaptureItemStatus status,
   );
 
-  Future<void> markCapturesClassifying(String batchId);
+  Future<void> markCapturesClassifying(String ingestId);
 
-  Future<void> markCapturesPending(String batchId);
+  Future<void> markCapturesPending(String ingestId, {String? failureReason});
 
-  Future<void> markBatchUnorganized(String batchId);
+  Future<void> markIngestUnorganized(String ingestId);
 
-  Future<void> markCapturesFailed(String batchId, String reason);
-
-  Future<void> markBatchStatus(
-    String batchId,
-    CaptureBatchStatus status, {
-    String? failureReason,
-  });
+  Future<void> markCapturesFailed(String ingestId, String reason);
 }

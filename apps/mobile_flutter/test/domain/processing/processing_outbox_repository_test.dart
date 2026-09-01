@@ -5,7 +5,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mymenu/core/database/app_database.dart';
 import 'package:mymenu/core/network/processing_api_client.dart';
-import 'package:mymenu/domain/capture/capture_batch.dart';
+import 'package:mymenu/domain/capture/capture_ingest.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
 import 'package:mymenu/domain/menu/app_repositories.dart';
@@ -30,7 +30,7 @@ void main() {
       processingApiClient: FakeProcessingApiClient(),
     );
 
-    final batch = await firstRepositories.captureRepository.createPhotoBatch(
+    final batch = await firstRepositories.captureRepository.createPhotoIngest(
       <CapturedMedia>[
         CapturedMedia(
           path: '/tmp/capture.jpg',
@@ -52,7 +52,7 @@ void main() {
     );
 
     final captures =
-        await restartedRepositories.captureRepository.listBatches();
+        await restartedRepositories.captureRepository.listIngests();
     final requests =
         await restartedRepositories.processingOutboxRepository.listRequests();
 
@@ -86,7 +86,7 @@ void main() {
       processingApiClient: server,
     );
     await firstRepositories.processingConsentRepository.acceptCurrentNotice();
-    await firstRepositories.captureRepository.createPhotoBatch(
+    await firstRepositories.captureRepository.createPhotoIngest(
       <CapturedMedia>[
         CapturedMedia(
           path: photo.path,
@@ -149,7 +149,7 @@ void main() {
       processingApiClient: server,
     );
     await repositories.processingConsentRepository.acceptCurrentNotice();
-    await repositories.captureRepository.createPhotoBatch(
+    await repositories.captureRepository.createPhotoIngest(
       <CapturedMedia>[
         CapturedMedia(
           path: photo.path,
@@ -277,7 +277,7 @@ void main() {
     );
     await repositories.processingConsentRepository.declineCurrentNotice();
 
-    final batch = await repositories.captureRepository.createPhotoBatch(
+    final batch = await repositories.captureRepository.createPhotoIngest(
       <CapturedMedia>[
         CapturedMedia(
           path: '/tmp/no-ai-one.jpg',
@@ -295,7 +295,7 @@ void main() {
     );
 
     expect(batch, isNotNull);
-    expect(batch!.status, CaptureBatchStatus.applied);
+    expect(batch!.status, CaptureIngestStatus.local);
     expect(
       batch.items.map((CaptureItem item) => item.status),
       everyElement(CaptureItemStatus.localOnly),
@@ -318,7 +318,7 @@ void main() {
       database: database,
       processingApiClient: FakeProcessingApiClient(),
     );
-    await repositories.captureRepository.createPhotoBatch(
+    await repositories.captureRepository.createPhotoIngest(
       <CapturedMedia>[
         CapturedMedia(
           path: '/tmp/already-waiting.jpg',
@@ -334,11 +334,11 @@ void main() {
 
     final dishes = await repositories.dishRepository.listDishes();
     final repairedBatch =
-        (await repositories.captureRepository.listBatches()).single;
+        (await repositories.captureRepository.listIngests()).single;
     final ProcessingOutboxRequest request =
         (await repositories.processingOutboxRepository.listRequests()).single;
     expect(dishes, isEmpty);
-    expect(repairedBatch.status, CaptureBatchStatus.applied);
+    expect(repairedBatch.status, CaptureIngestStatus.local);
     expect(repairedBatch.items.single.status, CaptureItemStatus.localOnly);
     expect(repairedBatch.items.single.appliedDishId, isNull);
     expect(request.deliveryState, ProcessingDeliveryState.canceled);
@@ -433,14 +433,14 @@ void main() {
       processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.processingConsentRepository.acceptCurrentNotice();
-    final String batchId =
+    final String ingestId =
         (await repositories.captureRepository.createIdeaCapture('zaru soba'))!;
     final ProcessingOutboxRequest request =
         (await repositories.processingOutboxRepository.listRequests()).single;
     await repositories.processingOutboxRepository.claimForUpload(request.id);
     await repositories.processingOutboxRepository.markFailed(request.id);
 
-    await repositories.captureRepository.retryBatch(batchId);
+    await repositories.captureRepository.retryIngest(ingestId);
 
     final ProcessingOutboxRequest retried =
         (await repositories.processingOutboxRepository.listRequests()).single;
@@ -465,7 +465,7 @@ void main() {
       database: database,
       processingApiClient: api,
     );
-    await repositories.captureRepository.createPhotoBatch(
+    await repositories.captureRepository.createPhotoIngest(
       <CapturedMedia>[
         CapturedMedia(
           path: photo.path,
@@ -510,7 +510,7 @@ void main() {
       processingApiClient: _QuotaExhaustedProcessingApi(),
     );
     await repositories.processingConsentRepository.acceptCurrentNotice();
-    await repositories.captureRepository.createPhotoBatch(
+    await repositories.captureRepository.createPhotoIngest(
       <CapturedMedia>[
         CapturedMedia(
           path: photo.path,
@@ -523,11 +523,11 @@ void main() {
 
     await repositories.processingCoordinator.processPendingCaptures();
 
-    final CaptureBatch batch =
-        (await repositories.captureRepository.listBatches()).single;
+    final CaptureIngest batch =
+        (await repositories.captureRepository.listIngests()).single;
     final ProcessingOutboxRequest request =
         (await repositories.processingOutboxRepository.listRequests()).single;
-    expect(batch.status, CaptureBatchStatus.local);
+    expect(batch.status, CaptureIngestStatus.local);
     expect(batch.items.single.status, CaptureItemStatus.localOnly);
     expect(batch.failureReason, isNull);
     expect(batch.items.single.failureReason, isNull);
@@ -535,27 +535,18 @@ void main() {
     expect(request.failureCode, 'free_allowance_exhausted');
 
     await (database.update(database.captureItems)
-          ..where((row) => row.batchId.equals(batch.id)))
+          ..where((row) => row.ingestId.equals(batch.id)))
         .write(
       const CaptureItemsCompanion(
         status: Value<String>('failed'),
         failureReason: Value<String?>('The free processing allowance is used.'),
       ),
     );
-    await (database.update(database.captureBatches)
-          ..where((row) => row.id.equals(batch.id)))
-        .write(
-      const CaptureBatchesCompanion(
-        status: Value<String>('failed'),
-        failureReason: Value<String?>('The free processing allowance is used.'),
-      ),
-    );
-
     await repositories.prepareLocalData();
 
-    final CaptureBatch repaired =
-        (await repositories.captureRepository.listBatches()).single;
-    expect(repaired.status, CaptureBatchStatus.local);
+    final CaptureIngest repaired =
+        (await repositories.captureRepository.listIngests()).single;
+    expect(repaired.status, CaptureIngestStatus.local);
     expect(repaired.items.single.status, CaptureItemStatus.localOnly);
     expect(repaired.failureReason, isNull);
     expect(repaired.items.single.failureReason, isNull);

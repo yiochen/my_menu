@@ -100,7 +100,7 @@ void main() {
 
     final CaptureCorrection correction =
         (await first.captureCorrectionRepository.moveCaptures(
-      batchId: 'batch_1',
+      ingestId: 'batch_1',
       captureIds: const <String>['capture_1'],
       targetDishId: 'dish_b',
     ))!;
@@ -120,8 +120,14 @@ void main() {
         .getSingle();
     final CaptureCorrection restored =
         (await restarted.captureCorrectionRepository.listCorrections()).single;
+    final Dish targetDish = (await restarted.dishRepository.listDishes())
+        .singleWhere((Dish dish) => dish.id == 'dish_b');
 
     expect(capture.appliedDishId, 'dish_b');
+    expect(
+      targetDish.sourcePhotos.single.addedAt?.toUtc(),
+      DateTime.utc(2026, 8, 15),
+    );
     expect(restored.id, correction.id);
     expect(restored.status, CaptureCorrectionStatus.applied);
   });
@@ -138,12 +144,16 @@ void main() {
 
     final CaptureCorrection split =
         (await repositories.captureCorrectionRepository.splitCaptures(
-      batchId: 'batch_1',
+      ingestId: 'batch_1',
       captureIds: const <String>['capture_1'],
       title: 'Weekend Dish',
     ))!;
     expect(split.createdDishId, isNotNull);
     expect(await _assignedDish(database, 'capture_1'), split.createdDishId);
+    final DishRow createdDish = await (database.select(database.dishes)
+          ..where((Dishes table) => table.id.equals(split.createdDishId!)))
+        .getSingle();
+    expect(createdDish.description, isEmpty);
 
     final CaptureCorrection undone =
         (await repositories.captureCorrectionRepository.undoLatest('batch_1'))!;
@@ -166,7 +176,7 @@ void main() {
     await database.into(database.captureItems).insert(
           CaptureItemsCompanion.insert(
             id: 'capture_unclassified',
-            batchId: const Value<String?>('batch_1'),
+            ingestId: const Value<String?>('batch_1'),
             ordinal: const Value<int>(1),
             kind: 'photo',
             status: 'discarded',
@@ -181,7 +191,7 @@ void main() {
     );
 
     await repositories.captureCorrectionRepository.assignCaptures(
-      batchId: 'batch_1',
+      ingestId: 'batch_1',
       captureIds: const <String>['capture_unclassified'],
       targetDishId: 'dish_b',
     );
@@ -208,13 +218,13 @@ void main() {
     );
     await repositories.processingOutboxRepository.enqueueCaptureGrouping(
       requestId: 'request_1',
-      batchId: 'batch_1',
+      ingestId: 'batch_1',
       captureIds: const <String>['capture_1'],
       now: DateTime.utc(2026, 8, 15),
     );
 
     await repositories.captureCorrectionRepository.moveCaptures(
-      batchId: 'batch_1',
+      ingestId: 'batch_1',
       captureIds: const <String>['capture_1'],
       targetDishId: 'dish_b',
     );
@@ -246,7 +256,6 @@ Future<void> _seedCorrectionFixture(AppDatabase database) async {
             category: 'Captured',
             prepMinutes: 0,
             difficulty: 'Draft',
-            madeCount: 1,
             lastMadeLabel: 'Today',
             ingredientsJson: '[]',
             recipeStepsJson: '[]',
@@ -254,18 +263,10 @@ Future<void> _seedCorrectionFixture(AppDatabase database) async {
           ),
         );
   }
-  await database.into(database.captureBatches).insert(
-        CaptureBatchesCompanion.insert(
-          id: 'batch_1',
-          status: 'applied',
-          createdAt: now,
-          updatedAt: now,
-        ),
-      );
   await database.into(database.captureItems).insert(
         CaptureItemsCompanion.insert(
           id: 'capture_1',
-          batchId: const Value<String?>('batch_1'),
+          ingestId: const Value<String?>('batch_1'),
           kind: 'photo',
           status: 'applied',
           createdAt: now,

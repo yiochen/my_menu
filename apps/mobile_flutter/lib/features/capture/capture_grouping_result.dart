@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_correction.dart';
+import 'package:mymenu/domain/capture/capture_ingest.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/menu/my_menu_state.dart';
@@ -25,13 +25,13 @@ typedef _CaptureDragPayload
 class CaptureGroupingResultView extends StatefulWidget {
   const CaptureGroupingResultView({
     required this.state,
-    required this.batchId,
+    required this.ingestId,
     required this.onClose,
     super.key,
   });
 
   final MyMenuState state;
-  final String batchId;
+  final String ingestId;
   final VoidCallback onClose;
 
   @override
@@ -45,13 +45,13 @@ class _CaptureGroupingResultViewState extends State<CaptureGroupingResultView> {
 
   @override
   Widget build(BuildContext context) {
-    final CaptureBatch? batch = widget.state.captureBatches
-        .where((CaptureBatch item) => item.id == widget.batchId)
+    final CaptureIngest? ingest = widget.state.captureIngests
+        .where((CaptureIngest item) => item.id == widget.ingestId)
         .firstOrNull;
-    if (batch == null) {
+    if (ingest == null) {
       return const SizedBox.shrink();
     }
-    final List<CaptureItem> activeItems = batch.items
+    final List<CaptureItem> activeItems = ingest.items
         .where(
           (CaptureItem item) =>
               item.status == CaptureItemStatus.applied &&
@@ -62,7 +62,7 @@ class _CaptureGroupingResultViewState extends State<CaptureGroupingResultView> {
         (CaptureItem left, CaptureItem right) =>
             left.ordinal.compareTo(right.ordinal),
       );
-    final List<CaptureItem> unclassifiedItems = batch.items
+    final List<CaptureItem> unclassifiedItems = ingest.items
         .where(
           (CaptureItem item) =>
               item.status == CaptureItemStatus.discarded &&
@@ -75,7 +75,7 @@ class _CaptureGroupingResultViewState extends State<CaptureGroupingResultView> {
       );
     final Map<String, List<CaptureItem>> groups = _groupItems(activeItems);
     final CaptureCorrection? latest =
-        widget.state.latestCaptureCorrection(widget.batchId);
+        widget.state.latestCaptureCorrection(widget.ingestId);
 
     return _isCorrecting
         ? _buildCorrection(activeItems, groups)
@@ -268,7 +268,7 @@ class _CaptureGroupingResultViewState extends State<CaptureGroupingResultView> {
       return;
     }
     await widget.state.moveCapturePhotos(
-      batchId: widget.batchId,
+      ingestId: widget.ingestId,
       captureIds: captureIds,
       targetDishId: targetDishId,
     );
@@ -284,9 +284,9 @@ class _CaptureGroupingResultViewState extends State<CaptureGroupingResultView> {
     if (captureIds.isEmpty) {
       return;
     }
-    final Set<String> groupedDishIds = widget.state.captureBatches
-        .where((CaptureBatch item) => item.id == widget.batchId)
-        .expand((CaptureBatch item) => item.items)
+    final Set<String> groupedDishIds = widget.state.captureIngests
+        .where((CaptureIngest item) => item.id == widget.ingestId)
+        .expand((CaptureIngest item) => item.items)
         .map((CaptureItem item) => item.appliedDishId)
         .whereType<String>()
         .toSet();
@@ -313,7 +313,7 @@ class _CaptureGroupingResultViewState extends State<CaptureGroupingResultView> {
       return;
     }
     await widget.state.splitCapturePhotos(
-      batchId: widget.batchId,
+      ingestId: widget.ingestId,
       captureIds: captureIds,
       title: title,
     );
@@ -326,7 +326,7 @@ class _CaptureGroupingResultViewState extends State<CaptureGroupingResultView> {
   }
 
   Future<void> _undo() async {
-    await widget.state.undoLatestCaptureCorrection(widget.batchId);
+    await widget.state.undoLatestCaptureCorrection(widget.ingestId);
     if (mounted) {
       setState(() {
         _selectedIds.clear();

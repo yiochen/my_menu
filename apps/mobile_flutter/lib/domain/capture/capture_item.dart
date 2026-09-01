@@ -22,7 +22,7 @@ class CaptureItem {
     required this.kind,
     required this.status,
     required this.createdAt,
-    this.batchId,
+    this.ingestId,
     this.ordinal = 0,
     this.localMediaRef,
     this.localPreviewRef,
@@ -40,7 +40,7 @@ class CaptureItem {
   final CaptureItemKind kind;
   final CaptureItemStatus status;
   final DateTime createdAt;
-  final String? batchId;
+  final String? ingestId;
   final int ordinal;
   final String? localMediaRef;
   final String? localPreviewRef;

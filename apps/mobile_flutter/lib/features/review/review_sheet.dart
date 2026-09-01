@@ -162,7 +162,7 @@ class _ReviewDecision extends StatelessWidget {
             _ReviewChoice(
               selected: !makeNew,
               title: 'Add to ${suggested!.title}',
-              subtitle: 'Keeps this cooking occasion together',
+              subtitle: 'Keeps these photos with the same dish',
               onTap: onChooseMatch,
             ),
             const SizedBox(height: 10),

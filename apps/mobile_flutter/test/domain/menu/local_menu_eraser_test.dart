@@ -19,7 +19,6 @@ void main() {
             category: 'Ideas',
             prepMinutes: 0,
             difficulty: 'Draft',
-            madeCount: 0,
             lastMadeLabel: 'Never',
             ingredientsJson: '[]',
             recipeStepsJson: '[]',

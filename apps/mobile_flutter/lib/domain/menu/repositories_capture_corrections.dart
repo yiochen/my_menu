@@ -20,12 +20,12 @@ class CaptureCorrectionRepository {
   }
 
   Future<CaptureCorrection?> moveCaptures({
-    required String batchId,
+    required String ingestId,
     required List<String> captureIds,
     required String targetDishId,
   }) {
     return _applyCorrection(
-      batchId: batchId,
+      ingestId: ingestId,
       captureIds: captureIds,
       targetDishId: targetDishId,
       type: CaptureCorrectionType.move,
@@ -33,7 +33,7 @@ class CaptureCorrectionRepository {
   }
 
   Future<CaptureCorrection?> splitCaptures({
-    required String batchId,
+    required String ingestId,
     required List<String> captureIds,
     required String title,
   }) {
@@ -42,7 +42,7 @@ class CaptureCorrectionRepository {
       throw ArgumentError.value(title, 'title', 'A new dish needs a name.');
     }
     return _applyCorrection(
-      batchId: batchId,
+      ingestId: ingestId,
       captureIds: captureIds,
       targetDishId: _uuid.v4(),
       type: CaptureCorrectionType.split,
@@ -51,12 +51,12 @@ class CaptureCorrectionRepository {
   }
 
   Future<CaptureCorrection?> assignCaptures({
-    required String batchId,
+    required String ingestId,
     required List<String> captureIds,
     required String targetDishId,
   }) {
     return _applyCorrection(
-      batchId: batchId,
+      ingestId: ingestId,
       captureIds: captureIds,
       targetDishId: targetDishId,
       type: CaptureCorrectionType.assign,
@@ -64,7 +64,7 @@ class CaptureCorrectionRepository {
   }
 
   Future<CaptureCorrection?> assignCapturesToNewDish({
-    required String batchId,
+    required String ingestId,
     required List<String> captureIds,
     required String title,
   }) {
@@ -73,7 +73,7 @@ class CaptureCorrectionRepository {
       throw ArgumentError.value(title, 'title', 'A new dish needs a name.');
     }
     return _applyCorrection(
-      batchId: batchId,
+      ingestId: ingestId,
       captureIds: captureIds,
       targetDishId: _uuid.v4(),
       type: CaptureCorrectionType.assignSplit,
@@ -82,7 +82,7 @@ class CaptureCorrectionRepository {
   }
 
   Future<CaptureCorrection?> _applyCorrection({
-    required String batchId,
+    required String ingestId,
     required List<String> captureIds,
     required String targetDishId,
     required CaptureCorrectionType type,
@@ -93,13 +93,13 @@ class CaptureCorrectionRepository {
     if (selectedIds.isEmpty) {
       return null;
     }
-    final List<db.CaptureItemRow> items =
-        await (_database.select(_database.captureItems)
-              ..where(
-                (db.CaptureItems table) =>
-                    table.batchId.equals(batchId) & table.id.isIn(selectedIds),
-              ))
-            .get();
+    final List<db.CaptureItemRow> items = await (_database
+            .select(_database.captureItems)
+          ..where(
+            (db.CaptureItems table) =>
+                table.ingestId.equals(ingestId) & table.id.isIn(selectedIds),
+          ))
+        .get();
     final bool isAssignment = type == CaptureCorrectionType.assign ||
         type == CaptureCorrectionType.assignSplit;
     final bool hasExpectedState = isAssignment
@@ -150,14 +150,14 @@ class CaptureCorrectionRepository {
         );
       }
       await moveLocalAssignments(
-        batchId: batchId,
+        ingestId: ingestId,
         items: items,
         targetDishId: targetDishId,
       );
       await _database.into(_database.captureCorrections).insert(
             db.CaptureCorrectionsCompanion.insert(
               id: actionId,
-              batchId: batchId,
+              ingestId: ingestId,
               actionType: type.name,
               captureIdsJson: jsonEncode(selectedIds),
               previousDishIdsJson: jsonEncode(previousStates),
@@ -174,7 +174,7 @@ class CaptureCorrectionRepository {
             ),
           );
       await ProcessingOutboxRepository(_database).supersedeCaptureGrouping(
-        batchId,
+        ingestId,
       );
       final CoverRepository covers = CoverRepository(_database);
       for (final String previousDishId in previousDishIds) {
@@ -216,14 +216,14 @@ class CaptureCorrectionRepository {
   }
 
   Future<CaptureCorrection?> undoLatest(
-    String batchId, {
+    String ingestId, {
     String? captureId,
   }) async {
     final List<db.CaptureCorrectionRow> rows =
         await (_database.select(_database.captureCorrections)
               ..where(
                 (db.CaptureCorrections table) =>
-                    table.batchId.equals(batchId) &
+                    table.ingestId.equals(ingestId) &
                     table.status.equals(CaptureCorrectionStatus.applied.name),
               )
               ..orderBy(
@@ -261,10 +261,6 @@ class CaptureCorrectionRepository {
       correction.targetDishId,
       ...correction.previousDishIds.values,
     };
-    final Map<String, bool> beforePresence = await _batchPresence(
-      correction.batchId,
-      affectedDishIds,
-    );
     final Map<String, Set<String>> removedRefsByDish = <String, Set<String>>{};
     for (final db.CaptureItemRow item in items) {
       final String? photoRef = _photoRef(item);
@@ -293,13 +289,8 @@ class CaptureCorrectionRepository {
           );
         }
       }
-      await _adjustDishCounts(
+      await _refreshAffectedDishes(
         dishIds: affectedDishIds,
-        beforePresence: beforePresence,
-        afterPresence: await _batchPresence(
-          correction.batchId,
-          affectedDishIds,
-        ),
         removedRefsByDish: removedRefsByDish,
       );
       for (final String dishId in correction.previousDishIds.values.toSet()) {
@@ -363,7 +354,7 @@ class CaptureCorrectionRepository {
         ),
       );
       await ProcessingOutboxRepository(_database).supersedeCaptureGrouping(
-        correction.batchId,
+        correction.ingestId,
       );
     }
 

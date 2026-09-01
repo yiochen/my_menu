@@ -41,7 +41,7 @@ void main() {
       final dishes = await repositories.dishRepository.listDishes();
       final requests =
           await repositories.processingOutboxRepository.listRequests();
-      final captures = await repositories.captureRepository.listBatches();
+      final captures = await repositories.captureRepository.listIngests();
 
       expect(dishes, hasLength(1));
       expect(dishes.single.title, 'Charred Corn Ramen');
@@ -68,7 +68,7 @@ void main() {
           'finish': 'menu_ready',
         },
         'origin': 'automatic',
-        'automaticCaptureBatchId': null,
+        'automaticIngestId': null,
         'automaticCaptureOrdinal': null,
         'contractVersion': 'cover-generation-v1',
         'coverSnapshot': <String, Object?>{
@@ -390,7 +390,7 @@ void main() {
       processingApiClient: FakeProcessingApiClient(),
     );
     await repositories.processingConsentRepository.acceptCurrentNotice();
-    await repositories.captureRepository.createPhotoBatch(
+    await repositories.captureRepository.createPhotoIngest(
       <CapturedMedia>[
         CapturedMedia(
           path: photo.path,
@@ -440,14 +440,6 @@ void main() {
     );
     await repositories.processingConsentRepository.acceptCurrentNotice();
     final DateTime capturedAt = DateTime.utc(2026, 8, 4, 15);
-    await database.into(database.captureBatches).insert(
-          CaptureBatchesCompanion.insert(
-            id: 'batch-order',
-            status: 'completed',
-            createdAt: capturedAt,
-            updatedAt: capturedAt,
-          ),
-        );
     for (final (String id, int ordinal) in <(String, int)>[
       ('capture-first', 0),
       ('capture-selected', 4),
@@ -455,7 +447,7 @@ void main() {
       await database.into(database.captureItems).insert(
             CaptureItemsCompanion.insert(
               id: id,
-              batchId: const Value<String?>('batch-order'),
+              ingestId: const Value<String?>('batch-order'),
               ordinal: Value<int>(ordinal),
               kind: 'photo',
               status: 'organized',
@@ -493,7 +485,7 @@ void main() {
     final ProcessingOutboxRequest request =
         (await repositories.processingOutboxRepository.listRequests()).single;
     expect(request.payload['sourceIds'], <String>['source-selected']);
-    expect(request.payload['automaticCaptureBatchId'], 'batch-order');
+    expect(request.payload['automaticIngestId'], 'batch-order');
     expect(request.payload['automaticCaptureOrdinal'], 0);
   });
 
@@ -836,7 +828,6 @@ Dish _dish(String id) {
     category: 'Ideas',
     prepMinutes: 0,
     difficulty: 'Draft',
-    madeCount: 0,
     lastMadeLabel: 'Not cooked yet',
     ingredients: const <String>[],
     recipeSteps: const <String>[],

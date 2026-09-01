@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mymenu/domain/capture/capture_batch.dart';
+import 'package:mymenu/domain/capture/capture_ingest.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/dishes/seeded_dishes.dart';
@@ -199,13 +199,11 @@ void main() {
     test('zero-history ideas remain valid until explicitly deleted', () async {
       final Dish idea = seededDishes.first.copyWith(
         id: 'zero_history_idea',
-        madeCount: 0,
         sourcePhotos: const <SourcePhoto>[],
       );
       final MyMenuState state = MyMenuState.forTesting(dishes: <Dish>[idea]);
       addTearDown(state.dispose);
 
-      expect(state.dishes.single.madeCount, 0);
       final DishDeletionTicket ticket =
           state.stageDishDeletion(<String>[idea.id]);
       await state.commitDishDeletion(ticket);
@@ -217,22 +215,22 @@ void main() {
       final DateTime now = DateTime.utc(2026, 8, 2);
       final CaptureItem photo = CaptureItem(
         id: 'photo_to_delete',
-        batchId: 'photo_batch',
+        ingestId: 'photo_batch',
         kind: CaptureItemKind.photo,
         status: CaptureItemStatus.localOnly,
         createdAt: now,
         localMediaRef: '/tmp/photo_to_delete.jpg',
         capturedLocalDate: '2026-08-02',
       );
-      final CaptureBatch batch = CaptureBatch(
+      final CaptureIngest batch = CaptureIngest(
         id: 'photo_batch',
-        status: CaptureBatchStatus.local,
+        status: CaptureIngestStatus.local,
         createdAt: now,
         updatedAt: now,
         items: <CaptureItem>[photo],
       );
       final MyMenuState state = MyMenuState.forTesting(
-        captureBatches: <CaptureBatch>[batch],
+        captureIngests: <CaptureIngest>[batch],
         captureItems: <CaptureItem>[photo],
       );
       addTearDown(state.dispose);
@@ -244,10 +242,10 @@ void main() {
 
       expect(state.photos, isEmpty);
       expect(state.captureItems, isEmpty);
-      expect(state.captureBatches, isEmpty);
+      expect(state.captureIngests, isEmpty);
       expect(state.undoCaptureDeletion(ticket), isTrue);
       expect(state.photos.single.id, photo.id);
-      expect(state.captureBatches.single.items.single.id, photo.id);
+      expect(state.captureIngests.single.items.single.id, photo.id);
 
       final CaptureDeletionTicket committed = state.stageCaptureDeletion(
         <String>[photo.id],
@@ -264,43 +262,43 @@ void main() {
         final DateTime now = DateTime.utc(2026, 7, 28);
         final CaptureItem pendingItem = CaptureItem(
           id: 'race_capture',
-          batchId: 'race_batch',
+          ingestId: 'race_batch',
           kind: CaptureItemKind.photo,
           status: CaptureItemStatus.classifying,
           createdAt: now,
         );
-        final CaptureBatch pendingBatch = CaptureBatch(
+        final CaptureIngest pendingBatch = CaptureIngest(
           id: 'race_batch',
-          status: CaptureBatchStatus.processing,
+          status: CaptureIngestStatus.processing,
           createdAt: now,
           updatedAt: now,
           items: <CaptureItem>[pendingItem],
         );
         final MyMenuState state = MyMenuState.forTesting(
           dishes: seededDishes,
-          captureBatches: <CaptureBatch>[pendingBatch],
+          captureIngests: <CaptureIngest>[pendingBatch],
           captureItems: <CaptureItem>[pendingItem],
         );
         addTearDown(state.dispose);
 
-        final CaptureBatchDeletionTicket ticket =
-            state.stageCaptureBatchDeletion(<String>[pendingBatch.id]);
+        final CaptureIngestDeletionTicket ticket =
+            state.stageCaptureIngestDeletion(<String>[pendingBatch.id]);
         final Dish groupedDish = seededDishes.first.copyWith(
           id: 'server_grouped_dish',
           title: 'Server Grouped Dish',
         );
         final CaptureItem appliedItem = CaptureItem(
           id: pendingItem.id,
-          batchId: pendingItem.batchId,
+          ingestId: pendingItem.ingestId,
           kind: pendingItem.kind,
           status: CaptureItemStatus.applied,
           createdAt: pendingItem.createdAt,
           appliedDishId: groupedDish.id,
         );
         state.applyCaptureCompletionForTesting(
-          batch: CaptureBatch(
+          ingest: CaptureIngest(
             id: pendingBatch.id,
-            status: CaptureBatchStatus.applied,
+            status: CaptureIngestStatus.applied,
             createdAt: now,
             updatedAt: now.add(const Duration(seconds: 1)),
             items: <CaptureItem>[appliedItem],
@@ -313,14 +311,14 @@ void main() {
           state.dishes.map((Dish dish) => dish.id),
           isNot(contains(groupedDish.id)),
         );
-        expect(state.captureBatches, isEmpty);
+        expect(state.captureIngests, isEmpty);
 
-        expect(state.undoCaptureBatchDeletion(ticket), isTrue);
+        expect(state.undoCaptureIngestDeletion(ticket), isTrue);
         expect(
           state.dishes.map((Dish dish) => dish.id),
           contains(groupedDish.id),
         );
-        expect(state.captureBatches.single.status, CaptureBatchStatus.applied);
+        expect(state.captureIngests.single.status, CaptureIngestStatus.applied);
         expect(state.captureItems.single.appliedDishId, groupedDish.id);
       },
     );

@@ -50,7 +50,7 @@ class PlanSuggestionCard extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 Text(
-                  'Made ${dish.madeCount} times · ${dish.prepMinutes} min',
+                  '${dish.prepMinutes} min · ${dish.category}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
