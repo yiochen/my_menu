@@ -77,8 +77,6 @@ A dish may include:
 - Recipe steps
 - Notes
 - Source photos
-- Made count
-- Last made date
 - Planned meals
 
 ### Cover Image
@@ -115,7 +113,9 @@ as generation input.
 
 Sources are the real captured or imported photos of the dish.
 
-They represent the actual times the user made the dish.
+They document the user's real experience with the dish. A Source is one photo;
+multiple Sources may come from the same meal, so photo count is not treated as
+a cook count.
 
 Sources are important because they:
 
@@ -131,7 +131,6 @@ Example:
 
 ```txt
 Pho
-Made 12 times
 
 Jun 2026 - source photo
 Apr 2026 - source photo
@@ -143,7 +142,7 @@ Jan 2026 - source photo
 Notes are first-class.
 
 Every Note belongs directly to the Dish. Notes are standalone Journal items,
-not captions or children of Source photos or cooking occasions.
+not captions or children of Source photos or capture ingests.
 
 Users often remember important cooking details that do not belong in a formal recipe.
 
@@ -227,13 +226,10 @@ Includes:
 - `✨ Improve Cover` action
 - Change Cover with generated Cover history and Sources
 - Dish title and description
-- Made count
-- Last made date
 - Recipe
 - Ingredients
 - Notes
 - Sources
-- Cook Again action
 
 ### Capture Modal
 

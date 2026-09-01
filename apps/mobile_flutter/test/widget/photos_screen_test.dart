@@ -128,7 +128,6 @@ MyMenuState _state() {
     category: 'Dinner',
     prepMinutes: 0,
     difficulty: '',
-    madeCount: 1,
     lastMadeLabel: 'Today',
     ingredients: const <String>[],
     recipeSteps: const <String>[],
@@ -143,7 +142,6 @@ MyMenuState _state() {
     category: 'Dinner',
     prepMinutes: 0,
     difficulty: '',
-    madeCount: 1,
     lastMadeLabel: 'Today',
     ingredients: const <String>[],
     recipeSteps: const <String>[],
@@ -156,7 +154,7 @@ MyMenuState _state() {
     captureItems: <CaptureItem>[
       CaptureItem(
         id: 'unorganized',
-        batchId: 'batch_1',
+        ingestId: 'batch_1',
         kind: CaptureItemKind.photo,
         status: CaptureItemStatus.localOnly,
         createdAt: now,
@@ -165,7 +163,7 @@ MyMenuState _state() {
       ),
       CaptureItem(
         id: 'review',
-        batchId: 'batch_2',
+        ingestId: 'batch_2',
         kind: CaptureItemKind.photo,
         status: CaptureItemStatus.needsReview,
         createdAt: now.subtract(const Duration(minutes: 1)),
@@ -174,7 +172,7 @@ MyMenuState _state() {
       ),
       CaptureItem(
         id: 'organized',
-        batchId: 'batch_3',
+        ingestId: 'batch_3',
         kind: CaptureItemKind.photo,
         status: CaptureItemStatus.applied,
         createdAt: now.subtract(const Duration(minutes: 2)),

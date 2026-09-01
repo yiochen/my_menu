@@ -50,18 +50,18 @@ extension MyMenuStatePhotos on MyMenuState {
     final CaptureItem first = captureItems.firstWhere(
       (CaptureItem item) => item.id == ids.first,
     );
-    final String? batchId = first.batchId;
-    if (batchId == null) {
+    final String? ingestId = first.ingestId;
+    if (ingestId == null) {
       return null;
     }
     final CaptureCorrection? created = first.appliedDishId == null
         ? await assignUnclassifiedPhotosToNewDish(
-            batchId: batchId,
+            ingestId: ingestId,
             captureIds: <String>[first.id],
             title: title,
           )
         : await splitCapturePhotos(
-            batchId: batchId,
+            ingestId: ingestId,
             captureIds: <String>[first.id],
             title: title,
           );

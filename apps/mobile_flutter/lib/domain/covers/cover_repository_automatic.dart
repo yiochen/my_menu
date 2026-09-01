@@ -158,7 +158,7 @@ extension CoverRepositoryAutomatic on CoverRepository {
           .toList(growable: false),
       'treatment': CoverTreatment.defaults.toJson(),
       'origin': CoverOrigin.automatic.name,
-      'automaticCaptureBatchId': earliestCapture?.batchId,
+      'automaticIngestId': earliestCapture?.ingestId,
       'automaticCaptureOrdinal': earliestCapture?.ordinal,
       'contractVersion': 'cover-generation-v1',
       'coverSnapshot': <String, Object?>{

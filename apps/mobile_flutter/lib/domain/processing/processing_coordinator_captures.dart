@@ -61,7 +61,7 @@ extension ProcessingCoordinatorCaptures on ProcessingCoordinator {
       }
       try {
         final List<db.CaptureItemRow> captures =
-            await _activeItemsForBatch(request.subjectId);
+            await _activeItemsForIngest(request.subjectId);
         final Map<String, String> processingAssets =
             await _prepareProcessingAssets(captures);
         final ApiProcessingJob job = await _processingApi
@@ -76,10 +76,6 @@ extension ProcessingCoordinatorCaptures on ProcessingCoordinator {
           requestId: request.id,
           serverJobId: job.id,
           expiresAt: job.expiresAt,
-        );
-        await _markBatchStatus(
-          request.subjectId,
-          CaptureBatchStatus.uploading,
         );
         request = (await outbox.requestForSubject(
           kind: request.kind,
@@ -118,12 +114,10 @@ extension ProcessingCoordinatorCaptures on ProcessingCoordinator {
           'processing transition failed requestId=${request.id} code=$code',
         );
         if (_isConnectivityError(error)) {
-          await _markBatchStatus(
+          await _markCapturesPending(
             request.subjectId,
-            CaptureBatchStatus.pendingUpload,
             failureReason: captureWaitingForConnectionReason,
           );
-          await _markCapturesPending(request.subjectId);
         } else {
           await _recordCaptureProcessingStop(outbox, request, code);
         }
@@ -142,11 +136,6 @@ extension ProcessingCoordinatorCaptures on ProcessingCoordinator {
       if (job.status == ApiProcessingJobStatus.expired) {
         await outbox.markExpired(request.id);
         const String reason = 'The AI organization request expired.';
-        await _markBatchStatus(
-          request.subjectId,
-          CaptureBatchStatus.failed,
-          failureReason: reason,
-        );
         await _markCapturesFailed(request.subjectId, reason);
         return;
       }
@@ -215,8 +204,8 @@ extension ProcessingCoordinatorCaptures on ProcessingCoordinator {
     }
   }
 
-  Future<List<db.CaptureItemRow>> _activeItemsForBatch(String batchId) {
-    return _captureProcessingLocalStore.activeItemsForBatch(batchId);
+  Future<List<db.CaptureItemRow>> _activeItemsForIngest(String ingestId) {
+    return _captureProcessingLocalStore.activeItemsForIngest(ingestId);
   }
 
   Future<List<ApiProcessingAssetManifest>> _assetManifest(
@@ -265,8 +254,8 @@ extension ProcessingCoordinatorCaptures on ProcessingCoordinator {
     }
   }
 
-  Future<void> _markCapturesClassifying(String batchId) async {
-    await _captureProcessingLocalStore.markCapturesClassifying(batchId);
+  Future<void> _markCapturesClassifying(String ingestId) async {
+    await _captureProcessingLocalStore.markCapturesClassifying(ingestId);
   }
 
   Future<void> _markCaptureStatus(
@@ -276,8 +265,14 @@ extension ProcessingCoordinatorCaptures on ProcessingCoordinator {
     await _captureProcessingLocalStore.markCaptureStatus(captureId, status);
   }
 
-  Future<void> _markCapturesPending(String batchId) async {
-    await _captureProcessingLocalStore.markCapturesPending(batchId);
+  Future<void> _markCapturesPending(
+    String ingestId, {
+    String? failureReason,
+  }) async {
+    await _captureProcessingLocalStore.markCapturesPending(
+      ingestId,
+      failureReason: failureReason,
+    );
   }
 
   Future<void> _recordCaptureProcessingStop(
@@ -287,33 +282,16 @@ extension ProcessingCoordinatorCaptures on ProcessingCoordinator {
   ) async {
     await outbox.markFailed(request.id, failureCode: code);
     if (code == processingFreeAllowanceExhaustedCode) {
-      await _captureProcessingLocalStore.markBatchUnorganized(
+      await _captureProcessingLocalStore.markIngestUnorganized(
         request.subjectId,
       );
       return;
     }
     final String reason = _processingFailureReason(code);
-    await _markBatchStatus(
-      request.subjectId,
-      CaptureBatchStatus.failed,
-      failureReason: reason,
-    );
     await _markCapturesFailed(request.subjectId, reason);
   }
 
-  Future<void> _markCapturesFailed(String batchId, String reason) async {
-    await _captureProcessingLocalStore.markCapturesFailed(batchId, reason);
-  }
-
-  Future<void> _markBatchStatus(
-    String batchId,
-    CaptureBatchStatus status, {
-    String? failureReason,
-  }) async {
-    await _captureProcessingLocalStore.markBatchStatus(
-      batchId,
-      status,
-      failureReason: failureReason,
-    );
+  Future<void> _markCapturesFailed(String ingestId, String reason) async {
+    await _captureProcessingLocalStore.markCapturesFailed(ingestId, reason);
   }
 }

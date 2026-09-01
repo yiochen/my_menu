@@ -20,27 +20,27 @@ class PhotoDetailIntent {
     this.action, {
     this.dishId,
     this.title,
-    this.includeBatch = false,
+    this.includeIngest = false,
   });
 
   final PhotoDetailAction action;
   final String? dishId;
   final String? title;
-  final bool includeBatch;
+  final bool includeIngest;
 }
 
 class PhotoDetailScreen extends StatelessWidget {
   const PhotoDetailScreen({
     required this.photo,
     required this.dishes,
-    required this.batchSiblingCount,
+    required this.ingestSiblingCount,
     required this.canUndo,
     super.key,
   });
 
   final CapturedPhoto photo;
   final List<Dish> dishes;
-  final int batchSiblingCount;
+  final int ingestSiblingCount;
   final bool canUndo;
 
   @override
@@ -171,7 +171,7 @@ class PhotoDetailScreen extends StatelessWidget {
     final result = await showPhotoDishPicker(
       context,
       dishes: dishes,
-      batchSiblingCount: batchSiblingCount,
+      ingestSiblingCount: ingestSiblingCount,
     );
     if (result != null && context.mounted) {
       Navigator.pop(
@@ -179,7 +179,7 @@ class PhotoDetailScreen extends StatelessWidget {
         PhotoDetailIntent(
           PhotoDetailAction.assign,
           dishId: result.dishId,
-          includeBatch: result.includeBatch,
+          includeIngest: result.includeIngest,
         ),
       );
     }

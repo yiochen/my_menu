@@ -17,7 +17,6 @@ extension DishRowMapper on db.DishRow {
       category: category,
       prepMinutes: prepMinutes,
       difficulty: difficulty,
-      madeCount: madeCount,
       lastMadeLabel: lastMadeLabel,
       ingredients: _stringListFromJson(ingredientsJson),
       recipeSteps: _stringListFromJson(recipeStepsJson),
@@ -43,7 +42,6 @@ extension DishCompanionMapper on Dish {
       category: category,
       prepMinutes: prepMinutes,
       difficulty: difficulty,
-      madeCount: madeCount,
       lastMadeLabel: lastMadeLabel,
       ingredientsJson: jsonEncode(ingredients),
       recipeStepsJson: jsonEncode(recipeSteps),
@@ -69,7 +67,7 @@ extension DishNoteRowMapper on db.DishNoteRow {
 }
 
 extension SourcePhotoRowMapper on db.SourcePhotoRow {
-  SourcePhoto toDomain() {
+  SourcePhoto toDomain({DateTime? addedAt}) {
     return SourcePhoto(
       id: id,
       url: url,
@@ -78,8 +76,9 @@ extension SourcePhotoRowMapper on db.SourcePhotoRow {
       placeholderUrl: placeholderUrl,
       capturedLabel: capturedLabel,
       captureId: captureId,
-      cookingOccasionId: cookingOccasionId,
+      ingestId: ingestId,
       capturedAt: capturedAt,
+      addedAt: addedAt,
       confidenceLabel: confidenceLabel,
     );
   }

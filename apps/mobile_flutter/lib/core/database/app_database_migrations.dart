@@ -50,6 +50,16 @@ Future<void> _preserveLegacyProcessingRequests(AppDatabase database) async {
   if (!columns.containsAll(required)) {
     return;
   }
+  final Set<String> captureColumns =
+      await _tableColumns(database, 'capture_items');
+  final String? correlationColumn = captureColumns.contains('ingest_id')
+      ? 'ingest_id'
+      : captureColumns.contains('batch_id')
+          ? 'batch_id'
+          : null;
+  if (correlationColumn == null) {
+    return;
+  }
   await database.customStatement('''
     INSERT OR IGNORE INTO processing_outbox (
       id,
@@ -69,13 +79,13 @@ Future<void> _preserveLegacyProcessingRequests(AppDatabase database) async {
       'capture_grouping',
       jobs.subject_id,
       json_object(
-        'batchId', jobs.subject_id,
+        'ingestId', jobs.subject_id,
         'captureIds', json(
           coalesce(
             (
               SELECT json_group_array(items.id)
               FROM capture_items AS items
-              WHERE items.batch_id = jobs.subject_id
+              WHERE items.$correlationColumn = jobs.subject_id
             ),
             '[]'
           )

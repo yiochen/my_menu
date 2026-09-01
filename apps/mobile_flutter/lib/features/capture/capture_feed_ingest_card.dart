@@ -1,25 +1,25 @@
 part of 'capture_feed_sheet.dart';
 
-class _CaptureBatchCard extends StatelessWidget {
-  const _CaptureBatchCard({
-    required this.batch,
+class _CaptureIngestCard extends StatelessWidget {
+  const _CaptureIngestCard({
+    required this.ingest,
     required this.state,
   });
 
-  final CaptureBatch batch;
+  final CaptureIngest ingest;
   final MyMenuState state;
 
   @override
   Widget build(BuildContext context) {
-    final bool canRetry =
-        batch.failedItemCount > 0 || batch.status == CaptureBatchStatus.failed;
-    final bool canRemove = batch.status != CaptureBatchStatus.applied &&
-        batch.status != CaptureBatchStatus.discarded;
+    final bool canRetry = ingest.failedItemCount > 0 ||
+        ingest.status == CaptureIngestStatus.failed;
+    final bool canRemove = ingest.status != CaptureIngestStatus.applied &&
+        ingest.status != CaptureIngestStatus.discarded;
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: batch.status == CaptureBatchStatus.applied
-            ? () => _openBatchResult(context, state, batch)
+        onTap: ingest.status == CaptureIngestStatus.applied
+            ? () => _openIngestResult(context, state, ingest)
             : null,
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -30,11 +30,11 @@ class _CaptureBatchCard extends StatelessWidget {
                 children: <Widget>[
                   Expanded(
                     child: Text(
-                      _batchTitle(batch),
+                      _ingestTitle(ingest),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),
-                  _BatchStatusPill(batch: batch),
+                  _IngestStatusPill(ingest: ingest),
                 ],
               ),
               const SizedBox(height: 10),
@@ -42,25 +42,25 @@ class _CaptureBatchCard extends StatelessWidget {
                 height: 82,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
-                  itemCount: batch.items.length,
+                  itemCount: ingest.items.length,
                   separatorBuilder: (_, __) => const SizedBox(width: 8),
                   itemBuilder: (BuildContext context, int index) {
-                    return _CapturePreview(item: batch.items[index]);
+                    return _CapturePreview(item: ingest.items[index]);
                   },
                 ),
               ),
               const SizedBox(height: 10),
-              Text(_progressLabel(batch)),
+              Text(_progressLabel(ingest)),
               if (canRetry) ...<Widget>[
                 const SizedBox(height: 8),
                 FilledButton.icon(
-                  key: ValueKey<String>('retry_batch_${batch.id}'),
-                  onPressed: () => state.retryCaptureBatch(batch.id),
+                  key: ValueKey<String>('retry_ingest_${ingest.id}'),
+                  onPressed: () => state.retryCaptureIngest(ingest.id),
                   icon: const Icon(Icons.refresh_rounded),
                   label: Text(
-                    batch.failedItemCount == 0
+                    ingest.failedItemCount == 0
                         ? 'Retry organization'
-                        : batch.failedItemCount == 1
+                        : ingest.failedItemCount == 1
                             ? 'Retry failed photo'
                             : 'Retry failed photos',
                   ),
@@ -71,8 +71,8 @@ class _CaptureBatchCard extends StatelessWidget {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton.icon(
-                    key: ValueKey<String>('remove_batch_${batch.id}'),
-                    onPressed: () => _removeBatch(context),
+                    key: ValueKey<String>('remove_ingest_${ingest.id}'),
+                    onPressed: () => _removeIngest(context),
                     style: TextButton.styleFrom(
                       foregroundColor: MyMenuColors.red,
                     ),
@@ -88,11 +88,12 @@ class _CaptureBatchCard extends StatelessWidget {
     );
   }
 
-  Future<void> _removeBatch(BuildContext context) async {
-    if (!await confirmCaptureBatchRemoval(context, batch) || !context.mounted) {
+  Future<void> _removeIngest(BuildContext context) async {
+    if (!await confirmCaptureIngestRemoval(context, ingest) ||
+        !context.mounted) {
       return;
     }
-    await state.deleteCaptureBatch(batch.id);
+    await state.deleteCaptureIngest(ingest.id);
     if (!context.mounted) {
       return;
     }
@@ -101,83 +102,81 @@ class _CaptureBatchCard extends StatelessWidget {
     );
   }
 
-  String _batchTitle(CaptureBatch batch) {
-    final int count = batch.items.length;
+  String _ingestTitle(CaptureIngest ingest) {
+    final int count = ingest.items.length;
     return '$count ${count == 1 ? 'photo' : 'photos'}';
   }
 
-  String _progressLabel(CaptureBatch batch) {
-    if (batch.status == CaptureBatchStatus.applied) {
-      final int dishCount = batch.items
+  String _progressLabel(CaptureIngest ingest) {
+    if (ingest.status == CaptureIngestStatus.applied) {
+      final int dishCount = ingest.items
           .map((CaptureItem item) => item.appliedDishId)
           .whereType<String>()
           .toSet()
           .length;
-      return dishCount == 1
-          ? 'Added as 1 cooking occasion'
-          : 'Added as $dishCount cooking occasions';
+      return dishCount == 1 ? 'Added to 1 dish' : 'Added to $dishCount dishes';
     }
-    if (batch.status == CaptureBatchStatus.processing) {
-      return '${batch.items.length} of ${batch.items.length} uploaded · '
+    if (ingest.status == CaptureIngestStatus.processing) {
+      return '${ingest.items.length} of ${ingest.items.length} uploaded · '
           'organizing in the background';
     }
-    if (batch.isWaitingForConnection) {
-      return 'Saved on this device · ${batch.uploadedItemCount} of '
-          '${batch.items.length} uploaded';
+    if (ingest.isWaitingForConnection) {
+      return 'Saved on this device · ${ingest.uploadedItemCount} of '
+          '${ingest.items.length} uploaded';
     }
-    if (batch.failedItemCount > 0) {
-      return '${batch.uploadedItemCount} of ${batch.items.length} uploaded · '
-          '${batch.failedItemCount} failed';
+    if (ingest.failedItemCount > 0) {
+      return '${ingest.uploadedItemCount} of ${ingest.items.length} uploaded · '
+          '${ingest.failedItemCount} failed';
     }
-    return '${batch.uploadedItemCount} of ${batch.items.length} uploaded';
+    return '${ingest.uploadedItemCount} of ${ingest.items.length} uploaded';
   }
 }
 
-class _BatchStatusPill extends StatelessWidget {
-  const _BatchStatusPill({required this.batch});
+class _IngestStatusPill extends StatelessWidget {
+  const _IngestStatusPill({required this.ingest});
 
-  final CaptureBatch batch;
+  final CaptureIngest ingest;
 
   @override
   Widget build(BuildContext context) {
-    final (String, Color, Color) display = batch.isWaitingForConnection
+    final (String, Color, Color) display = ingest.isWaitingForConnection
         ? (
             'Saved on this device',
             MyMenuColors.orangeDark,
             MyMenuColors.orangeSoft,
           )
-        : switch (batch.status) {
-            CaptureBatchStatus.local || CaptureBatchStatus.pendingUpload => (
+        : switch (ingest.status) {
+            CaptureIngestStatus.local || CaptureIngestStatus.pendingUpload => (
                 'Saved',
                 MyMenuColors.orangeDark,
                 MyMenuColors.orangeSoft
               ),
-            CaptureBatchStatus.uploading => (
+            CaptureIngestStatus.uploading => (
                 'Sending',
                 MyMenuColors.orangeDark,
                 MyMenuColors.orangeSoft
               ),
-            CaptureBatchStatus.readyForAi => (
+            CaptureIngestStatus.readyForAi => (
                 'Waiting',
                 MyMenuColors.green,
                 MyMenuColors.greenSoft
               ),
-            CaptureBatchStatus.processing => (
+            CaptureIngestStatus.processing => (
                 'Organizing',
                 MyMenuColors.orangeDark,
                 MyMenuColors.orangeSoft
               ),
-            CaptureBatchStatus.applied => (
+            CaptureIngestStatus.applied => (
                 'Added',
                 MyMenuColors.green,
                 MyMenuColors.greenSoft
               ),
-            CaptureBatchStatus.failed => (
+            CaptureIngestStatus.failed => (
                 'Needs retry',
                 Colors.red.shade800,
                 Colors.red.shade50
               ),
-            CaptureBatchStatus.discarded => (
+            CaptureIngestStatus.discarded => (
                 'Discarded',
                 MyMenuColors.muted,
                 MyMenuColors.oat

@@ -7,7 +7,6 @@ class Dish {
     required this.category,
     required this.prepMinutes,
     required this.difficulty,
-    required this.madeCount,
     required this.lastMadeLabel,
     required this.ingredients,
     required this.recipeSteps,
@@ -31,7 +30,6 @@ class Dish {
   final String category;
   final int prepMinutes;
   final String difficulty;
-  final int madeCount;
   final String lastMadeLabel;
   final List<String> ingredients;
   final List<String> recipeSteps;
@@ -68,7 +66,6 @@ class Dish {
     String? category,
     int? prepMinutes,
     String? difficulty,
-    int? madeCount,
     String? lastMadeLabel,
     List<String>? ingredients,
     List<String>? recipeSteps,
@@ -89,7 +86,6 @@ class Dish {
       category: category ?? this.category,
       prepMinutes: prepMinutes ?? this.prepMinutes,
       difficulty: difficulty ?? this.difficulty,
-      madeCount: madeCount ?? this.madeCount,
       lastMadeLabel: lastMadeLabel ?? this.lastMadeLabel,
       ingredients: ingredients ?? this.ingredients,
       recipeSteps: recipeSteps ?? this.recipeSteps,
@@ -142,8 +138,9 @@ class SourcePhoto {
     required this.capturedLabel,
     this.id,
     this.captureId,
-    this.cookingOccasionId,
+    this.ingestId,
     this.capturedAt,
+    this.addedAt,
     this.confidenceLabel,
     this.previewUrl,
     this.thumbnailUrl,
@@ -154,8 +151,9 @@ class SourcePhoto {
   final String url;
   final String capturedLabel;
   final String? captureId;
-  final String? cookingOccasionId;
+  final String? ingestId;
   final DateTime? capturedAt;
+  final DateTime? addedAt;
   final String? confidenceLabel;
   final String? previewUrl;
   final String? thumbnailUrl;

@@ -8,7 +8,6 @@ import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
 import 'package:mymenu/features/capture/capture_sheet.dart';
-import 'package:mymenu/features/dish_detail/cook_again_sheet.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_content.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_hero.dart';
 import 'package:mymenu/features/dish_detail/recipe_section_editor.dart';
@@ -139,15 +138,6 @@ class _DishDetailScreenState extends State<DishDetailScreen>
                     state.acknowledgeAutomaticCover(automaticCover.id),
               ),
             ],
-            const SizedBox(height: 16),
-            PrimaryPillButton(
-              key: const ValueKey<String>('cook_again_button'),
-              label: 'Cook again',
-              icon: Icons.play_arrow_rounded,
-              onPressed: () => showCookAgainSheet(context, state, dish),
-            ),
-            const SizedBox(height: 12),
-            _Metrics(dish: dish),
             const SizedBox(height: 12),
             _DetailTabs(controller: _tabController),
           ],
@@ -268,62 +258,6 @@ class _DetailPage extends StatelessWidget {
       key: PageStorageKey<String>('dish_detail_${pageName}_scroll_view'),
       padding: EdgeInsets.fromLTRB(horizontal, 16, horizontal, bottom),
       children: <Widget>[child],
-    );
-  }
-}
-
-class _Metrics extends StatelessWidget {
-  const _Metrics({required this.dish});
-
-  final Dish dish;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        Expanded(
-            child:
-                _Metric(value: '${dish.madeCount} cooks', label: 'occasions')),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _Metric(
-            value: '${dish.sourcePhotos.length} photos',
-            label: 'sources',
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(child: _Metric(value: dish.lastMadeLabel, label: 'last made')),
-      ],
-    );
-  }
-}
-
-class _Metric extends StatelessWidget {
-  const _Metric({required this.value, required this.label});
-
-  final String value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minHeight: 64),
-      decoration: BoxDecoration(
-        color: MyMenuColors.oat,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text(
-            value,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 3),
-          Text(label, style: Theme.of(context).textTheme.labelSmall),
-        ],
-      ),
     );
   }
 }

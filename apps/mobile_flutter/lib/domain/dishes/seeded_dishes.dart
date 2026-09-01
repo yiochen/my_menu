@@ -21,7 +21,6 @@ final List<Dish> seededDishes = <Dish>[
     category: 'Bowls',
     prepMinutes: 25,
     difficulty: 'Easy',
-    madeCount: 8,
     lastMadeLabel: 'Jul 18',
     isFavorite: true,
     ingredients: const <String>[
@@ -51,7 +50,6 @@ final List<Dish> seededDishes = <Dish>[
     category: 'Pasta',
     prepMinutes: 30,
     difficulty: 'Easy',
-    madeCount: 5,
     lastMadeLabel: 'Jun 28',
     isFavorite: true,
     ingredients: const <String>[
@@ -81,7 +79,6 @@ final List<Dish> seededDishes = <Dish>[
     category: 'Mains',
     prepMinutes: 45,
     difficulty: 'Medium',
-    madeCount: 3,
     lastMadeLabel: 'Jun 14',
     ingredients: const <String>[
       'Chicken cutlets|3 thin cutlets',
@@ -109,7 +106,6 @@ final List<Dish> seededDishes = <Dish>[
     category: 'Soups',
     prepMinutes: 120,
     difficulty: 'Weekend',
-    madeCount: 12,
     lastMadeLabel: 'May 31',
     ingredients: const <String>[
       'Rice noodles|14 oz',
@@ -137,7 +133,6 @@ final List<Dish> seededDishes = <Dish>[
     category: 'Pasta',
     prepMinutes: 20,
     difficulty: 'Easy',
-    madeCount: 1,
     lastMadeLabel: 'Jul 2',
     ingredients: const <String>['Noodles|8 oz', 'Garlic butter|4 tbsp'],
     recipeSteps: const <String>[
@@ -157,7 +152,6 @@ final List<Dish> seededDishes = <Dish>[
     category: 'Bowls',
     prepMinutes: 30,
     difficulty: 'Easy',
-    madeCount: 2,
     lastMadeLabel: 'Jun 20',
     ingredients: const <String>['Firm tofu|1 block', 'Sesame glaze|½ cup'],
     recipeSteps: const <String>[

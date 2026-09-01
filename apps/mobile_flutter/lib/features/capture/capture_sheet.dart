@@ -3,12 +3,12 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:mymenu/domain/capture/capture_batch.dart';
+import 'package:mymenu/domain/capture/capture_ingest.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
 import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/domain/processing/processing_consent_prompt.dart';
 import 'package:mymenu/domain/processing/processing_privacy_notice.dart';
-import 'package:mymenu/features/capture/camera_batch_sheet.dart';
+import 'package:mymenu/features/capture/camera_multi_capture_sheet.dart';
 import 'package:mymenu/features/capture/capture_add_idea.dart';
 import 'package:mymenu/features/capture/capture_media_service.dart';
 import 'package:mymenu/features/capture/capture_outcome_sheet.dart';
@@ -58,7 +58,7 @@ Future<CaptureCompletion?> showCaptureSheet(
       final bool added = await _captureMedia(
         context,
         state,
-        () => collectCameraBatch(context, mediaService),
+        () => collectCameraCapture(context, mediaService),
         targetDishId: targetDishId,
       );
       return added ? CaptureCompletion.photosAdded : null;
@@ -193,14 +193,14 @@ Future<bool> _captureMedia(
     if (!context.mounted || capturedMedia.isEmpty) {
       return false;
     }
-    final CaptureBatch? batch = await state.addPhotoCaptures(
+    final CaptureIngest? ingest = await state.addPhotoCaptures(
       capturedMedia,
       targetDishId: targetDishId,
     );
     if (!context.mounted) {
       return false;
     }
-    if (batch != null) {
+    if (ingest != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(targetDishId != null
@@ -219,7 +219,7 @@ Future<bool> _captureMedia(
         ),
       );
     }
-    return batch != null;
+    return ingest != null;
   } on PlatformException catch (_) {
     if (context.mounted) {
       await showCaptureOutcomeSheet(

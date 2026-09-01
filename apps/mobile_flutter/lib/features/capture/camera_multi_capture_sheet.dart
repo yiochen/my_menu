@@ -6,14 +6,14 @@ import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/app_image.dart';
 import 'package:mymenu/shared/widgets/warm_components.dart';
 
-enum _CameraBatchIntent { takeAnother, done }
+enum _CameraCaptureIntent { takeAnother, done }
 
-Future<List<CapturedMedia>> collectCameraBatch(
+Future<List<CapturedMedia>> collectCameraCapture(
   BuildContext context,
   CaptureMediaService mediaService,
 ) async {
   final List<CapturedMedia> media = <CapturedMedia>[];
-  while (media.length < CaptureRepository.maxBatchItems) {
+  while (media.length < CaptureRepository.maxIngestItems) {
     final CapturedMedia? captured = await mediaService.takePhoto();
     if (captured == null) {
       break;
@@ -22,32 +22,32 @@ Future<List<CapturedMedia>> collectCameraBatch(
     if (!context.mounted) {
       break;
     }
-    final _CameraBatchIntent? intent =
-        await showModalBottomSheet<_CameraBatchIntent>(
+    final _CameraCaptureIntent? intent =
+        await showModalBottomSheet<_CameraCaptureIntent>(
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
       isDismissible: false,
       enableDrag: false,
-      builder: (BuildContext context) => _CameraBatchReview(
+      builder: (BuildContext context) => _CameraCaptureReview(
         media: List<CapturedMedia>.unmodifiable(media),
       ),
     );
-    if (intent != _CameraBatchIntent.takeAnother) {
+    if (intent != _CameraCaptureIntent.takeAnother) {
       break;
     }
   }
   return media;
 }
 
-class _CameraBatchReview extends StatelessWidget {
-  const _CameraBatchReview({required this.media});
+class _CameraCaptureReview extends StatelessWidget {
+  const _CameraCaptureReview({required this.media});
 
   final List<CapturedMedia> media;
 
   @override
   Widget build(BuildContext context) {
-    final bool atLimit = media.length >= CaptureRepository.maxBatchItems;
+    final bool atLimit = media.length >= CaptureRepository.maxIngestItems;
     return WarmPage(
       includeBottomChromeSpace: false,
       topPadding: 10,
@@ -57,11 +57,11 @@ class _CameraBatchReview extends StatelessWidget {
         children: <Widget>[
           SheetTopBar(
             title: 'Photos captured',
-            onClose: () => Navigator.pop(context, _CameraBatchIntent.done),
+            onClose: () => Navigator.pop(context, _CameraCaptureIntent.done),
           ),
           const SizedBox(height: 16),
           Text(
-            '${media.length} of ${CaptureRepository.maxBatchItems}',
+            '${media.length} of ${CaptureRepository.maxIngestItems}',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineSmall,
           ),
@@ -110,7 +110,7 @@ class _CameraBatchReview extends StatelessWidget {
           if (atLimit)
             const StatusStrip(
               icon: Icons.check_circle_outline,
-              text: 'Batch limit reached. These 9 photos are ready to save.',
+              text: 'Photo limit reached. These 9 photos are ready to save.',
             ),
           if (atLimit) const SizedBox(height: 12),
           Row(
@@ -121,7 +121,7 @@ class _CameraBatchReview extends StatelessWidget {
                     key: const ValueKey<String>('camera_take_another'),
                     onPressed: () => Navigator.pop(
                       context,
-                      _CameraBatchIntent.takeAnother,
+                      _CameraCaptureIntent.takeAnother,
                     ),
                     icon: const Icon(Icons.add_a_photo_outlined),
                     label: const Text('Take another'),
@@ -133,7 +133,7 @@ class _CameraBatchReview extends StatelessWidget {
                 child: FilledButton.icon(
                   key: const ValueKey<String>('camera_done'),
                   onPressed: () =>
-                      Navigator.pop(context, _CameraBatchIntent.done),
+                      Navigator.pop(context, _CameraCaptureIntent.done),
                   icon: const Icon(Icons.check_rounded),
                   label: const Text('Done'),
                 ),

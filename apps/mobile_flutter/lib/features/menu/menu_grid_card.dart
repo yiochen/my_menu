@@ -6,7 +6,6 @@ import 'package:flutter/semantics.dart';
 import 'package:mymenu/app/app.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/features/dish_detail/dish_detail_screen.dart';
-import 'package:mymenu/features/menu/menu_memory_cue.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/dish_artwork.dart';
 import 'package:mymenu/shared/widgets/local_write_feedback.dart';
@@ -33,7 +32,10 @@ class MenuGridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final TextStyle titleStyle = Theme.of(context).textTheme.titleMedium!;
+    final TextStyle titleStyle = Theme.of(context)
+        .textTheme
+        .titleMedium!
+        .copyWith(fontWeight: FontWeight.w600);
     final double titleLineHeight =
         MediaQuery.textScalerOf(context).scale(titleStyle.fontSize!) *
             titleStyle.height!;
@@ -49,30 +51,10 @@ class MenuGridCard extends StatelessWidget {
             },
       child: Container(
         key: ValueKey<String>('menu_dish_${dish.id}'),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: selected
-              ? const <BoxShadow>[
-                  BoxShadow(
-                    color: Color(0x24C94B00),
-                    blurRadius: 26,
-                    offset: Offset(0, 10),
-                  ),
-                ]
-              : myMenuCardShadow,
-        ),
-        foregroundDecoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? MyMenuColors.orangeAction : MyMenuColors.line,
-            width: selected ? 2 : 1,
-          ),
-        ),
-        clipBehavior: Clip.antiAlias,
         child: Material(
           color: Colors.transparent,
           child: InkWell(
+            borderRadius: BorderRadius.circular(20),
             onTap: onTap ??
                 () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
@@ -126,29 +108,17 @@ class _MenuCardBody extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(12, 11, 12, 13),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              SizedBox(
-                height: titleSlotHeight,
-                child: Text(
-                  key: ValueKey<String>('menu_dish_title_${dish.id}'),
-                  dish.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: titleStyle,
-                ),
-              ),
-              Text(
-                '${dish.madeCount} '
-                '${dish.madeCount == 1 ? 'cook' : 'cooks'}'
-                ' · ${dish.sourcePhotos.length} photos',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 7),
-              MenuMemoryCue(dish: dish),
-            ],
+          padding: const EdgeInsets.only(top: 11, bottom: 3),
+          child: SizedBox(
+            width: double.infinity,
+            height: titleSlotHeight,
+            child: Text(
+              key: ValueKey<String>('menu_dish_title_${dish.id}'),
+              dish.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: titleStyle,
+            ),
           ),
         ),
       ],
@@ -171,72 +141,91 @@ class _MenuCardArtwork extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: <Widget>[
-        Hero(
-          key: ValueKey<String>('menu_artwork_hero_${dish.id}'),
-          tag: dishArtworkHeroTag(dish.id),
-          child: DishArtwork(dish: dish, resizeForDisplay: true),
-        ),
-        if (selectionMode)
-          Positioned.fill(
-            child: ColoredBox(
-              color: selected
-                  ? MyMenuColors.orangeAction.withValues(alpha: 0.12)
-                  : Colors.transparent,
+    return ClipRRect(
+      key: ValueKey<String>('menu_dish_artwork_clip_${dish.id}'),
+      borderRadius: BorderRadius.circular(20),
+      child: Stack(
+        fit: StackFit.expand,
+        children: <Widget>[
+          Hero(
+            key: ValueKey<String>('menu_artwork_hero_${dish.id}'),
+            tag: dishArtworkHeroTag(dish.id),
+            flightShuttleBuilder: dishArtworkFlightShuttleBuilder,
+            child: DishArtwork(dish: dish, resizeForDisplay: true),
+          ),
+          if (selectionMode)
+            Positioned.fill(
+              child: ColoredBox(
+                color: selected
+                    ? MyMenuColors.orangeAction.withValues(alpha: 0.12)
+                    : Colors.transparent,
+              ),
             ),
-          ),
-        if (selectionMode)
-          Positioned(
-            top: 10,
-            left: 10,
-            child: _SelectionIndicator(selected: selected),
-          ),
-        if (!selectionMode && showNewBadge && dish.isNew)
-          Positioned(
-            top: 5,
-            left: 7,
-            child: _NewDishLabel(dishId: dish.id),
-          ),
-        if (!selectionMode)
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Semantics(
-              button: true,
-              label: dish.isFavorite
-                  ? 'Remove from favorites'
-                  : 'Add to favorites',
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => runLocalWriteWithFeedback(
-                  context,
-                  () => MyMenuScope.read(context).toggleFavorite(dish.id),
-                ),
-                child: Container(
-                  width: 32,
-                  height: 32,
+          if (selected)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: dish.isFavorite
-                        ? const Color(0xF2FFFFFF)
-                        : const Color(0x57302018),
-                  ),
-                  child: Icon(
-                    dish.isFavorite
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
-                    size: 19,
-                    color: dish.isFavorite
-                        ? const Color(0xFFEF4D4D)
-                        : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: MyMenuColors.orangeAction,
+                      width: 2,
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-      ],
+          if (selectionMode)
+            Positioned(
+              top: 10,
+              left: 10,
+              child: _SelectionIndicator(selected: selected),
+            ),
+          if (!selectionMode && showNewBadge && dish.isNew)
+            Positioned(
+              top: 5,
+              left: 7,
+              child: _NewDishLabel(dishId: dish.id),
+            ),
+          if (!selectionMode)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Semantics(
+                button: true,
+                label: dish.isFavorite
+                    ? 'Remove from favorites'
+                    : 'Add to favorites',
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => runLocalWriteWithFeedback(
+                    context,
+                    () => MyMenuScope.read(context).toggleFavorite(dish.id),
+                  ),
+                  child: Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: dish.isFavorite
+                          ? const Color(0xF2FFFFFF)
+                          : const Color(0x57302018),
+                    ),
+                    child: Icon(
+                      dish.isFavorite
+                          ? Icons.favorite_rounded
+                          : Icons.favorite_border_rounded,
+                      size: 19,
+                      color: dish.isFavorite
+                          ? const Color(0xFFEF4D4D)
+                          : Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

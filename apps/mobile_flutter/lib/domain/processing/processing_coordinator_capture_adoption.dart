@@ -21,11 +21,6 @@ extension ProcessingCoordinatorCaptureRoutingAdoption on ProcessingCoordinator {
       await _captureProposalAdopter(request);
     } on FormatException {
       await ProcessingOutboxRepository(_database).rejectProposal(request.id);
-      await _markBatchStatus(
-        request.subjectId,
-        CaptureBatchStatus.failed,
-        failureReason: 'The processing result could not be safely applied.',
-      );
       await _markCapturesFailed(
         request.subjectId,
         'The processing result could not be safely applied.',

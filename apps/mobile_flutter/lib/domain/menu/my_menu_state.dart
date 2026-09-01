@@ -7,8 +7,8 @@ import 'package:flutter/widgets.dart';
 import 'package:mymenu/core/database/app_database.dart' as db;
 import 'package:mymenu/core/network/network_status_monitor.dart';
 import 'package:mymenu/core/network/processing_api_client.dart';
-import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_correction.dart';
+import 'package:mymenu/domain/capture/capture_ingest.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/capture/captured_media.dart';
 import 'package:mymenu/domain/capture/captured_photo.dart';
@@ -46,7 +46,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
             repositories == null ? List<Dish>.of(seededDishes) : const <Dish>[],
         _plan =
             repositories == null ? buildSeededPlan() : const <PlannedMeal>[],
-        _captureBatches = const <CaptureBatch>[],
+        _captureIngests = const <CaptureIngest>[],
         _captureItems = const <CaptureItem>[],
         _captureCorrections = const <CaptureCorrection>[],
         _generatedCovers = const <GeneratedCover>[],
@@ -72,7 +72,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
   MyMenuState.forTesting({
     List<Dish> dishes = const <Dish>[],
     List<PlannedMeal> plan = const <PlannedMeal>[],
-    List<CaptureBatch> captureBatches = const <CaptureBatch>[],
+    List<CaptureIngest> captureIngests = const <CaptureIngest>[],
     List<CaptureItem> captureItems = const <CaptureItem>[],
     List<CaptureCorrection> captureCorrections = const <CaptureCorrection>[],
     List<GeneratedCover> generatedCovers = const <GeneratedCover>[],
@@ -83,7 +83,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
         ProcessingConsentDecision.notDecided,
   })  : _dishes = List<Dish>.of(dishes),
         _plan = List<PlannedMeal>.of(plan),
-        _captureBatches = List<CaptureBatch>.of(captureBatches),
+        _captureIngests = List<CaptureIngest>.of(captureIngests),
         _captureItems = List<CaptureItem>.of(captureItems),
         _captureCorrections = List<CaptureCorrection>.of(captureCorrections),
         _generatedCovers = List<GeneratedCover>.of(generatedCovers),
@@ -98,7 +98,7 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
 
   List<Dish> _dishes;
   List<PlannedMeal> _plan;
-  List<CaptureBatch> _captureBatches;
+  List<CaptureIngest> _captureIngests;
   List<CaptureItem> _captureItems;
   List<CaptureCorrection> _captureCorrections;
   List<GeneratedCover> _generatedCovers;
@@ -111,8 +111,9 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
       <String, _PendingDishDeletion>{};
   final Map<String, _PendingCaptureDeletion> _pendingCaptureDeletions =
       <String, _PendingCaptureDeletion>{};
-  final Map<String, _PendingCaptureBatchDeletion>
-      _pendingCaptureBatchDeletions = <String, _PendingCaptureBatchDeletion>{};
+  final Map<String, _PendingCaptureIngestDeletion>
+      _pendingCaptureIngestDeletions =
+      <String, _PendingCaptureIngestDeletion>{};
   StreamSubscription<void>? _networkStatusSubscription;
   Future<void>? _activeProcessingResume;
   Timer? _processingResumeTimer;
@@ -130,28 +131,29 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
         ),
       );
   List<PlannedMeal> get plan => _validPlannedMeals;
-  List<CaptureBatch> get captureBatches {
+  List<CaptureIngest> get captureIngests {
     final Set<String> hiddenCaptureIds = _hiddenCaptureIds;
-    return List<CaptureBatch>.unmodifiable(
-      _captureBatches
+    return List<CaptureIngest>.unmodifiable(
+      _captureIngests
           .where(
-            (CaptureBatch batch) => !_pendingCaptureBatchIds.contains(batch.id),
+            (CaptureIngest ingest) =>
+                !_pendingCaptureIngestIds.contains(ingest.id),
           )
           .map(
-            (CaptureBatch batch) => CaptureBatch(
-              id: batch.id,
-              status: batch.status,
-              createdAt: batch.createdAt,
-              updatedAt: batch.updatedAt,
-              items: batch.items
+            (CaptureIngest ingest) => CaptureIngest(
+              id: ingest.id,
+              status: ingest.status,
+              createdAt: ingest.createdAt,
+              updatedAt: ingest.updatedAt,
+              items: ingest.items
                   .where(
                     (CaptureItem item) => !hiddenCaptureIds.contains(item.id),
                   )
                   .toList(growable: false),
-              failureReason: batch.failureReason,
+              failureReason: ingest.failureReason,
             ),
           )
-          .where((CaptureBatch batch) => batch.items.isNotEmpty),
+          .where((CaptureIngest ingest) => ingest.items.isNotEmpty),
     );
   }
 
@@ -203,13 +205,13 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
       await repositories.eraseLocalMenu();
       _pendingDishDeletions.clear();
       _pendingCaptureDeletions.clear();
-      _pendingCaptureBatchDeletions.clear();
+      _pendingCaptureIngestDeletions.clear();
       await _reloadFromRepositories();
       return;
     }
     _dishes = const <Dish>[];
     _plan = const <PlannedMeal>[];
-    _captureBatches = const <CaptureBatch>[];
+    _captureIngests = const <CaptureIngest>[];
     _captureItems = const <CaptureItem>[];
     _captureCorrections = const <CaptureCorrection>[];
     _generatedCovers = const <GeneratedCover>[];
@@ -284,9 +286,10 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   Dish recommendedDish() {
-    final List<Dish> sorted = List<Dish>.of(_dishes)
-      ..sort((Dish a, Dish b) => a.madeCount.compareTo(b.madeCount));
-    return sorted.first;
+    return _dishes.firstWhere(
+      (Dish dish) => dish.isFavorite,
+      orElse: () => _dishes.first,
+    );
   }
 
   Future<void> toggleFavorite(String dishId) async {
@@ -325,24 +328,23 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
     }
 
     if (normalized.contains('salmon')) {
-      _attachCook('dish_salmon', summary);
+      _attachCapture('dish_salmon', summary);
       return;
     }
 
     if (normalized.contains('linguine') || normalized.contains('pasta')) {
-      _attachCook('dish_linguine', summary);
+      _attachCapture('dish_linguine', summary);
       return;
     }
 
     final Dish nextDish = Dish(
       id: 'dish_capture_${_dishes.length}',
       title: 'Captured Dish',
-      description: 'Created from a mocked photo capture.',
+      description: '',
       heroImageUrl: '',
       category: 'Captured',
       prepMinutes: 0,
       difficulty: 'Draft',
-      madeCount: 1,
       lastMadeLabel: 'Today',
       ingredients: const <String>[],
       recipeSteps: const <String>[],
@@ -355,46 +357,5 @@ class MyMenuState extends ChangeNotifier with WidgetsBindingObserver {
 
     _dishes = <Dish>[nextDish, ..._dishes];
     notifyListeners();
-  }
-
-  void _attachCook(
-    String dishId,
-    String note, {
-    String? imageRef,
-    bool notify = true,
-  }) {
-    _dishes = _dishes.map((Dish dish) {
-      if (dish.id != dishId) {
-        return dish;
-      }
-
-      return dish.copyWith(
-        madeCount: dish.madeCount + 1,
-        lastMadeLabel: 'Today',
-        notes: <DishNote>[
-          ...dish.notes,
-          DishNote(
-            id: '${dish.id}_note_${DateTime.now().microsecondsSinceEpoch}',
-            dishId: dish.id,
-            body: note,
-            position: dish.notes.length,
-          ),
-        ],
-        sourcePhotos: <SourcePhoto>[
-          SourcePhoto(
-            url: imageRef ??
-                (dish.sourcePhotos.isEmpty
-                    ? dish.heroImageUrl
-                    : dish.sourcePhotos.first.url),
-            capturedLabel: 'Today',
-            confidenceLabel: '86%',
-          ),
-          ...dish.sourcePhotos,
-        ],
-      );
-    }).toList(growable: false);
-    if (notify) {
-      notifyListeners();
-    }
   }
 }

@@ -6,11 +6,11 @@ class LocalCaptureProcessingStore implements CaptureProcessingLocalStore {
   final CaptureRepository _repository;
 
   @override
-  Future<List<db.CaptureItemRow>> activeItemsForBatch(String batchId) {
+  Future<List<db.CaptureItemRow>> activeItemsForIngest(String ingestId) {
     return (_repository._database.select(_repository._database.captureItems)
           ..where(
             (db.CaptureItems table) =>
-                table.batchId.equals(batchId) &
+                table.ingestId.equals(ingestId) &
                 table.status
                     .equals(capture_domain.CaptureItemStatus.discarded.name)
                     .not(),
@@ -55,9 +55,9 @@ class LocalCaptureProcessingStore implements CaptureProcessingLocalStore {
   }
 
   @override
-  Future<void> markCapturesClassifying(String batchId) async {
+  Future<void> markCapturesClassifying(String ingestId) async {
     await (_repository._database.update(_repository._database.captureItems)
-          ..where((db.CaptureItems table) => table.batchId.equals(batchId)))
+          ..where((db.CaptureItems table) => table.ingestId.equals(ingestId)))
         .write(
       db.CaptureItemsCompanion(
         status: Value<String>(
@@ -65,53 +65,38 @@ class LocalCaptureProcessingStore implements CaptureProcessingLocalStore {
         ),
       ),
     );
-    await markBatchStatus(batchId, CaptureBatchStatus.processing);
   }
 
   @override
-  Future<void> markCapturesPending(String batchId) {
+  Future<void> markCapturesPending(
+    String ingestId, {
+    String? failureReason,
+  }) {
     return (_repository._database.update(_repository._database.captureItems)
-          ..where((db.CaptureItems table) => table.batchId.equals(batchId)))
+          ..where((db.CaptureItems table) => table.ingestId.equals(ingestId)))
         .write(
       db.CaptureItemsCompanion(
         status: Value<String>(
           capture_domain.CaptureItemStatus.pendingUpload.name,
         ),
-        failureReason: const Value<String?>(null),
+        failureReason: Value<String?>(failureReason),
       ),
     );
   }
 
   @override
-  Future<void> markBatchUnorganized(String batchId) {
-    return _repository._keepPhotoBatchUnorganized(batchId);
+  Future<void> markIngestUnorganized(String ingestId) {
+    return _repository._keepPhotoIngestUnorganized(ingestId);
   }
 
   @override
-  Future<void> markCapturesFailed(String batchId, String reason) {
+  Future<void> markCapturesFailed(String ingestId, String reason) {
     return (_repository._database.update(_repository._database.captureItems)
-          ..where((db.CaptureItems table) => table.batchId.equals(batchId)))
+          ..where((db.CaptureItems table) => table.ingestId.equals(ingestId)))
         .write(
       db.CaptureItemsCompanion(
         status: Value<String>(capture_domain.CaptureItemStatus.failed.name),
         failureReason: Value<String?>(reason),
-      ),
-    );
-  }
-
-  @override
-  Future<void> markBatchStatus(
-    String batchId,
-    CaptureBatchStatus status, {
-    String? failureReason,
-  }) {
-    return (_repository._database.update(_repository._database.captureBatches)
-          ..where((db.CaptureBatches table) => table.id.equals(batchId)))
-        .write(
-      db.CaptureBatchesCompanion(
-        status: Value<String>(status.name),
-        updatedAt: Value<DateTime>(DateTime.now()),
-        failureReason: Value<String?>(failureReason),
       ),
     );
   }

@@ -264,10 +264,10 @@ class _PhotosScreenState extends State<PhotosScreen> {
   }
 
   Future<void> _openDetail(MyMenuState state, CapturedPhoto photo) async {
-    final List<CapturedPhoto> batchSiblings = state.photos
+    final List<CapturedPhoto> ingestSiblings = state.photos
         .where(
           (CapturedPhoto sibling) =>
-              sibling.batchId == photo.batchId &&
+              sibling.ingestId == photo.ingestId &&
               sibling.id != photo.id &&
               !sibling.isOrganized,
         )
@@ -280,7 +280,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
         builder: (_) => PhotoDetailScreen(
           photo: photo,
           dishes: state.dishes,
-          batchSiblingCount: batchSiblings.length,
+          ingestSiblingCount: ingestSiblings.length,
           canUndo: latest?.canUndo ?? false,
         ),
       ),
@@ -288,7 +288,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
     if (!mounted || intent == null) return;
     final Set<String> ids = <String>{
       photo.id,
-      if (intent.includeBatch) ...batchSiblings.map((photo) => photo.id),
+      if (intent.includeIngest) ...ingestSiblings.map((photo) => photo.id),
     };
     switch (intent.action) {
       case PhotoDetailAction.assign:
@@ -297,7 +297,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
         showPhotoUndoSnackBar(
           context,
           state,
-          photo.batchId,
+          photo.ingestId,
           'Photo organized',
         );
       case PhotoDetailAction.createDish:
@@ -309,7 +309,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
         showPhotoUndoSnackBar(
           context,
           state,
-          photo.batchId,
+          photo.ingestId,
           'Dish created from photo',
         );
       case PhotoDetailAction.delete:
@@ -317,8 +317,8 @@ class _PhotosScreenState extends State<PhotosScreen> {
       case PhotoDetailAction.dismiss:
         await state.dismissPhotoSuggestion(photo.id);
       case PhotoDetailAction.retry:
-        if (photo.batchId != null) {
-          await state.retryCaptureBatch(photo.batchId!);
+        if (photo.ingestId != null) {
+          await state.retryCaptureIngest(photo.ingestId!);
           if (!mounted) return;
           showPhotoRetryOutcome(
             context,
@@ -329,9 +329,9 @@ class _PhotosScreenState extends State<PhotosScreen> {
           );
         }
       case PhotoDetailAction.undo:
-        if (photo.batchId != null) {
+        if (photo.ingestId != null) {
           await state.undoLatestCaptureCorrection(
-            photo.batchId!,
+            photo.ingestId!,
             captureId: photo.id,
           );
         }

@@ -14,7 +14,7 @@ extension CaptureProposalAdoptionRepository on CaptureCorrectionRepository {
               ..where(
                 (db.CaptureItems table) =>
                     table.id.isIn(expectedIds) &
-                    table.batchId.equals(request.subjectId),
+                    table.ingestId.equals(request.subjectId),
               ))
             .get();
     if (captures.length != expectedIds.length ||
@@ -76,7 +76,7 @@ extension CaptureProposalAdoptionRepository on CaptureCorrectionRepository {
           case 'existing_dish':
             final String dishId = outcome['localDishId']! as String;
             await moveLocalAssignments(
-              batchId: request.subjectId,
+              ingestId: request.subjectId,
               items: items,
               targetDishId: dishId,
             );
@@ -117,7 +117,7 @@ extension CaptureProposalAdoptionRepository on CaptureCorrectionRepository {
               ),
             );
             await moveLocalAssignments(
-              batchId: request.subjectId,
+              ingestId: request.subjectId,
               items: items,
               targetDishId: dishId,
             );
@@ -183,17 +183,6 @@ extension CaptureProposalAdoptionRepository on CaptureCorrectionRepository {
             );
         }
       }
-      await (_database.update(_database.captureBatches)
-            ..where(
-              (db.CaptureBatches table) => table.id.equals(request.subjectId),
-            ))
-          .write(
-        db.CaptureBatchesCompanion(
-          status: Value<String>(CaptureBatchStatus.applied.name),
-          updatedAt: Value<DateTime>(now),
-          failureReason: const Value<String?>(null),
-        ),
-      );
       await (_database.update(_database.processingOutbox)
             ..where(
               (db.ProcessingOutbox table) =>
@@ -222,7 +211,7 @@ extension CaptureProposalAdoptionRepository on CaptureCorrectionRepository {
     await _database.into(_database.captureCorrections).insertOnConflictUpdate(
           db.CaptureCorrectionsCompanion.insert(
             id: 'auto_${request.id}_$decisionIndex',
-            batchId: request.subjectId,
+            ingestId: request.subjectId,
             actionType: CaptureCorrectionType.autoAssign.name,
             captureIdsJson: jsonEncode(
               items.map((db.CaptureItemRow item) => item.id).toList(),

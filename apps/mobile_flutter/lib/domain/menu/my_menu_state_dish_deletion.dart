@@ -18,7 +18,7 @@ class _PendingDishDeletion {
     required this.dishes,
     required this.plannedMeals,
     required this.captureIds,
-    required this.captureBatches,
+    required this.captureIngests,
     required this.captureItems,
     required this.captureCorrections,
     required this.reviewItems,
@@ -28,7 +28,7 @@ class _PendingDishDeletion {
   final List<({int index, Dish dish})> dishes;
   final List<({int index, PlannedMeal meal})> plannedMeals;
   final Set<String> captureIds;
-  final List<CaptureBatch> captureBatches;
+  final List<CaptureIngest> captureIngests;
   final List<CaptureItem> captureItems;
   final List<CaptureCorrection> captureCorrections;
   final List<ReviewItem> reviewItems;
@@ -77,7 +77,7 @@ extension MyMenuDishDeletion on MyMenuState {
       dishes: selected,
       plannedMeals: plannedMeals,
       captureIds: captureIds,
-      captureBatches: _captureBatches,
+      captureIngests: _captureIngests,
       captureItems: _captureItems,
       captureCorrections: _captureCorrections,
       reviewItems: _reviewItems,
@@ -91,20 +91,20 @@ extension MyMenuDishDeletion on MyMenuState {
     _captureItems = _captureItems
         .where((CaptureItem item) => !captureIds.contains(item.id))
         .toList(growable: false);
-    _captureBatches = _captureBatches
+    _captureIngests = _captureIngests
         .map(
-          (CaptureBatch batch) => CaptureBatch(
-            id: batch.id,
-            status: batch.status,
-            createdAt: batch.createdAt,
-            updatedAt: batch.updatedAt,
-            items: batch.items
+          (CaptureIngest ingest) => CaptureIngest(
+            id: ingest.id,
+            status: ingest.status,
+            createdAt: ingest.createdAt,
+            updatedAt: ingest.updatedAt,
+            items: ingest.items
                 .where((CaptureItem item) => !captureIds.contains(item.id))
                 .toList(growable: false),
-            failureReason: batch.failureReason,
+            failureReason: ingest.failureReason,
           ),
         )
-        .where((CaptureBatch batch) => batch.items.isNotEmpty)
+        .where((CaptureIngest ingest) => ingest.items.isNotEmpty)
         .toList(growable: false);
     _captureCorrections = _captureCorrections
         .where(
@@ -195,7 +195,7 @@ extension MyMenuDishDeletion on MyMenuState {
       );
     }
     _plan = restoredPlan;
-    _captureBatches = pending.captureBatches;
+    _captureIngests = pending.captureIngests;
     _captureItems = pending.captureItems;
     _captureCorrections = pending.captureCorrections;
     _reviewItems = pending.reviewItems;

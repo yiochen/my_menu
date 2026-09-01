@@ -13,7 +13,7 @@ class CaptureRepository {
   final ProcessingOutboxRepository _processingOutboxRepository;
   final ImageDerivativeStore _imageDerivativeStore;
   final Uuid _uuid = const Uuid();
-  static const int maxBatchItems = 9;
+  static const int maxIngestItems = 9;
 
   Future<List<ReviewItem>> listReviewItems() async {
     final List<db.ReviewItemRow> rows =
@@ -43,54 +43,14 @@ class CaptureRepository {
     return rows.map((db.CaptureItemRow row) => row.toDomain()).toList();
   }
 
-  Future<List<CaptureBatch>> listBatches() async {
-    final List<db.CaptureBatchRow> batchRows =
-        await (_database.select(_database.captureBatches)
-              ..orderBy(<OrderingTerm Function(db.$CaptureBatchesTable)>[
-                (db.$CaptureBatchesTable table) =>
-                    OrderingTerm.desc(table.createdAt),
-              ]))
-            .get();
-    final List<db.CaptureItemRow> itemRows =
-        await (_database.select(_database.captureItems)
-              ..orderBy(<OrderingTerm Function(db.$CaptureItemsTable)>[
-                (db.$CaptureItemsTable table) =>
-                    OrderingTerm.asc(table.ordinal),
-              ]))
-            .get();
-    final Map<String, List<capture_domain.CaptureItem>> itemsByBatch =
-        <String, List<capture_domain.CaptureItem>>{};
-    for (final db.CaptureItemRow row in itemRows) {
-      final String? batchId = row.batchId;
-      if (batchId == null) {
-        continue;
-      }
-      itemsByBatch
-          .putIfAbsent(batchId, () => <capture_domain.CaptureItem>[])
-          .add(row.toDomain());
-    }
-    return batchRows.map((db.CaptureBatchRow row) {
-      return CaptureBatch(
-        id: row.id,
-        status: captureBatchStatusFromDatabase(row.status),
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        items: List<capture_domain.CaptureItem>.unmodifiable(
-          itemsByBatch[row.id] ?? const <capture_domain.CaptureItem>[],
-        ),
-        failureReason: row.failureReason,
-      );
-    }).toList(growable: false);
-  }
-
-  Future<CaptureBatch?> createPhotoBatch(
+  Future<CaptureIngest?> createPhotoIngest(
     List<Object> capturedMedia, {
     String? targetDishId,
   }) async {
     final List<CapturedMedia> media = capturedMedia
         .map(_normalizeCapturedMedia)
         .where((CapturedMedia item) => item.path.trim().isNotEmpty)
-        .take(maxBatchItems)
+        .take(maxIngestItems)
         .toList(growable: false);
     if (media.isEmpty) {
       return null;
@@ -108,7 +68,7 @@ class CaptureRepository {
       throw StateError('The selected dish no longer exists.');
     }
 
-    final String batchId = _uuid.v4();
+    final String ingestId = _uuid.v4();
     final String jobId = _uuid.v4();
     final DateTime now = DateTime.now();
     final ProcessingConsentDecision consent =
@@ -125,23 +85,13 @@ class CaptureRepository {
     );
     try {
       await _database.transaction(() async {
-        await _database.into(_database.captureBatches).insert(
-              db.CaptureBatchesCompanion.insert(
-                id: batchId,
-                status: useLocalFallback || isAuthoritativelyAssigned
-                    ? CaptureBatchStatus.applied.name
-                    : CaptureBatchStatus.pendingUpload.name,
-                createdAt: now,
-                updatedAt: now,
-              ),
-            );
         for (int ordinal = 0; ordinal < media.length; ordinal += 1) {
           final String id = captureIds[ordinal];
           final CapturedMedia item = media[ordinal];
           await _database.into(_database.captureItems).insert(
                 db.CaptureItemsCompanion.insert(
                   id: id,
-                  batchId: Value<String?>(batchId),
+                  ingestId: Value<String?>(ingestId),
                   ordinal: Value<int>(ordinal),
                   kind: capture_domain.CaptureItemKind.photo.name,
                   status: isAuthoritativelyAssigned
@@ -181,6 +131,7 @@ class CaptureRepository {
                     ),
                     capturedLabel: 'Today',
                     captureId: Value<String?>(id),
+                    ingestId: Value<String?>(ingestId),
                     capturedAt: Value<DateTime?>(item.capturedAt),
                     confidenceLabel: const Value<String?>('Added to dish'),
                   ),
@@ -218,7 +169,6 @@ class CaptureRepository {
                     ? previews.first.placeholderRef
                     : targetDish.heroPlaceholderUrl,
               ),
-              madeCount: Value<int>(targetDish.madeCount + 1),
               lastMadeLabel: const Value<String>('Today'),
             ),
           );
@@ -226,7 +176,7 @@ class CaptureRepository {
           await _database.into(_database.captureCorrections).insert(
                 db.CaptureCorrectionsCompanion.insert(
                   id: correctionId,
-                  batchId: batchId,
+                  ingestId: ingestId,
                   actionType: CaptureCorrectionType.assign.name,
                   captureIdsJson: jsonEncode(captureIds),
                   previousDishIdsJson: jsonEncode(<String, Object?>{
@@ -251,7 +201,7 @@ class CaptureRepository {
         }
         await _processingOutboxRepository.enqueueCaptureGrouping(
           requestId: jobId,
-          batchId: batchId,
+          ingestId: ingestId,
           captureIds: captureIds,
           now: now,
         );
@@ -263,8 +213,8 @@ class CaptureRepository {
       rethrow;
     }
 
-    return (await listBatches()).firstWhere(
-      (CaptureBatch batch) => batch.id == batchId,
+    return (await listIngests()).firstWhere(
+      (CaptureIngest ingest) => ingest.id == ingestId,
     );
   }
 
@@ -272,11 +222,11 @@ class CaptureRepository {
     List<Object> capturedMedia, {
     String? targetDishId,
   }) async {
-    final CaptureBatch? batch = await createPhotoBatch(
+    final CaptureIngest? ingest = await createPhotoIngest(
       capturedMedia,
       targetDishId: targetDishId,
     );
-    return batch?.items
+    return ingest?.items
             .map((capture_domain.CaptureItem item) => item.id)
             .toList(growable: false) ??
         const <String>[];
@@ -292,18 +242,10 @@ class CaptureRepository {
     final DateTime now = DateTime.now();
     final String localDate = _dateKey(now);
     await _database.transaction(() async {
-      await _database.into(_database.captureBatches).insert(
-            db.CaptureBatchesCompanion.insert(
-              id: id,
-              status: CaptureBatchStatus.pendingUpload.name,
-              createdAt: now,
-              updatedAt: now,
-            ),
-          );
       await _database.into(_database.captureItems).insert(
             db.CaptureItemsCompanion.insert(
               id: id,
-              batchId: Value<String?>(id),
+              ingestId: Value<String?>(id),
               kind: capture_domain.CaptureItemKind.idea.name,
               status: capture_domain.CaptureItemStatus.pendingUpload.name,
               createdAt: now,
@@ -315,7 +257,7 @@ class CaptureRepository {
           );
       await _processingOutboxRepository.enqueueCaptureGrouping(
         requestId: jobId,
-        batchId: id,
+        ingestId: id,
         captureIds: <String>[id],
         now: now,
       );

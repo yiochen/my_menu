@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:mymenu/domain/capture/capture_batch.dart';
+import 'package:mymenu/domain/capture/capture_ingest.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/shared/theme/my_menu_theme.dart';
 import 'package:mymenu/shared/widgets/dish_artwork.dart';
@@ -8,7 +8,7 @@ import 'package:mymenu/shared/widgets/dish_artwork.dart';
 part 'menu_delete_action_bar.dart';
 
 Future<bool> showMenuDeleteDialog(BuildContext context, List<Dish> dishes,
-    {List<CaptureBatch> processingBatches = const <CaptureBatch>[]}) async {
+    {List<CaptureIngest> processingIngests = const <CaptureIngest>[]}) async {
   return await showModalBottomSheet<bool>(
         context: context,
         isScrollControlled: true,
@@ -24,7 +24,7 @@ Future<bool> showMenuDeleteDialog(BuildContext context, List<Dish> dishes,
         builder: (BuildContext sheetContext) {
           return _MenuDeleteConfirmation(
             dishes: dishes,
-            processingBatches: processingBatches,
+            processingIngests: processingIngests,
           );
         },
       ) ??
@@ -34,15 +34,15 @@ Future<bool> showMenuDeleteDialog(BuildContext context, List<Dish> dishes,
 class _MenuDeleteConfirmation extends StatelessWidget {
   const _MenuDeleteConfirmation({
     required this.dishes,
-    required this.processingBatches,
+    required this.processingIngests,
   });
 
   final List<Dish> dishes;
-  final List<CaptureBatch> processingBatches;
+  final List<CaptureIngest> processingIngests;
 
   @override
   Widget build(BuildContext context) {
-    final int count = dishes.length + processingBatches.length;
+    final int count = dishes.length + processingIngests.length;
     final double maxHeight = MediaQuery.sizeOf(context).height * 0.82;
     return ConstrainedBox(
       key: const ValueKey<String>('menu_delete_dialog'),
@@ -67,7 +67,7 @@ class _MenuDeleteConfirmation extends StatelessWidget {
             _DeleteTitle(
               count: count,
               dishCount: dishes.length,
-              uploadCount: processingBatches.length,
+              uploadCount: processingIngests.length,
             ),
             const SizedBox(height: 14),
             ...dishes.take(3).map(
@@ -76,10 +76,10 @@ class _MenuDeleteConfirmation extends StatelessWidget {
                     child: _DeleteDishRow(dish: dish),
                   ),
                 ),
-            ...processingBatches.take(3 - dishes.take(3).length).map(
-                  (CaptureBatch batch) => Padding(
+            ...processingIngests.take(3 - dishes.take(3).length).map(
+                  (CaptureIngest ingest) => Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: _DeleteUploadRow(batch: batch),
+                    child: _DeleteUploadRow(ingest: ingest),
                   ),
                 ),
             if (count > 3)
@@ -207,13 +207,13 @@ class _DeleteActions extends StatelessWidget {
 }
 
 class _DeleteUploadRow extends StatelessWidget {
-  const _DeleteUploadRow({required this.batch});
+  const _DeleteUploadRow({required this.ingest});
 
-  final CaptureBatch batch;
+  final CaptureIngest ingest;
 
   @override
   Widget build(BuildContext context) {
-    final int count = batch.items.length;
+    final int count = ingest.items.length;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -271,9 +271,7 @@ class _DeleteDishRow extends StatelessWidget {
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
                 Text(
-                  '${dish.madeCount} '
-                  '${dish.madeCount == 1 ? 'cook' : 'cooks'}'
-                  ' · ${dish.sourcePhotos.length} source photos',
+                  '${dish.sourcePhotos.length} source photos',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],

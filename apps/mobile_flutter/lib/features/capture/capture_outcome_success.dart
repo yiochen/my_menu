@@ -22,7 +22,7 @@ class CaptureSavedView extends StatelessWidget {
       headline: 'Got it. You’re done.',
       description: photoCount <= 1
           ? 'This cooking moment is safely queued for upload.'
-          : 'All $photoCount photos are safely queued in one capture batch.',
+          : 'All $photoCount photos are safely queued together.',
       art: const CaptureResultIcon(
         icon: Icons.check_rounded,
         color: MyMenuColors.green,
@@ -77,7 +77,8 @@ class CaptureMatchedView extends StatelessWidget {
     return CaptureOutcomeFrame(
       topLabel: 'Capture organized',
       headline: 'Added to Miso Salmon Bowl',
-      description: 'Your photo joined today’s cooking occasion—not a new dish.',
+      description:
+          'Your photo was added to this dish instead of making a new one.',
       art: CaptureDishResultArt(dish: dish),
       body: Column(
         children: <Widget>[
@@ -88,7 +89,7 @@ class CaptureMatchedView extends StatelessWidget {
                 CaptureDishSafeSummary(
                   dish: dish,
                   title: 'Miso Salmon Bowl',
-                  subtitle: 'Cook #9 · 13 source photos now',
+                  subtitle: '13 source photos now',
                 ),
                 const Divider(height: 24),
                 const CaptureStatusLine(
@@ -153,8 +154,8 @@ class CaptureCreatedView extends StatelessWidget {
       description: onlyRejected
           ? 'These photos do not appear to show a prepared dish, so nothing was added to Menu.'
           : dishes.length <= 1
-              ? 'MyMenu organized this cooking occasion into a new living record.'
-              : 'Each visual group became a separate cooking occasion.',
+              ? 'MyMenu organized these photos into a new living record.'
+              : 'Each visual group became a separate dish.',
       art: CaptureResultIcon(
         icon: onlyRejected
             ? Icons.no_food_rounded
@@ -187,8 +188,7 @@ class CaptureCreatedView extends StatelessWidget {
                 CaptureDishSafeSummary(
                   dish: dishes[index],
                   title: dishes[index].title,
-                  subtitle: '${dishes[index].madeCount} cook · '
-                      '${dishes[index].sourcePhotos.length} '
+                  subtitle: '${dishes[index].sourcePhotos.length} '
                       '${dishes[index].sourcePhotos.length == 1 ? 'photo' : 'photos'}',
                 ),
                 if (index != dishes.length - 1) const Divider(height: 24),

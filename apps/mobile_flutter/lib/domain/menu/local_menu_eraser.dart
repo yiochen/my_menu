@@ -27,7 +27,6 @@ class LocalMenuEraser {
       await database.delete(database.captureCorrections).go();
       await database.delete(database.reviewItems).go();
       await database.delete(database.captureItems).go();
-      await database.delete(database.captureBatches).go();
       await database.delete(database.plannedMeals).go();
       await database.delete(database.generatedCovers).go();
       await database.delete(database.sourcePhotos).go();

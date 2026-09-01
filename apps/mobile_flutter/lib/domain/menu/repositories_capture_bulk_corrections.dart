@@ -15,7 +15,7 @@ extension CaptureCorrectionRepositoryBulk on CaptureCorrectionRepository {
               ))
             .get();
     if (items.length != dishIdByCaptureId.length ||
-        items.any((db.CaptureItemRow item) => item.batchId == null)) {
+        items.any((db.CaptureItemRow item) => item.ingestId == null)) {
       throw StateError('Every selected photo must still be available.');
     }
     final Map<(String, String, bool), List<String>> groups =
@@ -26,7 +26,7 @@ extension CaptureCorrectionRepositoryBulk on CaptureCorrectionRepository {
         continue;
       }
       groups.putIfAbsent(
-        (item.batchId!, targetDishId, item.appliedDishId == null),
+        (item.ingestId!, targetDishId, item.appliedDishId == null),
         () => <String>[],
       ).add(item.id);
     }
@@ -35,7 +35,7 @@ extension CaptureCorrectionRepositoryBulk on CaptureCorrectionRepository {
       for (final MapEntry<(String, String, bool), List<String>> group
           in groups.entries) {
         final CaptureCorrection? correction = await _applyCorrection(
-          batchId: group.key.$1,
+          ingestId: group.key.$1,
           captureIds: group.value,
           targetDishId: group.key.$2,
           type: group.key.$3

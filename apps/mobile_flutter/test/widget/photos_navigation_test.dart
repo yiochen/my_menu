@@ -278,7 +278,6 @@ Dish _dish() {
     category: '',
     prepMinutes: 0,
     difficulty: '',
-    madeCount: 0,
     lastMadeLabel: 'Not cooked yet',
     ingredients: <String>[],
     recipeSteps: <String>[],

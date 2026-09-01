@@ -56,7 +56,7 @@ class AlternateDishSearch extends StatelessWidget {
                           borderRadius: BorderRadius.circular(18),
                         ),
                         title: Text(dish.title),
-                        subtitle: Text('${dish.madeCount} times made'),
+                        subtitle: Text(dish.category),
                         onTap: () => onSelect(dish),
                       );
                     },

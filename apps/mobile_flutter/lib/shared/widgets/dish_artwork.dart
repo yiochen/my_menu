@@ -9,6 +9,34 @@ import 'package:mymenu/shared/widgets/food_cover_placeholder.dart';
 
 String dishArtworkHeroTag(String dishId) => 'dish_artwork_$dishId';
 
+Widget dishArtworkFlightShuttleBuilder(
+  BuildContext flightContext,
+  Animation<double> animation,
+  HeroFlightDirection flightDirection,
+  BuildContext fromHeroContext,
+  BuildContext toHeroContext,
+) {
+  final Hero fromHero = fromHeroContext.widget as Hero;
+  final Hero toHero = toHeroContext.widget as Hero;
+  final Widget artwork = flightDirection == HeroFlightDirection.push
+      ? toHero.child
+      : fromHero.child;
+
+  return AnimatedBuilder(
+    animation: animation,
+    child: artwork,
+    builder: (BuildContext context, Widget? child) {
+      return ClipRRect(
+        key: const ValueKey<String>('dish_artwork_hero_flight_clip'),
+        borderRadius: BorderRadius.circular(
+          20 + (8 * animation.value),
+        ),
+        child: SizedBox.expand(child: child),
+      );
+    },
+  );
+}
+
 class DishArtwork extends StatelessWidget {
   const DishArtwork({
     required this.dish,

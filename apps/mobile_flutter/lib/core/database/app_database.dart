@@ -12,6 +12,7 @@ export 'package:mymenu/core/database/app_database_local.dart';
 export 'package:mymenu/core/database/app_database_processing.dart';
 
 part 'app_database.g.dart';
+part 'app_database_ingest_migration.dart';
 part 'app_database_media_migration.dart';
 part 'app_database_migrations.dart';
 
@@ -27,7 +28,6 @@ class Dishes extends Table {
   TextColumn get category => text()();
   IntColumn get prepMinutes => integer()();
   TextColumn get difficulty => text()();
-  IntColumn get madeCount => integer()();
   TextColumn get lastMadeLabel => text()();
   TextColumn get ingredientsJson => text()();
   TextColumn get recipeStepsJson => text()();
@@ -64,7 +64,7 @@ class SourcePhotos extends Table {
   TextColumn get capturedLabel => text()();
   TextColumn get confidenceLabel => text().nullable()();
   TextColumn get captureId => text().nullable()();
-  TextColumn get cookingOccasionId => text().nullable()();
+  TextColumn get ingestId => text().nullable()();
   DateTimeColumn get capturedAt => dateTime().nullable()();
 
   @override
@@ -74,7 +74,7 @@ class SourcePhotos extends Table {
 @DataClassName('CaptureItemRow')
 class CaptureItems extends Table {
   TextColumn get id => text()();
-  TextColumn get batchId => text().nullable()();
+  TextColumn get ingestId => text().nullable()();
   IntColumn get ordinal => integer().withDefault(const Constant(0))();
   TextColumn get kind => text()();
   TextColumn get status => text()();
@@ -94,22 +94,10 @@ class CaptureItems extends Table {
   Set<Column<Object>> get primaryKey => <Column<Object>>{id};
 }
 
-@DataClassName('CaptureBatchRow')
-class CaptureBatches extends Table {
-  TextColumn get id => text()();
-  TextColumn get status => text()();
-  DateTimeColumn get createdAt => dateTime()();
-  DateTimeColumn get updatedAt => dateTime()();
-  TextColumn get failureReason => text().nullable()();
-
-  @override
-  Set<Column<Object>> get primaryKey => <Column<Object>>{id};
-}
-
 @DataClassName('CaptureCorrectionRow')
 class CaptureCorrections extends Table {
   TextColumn get id => text()();
-  TextColumn get batchId => text()();
+  TextColumn get ingestId => text()();
   TextColumn get actionType => text()();
   TextColumn get captureIdsJson => text()();
   TextColumn get previousDishIdsJson => text()();
@@ -144,7 +132,6 @@ class ReviewItems extends Table {
     DishNotes,
     SourcePhotos,
     GeneratedCovers,
-    CaptureBatches,
     CaptureItems,
     CaptureCorrections,
     PlannedMeals,
@@ -183,7 +170,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 19;
+  int get schemaVersion => 20;
 
   @override
   MigrationStrategy get migration {
@@ -195,33 +182,10 @@ class AppDatabase extends _$AppDatabase {
           await _migrateJsonNotesToRows(this);
         }
         if (from < 3) {
-          await migrator.createTable(captureBatches);
-          await migrator.addColumn(captureItems, captureItems.batchId);
+          await migrator.addColumn(captureItems, captureItems.ingestId);
           await migrator.addColumn(captureItems, captureItems.ordinal);
           await migrator.addColumn(captureItems, captureItems.failureReason);
-          await customStatement('''
-            INSERT INTO capture_batches (
-              id,
-              status,
-              created_at,
-              updated_at,
-              failure_reason
-            )
-            SELECT
-              id,
-              CASE status
-                WHEN 'failed' THEN 'failed'
-                WHEN 'applied' THEN 'applied'
-                WHEN 'discarded' THEN 'discarded'
-                WHEN 'classifying' THEN 'processing'
-                ELSE 'pendingUpload'
-              END,
-              created_at,
-              created_at,
-              NULL
-            FROM capture_items
-          ''');
-          await customStatement('UPDATE capture_items SET batch_id = id');
+          await customStatement('UPDATE capture_items SET ingest_id = id');
         }
         if (from < 5) {
           await migrator.addColumn(captureItems, captureItems.capturedAt);
@@ -250,7 +214,7 @@ class AppDatabase extends _$AppDatabase {
             await migrator.addColumn(sourcePhotos, sourcePhotos.captureId);
             await migrator.addColumn(
               sourcePhotos,
-              sourcePhotos.cookingOccasionId,
+              sourcePhotos.ingestId,
             );
             await migrator.addColumn(sourcePhotos, sourcePhotos.capturedAt);
           }
@@ -272,8 +236,7 @@ class AppDatabase extends _$AppDatabase {
           ).get())
               .map((QueryRow row) => row.read<String>('name'))
               .toSet();
-          if (existingTables.contains('ai_jobs') &&
-              existingTables.contains('capture_batches')) {
+          if (existingTables.contains('ai_jobs')) {
             await customStatement('''
             INSERT OR IGNORE INTO processing_outbox (
               id,
@@ -290,24 +253,21 @@ class AppDatabase extends _$AppDatabase {
               jobs.id,
               'capture_grouping',
               jobs.subject_id,
-              '{"batchId":"' || jobs.subject_id || '","captureIds":[]}',
+              '{"ingestId":"' || jobs.subject_id || '","captureIds":[]}',
               CASE jobs.status
                 WHEN 'pending_offline' THEN 'waitingForConsent'
                 WHEN 'canceled' THEN 'canceled'
                 WHEN 'failed' THEN 'failed'
                 ELSE 'submitted'
               END,
-              CASE
-                WHEN batches.status = 'applied' THEN 'adopted'
-                WHEN jobs.status = 'succeeded' THEN 'readyForAdoption'
+              CASE jobs.status
+                WHEN 'succeeded' THEN 'readyForAdoption'
                 ELSE 'awaitingProposal'
               END,
               NULL,
               jobs.created_at,
               jobs.updated_at
             FROM ai_jobs AS jobs
-            INNER JOIN capture_batches AS batches
-              ON batches.id = jobs.subject_id
             WHERE jobs.job_type = 'batch_grouping'
             ''');
           }
@@ -362,6 +322,7 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 18) await _migrateDishOpenedV18(this, migrator);
         if (from < 19) await _migrateLocalFirstContractV19(this);
+        if (from < 20) await _migrateCaptureIngestV20(this);
       },
     );
   }

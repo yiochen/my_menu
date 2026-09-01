@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mymenu/domain/capture/capture_batch.dart';
 import 'package:mymenu/domain/capture/capture_correction.dart';
+import 'package:mymenu/domain/capture/capture_ingest.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/menu/my_menu_state.dart';
@@ -222,7 +222,7 @@ Future<void> _pumpResult(WidgetTester tester, MyMenuState state) async {
       home: Scaffold(
         body: CaptureGroupingResultView(
           state: state,
-          batchId: 'batch_1',
+          ingestId: 'batch_1',
           onClose: () {},
         ),
       ),
@@ -239,7 +239,7 @@ MyMenuState _groupedState({
   final List<CaptureItem> captures = <CaptureItem>[
     CaptureItem(
       id: 'capture_a',
-      batchId: 'batch_1',
+      ingestId: 'batch_1',
       kind: CaptureItemKind.photo,
       status: CaptureItemStatus.applied,
       createdAt: now,
@@ -247,7 +247,7 @@ MyMenuState _groupedState({
     ),
     CaptureItem(
       id: 'capture_b',
-      batchId: 'batch_1',
+      ingestId: 'batch_1',
       ordinal: 1,
       kind: CaptureItemKind.photo,
       status: CaptureItemStatus.applied,
@@ -256,7 +256,7 @@ MyMenuState _groupedState({
     ),
     CaptureItem(
       id: 'capture_c',
-      batchId: 'batch_1',
+      ingestId: 'batch_1',
       ordinal: 2,
       kind: CaptureItemKind.photo,
       status: CaptureItemStatus.applied,
@@ -266,7 +266,7 @@ MyMenuState _groupedState({
     if (withUnclassified)
       CaptureItem(
         id: 'capture_rejected',
-        batchId: 'batch_1',
+        ingestId: 'batch_1',
         ordinal: 3,
         kind: CaptureItemKind.photo,
         status: CaptureItemStatus.discarded,
@@ -280,10 +280,10 @@ MyMenuState _groupedState({
       _dish('dish_b', 'Charred Corn Ramen'),
       _dish('dish_c', 'Crispy Tofu Salad'),
     ],
-    captureBatches: <CaptureBatch>[
-      CaptureBatch(
+    captureIngests: <CaptureIngest>[
+      CaptureIngest(
         id: 'batch_1',
-        status: CaptureBatchStatus.applied,
+        status: CaptureIngestStatus.applied,
         createdAt: now,
         updatedAt: now,
         items: captures,
@@ -294,7 +294,7 @@ MyMenuState _groupedState({
         ? <CaptureCorrection>[
             CaptureCorrection(
               id: 'correction_1',
-              batchId: 'batch_1',
+              ingestId: 'batch_1',
               type: CaptureCorrectionType.move,
               captureIds: const <String>['capture_a'],
               previousDishIds: const <String, String>{
@@ -319,7 +319,6 @@ Dish _dish(String id, String title) {
     category: 'Captured',
     prepMinutes: 0,
     difficulty: 'Not set',
-    madeCount: 1,
     lastMadeLabel: 'Today',
     ingredients: const <String>[],
     recipeSteps: const <String>[],

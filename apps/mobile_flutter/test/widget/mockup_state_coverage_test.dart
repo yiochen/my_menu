@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mymenu/domain/capture/capture_batch.dart';
+import 'package:mymenu/domain/capture/capture_ingest.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/menu/my_menu_state.dart';
 import 'package:mymenu/features/capture/add_idea_sheet.dart';
@@ -59,7 +59,7 @@ void main() {
       final List<CaptureItem> items = <CaptureItem>[
         CaptureItem(
           id: 'offline_0',
-          batchId: 'offline_batch',
+          ingestId: 'offline_batch',
           kind: CaptureItemKind.photo,
           status: CaptureItemStatus.pendingUpload,
           createdAt: now,
@@ -67,7 +67,7 @@ void main() {
         ),
         CaptureItem(
           id: 'offline_1',
-          batchId: 'offline_batch',
+          ingestId: 'offline_batch',
           ordinal: 1,
           kind: CaptureItemKind.photo,
           status: CaptureItemStatus.pendingUpload,
@@ -75,16 +75,16 @@ void main() {
           localMediaRef: '/tmp/one.jpg',
         ),
       ];
-      final CaptureBatch batch = CaptureBatch(
+      final CaptureIngest batch = CaptureIngest(
         id: 'offline_batch',
-        status: CaptureBatchStatus.pendingUpload,
+        status: CaptureIngestStatus.pendingUpload,
         createdAt: now,
         updatedAt: now,
         items: items,
         failureReason: captureWaitingForConnectionReason,
       );
       final MyMenuState state = MyMenuState.forTesting(
-        captureBatches: <CaptureBatch>[batch],
+        captureIngests: <CaptureIngest>[batch],
         captureItems: items,
       );
 
@@ -95,7 +95,7 @@ void main() {
           initialStep: CaptureOutcomeStep.saved,
           organizedStep: CaptureOutcomeStep.matched,
           photoCount: 2,
-          batchId: batch.id,
+          ingestId: batch.id,
         ),
       );
 

@@ -36,9 +36,9 @@ At completion:
 | `dish_ingredients` | Remove | Local ingredient representation |
 | `dish_steps` | Remove | Local recipe-step representation |
 | `captures` | Remove | Local capture tables/files |
-| `capture_batches` | Remove | Local capture batches |
+| `capture_batches` | Remove | Correlated `capture_items.ingest_id` plus processing outbox state |
 | `dish_images` | Remove | Local source/cover files and rows |
-| `cooking_occasions` | Remove | Local cooking history |
+| `cooking_occasions` | Remove | No replacement; Sources remain independent Journal records |
 | `review_items` | Remove | Local review items |
 | `planned_meals` | Remove | Local planned meals |
 | `capture_grouping_actions` | Remove | Local correction/undo state |

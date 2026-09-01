@@ -103,16 +103,18 @@ extension _MenuScreenSections on _MenuScreenState {
           ),
         ),
         const SizedBox(width: 8),
-        IconButton(
+        TextButton.icon(
           key: const ValueKey<String>('menu_sort_button'),
-          tooltip: _newestFirst ? 'Newest first' : 'Oldest first',
           onPressed: () => _updateSelection(() => _newestFirst = !_newestFirst),
-          style: IconButton.styleFrom(
+          style: TextButton.styleFrom(
             backgroundColor: MyMenuColors.oat,
             foregroundColor: MyMenuColors.muted,
-            fixedSize: const Size(32, 32),
-            minimumSize: const Size(32, 32),
-            padding: EdgeInsets.zero,
+            minimumSize: const Size(0, 32),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            textStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(11),
             ),
@@ -121,8 +123,9 @@ extension _MenuScreenSections on _MenuScreenState {
             _newestFirst
                 ? Icons.arrow_downward_rounded
                 : Icons.arrow_upward_rounded,
-            size: 17,
+            size: 15,
           ),
+          label: Text(_newestFirst ? 'Newest' : 'Oldest'),
         ),
       ],
     );

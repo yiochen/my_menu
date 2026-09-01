@@ -90,7 +90,7 @@ class ProcessingOutboxRepository {
 
   Future<void> enqueueCaptureGrouping({
     required String requestId,
-    required String batchId,
+    required String ingestId,
     required List<String> captureIds,
     required DateTime now,
   }) async {
@@ -101,9 +101,9 @@ class ProcessingOutboxRepository {
           db.ProcessingOutboxCompanion.insert(
             id: requestId,
             requestKind: ProcessingRequestKind.captureGrouping.databaseValue,
-            subjectId: batchId,
+            subjectId: ingestId,
             payloadJson: jsonEncode(<String, Object?>{
-              'batchId': batchId,
+              'ingestId': ingestId,
               'captureIds': captureIds,
             }),
             deliveryState: isAccepted
@@ -152,12 +152,12 @@ class ProcessingOutboxRepository {
   }
 
   Future<void> retryCaptureGrouping({
-    required String batchId,
+    required String ingestId,
     required DateTime now,
   }) async {
     final ProcessingOutboxRequest? current = await requestForSubject(
       kind: ProcessingRequestKind.captureGrouping,
-      subjectId: batchId,
+      subjectId: ingestId,
     );
     if (current == null ||
         (current.deliveryState != ProcessingDeliveryState.failed &&
@@ -173,7 +173,7 @@ class ProcessingOutboxRepository {
                 table.requestKind.equals(
                   ProcessingRequestKind.captureGrouping.databaseValue,
                 ) &
-                table.subjectId.equals(batchId) &
+                table.subjectId.equals(ingestId) &
                 (table.deliveryState.equals(
                       ProcessingDeliveryState.failed.name,
                     ) |
@@ -266,7 +266,7 @@ class ProcessingOutboxRepository {
     );
   }
 
-  Future<void> supersedeCaptureGrouping(String batchId) async {
+  Future<void> supersedeCaptureGrouping(String ingestId) async {
     final DateTime now = DateTime.now();
     await (_database.update(_database.processingOutbox)
           ..where(
@@ -274,7 +274,7 @@ class ProcessingOutboxRepository {
                 table.requestKind.equals(
                   ProcessingRequestKind.captureGrouping.databaseValue,
                 ) &
-                table.subjectId.equals(batchId) &
+                table.subjectId.equals(ingestId) &
                 table.adoptionState
                     .equals(ProcessingAdoptionState.adopted.name)
                     .not(),
@@ -291,7 +291,7 @@ class ProcessingOutboxRepository {
                 table.requestKind.equals(
                   ProcessingRequestKind.captureGrouping.databaseValue,
                 ) &
-                table.subjectId.equals(batchId) &
+                table.subjectId.equals(ingestId) &
                 table.deliveryState
                     .equals(ProcessingDeliveryState.acknowledged.name)
                     .not(),

@@ -1,7 +1,7 @@
 part of 'my_menu_state.dart';
 
 extension MyMenuStateCapturePersistence on MyMenuState {
-  Future<CaptureBatch?> addPhotoCaptures(
+  Future<CaptureIngest?> addPhotoCaptures(
     List<Object> capturedMedia, {
     String? targetDishId,
   }) {
@@ -19,7 +19,7 @@ extension MyMenuStateCapturePersistence on MyMenuState {
         kind: item.kind,
         status: CaptureItemStatus.localOnly,
         createdAt: item.createdAt,
-        batchId: item.batchId,
+        ingestId: item.ingestId,
         ordinal: item.ordinal,
         localMediaRef: item.localMediaRef,
         localPreviewRef: item.localPreviewRef,
@@ -55,15 +55,15 @@ extension MyMenuStateCapturePersistence on MyMenuState {
     await _reloadFromRepositories();
   }
 
-  Future<void> deleteCaptureBatch(String batchId) async {
+  Future<void> deleteCaptureIngest(String ingestId) async {
     final AppRepositories? repositories = _repositories;
     final Set<String> captureIds = _captureItems
-        .where((CaptureItem item) => item.batchId == batchId)
+        .where((CaptureItem item) => item.ingestId == ingestId)
         .map((CaptureItem item) => item.id)
         .toSet();
     if (repositories == null) {
-      _captureBatches = _captureBatches
-          .where((CaptureBatch batch) => batch.id != batchId)
+      _captureIngests = _captureIngests
+          .where((CaptureIngest ingest) => ingest.id != ingestId)
           .toList(growable: false);
       _captureItems = _captureItems
           .where((CaptureItem item) => !captureIds.contains(item.id))
@@ -73,13 +73,13 @@ extension MyMenuStateCapturePersistence on MyMenuState {
           .toList(growable: false);
       _captureCorrections = _captureCorrections
           .where(
-              (CaptureCorrection correction) => correction.batchId != batchId)
+              (CaptureCorrection correction) => correction.ingestId != ingestId)
           .toList(growable: false);
       _notifyChanged();
       _updateProcessingResumePolling();
       return;
     }
-    await repositories.captureRepository.deleteBatch(batchId);
+    await repositories.captureRepository.deleteIngest(ingestId);
     await _reloadFromRepositories();
     _updateProcessingResumePolling();
   }
@@ -111,7 +111,7 @@ extension MyMenuStateCapturePersistence on MyMenuState {
     }
   }
 
-  Future<CaptureBatch?> _createPhotoCaptures(
+  Future<CaptureIngest?> _createPhotoCaptures(
     List<Object> capturedMedia, {
     String? targetDishId,
   }) async {
@@ -137,12 +137,12 @@ extension MyMenuStateCapturePersistence on MyMenuState {
         _dishes.any(
           (Dish dish) => dish.id == targetDishId && dish.sourcePhotos.isEmpty,
         );
-    final CaptureBatch? batch =
-        await repositories.captureRepository.createPhotoBatch(
+    final CaptureIngest? ingest =
+        await repositories.captureRepository.createPhotoIngest(
       capturedMedia,
       targetDishId: targetDishId,
     );
-    if (batch == null) {
+    if (ingest == null) {
       return null;
     }
     if (targetDishId == null) {
@@ -153,7 +153,7 @@ extension MyMenuStateCapturePersistence on MyMenuState {
       unawaited(resumeProcessing());
     } else if (firstSourcesForDish) {
       final Set<String> captureIds =
-          batch.items.map((CaptureItem item) => item.id).toSet();
+          ingest.items.map((CaptureItem item) => item.id).toSet();
       final Dish dish = dishById(targetDishId);
       final bool enqueued =
           await repositories.coverRepository.enqueueAutomaticCover(
@@ -166,14 +166,14 @@ extension MyMenuStateCapturePersistence on MyMenuState {
             .whereType<String>()
             .take(3)
             .toList(growable: false),
-        now: batch.createdAt,
+        now: ingest.createdAt,
       );
       if (enqueued) {
         await _reloadFromRepositories();
         _startProcessingResumeWindow();
       }
     }
-    return batch;
+    return ingest;
   }
 
   Future<void> _reloadFromRepositories() async {
@@ -201,24 +201,24 @@ extension MyMenuStateCapturePersistence on MyMenuState {
               !pendingDishIds.contains(item.appliedDishId),
         )
         .toList(growable: false);
-    _captureBatches = (await repositories.captureRepository.listBatches())
+    _captureIngests = (await repositories.captureRepository.listIngests())
         .map(
-          (CaptureBatch batch) => CaptureBatch(
-            id: batch.id,
-            status: batch.status,
-            createdAt: batch.createdAt,
-            updatedAt: batch.updatedAt,
-            items: batch.items
+          (CaptureIngest ingest) => CaptureIngest(
+            id: ingest.id,
+            status: ingest.status,
+            createdAt: ingest.createdAt,
+            updatedAt: ingest.updatedAt,
+            items: ingest.items
                 .where(
                   (CaptureItem item) =>
                       !pendingCaptureIds.contains(item.id) &&
                       !pendingDishIds.contains(item.appliedDishId),
                 )
                 .toList(growable: false),
-            failureReason: batch.failureReason,
+            failureReason: ingest.failureReason,
           ),
         )
-        .where((CaptureBatch batch) => batch.items.isNotEmpty)
+        .where((CaptureIngest ingest) => ingest.items.isNotEmpty)
         .toList(growable: false);
     _reviewItems = (await repositories.captureRepository.listReviewItems())
         .where(
@@ -249,12 +249,12 @@ extension MyMenuStateCapturePersistence on MyMenuState {
     _notifyChanged();
   }
 
-  Future<void> retryCaptureBatch(String batchId) async {
+  Future<void> retryCaptureIngest(String ingestId) async {
     final AppRepositories? repositories = _repositories;
     if (repositories == null) {
       return;
     }
-    await repositories.captureRepository.retryBatch(batchId);
+    await repositories.captureRepository.retryIngest(ingestId);
     await _reloadFromRepositories();
     await resumeProcessing();
   }

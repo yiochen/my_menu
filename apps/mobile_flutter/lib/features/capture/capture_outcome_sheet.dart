@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:mymenu/domain/capture/capture_batch.dart';
+import 'package:mymenu/domain/capture/capture_ingest.dart';
 import 'package:mymenu/domain/capture/capture_item.dart';
 import 'package:mymenu/domain/dishes/dish.dart';
 import 'package:mymenu/domain/menu/my_menu_state.dart';
@@ -16,7 +16,7 @@ Future<void> showCaptureOutcomeSheet(
   required CaptureOutcomeStep initialStep,
   required CaptureOutcomeStep organizedStep,
   required int photoCount,
-  String? batchId,
+  String? ingestId,
 }) {
   if (initialStep == CaptureOutcomeStep.created) {
     return Navigator.of(context).push<void>(
@@ -28,7 +28,7 @@ Future<void> showCaptureOutcomeSheet(
             initialStep: initialStep,
             organizedStep: organizedStep,
             photoCount: photoCount,
-            batchId: batchId,
+            ingestId: ingestId,
             fullScreen: true,
           ),
         ),
@@ -44,7 +44,7 @@ Future<void> showCaptureOutcomeSheet(
       initialStep: initialStep,
       organizedStep: organizedStep,
       photoCount: photoCount,
-      batchId: batchId,
+      ingestId: ingestId,
     ),
   );
 }
@@ -55,7 +55,7 @@ class CaptureOutcomeSheet extends StatefulWidget {
     required this.initialStep,
     required this.organizedStep,
     required this.photoCount,
-    this.batchId,
+    this.ingestId,
     this.fullScreen = false,
     super.key,
   });
@@ -64,7 +64,7 @@ class CaptureOutcomeSheet extends StatefulWidget {
   final CaptureOutcomeStep initialStep;
   final CaptureOutcomeStep organizedStep;
   final int photoCount;
-  final String? batchId;
+  final String? ingestId;
   final bool fullScreen;
 
   @override
@@ -97,7 +97,7 @@ class _CaptureOutcomeSheetState extends State<CaptureOutcomeSheet> {
             ),
           CaptureOutcomeStep.created => _createdView(),
           CaptureOutcomeStep.failed => CaptureFailedView(
-              failureReason: _batch()?.failureReason,
+              failureReason: _ingest()?.failureReason,
               onRetry: _retry,
               onClose: _close,
             ),
@@ -118,18 +118,18 @@ class _CaptureOutcomeSheetState extends State<CaptureOutcomeSheet> {
   }
 
   CaptureOutcomeStep _displayStep() {
-    if (_step != CaptureOutcomeStep.saved || widget.batchId == null) {
+    if (_step != CaptureOutcomeStep.saved || widget.ingestId == null) {
       return _step;
     }
-    for (final CaptureBatch batch in widget.state.captureBatches) {
-      if (batch.id == widget.batchId) {
-        if (batch.isWaitingForConnection) {
+    for (final CaptureIngest ingest in widget.state.captureIngests) {
+      if (ingest.id == widget.ingestId) {
+        if (ingest.isWaitingForConnection) {
           return CaptureOutcomeStep.offline;
         }
-        if (batch.status == CaptureBatchStatus.applied) {
+        if (ingest.status == CaptureIngestStatus.applied) {
           return CaptureOutcomeStep.created;
         }
-        if (batch.status == CaptureBatchStatus.failed) {
+        if (ingest.status == CaptureIngestStatus.failed) {
           return CaptureOutcomeStep.failed;
         }
       }
@@ -138,12 +138,12 @@ class _CaptureOutcomeSheetState extends State<CaptureOutcomeSheet> {
   }
 
   Widget _createdView() {
-    final String? batchId = widget.batchId;
-    if (batchId != null &&
+    final String? ingestId = widget.ingestId;
+    if (ingestId != null &&
         (_resultDishes().isNotEmpty || _rejectedCount() > 0)) {
       return CaptureGroupingResultView(
         state: widget.state,
-        batchId: batchId,
+        ingestId: ingestId,
         onClose: _close,
       );
     }
@@ -155,11 +155,11 @@ class _CaptureOutcomeSheetState extends State<CaptureOutcomeSheet> {
   }
 
   List<Dish> _resultDishes() {
-    final CaptureBatch? batch = _batch();
-    if (batch == null) {
+    final CaptureIngest? ingest = _ingest();
+    if (ingest == null) {
       return const <Dish>[];
     }
-    final Set<String> dishIds = batch.items
+    final Set<String> dishIds = ingest.items
         .map((item) => item.appliedDishId)
         .whereType<String>()
         .toSet();
@@ -169,24 +169,24 @@ class _CaptureOutcomeSheetState extends State<CaptureOutcomeSheet> {
   }
 
   int _rejectedCount() =>
-      _batch()
+      _ingest()
           ?.items
           .where(
               (CaptureItem item) => item.status == CaptureItemStatus.discarded)
           .length ??
       0;
 
-  CaptureBatch? _batch() => widget.state.captureBatches
-      .where((CaptureBatch item) => item.id == widget.batchId)
+  CaptureIngest? _ingest() => widget.state.captureIngests
+      .where((CaptureIngest item) => item.id == widget.ingestId)
       .firstOrNull;
 
   Future<void> _retry() async {
-    final String? batchId = widget.batchId;
-    if (batchId == null) {
+    final String? ingestId = widget.ingestId;
+    if (ingestId == null) {
       return;
     }
     setState(() => _step = CaptureOutcomeStep.saved);
-    await widget.state.retryCaptureBatch(batchId);
+    await widget.state.retryCaptureIngest(ingestId);
   }
 
   void _close() => Navigator.pop(context);

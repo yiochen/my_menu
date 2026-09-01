@@ -31,8 +31,8 @@ extension CaptureRepositoryDeletion on CaptureRepository {
           failureReason: const Value<String?>(null),
         ),
       );
-      if (item.batchId case final String batchId) {
-        await _processingOutboxRepository.supersedeCaptureGrouping(batchId);
+      if (item.ingestId case final String ingestId) {
+        await _processingOutboxRepository.supersedeCaptureGrouping(ingestId);
       }
     });
   }
@@ -47,8 +47,8 @@ extension CaptureRepositoryDeletion on CaptureRepository {
     }
     final String? affectedDishId = capture.appliedDishId;
     await _database.transaction(() async {
-      if (capture.batchId case final String batchId) {
-        await _processingOutboxRepository.supersedeCaptureGrouping(batchId);
+      if (capture.ingestId case final String ingestId) {
+        await _processingOutboxRepository.supersedeCaptureGrouping(ingestId);
       }
       await (_database.delete(_database.reviewItems)
             ..where(
@@ -65,10 +65,9 @@ extension CaptureRepositoryDeletion on CaptureRepository {
       await (_database.delete(_database.captureItems)
             ..where((db.CaptureItems table) => table.id.equals(captureId)))
           .go();
-      if (affectedDishId != null && capture.batchId != null) {
+      if (affectedDishId != null && capture.ingestId != null) {
         await _refreshDishAfterCaptureRemoval(
           dishId: affectedDishId,
-          batchId: capture.batchId!,
           removedRefs:
               <String?>[capture.localMediaRef].whereType<String>().toSet(),
         );
@@ -84,13 +83,13 @@ extension CaptureRepositoryDeletion on CaptureRepository {
     );
   }
 
-  Future<void> retryBatch(String batchId) async {
+  Future<void> retryIngest(String ingestId) async {
     final DateTime now = DateTime.now();
     await _database.transaction(() async {
       await (_database.update(_database.captureItems)
             ..where(
               (db.$CaptureItemsTable table) =>
-                  table.batchId.equals(batchId) &
+                  table.ingestId.equals(ingestId) &
                   table.status.equals(
                     capture_domain.CaptureItemStatus.failed.name,
                   ),
@@ -103,27 +102,17 @@ extension CaptureRepositoryDeletion on CaptureRepository {
           failureReason: const Value<String?>(null),
         ),
       );
-      await (_database.update(
-        _database.captureBatches,
-      )..where((db.$CaptureBatchesTable table) => table.id.equals(batchId)))
-          .write(
-        db.CaptureBatchesCompanion(
-          status: Value<String>(CaptureBatchStatus.pendingUpload.name),
-          updatedAt: Value<DateTime>(now),
-          failureReason: const Value<String?>(null),
-        ),
-      );
       await _processingOutboxRepository.retryCaptureGrouping(
-        batchId: batchId,
+        ingestId: ingestId,
         now: now,
       );
     });
   }
 
-  Future<void> deleteBatch(String batchId) async {
+  Future<void> deleteIngest(String ingestId) async {
     final List<db.CaptureItemRow> captures = await (_database.select(
       _database.captureItems,
-    )..where((db.CaptureItems table) => table.batchId.equals(batchId)))
+    )..where((db.CaptureItems table) => table.ingestId.equals(ingestId)))
         .get();
     final List<String> captureIds = captures
         .map((db.CaptureItemRow capture) => capture.id)
@@ -143,7 +132,7 @@ extension CaptureRepositoryDeletion on CaptureRepository {
           );
     }
     await _database.transaction(() async {
-      await _processingOutboxRepository.supersedeCaptureGrouping(batchId);
+      await _processingOutboxRepository.supersedeCaptureGrouping(ingestId);
       if (captureIds.isNotEmpty) {
         await (_database.delete(_database.reviewItems)
               ..where(
@@ -164,19 +153,15 @@ extension CaptureRepositoryDeletion on CaptureRepository {
       }
       await (_database.delete(_database.captureCorrections)
             ..where(
-              (db.CaptureCorrections table) => table.batchId.equals(batchId),
+              (db.CaptureCorrections table) => table.ingestId.equals(ingestId),
             ))
           .go();
       await (_database.delete(_database.captureItems)
-            ..where((db.CaptureItems table) => table.batchId.equals(batchId)))
-          .go();
-      await (_database.delete(_database.captureBatches)
-            ..where((db.CaptureBatches table) => table.id.equals(batchId)))
+            ..where((db.CaptureItems table) => table.ingestId.equals(ingestId)))
           .go();
       for (final String dishId in affectedDishIds) {
         await _refreshDishAfterCaptureRemoval(
           dishId: dishId,
-          batchId: batchId,
           removedRefs: removedRefsByDish[dishId] ?? const <String>{},
         );
       }
@@ -198,7 +183,6 @@ extension CaptureRepositoryDeletion on CaptureRepository {
 
   Future<void> _refreshDishAfterCaptureRemoval({
     required String dishId,
-    required String batchId,
     required Set<String> removedRefs,
   }) async {
     final db.DishRow? dish = await (_database.select(_database.dishes)
@@ -207,22 +191,6 @@ extension CaptureRepositoryDeletion on CaptureRepository {
     if (dish == null) {
       return;
     }
-    final List<db.SourcePhotoRow> sources =
-        await (_database.select(_database.sourcePhotos)
-              ..where(
-                (db.SourcePhotos table) => table.dishId.equals(dishId),
-              ))
-            .get();
-    final bool batchStillPresent =
-        await (_database.select(_database.captureItems)
-                  ..where(
-                    (db.CaptureItems table) =>
-                        table.batchId.equals(batchId) &
-                        table.appliedDishId.equals(dishId),
-                  )
-                  ..limit(1))
-                .getSingleOrNull() !=
-            null;
     final bool removedCurrentCover = removedRefs.contains(dish.heroImageUrl);
     final String heroImageUrl = removedCurrentCover ? '' : dish.heroImageUrl;
     final String? heroPreviewUrl =
@@ -231,13 +199,6 @@ extension CaptureRepositoryDeletion on CaptureRepository {
         removedCurrentCover ? null : dish.heroThumbnailUrl;
     final String? heroPlaceholderUrl =
         removedCurrentCover ? null : dish.heroPlaceholderUrl;
-    final int madeCount = sources.isEmpty
-        ? 0
-        : batchStillPresent
-            ? dish.madeCount
-            : dish.madeCount > 0
-                ? dish.madeCount - 1
-                : 0;
     await (_database.update(_database.dishes)
           ..where((db.Dishes table) => table.id.equals(dishId)))
         .write(
@@ -246,10 +207,6 @@ extension CaptureRepositoryDeletion on CaptureRepository {
         heroPreviewUrl: Value<String?>(heroPreviewUrl),
         heroThumbnailUrl: Value<String?>(heroThumbnailUrl),
         heroPlaceholderUrl: Value<String?>(heroPlaceholderUrl),
-        madeCount: Value<int>(madeCount),
-        lastMadeLabel: Value<String>(
-          madeCount == 0 ? 'Not cooked yet' : dish.lastMadeLabel,
-        ),
       ),
     );
   }

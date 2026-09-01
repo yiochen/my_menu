@@ -17,7 +17,7 @@ extension _UnclassifiedResultActions on _CaptureGroupingResultViewState {
         );
         if (targetDishId != null) {
           await widget.state.assignUnclassifiedPhotos(
-            batchId: widget.batchId,
+            ingestId: widget.ingestId,
             captureIds: <String>[item.id],
             targetDishId: targetDishId,
           );
@@ -29,7 +29,7 @@ extension _UnclassifiedResultActions on _CaptureGroupingResultViewState {
         );
         if (title != null) {
           await widget.state.assignUnclassifiedPhotosToNewDish(
-            batchId: widget.batchId,
+            ingestId: widget.ingestId,
             captureIds: <String>[item.id],
             title: title,
           );

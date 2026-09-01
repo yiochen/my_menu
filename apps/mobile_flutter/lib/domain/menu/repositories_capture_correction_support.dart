@@ -35,7 +35,7 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
     }
     return CaptureCorrection(
       id: row.id,
-      batchId: row.batchId,
+      ingestId: row.ingestId,
       type: CaptureCorrectionType.values.byName(row.actionType),
       captureIds: captureIds is List<dynamic>
           ? captureIds.whereType<String>().toList(growable: false)
@@ -67,7 +67,7 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
           db.DishesCompanion.insert(
             id: id,
             title: title,
-            description: 'Created from selected capture photos.',
+            description: '',
             heroImageUrl: heroImageUrl,
             heroPreviewUrl: Value<String?>(heroPreviewUrl),
             heroThumbnailUrl: Value<String?>(heroThumbnailUrl),
@@ -75,7 +75,6 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
             category: 'Captured',
             prepMinutes: 0,
             difficulty: 'Not set',
-            madeCount: 0,
             lastMadeLabel: 'Today',
             ingredientsJson: '[]',
             recipeStepsJson: '[]',
@@ -86,7 +85,7 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
   }
 
   Future<void> moveLocalAssignments({
-    required String batchId,
+    required String ingestId,
     required List<db.CaptureItemRow> items,
     required String targetDishId,
   }) async {
@@ -96,8 +95,6 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
           .map((db.CaptureItemRow item) => item.appliedDishId)
           .whereType<String>(),
     };
-    final Map<String, bool> beforePresence =
-        await _batchPresence(batchId, dishIds);
     final Map<String, Set<String>> removedRefsByDish = <String, Set<String>>{};
     for (final db.CaptureItemRow item in items) {
       final String? sourceDishId = item.appliedDishId;
@@ -111,10 +108,8 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
       }
       await _moveOneLocalAssignment(item: item, targetDishId: targetDishId);
     }
-    await _adjustDishCounts(
+    await _refreshAffectedDishes(
       dishIds: dishIds,
-      beforePresence: beforePresence,
-      afterPresence: await _batchPresence(batchId, dishIds),
       removedRefsByDish: removedRefsByDish,
     );
   }
@@ -154,6 +149,7 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
                 placeholderUrl: Value<String?>(item.localPlaceholderRef),
                 capturedLabel: 'Today',
                 captureId: Value<String?>(item.id),
+                ingestId: Value<String?>(item.ingestId),
                 capturedAt: Value<DateTime?>(item.capturedAt),
                 confidenceLabel: const Value<String?>('User corrected'),
               ),
@@ -200,30 +196,8 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
     );
   }
 
-  Future<Map<String, bool>> _batchPresence(
-    String batchId,
-    Set<String> dishIds,
-  ) async {
-    final List<db.CaptureItemRow> rows =
-        await (_database.select(_database.captureItems)
-              ..where(
-                (db.CaptureItems table) =>
-                    table.batchId.equals(batchId) &
-                    table.appliedDishId.isIn(dishIds),
-              ))
-            .get();
-    return <String, bool>{
-      for (final String dishId in dishIds)
-        dishId: rows.any(
-          (db.CaptureItemRow item) => item.appliedDishId == dishId,
-        ),
-    };
-  }
-
-  Future<void> _adjustDishCounts({
+  Future<void> _refreshAffectedDishes({
     required Set<String> dishIds,
-    required Map<String, bool> beforePresence,
-    required Map<String, bool> afterPresence,
     Map<String, Set<String>> removedRefsByDish = const <String, Set<String>>{},
   }) async {
     for (final String dishId in dishIds) {
@@ -233,18 +207,12 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
                   (db.SourcePhotos table) => table.dishId.equals(dishId),
                 ))
               .get();
-      final int sourceCount = sources.length;
       final db.DishRow? dish = await (_database.select(_database.dishes)
             ..where((db.Dishes table) => table.id.equals(dishId)))
           .getSingleOrNull();
       if (dish == null) {
         continue;
       }
-      final int presenceDelta = ((afterPresence[dishId] ?? false) ? 1 : 0) -
-          ((beforePresence[dishId] ?? false) ? 1 : 0);
-      final int adjustedCount = dish.madeCount + presenceDelta;
-      final int madeCount =
-          sourceCount == 0 || adjustedCount < 0 ? 0 : adjustedCount;
       final bool removedCurrentHero =
           removedRefsByDish[dishId]?.contains(dish.heroImageUrl) ?? false;
       final String heroImageUrl =
@@ -271,10 +239,6 @@ extension CaptureCorrectionRepositorySupport on CaptureCorrectionRepository {
           heroPreviewUrl: Value<String?>(heroPreviewUrl),
           heroThumbnailUrl: Value<String?>(heroThumbnailUrl),
           heroPlaceholderUrl: Value<String?>(heroPlaceholderUrl),
-          madeCount: Value<int>(madeCount),
-          lastMadeLabel: Value<String>(
-            madeCount == 0 ? 'Not cooked yet' : dish.lastMadeLabel,
-          ),
         ),
       );
     }
